@@ -1,1 +1,159 @@
 
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>klk - Chat familiar</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial;background:#e9f5ef;color:#222}
+header{background:#075e54;color:white;padding:20px;font-size:26px;font-weight:bold}
+header small{display:block;font-size:13px;font-weight:normal}
+main{max-width:600px;margin:auto;padding:15px}
+.card{background:white;padding:20px;border-radius:14px;margin-top:20px}
+input,button{width:100%;padding:13px;margin:7px 0;border-radius:9px;border:1px solid #ccc;font-size:16px}
+button{background:#075e54;color:white;border:0;font-weight:bold}
+#chat{display:none}
+#messages{height:55vh;overflow:auto;background:#f4f4f4;padding:10px;border-radius:10px}
+.msg{background:#d9fdd3;padding:10px;border-radius:10px;margin:8px 0;overflow-wrap:anywhere}
+.muted{color:#777;font-size:12px}
+</style>
+</head>
+<body>
+<header>klk <small>Chat familiar</small></header>
+
+<main>
+<section id="login" class="card">
+<h2>Bienvenido a klk</h2>
+<p>Entra o crea tu cuenta familiar.</p>
+<input id="email" type="email" placeholder="Correo electrónico">
+<input id="password" type="password" placeholder="Contraseña">
+<button id="register">Crear cuenta</button>
+<button id="enter">Iniciar sesión</button>
+<p id="status"></p>
+</section>
+
+<section id="chat" class="card">
+<h2>Chat familiar</h2>
+<p id="who"></p>
+<button id="logout">Cerrar sesión</button>
+<div id="messages"></div>
+<input id="message" placeholder="Escribe un mensaje...">
+<button id="send">Enviar mensaje</button>
+</section>
+</main>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+<script>
+const firebaseConfig = {
+apiKey: "AIzaSyAgMkDOS77y-jHnzCEteQW1UgC90gShjuU",
+authDomain: "klk-familia.firebaseapp.com",
+projectId: "klk-familia",
+storageBucket: "klk-familia.firebasestorage.app",
+messagingSenderId: "184754934059",
+appId: "1:184754934059:web:1d385677b2c7c00699b56e",
+measurementId: "G-DXX2PHDNN0"
+};
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+const $ = id => document.getElementById(id);
+
+$("register").onclick = async () => {
+try {
+await auth.createUserWithEmailAndPassword(
+$("email").value.trim(),
+$("password").value
+);
+$("status").textContent = "Cuenta creada.";
+} catch(e) {
+$("status").textContent = e.message;
+}
+};
+
+$("enter").onclick = async () => {
+try {
+await auth.signInWithEmailAndPassword(
+$("email").value.trim(),
+$("password").value
+);
+} catch(e) {
+$("status").textContent = e.message;
+}
+};
+
+$("logout").onclick = () => auth.signOut();
+
+auth.onAuthStateChanged(user => {
+$("login").style.display = user ? "none" : "block";
+$("chat").style.display = user ? "block" : "none";
+
+if(user) {
+$("who").textContent = "Conectado: " + user.email;
+loadMessages();
+}
+});
+
+let unsubscribe = null;
+
+function loadMessages() {
+if(unsubscribe) unsubscribe();
+
+unsubscribe = db.collection("messages")
+.orderBy("createdAt")
+.limit(100)
+.onSnapshot(snapshot => {
+$("messages").innerHTML = "";
+
+snapshot.forEach(doc => {
+const m = doc.data();
+const div = document.createElement("div");
+div.className = "msg";
+
+const name = document.createElement("b");
+name.textContent = m.email || "Familia";
+const content = document.createElement("p");
+content.textContent = m.text || "";
+
+div.append(name, content);
+$("messages").appendChild(div);
+});
+
+$("messages").scrollTop = $("messages").scrollHeight;
+}, error => {
+$("messages").textContent = "Error: " + error.message;
+});
+}
+
+$("send").onclick = async () => {
+const text = $("message").value.trim();
+const user = auth.currentUser;
+
+if(!text || !user) return;
+
+try {
+await db.collection("messages").add({
+text: text,
+email: user.email,
+uid: user.uid,
+createdAt: firebase.firestore.FieldValue.serverTimestamp()
+});
+$("message").value = "";
+} catch(e) {
+alert("No se pudo enviar: " + e.message);
+}
+};
+
+$("message").addEventListener("keydown", e => {
+if(e.key === "Enter") $("send").click();
+});
+</script>
+</body>
+</html>
+
