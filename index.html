@@ -12,17 +12,28 @@
 <link rel="icon" href="./icon.svg" type="image/svg+xml">
 <title>klk - Chat familiar</title>
 <style>
-*{box-sizing:border-box}html{min-height:100%;}body{margin:0;font-family:Arial,sans-serif;background:#e9f5ef;color:#17211e;min-height:100vh;min-height:100dvh;padding-bottom:env(safe-area-inset-bottom)}
-header{background:#075e54;color:white;padding:calc(18px + env(safe-area-inset-top)) max(18px,calc((100vw - 620px)/2)) 18px;font-size:28px;font-weight:700}
-header small{display:block;font-size:13px;font-weight:400;opacity:.9}
-main{max-width:620px;margin:auto;padding:14px 14px calc(14px + env(safe-area-inset-bottom))}.card{background:#fff;padding:20px;border-radius:16px;margin-top:16px;box-shadow:0 3px 14px #0000000d}
-h2{margin-top:0}input,button{width:100%;padding:14px;margin:7px 0;border-radius:10px;font-size:16px}
-input{border:1px solid #cbd5d1;background:#fff;color:#17211e}input:focus{outline:2px solid #128c7e;border-color:transparent}
-button{background:#075e54;color:white;border:0;font-weight:700;cursor:pointer}button.secondary{background:#e3f2ed;color:#075e54}button:disabled{opacity:.55}#mediaActions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}#mediaActions button{margin:0}#messages img{display:block;max-width:100%;max-height:320px;border-radius:10px;margin-top:8px}#messages audio{width:100%;margin-top:8px}#recordStatus{min-height:18px}
-#chat{display:none}#messages{height:52vh;height:52dvh;max-height:560px;min-height:220px;overflow:auto;background:#f4f8f6;padding:10px;border-radius:12px}
-.msg{background:#d9fdd3;padding:10px 12px;border-radius:12px;margin:8px 0;overflow-wrap:anywhere;max-width:92%}
-.msg p{margin:5px 0 0;white-space:pre-wrap}.muted{color:#68736f;font-size:12px}
-#status{color:#a12b2b;overflow-wrap:anywhere;min-height:18px}.hint{font-size:13px;color:#68736f;line-height:1.45}button[hidden]{display:none!important}#installApp{margin-top:0}
+*{box-sizing:border-box}html{min-height:100%;background:#efeae2}body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#efeae2;color:#111b21;min-height:100vh;min-height:100dvh;padding-bottom:env(safe-area-inset-bottom)}
+header{position:sticky;top:0;z-index:5;background:#075e54;color:white;padding:calc(14px + env(safe-area-inset-top)) 18px 14px;font-size:25px;font-weight:700;box-shadow:0 2px 5px #0002}
+header small{display:block;font-size:13px;font-weight:400;opacity:.9;margin-top:3px}
+main{max-width:760px;margin:auto;padding:12px 10px calc(12px + env(safe-area-inset-bottom))}.card{background:#fff;padding:20px;border-radius:12px;margin-top:16px;box-shadow:0 2px 8px #00000012}
+h2{margin-top:0}input,button{width:100%;padding:14px;margin:7px 0;border-radius:24px;font-size:16px}
+input{border:1px solid #d6dce0;background:#fff;color:#17211e}input:focus{outline:2px solid #128c7e;border-color:transparent}
+button{background:#075e54;color:white;border:0;font-weight:700;cursor:pointer}button.secondary{background:#e3f2ed;color:#075e54}button:disabled{opacity:.55}
+#chat{display:none;padding:0;overflow:hidden;background:#efeae2}
+.chatTop{background:#075e54;color:#fff;padding:14px 16px}.chatTop h2{font-size:18px;margin:0 0 3px}.chatTop .muted{color:#d6eee8}
+#messages{height:58vh;height:58dvh;max-height:650px;min-height:260px;overflow:auto;padding:14px 12px;background-color:#efeae2;background-image:radial-gradient(#d8d0c5 0.7px,transparent 0.7px);background-size:18px 18px}
+.msg{background:#fff;padding:9px 12px;border-radius:3px 12px 12px 12px;margin:8px 0;overflow-wrap:anywhere;max-width:88%;width:fit-content;box-shadow:0 1px 1px #00000012}
+.msg.mine{background:#d9fdd3;margin-left:auto;border-radius:12px 3px 12px 12px}
+.msg b{font-size:12px;color:#087568}.msg p{margin:5px 0 0;white-space:pre-wrap;font-size:15px;line-height:1.35}
+#messages img{display:block;max-width:100%;max-height:340px;border-radius:8px;margin-top:7px}#messages audio{display:block;width:min(260px,70vw);max-width:100%;margin-top:7px}
+.composer{display:flex;align-items:center;gap:7px;padding:9px;background:#f0f2f5}
+.composer input{flex:1;min-width:0;margin:0;border:0;border-radius:24px;padding:13px 16px;background:#fff}
+.iconBtn{width:44px;height:44px;flex:0 0 44px;margin:0;padding:0;border-radius:50%;font-size:20px;background:#fff;color:#54656f}
+#send{width:46px;height:46px;flex:0 0 46px;margin:0;padding:0;border-radius:50%;font-size:18px}
+#mediaActions{display:flex;gap:7px;padding:0 12px 8px;background:#f0f2f5}#mediaActions button{width:auto;flex:1;margin:0;padding:9px 5px;border-radius:20px;font-size:13px}
+#recordStatus{padding:0 12px;margin:0;background:#f0f2f5;min-height:18px}.chatFoot{padding:4px 12px 10px;background:#f0f2f5}
+.muted{color:#68736f;font-size:12px}#status{color:#a12b2b;overflow-wrap:anywhere;min-height:18px}.hint{font-size:13px;color:#68736f;line-height:1.45}button[hidden]{display:none!important}#installApp{margin-top:0}
+@media(max-width:420px){main{padding:8px 0}.card{border-radius:0;margin-top:8px}#chat{margin-top:0}#messages{height:calc(100dvh - 220px);max-height:none}}
 </style>
 </head>
 <body>
@@ -42,12 +53,22 @@ button{background:#075e54;color:white;border:0;font-weight:700;cursor:pointer}bu
 <p class="hint">Necesitas conexión a internet para iniciar sesión y enviar mensajes.</p>
 </section>
 <section id="chat" class="card">
-<h2>Chat familiar</h2><p id="who" class="muted"></p>
+<div class="chatTop"><h2>👨‍👩‍👧‍👦 Familia klk</h2><p id="who" class="muted"></p></div>
 <div id="messages" aria-live="polite"><p class="muted">Cargando mensajes...</p></div>
-<input id="message" maxlength="2000" placeholder="Escribe un mensaje..." autocomplete="off">
-<button id="send" type="button">Enviar mensaje</button>
-<button id="logout" class="secondary" type="button">Cerrar sesión</button>
-<p id="chatStatus" class="hint" role="status" aria-live="polite"></p>
+<div class="composer">
+ <button id="pickPhoto" class="iconBtn" type="button" aria-label="Elegir foto" title="Elegir foto">＋</button>
+ <input id="message" maxlength="2000" placeholder="Escribe un mensaje" autocomplete="off" aria-label="Escribe un mensaje">
+ <button id="send" type="button" aria-label="Enviar mensaje" title="Enviar">➤</button>
+</div>
+<div id="mediaActions">
+ <button id="takePhoto" type="button">📷 Cámara</button>
+ <button id="recordAudio" type="button">🎙️ Grabar audio</button>
+ <button id="sendAudio" type="button" disabled>Enviar audio</button>
+</div>
+<input id="galleryInput" type="file" accept="image/*" hidden>
+<input id="cameraInput" type="file" accept="image/*" capture="environment" hidden>
+<p id="recordStatus" class="hint" role="status" aria-live="polite"></p>
+<div class="chatFoot"><p id="chatStatus" class="hint" role="status" aria-live="polite"></p><button id="logout" class="secondary" type="button">Cerrar sesión</button></div>
 </section>
 </main>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -137,10 +158,13 @@ function loadMessages() {
   if (snapshot.empty) { $("messages").textContent = "Todavía no hay mensajes. ¡Envía el primero!"; return; }
   snapshot.forEach(doc => {
    const data = doc.data(), item = document.createElement("div");
-   item.className = "msg";
+   item.className = "msg" + (auth.currentUser && data.uid === auth.currentUser.uid ? " mine" : "");
    const sender = document.createElement("b"); sender.textContent = data.email || "Familia";
-   const body = document.createElement("p"); body.textContent = data.text || "";
-   item.append(sender, body); $("messages").appendChild(item);
+   item.appendChild(sender);
+   if (data.type === "image" && data.mediaUrl) { const img = document.createElement("img"); img.src = data.mediaUrl; img.alt = "Foto compartida"; img.loading = "lazy"; item.appendChild(img); }
+   else if (data.type === "audio" && data.mediaUrl) { const audio = document.createElement("audio"); audio.controls = true; audio.preload = "metadata"; audio.src = data.mediaUrl; item.appendChild(audio); }
+   else { const body = document.createElement("p"); body.textContent = data.text || ""; item.appendChild(body); }
+   $("messages").appendChild(item);
   });
   $("messages").scrollTop = $("messages").scrollHeight;
  }, error => showError("chatStatus", error));
