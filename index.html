@@ -18,7 +18,7 @@ header small{display:block;font-size:13px;font-weight:400;opacity:.9}
 main{max-width:620px;margin:auto;padding:14px 14px calc(14px + env(safe-area-inset-bottom))}.card{background:#fff;padding:20px;border-radius:16px;margin-top:16px;box-shadow:0 3px 14px #0000000d}
 h2{margin-top:0}input,button{width:100%;padding:14px;margin:7px 0;border-radius:10px;font-size:16px}
 input{border:1px solid #cbd5d1;background:#fff;color:#17211e}input:focus{outline:2px solid #128c7e;border-color:transparent}
-button{background:#075e54;color:white;border:0;font-weight:700;cursor:pointer}button.secondary{background:#e3f2ed;color:#075e54}button:disabled{opacity:.55}
+button{background:#075e54;color:white;border:0;font-weight:700;cursor:pointer}button.secondary{background:#e3f2ed;color:#075e54}button:disabled{opacity:.55}#mediaActions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}#mediaActions button{margin:0}#messages img{display:block;max-width:100%;max-height:320px;border-radius:10px;margin-top:8px}#messages audio{width:100%;margin-top:8px}#recordStatus{min-height:18px}
 #chat{display:none}#messages{height:52vh;height:52dvh;max-height:560px;min-height:220px;overflow:auto;background:#f4f8f6;padding:10px;border-radius:12px}
 .msg{background:#d9fdd3;padding:10px 12px;border-radius:12px;margin:8px 0;overflow-wrap:anywhere;max-width:92%}
 .msg p{margin:5px 0 0;white-space:pre-wrap}.muted{color:#68736f;font-size:12px}
@@ -52,7 +52,7 @@ button{background:#075e54;color:white;border:0;font-weight:700;cursor:pointer}bu
 </main>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>\n<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 <script>
 const firebaseConfig = {
  apiKey: "AIzaSyAgMkDOS77y-jHnzCEteQW1UgC90gShjuU",
@@ -64,7 +64,7 @@ const firebaseConfig = {
  measurementId: "G-DXX2PHDNN0"
 };
 const $ = id => document.getElementById(id);
-let auth, db, unsubscribe = null, sending = false;
+let auth, db, storage, unsubscribe = null, sending = false, mediaRecorder = null, audioStream = null, audioBlob = null, audioStartedAt = 0;
 function showError(target, error) {
  const messages = {
   "auth/email-already-in-use":"Este correo ya tiene una cuenta.",
@@ -83,7 +83,7 @@ function setBusy(busy) {
 }
 try {
  firebase.initializeApp(firebaseConfig);
- auth = firebase.auth(); db = firebase.firestore();
+ auth = firebase.auth(); db = firebase.firestore(); storage = firebase.storage();
 } catch (error) { $("status").textContent = "No se pudo iniciar Firebase: " + error.message; }
 $("authForm").addEventListener("submit", async event => {
  event.preventDefault(); $("status").textContent = "";
@@ -155,7 +155,85 @@ $("send").onclick = async () => {
  } catch(error) { showError("chatStatus", error); }
  finally { sending = false; $("send").disabled = false; }
 };
-$("message").addEventListener("keydown", event => { if (event.key === "Enter") $("send").click(); });
+
+async function uploadMedia(file, type, durationSeconds = null) {
+ const user = auth && auth.currentUser;
+ if (!user || !file) return;
+ const maxBytes = type === "image" ? 10 * 1024 * 1024 : 20 * 1024 * 1024;
+ if (file.size > maxBytes) { $("chatStatus").textContent = type === "image" ? "La foto debe pesar menos de 10 MB." : "La nota de voz debe pesar menos de 20 MB."; return; }
+ if (type === "image" && !file.type.startsWith("image/")) { $("chatStatus").textContent = "Selecciona un archivo de imagen."; return; }
+ if (type === "audio" && !file.type.startsWith("audio/")) { $("chatStatus").textContent = "No se pudo reconocer el formato del audio."; return; }
+ $("chatStatus").textContent = type === "image" ? "Subiendo foto..." : "Subiendo nota de voz...";
+ $("send").disabled = true; $("pickPhoto").disabled = true; $("takePhoto").disabled = true; $("recordAudio").disabled = true;
+ try {
+  const ext = (file.name && file.name.includes(".") ? file.name.split(".").pop() : (type === "image" ? "jpg" : "webm")).replace(/[^a-z0-9]/gi,"").toLowerCase();
+  const path = "messages/" + user.uid + "/" + Date.now() + "-" + Math.random().toString(36).slice(2) + "." + ext;
+  const ref = storage.ref().child(path);
+  await ref.put(file, {contentType:file.type || (type === "image" ? "image/jpeg" : "audio/webm")});
+  const mediaUrl = await ref.getDownloadURL();
+  await db.collection("messages").add({
+   type, mediaUrl, storagePath:path, mimeType:file.type || "", fileName:file.name || (type === "image" ? "foto" : "nota-de-voz"),
+   size:file.size, ...(durationSeconds === null ? {} : {duration:durationSeconds}),
+   email:user.email || "", uid:user.uid, createdAt:firebase.firestore.FieldValue.serverTimestamp()
+  });
+  $("chatStatus").textContent = type === "image" ? "Foto enviada." : "Nota de voz enviada.";
+ } catch(error) { showError("chatStatus", error); }
+ finally { $("send").disabled = false; $("pickPhoto").disabled = false; $("takePhoto").disabled = false; $("recordAudio").disabled = false; }
+}
+$("pickPhoto").onclick = () => $("galleryInput").click();
+$("takePhoto").onclick = () => $("cameraInput").click();
+$("galleryInput").addEventListener("change", async event => { const file = event.target.files && event.target.files[0]; if (file) await uploadMedia(file,"image"); event.target.value = ""; });
+$("cameraInput").addEventListener("change", async event => { const file = event.target.files && event.target.files[0]; if (file) await uploadMedia(file,"image"); event.target.value = ""; });
+$("recordAudio").addEventListener("click", async () => {
+ if (mediaRecorder && mediaRecorder.state === "recording") {
+  mediaRecorder.stop();
+  return;
+ }
+ if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.MediaRecorder) {
+  $("recordStatus").textContent = "Este teléfono o navegador no permite grabar audio aquí. Actualiza Chrome y vuelve a intentarlo.";
+  return;
+ }
+ try {
+  audioStream = await navigator.mediaDevices.getUserMedia({audio:true});
+  const mimeType = ["audio/webm;codecs=opus","audio/webm","audio/mp4"].find(type => MediaRecorder.isTypeSupported(type)) || "";
+  mediaRecorder = new MediaRecorder(audioStream, mimeType ? {mimeType} : undefined);
+  const chunks = [];
+  mediaRecorder.ondataavailable = event => { if (event.data && event.data.size) chunks.push(event.data); };
+  mediaRecorder.onstop = () => {
+   const type = mediaRecorder.mimeType || "audio/webm";
+   audioBlob = new Blob(chunks,{type});
+   $("sendAudio").disabled = !audioBlob.size;
+   $("recordAudio").textContent = "🎙️ Grabar otra vez";
+   const seconds = Math.max(1,Math.round((Date.now()-audioStartedAt)/1000));
+   $("recordStatus").textContent = "Audio grabado (" + seconds + " s). Pulsa «Enviar nota de voz».";
+   if (audioStream) audioStream.getTracks().forEach(track => track.stop());
+   audioStream = null;
+   mediaRecorder = null;
+   $("recordAudio").disabled = false;
+   $("sendAudio").dataset.duration = String(seconds);
+  };
+  mediaRecorder.start();
+  audioStartedAt = Date.now();
+  $("recordAudio").textContent = "⏹️ Detener grabación";
+  $("recordStatus").textContent = "Grabando... Pulsa detener cuando termines.";
+ } catch(error) {
+  $("recordStatus").textContent = error.name === "NotAllowedError" ? "Permite el acceso al micrófono para grabar notas de voz." : "No se pudo iniciar la grabación: " + error.message;
+  if (audioStream) audioStream.getTracks().forEach(track => track.stop());
+  audioStream = null;
+ }
+});
+$("sendAudio").onclick = async () => {
+ if (!audioBlob) return;
+ const ext = audioBlob.type.includes("mp4") ? "m4a" : "webm";
+ const file = new File([audioBlob],"nota-de-voz." + ext,{type:audioBlob.type});
+ const duration = Number($("sendAudio").dataset.duration || 0);
+ $("sendAudio").disabled = true;
+ await uploadMedia(file,"audio",duration);
+ audioBlob = null;
+ $("recordStatus").textContent = "";
+ $("recordAudio").textContent = "🎙️ Grabar audio";
+};
+\n$("message").addEventListener("keydown", event => { if (event.key === "Enter") $("send").click(); });
 </script>
 <script>
 if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(error => console.error("Service worker:", error)));
