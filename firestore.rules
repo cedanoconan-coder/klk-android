@@ -2,18 +2,41 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     match /messages/{messageId} {
-      // Solo usuarios autenticados pueden leer el chat.
       allow read: if request.auth != null;
-      // Cada usuario solo puede publicar mensajes a su nombre.
       allow create: if request.auth != null
-        && request.resource.data.keys().hasOnly(['text', 'email', 'uid', 'createdAt'])
-        && request.resource.data.keys().hasAll(['text', 'email', 'uid', 'createdAt'])
+        && request.resource.data.keys().hasOnly([
+          'type', 'text', 'mediaUrl', 'storagePath', 'mimeType', 'fileName',
+          'size', 'duration', 'email', 'uid', 'createdAt'
+        ])
+        && request.resource.data.keys().hasAll(['type', 'email', 'uid', 'createdAt'])
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.email == request.auth.token.email
-        && request.resource.data.text is string
-        && request.resource.data.text.size() > 0
-        && request.resource.data.text.size() <= 2000
-        && request.resource.data.createdAt == request.time;
+        && request.resource.data.createdAt == request.time
+        && (
+          (request.resource.data.type == 'text'
+            && request.resource.data.keys().hasAll(['text'])
+            && request.resource.data.text is string
+            && request.resource.data.text.size() > 0
+            && request.resource.data.text.size() <= 2000)
+          ||
+          (request.resource.data.type == 'image'
+            && request.resource.data.keys().hasAll(['mediaUrl', 'storagePath', 'mimeType', 'size'])
+            && request.resource.data.mediaUrl is string
+            && request.resource.data.storagePath is string
+            && request.resource.data.mimeType.matches('image/.*')
+            && request.resource.data.size is int
+            && request.resource.data.size > 0
+            && request.resource.data.size <= 10485760)
+          ||
+          (request.resource.data.type == 'audio'
+            && request.resource.data.keys().hasAll(['mediaUrl', 'storagePath', 'mimeType', 'size'])
+            && request.resource.data.mediaUrl is string
+            && request.resource.data.storagePath is string
+            && request.resource.data.mimeType.matches('audio/.*')
+            && request.resource.data.size is int
+            && request.resource.data.size > 0
+            && request.resource.data.size <= 20971520)
+        );
       allow update, delete: if false;
     }
   }
