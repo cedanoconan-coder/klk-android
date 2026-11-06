@@ -5,6 +5,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>klk - Chat familiar</title>
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="theme-color" content="#075e54">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <style>
 *{box-sizing:border-box}
 body{margin:0;font-family:Arial;background:#e9f5ef;color:#222}
@@ -153,6 +158,11 @@ alert("No se pudo enviar: " + e.message);
 $("message").addEventListener("keydown", e => {
 if(e.key === "Enter") $("send").click();
 });
+</script>
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(err => console.error("No se pudo activar el modo instalable:", err)));
+}
 </script>
 </body>
 </html>
