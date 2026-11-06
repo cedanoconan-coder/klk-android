@@ -1,0 +1,20 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /messages/{messageId} {
+      // Solo usuarios autenticados pueden leer el chat.
+      allow read: if request.auth != null;
+      // Cada usuario solo puede publicar mensajes a su nombre.
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasOnly(['text', 'email', 'uid', 'createdAt'])
+        && request.resource.data.keys().hasAll(['text', 'email', 'uid', 'createdAt'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.text is string
+        && request.resource.data.text.size() > 0
+        && request.resource.data.text.size() <= 2000
+        && request.resource.data.createdAt == request.time;
+      allow update, delete: if false;
+    }
+  }
+}
