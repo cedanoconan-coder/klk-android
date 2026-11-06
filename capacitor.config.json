@@ -1,7 +1,7 @@
 {
   "appId": "com.klk.familia",
   "appName": "klk",
-  "webDir": ".",
+  "webDir": "www",
   "server": {
     "androidScheme": "https"
   }
