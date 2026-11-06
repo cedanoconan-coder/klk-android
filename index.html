@@ -36,6 +36,7 @@ button{background:#075e54;color:white;border:0;font-weight:700;cursor:pointer}bu
 <button id="enter" type="submit">Iniciar sesión</button>
 </form>
 <button id="register" class="secondary" type="button">Crear cuenta</button>
+<button id="forgot" class="secondary" type="button">Olvidé mi contraseña</button>
 <p id="status" role="status" aria-live="polite"></p>
 <p class="hint">Necesitas conexión a internet para iniciar sesión y enviar mensajes.</p>
 </section>
@@ -77,7 +78,7 @@ function showError(target, error) {
  $(target).textContent = messages[error.code] || error.message || "Ocurrió un error. Inténtalo de nuevo.";
 }
 function setBusy(busy) {
- $("enter").disabled = busy; $("register").disabled = busy;
+ $("enter").disabled = busy; $("register").disabled = busy; $("forgot").disabled = busy;
 }
 try {
  firebase.initializeApp(firebaseConfig);
@@ -100,6 +101,25 @@ $("register").addEventListener("click", async () => {
  try { await auth.createUserWithEmailAndPassword(email, password); $("status").textContent = "Cuenta creada correctamente."; }
  catch(error) { showError("status", error); }
  finally { setBusy(false); }
+});
+$("forgot").addEventListener("click", async () => {
+ $("status").textContent = "";
+ if (!auth) return;
+ const email = $("email").value.trim();
+ if (!email) { $("status").textContent = "Escribe primero tu correo electrónico y vuelve a pulsar aquí."; $("email").focus(); return; }
+ setBusy(true);
+ try {
+  await auth.sendPasswordResetEmail(email);
+  $("status").textContent = "Si el correo está registrado, Firebase enviará un enlace para cambiar la contraseña. Revisa también Spam o Correo no deseado.";
+ } catch(error) {
+  const messages = {
+   "auth/invalid-email":"El correo electrónico no es válido.",
+   "auth/user-not-found":"No encontramos una cuenta con ese correo.",
+   "auth/too-many-requests":"Se hicieron demasiados intentos. Espera un momento e inténtalo de nuevo.",
+   "auth/network-request-failed":"No hay conexión. Revisa tu internet e inténtalo de nuevo."
+  };
+  $("status").textContent = messages[error.code] || "No se pudo enviar el correo. Inténtalo de nuevo.";
+ } finally { setBusy(false); }
 });
 $("logout").onclick = async () => { if (unsubscribe) { unsubscribe(); unsubscribe = null; } await auth.signOut(); };
 auth && auth.onAuthStateChanged(user => {
