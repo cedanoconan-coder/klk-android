@@ -150,7 +150,7 @@ $("send").onclick = async () => {
  if (!text || !user || sending) return;
  sending = true; $("send").disabled = true; $("chatStatus").textContent = "";
  try {
-  await db.collection("messages").add({text, email:user.email || "", uid:user.uid, createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+  await db.collection("messages").add({type:"text", text, email:user.email || "", uid:user.uid, createdAt:firebase.firestore.FieldValue.serverTimestamp()});
   $("message").value = "";
  } catch(error) { showError("chatStatus", error); }
  finally { sending = false; $("send").disabled = false; }
