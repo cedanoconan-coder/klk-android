@@ -12,22 +12,23 @@
 <link rel="icon" href="./icon.svg" type="image/svg+xml">
 <title>klk - Chat familiar</title>
 <style>
-*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#e9f5ef;color:#17211e;min-height:100vh}
-header{background:#075e54;color:white;padding:18px max(18px,calc((100vw - 620px)/2));font-size:28px;font-weight:700}
+*{box-sizing:border-box}html{min-height:100%;}body{margin:0;font-family:Arial,sans-serif;background:#e9f5ef;color:#17211e;min-height:100vh;min-height:100dvh;padding-bottom:env(safe-area-inset-bottom)}
+header{background:#075e54;color:white;padding:calc(18px + env(safe-area-inset-top)) max(18px,calc((100vw - 620px)/2)) 18px;font-size:28px;font-weight:700}
 header small{display:block;font-size:13px;font-weight:400;opacity:.9}
-main{max-width:620px;margin:auto;padding:14px}.card{background:#fff;padding:20px;border-radius:16px;margin-top:16px;box-shadow:0 3px 14px #0000000d}
+main{max-width:620px;margin:auto;padding:14px 14px calc(14px + env(safe-area-inset-bottom))}.card{background:#fff;padding:20px;border-radius:16px;margin-top:16px;box-shadow:0 3px 14px #0000000d}
 h2{margin-top:0}input,button{width:100%;padding:14px;margin:7px 0;border-radius:10px;font-size:16px}
 input{border:1px solid #cbd5d1;background:#fff;color:#17211e}input:focus{outline:2px solid #128c7e;border-color:transparent}
 button{background:#075e54;color:white;border:0;font-weight:700;cursor:pointer}button.secondary{background:#e3f2ed;color:#075e54}button:disabled{opacity:.55}
-#chat{display:none}#messages{height:52vh;min-height:260px;overflow:auto;background:#f4f8f6;padding:10px;border-radius:12px}
+#chat{display:none}#messages{height:52vh;height:52dvh;max-height:560px;min-height:220px;overflow:auto;background:#f4f8f6;padding:10px;border-radius:12px}
 .msg{background:#d9fdd3;padding:10px 12px;border-radius:12px;margin:8px 0;overflow-wrap:anywhere;max-width:92%}
 .msg p{margin:5px 0 0;white-space:pre-wrap}.muted{color:#68736f;font-size:12px}
-#status{color:#a12b2b;overflow-wrap:anywhere;min-height:18px}.hint{font-size:13px;color:#68736f;line-height:1.45}
+#status{color:#a12b2b;overflow-wrap:anywhere;min-height:18px}.hint{font-size:13px;color:#68736f;line-height:1.45}button[hidden]{display:none!important}#installApp{margin-top:0}
 </style>
 </head>
 <body>
 <header>klk <small>Tu familia, siempre conectada ❤️</small></header>
 <main>
+<button id="installApp" class="secondary" type="button" hidden>Instalar klk en este teléfono</button>
 <section id="login" class="card">
 <h2>Bienvenido a klk</h2><p>Entra o crea tu cuenta familiar.</p>
 <form id="authForm">
@@ -158,5 +159,30 @@ $("message").addEventListener("keydown", event => { if (event.key === "Enter") $
 </script>
 <script>
 if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(error => console.error("Service worker:", error)));
+</script>
+<script>
+let pendingInstall = null;
+window.addEventListener("beforeinstallprompt", event => {
+ event.preventDefault();
+ pendingInstall = event;
+ $("installApp").hidden = false;
+});
+$("installApp").addEventListener("click", async () => {
+ if (!pendingInstall) {
+  $("status").textContent = "Para instalar: abre el menú ⋮ de Chrome y elige Instalar aplicación o Añadir a pantalla de inicio.";
+  return;
+ }
+ pendingInstall.prompt();
+ const choice = await pendingInstall.userChoice;
+ if (choice && choice.outcome === "accepted") $("installApp").hidden = true;
+ pendingInstall = null;
+});
+window.addEventListener("appinstalled", () => {
+ $("installApp").hidden = true;
+ pendingInstall = null;
+});
+if (window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone) {
+ $("installApp").hidden = true;
+}
 </script>
 </body></html>
