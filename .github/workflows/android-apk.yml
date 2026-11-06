@@ -35,6 +35,23 @@ jobs:
       - name: Generar proyecto Android
         run: npx cap add android
 
+      - name: Declarar permisos de cámara y micrófono
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("android/app/src/main/AndroidManifest.xml")
+          s = p.read_text()
+          marker = '<application'
+          permissions = '''    <uses-permission android:name="android.permission.CAMERA" />
+              <uses-permission android:name="android.permission.RECORD_AUDIO" />
+              <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+          '''
+          if marker not in s:
+              raise SystemExit("No se encontró la etiqueta application en AndroidManifest.xml")
+          s = s.replace(marker, permissions + marker, 1)
+          p.write_text(s)
+          PY
+
       - name: Sincronizar archivos
         run: npx cap sync android
 
