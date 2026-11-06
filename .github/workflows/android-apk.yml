@@ -35,6 +35,22 @@ jobs:
       - name: Generar proyecto Android
         run: npx cap add android
 
+      - name: Instalar herramienta para iconos Android
+        run: sudo apt-get update && sudo apt-get install -y librsvg2-bin
+
+      - name: Aplicar logo klk a los iconos Android
+        run: |
+          set -e
+          for item in mdpi:108 hdpi:162 xhdpi:216 xxhdpi:324 xxxhdpi:432; do
+            density="${item%%:*}"
+            size="${item##*:}"
+            dir="android/app/src/main/res/mipmap-$density"
+            mkdir -p "$dir"
+            rsvg-convert -w "$size" -h "$size" icon.svg > "$dir/ic_launcher.png"
+            cp "$dir/ic_launcher.png" "$dir/ic_launcher_round.png"
+            cp "$dir/ic_launcher.png" "$dir/ic_launcher_foreground.png"
+          done
+
       - name: Declarar permisos de cámara y micrófono
         run: |
           python3 - <<'PY'
