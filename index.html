@@ -1,169 +1,142 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>klk - Chat familiar</title>
-<link rel="manifest" href="./manifest.webmanifest">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#075e54">
+<meta name="description" content="Chat privado para mantener a la familia conectada.">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icon.svg" type="image/svg+xml">
+<title>klk - Chat familiar</title>
 <style>
-*{box-sizing:border-box}
-body{margin:0;font-family:Arial;background:#e9f5ef;color:#222}
-header{background:#075e54;color:white;padding:20px;font-size:26px;font-weight:bold}
-header small{display:block;font-size:13px;font-weight:normal}
-main{max-width:600px;margin:auto;padding:15px}
-.card{background:white;padding:20px;border-radius:14px;margin-top:20px}
-input,button{width:100%;padding:13px;margin:7px 0;border-radius:9px;border:1px solid #ccc;font-size:16px}
-button{background:#075e54;color:white;border:0;font-weight:bold}
-#chat{display:none}
-#messages{height:55vh;overflow:auto;background:#f4f4f4;padding:10px;border-radius:10px}
-.msg{background:#d9fdd3;padding:10px;border-radius:10px;margin:8px 0;overflow-wrap:anywhere}
-.muted{color:#777;font-size:12px}
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#e9f5ef;color:#17211e;min-height:100vh}
+header{background:#075e54;color:white;padding:18px max(18px,calc((100vw - 620px)/2));font-size:28px;font-weight:700}
+header small{display:block;font-size:13px;font-weight:400;opacity:.9}
+main{max-width:620px;margin:auto;padding:14px}.card{background:#fff;padding:20px;border-radius:16px;margin-top:16px;box-shadow:0 3px 14px #0000000d}
+h2{margin-top:0}input,button{width:100%;padding:14px;margin:7px 0;border-radius:10px;font-size:16px}
+input{border:1px solid #cbd5d1;background:#fff;color:#17211e}input:focus{outline:2px solid #128c7e;border-color:transparent}
+button{background:#075e54;color:white;border:0;font-weight:700;cursor:pointer}button.secondary{background:#e3f2ed;color:#075e54}button:disabled{opacity:.55}
+#chat{display:none}#messages{height:52vh;min-height:260px;overflow:auto;background:#f4f8f6;padding:10px;border-radius:12px}
+.msg{background:#d9fdd3;padding:10px 12px;border-radius:12px;margin:8px 0;overflow-wrap:anywhere;max-width:92%}
+.msg p{margin:5px 0 0;white-space:pre-wrap}.muted{color:#68736f;font-size:12px}
+#status{color:#a12b2b;overflow-wrap:anywhere;min-height:18px}.hint{font-size:13px;color:#68736f;line-height:1.45}
 </style>
 </head>
 <body>
-<header>klk <small>Chat familiar</small></header>
-
+<header>klk <small>Tu familia, siempre conectada ❤️</small></header>
 <main>
 <section id="login" class="card">
-<h2>Bienvenido a klk</h2>
-<p>Entra o crea tu cuenta familiar.</p>
-<input id="email" type="email" placeholder="Correo electrónico">
-<input id="password" type="password" placeholder="Contraseña">
-<button id="register">Crear cuenta</button>
-<button id="enter">Iniciar sesión</button>
-<p id="status"></p>
+<h2>Bienvenido a klk</h2><p>Entra o crea tu cuenta familiar.</p>
+<form id="authForm">
+<input id="email" type="email" autocomplete="email" placeholder="Correo electrónico" required>
+<input id="password" type="password" autocomplete="current-password" placeholder="Contraseña (mínimo 6 caracteres)" minlength="6" required>
+<button id="enter" type="submit">Iniciar sesión</button>
+</form>
+<button id="register" class="secondary" type="button">Crear cuenta</button>
+<p id="status" role="status" aria-live="polite"></p>
+<p class="hint">Necesitas conexión a internet para iniciar sesión y enviar mensajes.</p>
 </section>
-
 <section id="chat" class="card">
-<h2>Chat familiar</h2>
-<p id="who"></p>
-<button id="logout">Cerrar sesión</button>
-<div id="messages"></div>
-<input id="message" placeholder="Escribe un mensaje...">
-<button id="send">Enviar mensaje</button>
+<h2>Chat familiar</h2><p id="who" class="muted"></p>
+<div id="messages" aria-live="polite"><p class="muted">Cargando mensajes...</p></div>
+<input id="message" maxlength="2000" placeholder="Escribe un mensaje..." autocomplete="off">
+<button id="send" type="button">Enviar mensaje</button>
+<button id="logout" class="secondary" type="button">Cerrar sesión</button>
+<p id="chatStatus" class="hint" role="status" aria-live="polite"></p>
 </section>
 </main>
-
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-
 <script>
 const firebaseConfig = {
-apiKey: "AIzaSyAgMkDOS77y-jHnzCEteQW1UgC90gShjuU",
-authDomain: "klk-familia.firebaseapp.com",
-projectId: "klk-familia",
-storageBucket: "klk-familia.firebasestorage.app",
-messagingSenderId: "184754934059",
-appId: "1:184754934059:web:1d385677b2c7c00699b56e",
-measurementId: "G-DXX2PHDNN0"
+ apiKey: "AIzaSyAgMkDOS77y-jHnzCEteQW1UgC90gShjuU",
+ authDomain: "klk-familia.firebaseapp.com",
+ projectId: "klk-familia",
+ storageBucket: "klk-familia.firebasestorage.app",
+ messagingSenderId: "184754934059",
+ appId: "1:184754934059:web:1d385677b2c7c00699b56e",
+ measurementId: "G-DXX2PHDNN0"
 };
-
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
-
 const $ = id => document.getElementById(id);
-
-$("register").onclick = async () => {
+let auth, db, unsubscribe = null, sending = false;
+function showError(target, error) {
+ const messages = {
+  "auth/email-already-in-use":"Este correo ya tiene una cuenta.",
+  "auth/invalid-email":"El correo electrónico no es válido.",
+  "auth/weak-password":"La contraseña debe tener al menos 6 caracteres.",
+  "auth/user-not-found":"No existe una cuenta con ese correo.",
+  "auth/wrong-password":"La contraseña es incorrecta.",
+  "auth/invalid-credential":"El correo o la contraseña son incorrectos.",
+  "auth/network-request-failed":"No hay conexión. Revisa tu internet e inténtalo de nuevo.",
+  "permission-denied":"Firebase bloqueó la operación. Hay que revisar las reglas de seguridad."
+ };
+ $(target).textContent = messages[error.code] || error.message || "Ocurrió un error. Inténtalo de nuevo.";
+}
+function setBusy(busy) {
+ $("enter").disabled = busy; $("register").disabled = busy;
+}
 try {
-await auth.createUserWithEmailAndPassword(
-$("email").value.trim(),
-$("password").value
-);
-$("status").textContent = "Cuenta creada.";
-} catch(e) {
-$("status").textContent = e.message;
-}
-};
-
-$("enter").onclick = async () => {
-try {
-await auth.signInWithEmailAndPassword(
-$("email").value.trim(),
-$("password").value
-);
-} catch(e) {
-$("status").textContent = e.message;
-}
-};
-
-$("logout").onclick = () => auth.signOut();
-
-auth.onAuthStateChanged(user => {
-$("login").style.display = user ? "none" : "block";
-$("chat").style.display = user ? "block" : "none";
-
-if(user) {
-$("who").textContent = "Conectado: " + user.email;
-loadMessages();
-}
+ firebase.initializeApp(firebaseConfig);
+ auth = firebase.auth(); db = firebase.firestore();
+} catch (error) { $("status").textContent = "No se pudo iniciar Firebase: " + error.message; }
+$("authForm").addEventListener("submit", async event => {
+ event.preventDefault(); $("status").textContent = "";
+ if (!auth) return;
+ setBusy(true);
+ try { await auth.signInWithEmailAndPassword($("email").value.trim(), $("password").value); }
+ catch(error) { showError("status", error); }
+ finally { setBusy(false); }
 });
-
-let unsubscribe = null;
-
+$("register").addEventListener("click", async () => {
+ $("status").textContent = "";
+ if (!auth) return;
+ const email = $("email").value.trim(), password = $("password").value;
+ if (!email || password.length < 6) { $("status").textContent = "Escribe un correo válido y una contraseña de al menos 6 caracteres."; return; }
+ setBusy(true);
+ try { await auth.createUserWithEmailAndPassword(email, password); $("status").textContent = "Cuenta creada correctamente."; }
+ catch(error) { showError("status", error); }
+ finally { setBusy(false); }
+});
+$("logout").onclick = async () => { if (unsubscribe) { unsubscribe(); unsubscribe = null; } await auth.signOut(); };
+auth && auth.onAuthStateChanged(user => {
+ $("login").style.display = user ? "none" : "block";
+ $("chat").style.display = user ? "block" : "none";
+ if (user) { $("who").textContent = "Conectado: " + (user.email || "usuario"); loadMessages(); }
+ else { if (unsubscribe) unsubscribe(); unsubscribe = null; $("messages").innerHTML = ""; }
+});
 function loadMessages() {
-if(unsubscribe) unsubscribe();
-
-unsubscribe = db.collection("messages")
-.orderBy("createdAt")
-.limit(100)
-.onSnapshot(snapshot => {
-$("messages").innerHTML = "";
-
-snapshot.forEach(doc => {
-const m = doc.data();
-const div = document.createElement("div");
-div.className = "msg";
-
-const name = document.createElement("b");
-name.textContent = m.email || "Familia";
-const content = document.createElement("p");
-content.textContent = m.text || "";
-
-div.append(name, content);
-$("messages").appendChild(div);
-});
-
-$("messages").scrollTop = $("messages").scrollHeight;
-}, error => {
-$("messages").textContent = "Error: " + error.message;
-});
+ if (unsubscribe) unsubscribe();
+ $("messages").textContent = "Cargando mensajes...";
+ unsubscribe = db.collection("messages").orderBy("createdAt").limit(100).onSnapshot(snapshot => {
+  $("messages").innerHTML = "";
+  if (snapshot.empty) { $("messages").textContent = "Todavía no hay mensajes. ¡Envía el primero!"; return; }
+  snapshot.forEach(doc => {
+   const data = doc.data(), item = document.createElement("div");
+   item.className = "msg";
+   const sender = document.createElement("b"); sender.textContent = data.email || "Familia";
+   const body = document.createElement("p"); body.textContent = data.text || "";
+   item.append(sender, body); $("messages").appendChild(item);
+  });
+  $("messages").scrollTop = $("messages").scrollHeight;
+ }, error => showError("chatStatus", error));
 }
-
 $("send").onclick = async () => {
-const text = $("message").value.trim();
-const user = auth.currentUser;
-
-if(!text || !user) return;
-
-try {
-await db.collection("messages").add({
-text: text,
-email: user.email,
-uid: user.uid,
-createdAt: firebase.firestore.FieldValue.serverTimestamp()
-});
-$("message").value = "";
-} catch(e) {
-alert("No se pudo enviar: " + e.message);
-}
+ const text = $("message").value.trim(), user = auth && auth.currentUser;
+ if (!text || !user || sending) return;
+ sending = true; $("send").disabled = true; $("chatStatus").textContent = "";
+ try {
+  await db.collection("messages").add({text, email:user.email || "", uid:user.uid, createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+  $("message").value = "";
+ } catch(error) { showError("chatStatus", error); }
+ finally { sending = false; $("send").disabled = false; }
 };
-
-$("message").addEventListener("keydown", e => {
-if(e.key === "Enter") $("send").click();
-});
+$("message").addEventListener("keydown", event => { if (event.key === "Enter") $("send").click(); });
 </script>
 <script>
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(err => console.error("No se pudo activar el modo instalable:", err)));
-}
+if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(error => console.error("Service worker:", error)));
 </script>
-</body>
-</html>
-
+</body></html>
