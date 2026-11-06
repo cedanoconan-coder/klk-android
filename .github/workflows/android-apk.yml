@@ -19,7 +19,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
 
       - name: Configurar Java
         uses: actions/setup-java@v4
@@ -29,6 +28,9 @@ jobs:
 
       - name: Instalar dependencias
         run: npm install
+
+      - name: Preparar archivos web
+        run: mkdir -p www && cp index.html icon.svg manifest.webmanifest sw.js www/
 
       - name: Generar proyecto Android
         run: npx cap add android
