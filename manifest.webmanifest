@@ -1,4 +1,5 @@
 {
+  "id": "./",
   "name": "klk - Chat familiar",
   "short_name": "klk",
   "description": "Chat para mantener a la familia conectada.",
@@ -6,13 +7,20 @@
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
   "orientation": "portrait",
   "background_color": "#e9f5ef",
   "theme_color": "#075e54",
   "icons": [
     {
       "src": "./icon.svg",
-      "sizes": "any",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon.svg",
+      "sizes": "512x512",
       "type": "image/svg+xml",
       "purpose": "any maskable"
     }
