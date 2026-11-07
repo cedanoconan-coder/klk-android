@@ -46,6 +46,21 @@ async function verifyFirebaseUser(request: Request): Promise<string | null> {
   }
 }
 
+async function verifyConversationMember(conversationId: string, token: string, uid: string): Promise<string[] | null> {
+  if (!/^[A-Za-z0-9_-]{1,256}$/.test(conversationId)) return null;
+  const url = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents/conversations/${encodeURIComponent(conversationId)}`;
+  try {
+    const response = await fetch(url, { headers: { Authorization: `Bearer ${token} } });
+    if (!response.ok) return null;
+    const document = await response.json();
+    const members = document?.fields?.members?.arrayValue?.values?.map((v: any) => v.stringValue).filter((v: unknown) => typeof v === "string") ?? [];
+    if (members.length !== 2 || !members.includes(uid)) return null;
+    return members;
+  } catch {
+    return null;
+  }
+}
+
 Deno.serve(async (request) => {
   if (request.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -57,8 +72,10 @@ Deno.serve(async (request) => {
 
   const uid = await verifyFirebaseUser(request);
   if (!uid) return reply(401, { error: "Sesión de Firebase no válida." });
+  const authHeader = request.headers.get("Authorization") ?? "";
+  const firebaseToken = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
 
-  let body: { action?: string; type?: string; size?: number; mimeType?: string; path?: string };
+  let body: { action?: string; type?: string; size?: number; mimeType?: string; path?: string; conversationId?: string };
   try {
     body = await request.json();
   } catch {
@@ -86,7 +103,14 @@ Deno.serve(async (request) => {
       : mimeType === "audio/mp4" ? "m4a"
       : mimeType === "audio/webm" || mimeType === "audio/webm;codecs=opus" ? "webm"
       : mimeType.split("/")[1]?.replace(/[^a-z0-9]/g, "").slice(0, 8) || "bin";
-    const path = `${uid}/${crypto.randomUUID()}.${extension}`;
+    let path: string;
+    if (body.conversationId) {
+      const members = await verifyConversationMember(body.conversationId, firebaseToken, uid);
+      if (!members) return reply(403, { error: "No perteneces a esta conversación privada." });
+      path = `dm/${body.conversationId}/${uid}/${crypto.randomUUID()}.${extension}`;
+    } else {
+      path = `${uid}/${crypto.randomUUID()}.${extension}`;
+    }
     const { data, error } = await admin.storage.from(BUCKET).createSignedUploadUrl(path);
     if (error || !data) {
       console.error("No se pudo crear la carga firmada:", error);
@@ -97,9 +121,15 @@ Deno.serve(async (request) => {
 
   if (body.action === "create-download-url") {
     const path = typeof body.path === "string" ? body.path : "";
-    // Messages are visible to signed-in family members; uploads are always isolated by UID.
-    if (!/^[^/]{1,128}\/[A-Za-z0-9-]{16,64}\.[a-z0-9]{1,8}$/i.test(path)) {
-      return reply(400, { error: "Ruta de archivo no válida." });
+    if (body.conversationId) {
+      const members = await verifyConversationMember(body.conversationId, firebaseToken, uid);
+      if (!members || !path.startsWith(`dm/${body.conversationId}/`) ||
+          !/^dm\/[A-Za-z0-9_-]{1,256}\/[A-Za-z0-9_-]{1,128}\/[A-Za-z0-9-]{16,64}\.[a-z0-9]{1,8}$/i.test(path) ||
+          !members.some(member => path.startsWith(`dm/${body.conversationId}/${member}/`))) {
+        return reply(403, { error: "No tienes permiso para acceder a este archivo privado." });
+      }
+    } else if (!/^[^/]{1,128}\/[A-Za-z0-9-]{16,64}\.[a-z0-9]{1,8}$/i.test(path) || !path.startsWith(`${uid}/`)) {
+      return reply(403, { error: "Ruta de archivo no válida o sin permiso." });
     }
     const { data, error } = await admin.storage.from(BUCKET).createSignedUrl(path, 60 * 60);
     if (error || !data?.signedUrl) {
