@@ -2,7 +2,7 @@ name: Construir APK de klk
 
 on:
   push:
-    branches: ["main"]
+    branches: ["main", "integrar-supabase-storage"]
   workflow_dispatch:
 
 permissions:
