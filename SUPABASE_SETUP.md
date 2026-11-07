@@ -11,7 +11,7 @@ Firebase Authentication y Cloud Firestore siguen gestionando las cuentas y los m
    - `SUPABASE_SERVICE_ROLE_KEY` = la clave secreta del proyecto. Solo como secreto del servidor; nunca la pongas en el HTML ni en GitHub.
    Supabase proporciona `SUPABASE_URL` automáticamente.
 4. Despliega la Edge Function `media` desde `supabase/functions/media/index.ts` con Supabase CLI: `supabase functions deploy media --no-verify-jwt`. El gateway no valida el JWT de Supabase porque la aplicación envía un ID token de Firebase; la función valida ese token internamente con las claves públicas de Google.
-5. En `index.html`, sustituye el texto `PEGA_AQUI_LA_CLAVE_PUBLICABLE` por la clave **Publishable** del proyecto Supabase. Esa clave puede estar en el cliente. Nunca uses la clave Secret/service_role aquí.
+5. El `index.html` de la rama de integración ya contiene la URL del proyecto y su clave **Publishable**. Esa clave es pública y puede estar en el cliente. No la confundas con `SUPABASE_SERVICE_ROLE_KEY`: la clave Secret/service_role debe permanecer exclusivamente en los secretos de Supabase.
 
 ## Publicar reglas de Firestore
 
