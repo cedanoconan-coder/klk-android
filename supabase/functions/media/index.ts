@@ -50,7 +50,7 @@ async function verifyConversationMember(conversationId: string, token: string, u
   if (!/^[A-Za-z0-9_-]{1,256}$/.test(conversationId)) return null;
   const url = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents/conversations/${encodeURIComponent(conversationId)}`;
   try {
-    const response = await fetch(url, { headers: { Authorization: `Bearer ${token} } });
+    const response = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
     if (!response.ok) return null;
     const document = await response.json();
     const members = document?.fields?.members?.arrayValue?.values?.map((v: any) => v.stringValue).filter((v: unknown) => typeof v === "string") ?? [];
