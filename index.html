@@ -90,7 +90,7 @@ const SUPABASE_URL = "https://nrnqzzhhvjramxkahkqs.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_mV8KjGyjKOd6rDLTtNUBnQ_dvUIHItV";
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 const mediaUrlCache = new Map();
-let auth, db, unsubscribe = null, sending = false, mediaRecorder = null, audioStream = null, audioBlob = null, audioStartedAt = 0;
+let auth, db, firebaseInitError = null, unsubscribe = null, sending = false, mediaRecorder = null, audioStream = null, audioBlob = null, audioStartedAt = 0;
 function showError(target, error) {
  console.error("Error de klk/Firebase:", error);
  const messages = {
@@ -116,10 +116,10 @@ function setBusy(busy) {
 try {
  firebase.initializeApp(firebaseConfig);
  auth = firebase.auth(); db = firebase.firestore();
-} catch (error) { $("status").textContent = "No se pudo iniciar Firebase: " + error.message; }
+} catch (error) { firebaseInitError = error; $("status").textContent = "No se pudo iniciar Firebase. Comprueba la conexión a Internet y vuelve a abrir klk. Detalle: " + error.message; }
 $("authForm").addEventListener("submit", async event => {
  event.preventDefault(); $("status").textContent = "";
- if (!auth) return;
+ if (!auth) { $("status").textContent = "Firebase no está disponible. " + (firebaseInitError && firebaseInitError.message ? firebaseInitError.message : "Comprueba tu conexión a Internet y vuelve a abrir klk."); return; }
  setBusy(true);
  try { await auth.signInWithEmailAndPassword($("email").value.trim(), $("password").value); }
  catch(error) { showError("status", error); }
