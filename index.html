@@ -73,7 +73,8 @@ button{background:#075e54;color:white;border:0;font-weight:700;cursor:pointer}bu
 </main>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>\n<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 <script>
 const firebaseConfig = {
  apiKey: "AIzaSyAgMkDOS77y-jHnzCEteQW1UgC90gShjuU",
@@ -257,7 +258,8 @@ $("sendAudio").onclick = async () => {
  $("recordStatus").textContent = "";
  $("recordAudio").textContent = "🎙️ Grabar audio";
 };
-\n$("message").addEventListener("keydown", event => { if (event.key === "Enter") $("send").click(); });
+
+$("message").addEventListener("keydown", event => { if (event.key === "Enter") $("send").click(); });
 </script>
 <script>
 if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(error => console.error("Service worker:", error)));
