@@ -74,7 +74,7 @@ button{background:#075e54;color:white;border:0;font-weight:700;cursor:pointer}bu
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const firebaseConfig = {
  apiKey: "AIzaSyAgMkDOS77y-jHnzCEteQW1UgC90gShjuU",
@@ -86,7 +86,11 @@ const firebaseConfig = {
  measurementId: "G-DXX2PHDNN0"
 };
 const $ = id => document.getElementById(id);
-let auth, db, storage, firebaseInitError = null, unsubscribe = null, sending = false, mediaRecorder = null, audioStream = null, audioBlob = null, audioStartedAt = 0;
+const SUPABASE_URL = "https://nrnqzzhhvjramxkahkqs.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_mV8KjGyjKOd6rDLTtNUBnQ_dvUIHItV";
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+const mediaUrlCache = new Map();
+let auth, db, firebaseInitError = null, unsubscribe = null, sending = false, mediaRecorder = null, audioStream = null, audioBlob = null, audioStartedAt = 0;
 function showError(target, error) {
  console.error("Error de klk/Firebase:", error);
  const messages = {
@@ -111,7 +115,7 @@ function setBusy(busy) {
 }
 try {
  firebase.initializeApp(firebaseConfig);
- auth = firebase.auth(); db = firebase.firestore(); storage = firebase.storage();
+ auth = firebase.auth(); db = firebase.firestore();
 } catch (error) { firebaseInitError = error; $("status").textContent = "No se pudo iniciar Firebase. Comprueba la conexión a Internet y vuelve a abrir klk. Detalle: " + error.message; }
 $("authForm").addEventListener("submit", async event => {
  event.preventDefault(); $("status").textContent = "";
@@ -157,22 +161,42 @@ auth && auth.onAuthStateChanged(user => {
  if (user) { $("who").textContent = "Conectado: " + (user.email || "usuario"); loadMessages(); }
  else { if (unsubscribe) unsubscribe(); unsubscribe = null; $("messages").innerHTML = ""; }
 });
+async function getMediaUrl(path) {
+ if (!path) return "";
+ const cached = mediaUrlCache.get(path);
+ if (cached && cached.expiresAt > Date.now() + 60000) return cached.url;
+ const user = auth && auth.currentUser;
+ if (!user) return "";
+ const idToken = await user.getIdToken();
+ const response = await fetch(SUPABASE_URL + "/functions/v1/media", {
+  method: "POST",
+  headers: { "Content-Type": "application/json", "apikey": SUPABASE_PUBLISHABLE_KEY, "Authorization": "Bearer " + idToken },
+  body: JSON.stringify({ action: "create-download-url", path })
+ });
+ const result = await response.json().catch(() => ({}));
+ if (!response.ok || !result.signedUrl) throw new Error(result.error || "No se pudo abrir el archivo multimedia.");
+ mediaUrlCache.set(path, { url: result.signedUrl, expiresAt: Date.now() + Number(result.expiresIn || 3600) * 1000 });
+ return result.signedUrl;
+}
 function loadMessages() {
  if (unsubscribe) unsubscribe();
  $("messages").textContent = "Cargando mensajes...";
- unsubscribe = db.collection("messages").orderBy("createdAt").limit(100).onSnapshot(snapshot => {
+ unsubscribe = db.collection("messages").orderBy("createdAt").limit(100).onSnapshot(async snapshot => {
   $("messages").innerHTML = "";
   if (snapshot.empty) { $("messages").textContent = "Todavía no hay mensajes. ¡Envía el primero!"; return; }
-  snapshot.forEach(doc => {
+  for (const doc of snapshot.docs) {
    const data = doc.data(), item = document.createElement("div");
    item.className = "msg" + (auth.currentUser && data.uid === auth.currentUser.uid ? " mine" : "");
-   const sender = document.createElement("b"); sender.textContent = data.email || "Familia";
-   item.appendChild(sender);
-   if (data.type === "image" && data.mediaUrl) { const img = document.createElement("img"); img.src = data.mediaUrl; img.alt = "Foto compartida"; img.loading = "lazy"; item.appendChild(img); }
-   else if (data.type === "audio" && data.mediaUrl) { const audio = document.createElement("audio"); audio.controls = true; audio.preload = "metadata"; audio.src = data.mediaUrl; item.appendChild(audio); }
-   else { const body = document.createElement("p"); body.textContent = data.text || ""; item.appendChild(body); }
-   $("messages").appendChild(item);
-  });
+   const sender = document.createElement("b"); sender.textContent = data.email || "Familia"; item.appendChild(sender);
+   if ((data.type === "image" || data.type === "audio") && (data.storagePath || data.mediaUrl)) {
+    const placeholder = document.createElement("p"); placeholder.textContent = "Cargando archivo..."; item.appendChild(placeholder); $("messages").appendChild(item);
+    try {
+     const url = data.storagePath ? await getMediaUrl(data.storagePath) : data.mediaUrl; placeholder.remove();
+     if (data.type === "image") { const img = document.createElement("img"); img.src = url; img.alt = "Foto compartida"; img.loading = "lazy"; item.appendChild(img); }
+     else { const audio = document.createElement("audio"); audio.controls = true; audio.preload = "metadata"; audio.src = url; item.appendChild(audio); }
+    } catch(error) { placeholder.textContent = "No se pudo cargar: " + error.message; }
+   } else { const body = document.createElement("p"); body.textContent = data.text || ""; item.appendChild(body); $("messages").appendChild(item); }
+  }
   $("messages").scrollTop = $("messages").scrollHeight;
  }, error => showError("chatStatus", error));
 }
@@ -189,27 +213,39 @@ $("send").onclick = async () => {
 
 async function uploadMedia(file, type, durationSeconds = null) {
  const user = auth && auth.currentUser;
- if (!user || !file) return;
+ if (!user || !file || sending) return;
  const maxBytes = type === "image" ? 10 * 1024 * 1024 : 20 * 1024 * 1024;
  if (file.size > maxBytes) { $("chatStatus").textContent = type === "image" ? "La foto debe pesar menos de 10 MB." : "La nota de voz debe pesar menos de 20 MB."; return; }
  if (type === "image" && !file.type.startsWith("image/")) { $("chatStatus").textContent = "Selecciona un archivo de imagen."; return; }
  if (type === "audio" && !file.type.startsWith("audio/")) { $("chatStatus").textContent = "No se pudo reconocer el formato del audio."; return; }
- $("chatStatus").textContent = type === "image" ? "Subiendo foto..." : "Subiendo nota de voz...";
- $("send").disabled = true; $("pickPhoto").disabled = true; $("takePhoto").disabled = true; $("recordAudio").disabled = true;
+ sending = true;
+ $("chatStatus").textContent = "Preparando archivo...";
+ $("send").disabled = true; $("pickPhoto").disabled = true; $("takePhoto").disabled = true; $("recordAudio").disabled = true; $("sendAudio").disabled = true;
  try {
-  const ext = (file.name && file.name.includes(".") ? file.name.split(".").pop() : (type === "image" ? "jpg" : "webm")).replace(/[^a-z0-9]/gi,"").toLowerCase();
-  const path = "messages/" + user.uid + "/" + Date.now() + "-" + Math.random().toString(36).slice(2) + "." + ext;
-  const ref = storage.ref().child(path);
-  await ref.put(file, {contentType:file.type || (type === "image" ? "image/jpeg" : "audio/webm")});
-  const mediaUrl = await ref.getDownloadURL();
+  const mimeType = file.type || (type === "image" ? "image/jpeg" : "audio/webm");
+  const idToken = await user.getIdToken();
+  const response = await fetch(SUPABASE_URL + "/functions/v1/media", {
+   method: "POST",
+   headers: { "Content-Type": "application/json", "apikey": SUPABASE_PUBLISHABLE_KEY, "Authorization": "Bearer " + idToken },
+   body: JSON.stringify({ action: "create-upload", type, size: file.size, mimeType })
+  });
+  const signed = await response.json().catch(() => ({}));
+  if (!response.ok || !signed.path || !signed.token) throw new Error(signed.error || "No se pudo preparar la carga en Supabase.");
+  $("chatStatus").textContent = "Subiendo archivo...";
+  const { error: uploadError } = await supabaseClient.storage.from("Chat-media").uploadToSignedUrl(signed.path, signed.token, file, { contentType: mimeType });
+  if (uploadError) throw uploadError;
   await db.collection("messages").add({
-   type, mediaUrl, storagePath:path, mimeType:file.type || "", fileName:file.name || (type === "image" ? "foto" : "nota-de-voz"),
-   size:file.size, ...(durationSeconds === null ? {} : {duration:durationSeconds}),
+   type, storagePath: signed.path, mimeType, fileName: file.name || (type === "image" ? "foto" : "nota-de-voz"),
+   size: file.size, ...(durationSeconds === null ? {} : {duration:durationSeconds}),
    email:user.email || "", uid:user.uid, createdAt:firebase.firestore.FieldValue.serverTimestamp()
   });
   $("chatStatus").textContent = type === "image" ? "Foto enviada." : "Nota de voz enviada.";
- } catch(error) { showError("chatStatus", error); }
- finally { $("send").disabled = false; $("pickPhoto").disabled = false; $("takePhoto").disabled = false; $("recordAudio").disabled = false; }
+ } catch(error) {
+  console.error("Error al enviar archivo:", error);
+  $("chatStatus").textContent = "No se pudo enviar el archivo: " + (error.message || "Error desconocido");
+ } finally {
+  sending = false; $("send").disabled = false; $("pickPhoto").disabled = false; $("takePhoto").disabled = false; $("recordAudio").disabled = false; $("sendAudio").disabled = !audioBlob;
+ }
 }
 $("pickPhoto").onclick = () => $("galleryInput").click();
 $("takePhoto").onclick = () => $("cameraInput").click();
@@ -261,6 +297,7 @@ $("sendAudio").onclick = async () => {
  $("sendAudio").disabled = true;
  await uploadMedia(file,"audio",duration);
  audioBlob = null;
+ $("sendAudio").disabled = true;
  $("recordStatus").textContent = "";
  $("recordAudio").textContent = "🎙️ Grabar audio";
 };
