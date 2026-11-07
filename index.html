@@ -223,6 +223,7 @@ async function openPrivateConversation(otherUid, otherName) {
   activeConversationId = conversationId; activeConversationName = otherName;
   $("chatTitle").textContent = "💬 " + otherName;
   $("dmPanel").style.display = "none"; $("messages").style.display = "block";
+  document.querySelector(".composer").style.display = "flex"; $("mediaActions").style.display = "flex"; $("recordStatus").style.display = "block";
   $("chatStatus").textContent = "Conversación privada con " + otherName;
   loadMessages();
  } catch(error) { showError("chatStatus",error); }
@@ -231,12 +232,14 @@ $("showGroup").onclick = () => {
  activeConversationId = null; activeConversationName = null;
  $("chatTitle").textContent = "👨‍👩‍👧‍👦 Familia klk";
  $("dmPanel").style.display = "none"; $("messages").style.display = "block";
+ document.querySelector(".composer").style.display = "flex"; $("mediaActions").style.display = "flex"; $("recordStatus").style.display = "block";
  $("chatStatus").textContent = "Chat familiar grupal";
  loadMessages();
 };
 $("showPeople").onclick = () => {
  if (unsubscribe) { unsubscribe(); unsubscribe = null; }
  $("messages").style.display = "none"; $("dmPanel").style.display = "block";
+ document.querySelector(".composer").style.display = "none"; $("mediaActions").style.display = "none"; $("recordStatus").style.display = "none";
  $("chatStatus").textContent = "Selecciona un miembro para conversar en privado.";
 };
 async function getMediaUrl(path, conversationId = null) {
