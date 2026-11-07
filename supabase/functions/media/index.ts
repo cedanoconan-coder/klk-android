@@ -8,9 +8,16 @@ const corsHeaders = {
   "Content-Type": "application/json",
 };
 
-const PROJECT_ID = Deno.env.get("FIREBASE_PROJECT_ID") ?? "";
+const PROJECT_ID = Deno.env.get("FIREBASE_PROJECT_ID") ?? "klk-familia";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
-const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+const secretKeysRaw = Deno.env.get("SUPABASE_SECRET_KEYS") ?? "";
+let SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+try {
+  const secretKeys = JSON.parse(secretKeysRaw);
+  SERVICE_ROLE_KEY = SERVICE_ROLE_KEY || secretKeys.default || "";
+} catch {
+  // Older projects may expose only the legacy service-role environment variable.
+}
 const BUCKET = "Chat-media";
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 const MAX_AUDIO_BYTES = 20 * 1024 * 1024;
