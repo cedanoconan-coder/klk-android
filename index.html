@@ -194,6 +194,7 @@ auth && auth.onAuthStateChanged(async user => {
  $("login").style.display = user ? "none" : "block";
  $("chat").style.display = user ? "block" : "none";
  if (user) {
+  window.klkSetCurrentUid && window.klkSetCurrentUid(user.uid);
   $("who").textContent = "Conectado: " + (user.email || "usuario");
   activeConversationId = null; activeConversationName = null;
   $("chatTitle").textContent = "👨‍👩‍👧‍👦 Familia klk"; $("dmPanel").style.display = "none"; $("messages").style.display = "block";
@@ -202,6 +203,7 @@ auth && auth.onAuthStateChanged(async user => {
    loadPeople(); loadMessages();
   } catch(error) { showError("chatStatus",error); }
  } else {
+  window.klkSetCurrentUid && window.klkSetCurrentUid(null);
   if (unsubscribe) unsubscribe(); unsubscribe = null;
   if (peopleUnsubscribe) peopleUnsubscribe(); peopleUnsubscribe = null;
   activeConversationId = null; $("messages").innerHTML = "";
