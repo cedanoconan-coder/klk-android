@@ -188,10 +188,10 @@ function loadMessages() {
    const data = doc.data(), item = document.createElement("div");
    item.className = "msg" + (auth.currentUser && data.uid === auth.currentUser.uid ? " mine" : "");
    const sender = document.createElement("b"); sender.textContent = data.email || "Familia"; item.appendChild(sender);
-   if ((data.type === "image" || data.type === "audio") && data.storagePath) {
+   if ((data.type === "image" || data.type === "audio") && (data.storagePath || data.mediaUrl)) {
     const placeholder = document.createElement("p"); placeholder.textContent = "Cargando archivo..."; item.appendChild(placeholder); $("messages").appendChild(item);
     try {
-     const url = await getMediaUrl(data.storagePath); placeholder.remove();
+     const url = data.storagePath ? await getMediaUrl(data.storagePath) : data.mediaUrl; placeholder.remove();
      if (data.type === "image") { const img = document.createElement("img"); img.src = url; img.alt = "Foto compartida"; img.loading = "lazy"; item.appendChild(img); }
      else { const audio = document.createElement("audio"); audio.controls = true; audio.preload = "metadata"; audio.src = url; item.appendChild(audio); }
     } catch(error) { placeholder.textContent = "No se pudo cargar: " + error.message; }
@@ -297,6 +297,7 @@ $("sendAudio").onclick = async () => {
  $("sendAudio").disabled = true;
  await uploadMedia(file,"audio",duration);
  audioBlob = null;
+ $("sendAudio").disabled = true;
  $("recordStatus").textContent = "";
  $("recordAudio").textContent = "🎙️ Grabar audio";
 };
