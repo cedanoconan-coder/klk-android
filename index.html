@@ -218,32 +218,66 @@ $("send").onclick = async () => {
  finally { sending = false; $("send").disabled = false; }
 };
 
+async function compressImage(file) {
+ if (!file || !file.type.startsWith("image/") || file.size < 900 * 1024) return file;
+ let bitmap, objectUrl;
+ try {
+  if ("createImageBitmap" in window) bitmap = await createImageBitmap(file);
+  else {
+   const img = new Image();
+   objectUrl = URL.createObjectURL(file);
+   await new Promise((resolve, reject) => { img.onload = resolve; img.onerror = reject; img.src = objectUrl; });
+   bitmap = img;
+  }
+  const maxSide = 1600, scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
+  if (scale === 1 && file.size < 1.5 * 1024 * 1024) return file;
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+  canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return file;
+  ctx.fillStyle = "#fff";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", 0.78));
+  if (!blob || blob.size >= file.size) return file;
+  const baseName = (file.name || "foto").replace(/\.[^.]+$/, "");
+  return new File([blob], baseName + ".jpg", {type:"image/jpeg", lastModified:Date.now()});
+ } catch (error) {
+  console.warn("No se pudo optimizar la foto; se enviará original:", error);
+  return file;
+ } finally {
+  if (bitmap && bitmap.close) bitmap.close();
+  if (objectUrl) URL.revokeObjectURL(objectUrl);
+ }
+}
 async function uploadMedia(file, type, durationSeconds = null) {
  const user = auth && auth.currentUser;
  if (!user || !file || sending) return;
- const maxBytes = type === "image" ? 10 * 1024 * 1024 : 20 * 1024 * 1024;
- if (file.size > maxBytes) { $("chatStatus").textContent = type === "image" ? "La foto debe pesar menos de 10 MB." : "La nota de voz debe pesar menos de 20 MB."; return; }
  if (type === "image" && !file.type.startsWith("image/")) { $("chatStatus").textContent = "Selecciona un archivo de imagen."; return; }
  if (type === "audio" && !file.type.startsWith("audio/")) { $("chatStatus").textContent = "No se pudo reconocer el formato del audio."; return; }
  sending = true;
- $("chatStatus").textContent = "Preparando archivo...";
+ $("chatStatus").textContent = type === "image" ? "Optimizando foto..." : "Preparando archivo...";
  $("send").disabled = true; $("pickPhoto").disabled = true; $("takePhoto").disabled = true; $("recordAudio").disabled = true; $("sendAudio").disabled = true;
  try {
-  const mimeType = file.type || (type === "image" ? "image/jpeg" : "audio/webm");
+  const uploadFile = type === "image" ? await compressImage(file) : file;
+  const maxBytes = type === "image" ? 10 * 1024 * 1024 : 20 * 1024 * 1024;
+  if (uploadFile.size > maxBytes) throw new Error(type === "image" ? "La foto pesa más de 10 MB incluso después de optimizarla." : "La nota de voz debe pesar menos de 20 MB.");
+  const mimeType = uploadFile.type || (type === "image" ? "image/jpeg" : "audio/webm");
   const idToken = await user.getIdToken();
   const response = await fetch(SUPABASE_URL + "/functions/v1/media", {
    method: "POST",
    headers: { "Content-Type": "application/json", "apikey": SUPABASE_PUBLISHABLE_KEY, "Authorization": "Bearer " + idToken },
-   body: JSON.stringify({ action: "create-upload", type, size: file.size, mimeType })
+   body: JSON.stringify({ action: "create-upload", type, size: uploadFile.size, mimeType })
   });
   const signed = await response.json().catch(() => ({}));
   if (!response.ok || !signed.path || !signed.token) throw new Error(signed.error || "No se pudo preparar la carga en Supabase.");
-  $("chatStatus").textContent = "Subiendo archivo...";
-  const { error: uploadError } = await getSupabaseClient().storage.from("Chat-media").uploadToSignedUrl(signed.path, signed.token, file, { contentType: mimeType });
+  $("chatStatus").textContent = type === "image" ? "Subiendo foto optimizada..." : "Subiendo archivo...";
+  const { error: uploadError } = await getSupabaseClient().storage.from("Chat-media").uploadToSignedUrl(signed.path, signed.token, uploadFile, { contentType: mimeType });
   if (uploadError) throw uploadError;
   await db.collection("messages").add({
-   type, storagePath: signed.path, mimeType, fileName: file.name || (type === "image" ? "foto" : "nota-de-voz"),
-   size: file.size, ...(durationSeconds === null ? {} : {duration:durationSeconds}),
+   type, storagePath: signed.path, mimeType, fileName: uploadFile.name || (type === "image" ? "foto" : "nota-de-voz"),
+   size: uploadFile.size, ...(durationSeconds === null ? {} : {duration:durationSeconds}),
    email:user.email || "", uid:user.uid, createdAt:firebase.firestore.FieldValue.serverTimestamp()
   });
   $("chatStatus").textContent = type === "image" ? "Foto enviada." : "Nota de voz enviada.";
