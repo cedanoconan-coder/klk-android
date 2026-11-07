@@ -1,0 +1,4 @@
+project_id = "klk-familia"
+
+[functions.media]
+verify_jwt = false
