@@ -232,7 +232,7 @@ async function uploadMedia(file, type, durationSeconds = null) {
   const signed = await response.json().catch(() => ({}));
   if (!response.ok || !signed.path || !signed.token) throw new Error(signed.error || "No se pudo preparar la carga en Supabase.");
   $("chatStatus").textContent = "Subiendo archivo...";
-  const { error: uploadError } = await supabaseClient.storage.from("klk-media").uploadToSignedUrl(signed.path, signed.token, file, { contentType: mimeType });
+  const { error: uploadError } = await supabaseClient.storage.from("Chat-media").uploadToSignedUrl(signed.path, signed.token, file, { contentType: mimeType });
   if (uploadError) throw uploadError;
   await db.collection("messages").add({
    type, storagePath: signed.path, mimeType, fileName: file.name || (type === "image" ? "foto" : "nota-de-voz"),
