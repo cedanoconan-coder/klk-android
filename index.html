@@ -88,6 +88,7 @@ const firebaseConfig = {
 const $ = id => document.getElementById(id);
 let auth, db, storage, unsubscribe = null, sending = false, mediaRecorder = null, audioStream = null, audioBlob = null, audioStartedAt = 0;
 function showError(target, error) {
+ console.error("Error de klk/Firebase:", error);
  const messages = {
   "auth/email-already-in-use":"Este correo ya tiene una cuenta.",
   "auth/invalid-email":"El correo electrónico no es válido.",
@@ -95,10 +96,15 @@ function showError(target, error) {
   "auth/user-not-found":"No existe una cuenta con ese correo.",
   "auth/wrong-password":"La contraseña es incorrecta.",
   "auth/invalid-credential":"El correo o la contraseña son incorrectos.",
-  "auth/network-request-failed":"No hay conexión. Revisa tu internet e inténtalo de nuevo.",
+  "auth/network-request-failed":"Firebase no respondió a la solicitud. Comprueba la conexión, la fecha y hora automáticas del teléfono y que no haya un DNS privado o bloqueador filtrando Google.",
+  "auth/unauthorized-domain":"Firebase no autorizó el dominio de esta aplicación. Hay que corregir los dominios autorizados del proyecto.",
+  "auth/operation-not-allowed":"El inicio de sesión por correo y contraseña no está activado en Firebase.",
+  "auth/api-key-not-valid.-please-pass-a-valid-api-key.":"La clave de Firebase no es válida.",
   "permission-denied":"Firebase bloqueó la operación. Hay que revisar las reglas de seguridad."
  };
- $(target).textContent = messages[error.code] || error.message || "Ocurrió un error. Inténtalo de nuevo.";
+ const code = error && error.code ? error.code : "sin código";
+ const detail = error && error.message ? error.message : "Sin detalle técnico";
+ $(target).textContent = (messages[code] || detail || "Ocurrió un error. Inténtalo de nuevo.") + " [ " + code + " ]";
 }
 function setBusy(busy) {
  $("enter").disabled = busy; $("register").disabled = busy; $("forgot").disabled = busy;
