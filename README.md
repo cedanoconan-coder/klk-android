@@ -6,7 +6,8 @@ Aplicación web instalable (PWA) para iniciar sesión y conversar en un chat fam
 - HTML, CSS y JavaScript
 - Firebase Authentication (correo y contraseña)
 - Cloud Firestore
-- Service Worker y Web App Manifest
+- Supabase Storage para fotos y notas de voz
+- Capacitor para generar una aplicación Android instalable
 
 ## Archivos principales
 - `index.html`: interfaz, autenticación y chat.
@@ -16,6 +17,7 @@ Aplicación web instalable (PWA) para iniciar sesión y conversar en un chat fam
 - `firestore.rules`: reglas de seguridad propuestas para Firestore.
 - `firebase.json`: configuración para Firebase CLI.
 - `.github/workflows/pages.yml`: publicación automática en GitHub Pages.
+- `.github/workflows/android-apk.yml`: compilación automática de un APK de prueba para Android.
 
 ## Pasos pendientes para activar el servicio
 1. En Firebase Console, abrir el proyecto `klk-familia`.
