@@ -74,7 +74,7 @@ button{background:#075e54;color:white;border:0;font-weight:700;cursor:pointer}bu
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const firebaseConfig = {
  apiKey: "AIzaSyAgMkDOS77y-jHnzCEteQW1UgC90gShjuU",
@@ -86,7 +86,11 @@ const firebaseConfig = {
  measurementId: "G-DXX2PHDNN0"
 };
 const $ = id => document.getElementById(id);
-let auth, db, storage, unsubscribe = null, sending = false, mediaRecorder = null, audioStream = null, audioBlob = null, audioStartedAt = 0;
+const SUPABASE_URL = "https://nrnqzzhhvjramxkahkqs.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "PEGA_AQUI_LA_CLAVE_PUBLICABLE";
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+const mediaUrlCache = new Map();
+let auth, db, unsubscribe = null, sending = false, mediaRecorder = null, audioStream = null, audioBlob = null, audioStartedAt = 0;
 function showError(target, error) {
  console.error("Error de klk/Firebase:", error);
  const messages = {
@@ -111,7 +115,7 @@ function setBusy(busy) {
 }
 try {
  firebase.initializeApp(firebaseConfig);
- auth = firebase.auth(); db = firebase.firestore(); storage = firebase.storage();
+ auth = firebase.auth(); db = firebase.firestore();
 } catch (error) { $("status").textContent = "No se pudo iniciar Firebase: " + error.message; }
 $("authForm").addEventListener("submit", async event => {
  event.preventDefault(); $("status").textContent = "";
