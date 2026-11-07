@@ -86,7 +86,7 @@ const firebaseConfig = {
  measurementId: "G-DXX2PHDNN0"
 };
 const $ = id => document.getElementById(id);
-let auth, db, storage, unsubscribe = null, sending = false, mediaRecorder = null, audioStream = null, audioBlob = null, audioStartedAt = 0;
+let auth, db, storage, firebaseInitError = null, unsubscribe = null, sending = false, mediaRecorder = null, audioStream = null, audioBlob = null, audioStartedAt = 0;
 function showError(target, error) {
  console.error("Error de klk/Firebase:", error);
  const messages = {
@@ -112,10 +112,10 @@ function setBusy(busy) {
 try {
  firebase.initializeApp(firebaseConfig);
  auth = firebase.auth(); db = firebase.firestore(); storage = firebase.storage();
-} catch (error) { $("status").textContent = "No se pudo iniciar Firebase: " + error.message; }
+} catch (error) { firebaseInitError = error; $("status").textContent = "No se pudo iniciar Firebase. Comprueba la conexión a Internet y vuelve a abrir klk. Detalle: " + error.message; }
 $("authForm").addEventListener("submit", async event => {
  event.preventDefault(); $("status").textContent = "";
- if (!auth) return;
+ if (!auth) { $("status").textContent = "Firebase no está disponible. " + (firebaseInitError && firebaseInitError.message ? firebaseInitError.message : "Comprueba tu conexión a Internet y vuelve a abrir klk."); return; }
  setBusy(true);
  try { await auth.signInWithEmailAndPassword($("email").value.trim(), $("password").value); }
  catch(error) { showError("status", error); }
@@ -123,7 +123,7 @@ $("authForm").addEventListener("submit", async event => {
 });
 $("register").addEventListener("click", async () => {
  $("status").textContent = "";
- if (!auth) return;
+ if (!auth) { $("status").textContent = "Firebase no está disponible. " + (firebaseInitError && firebaseInitError.message ? firebaseInitError.message : "Comprueba tu conexión a Internet y vuelve a abrir klk."); return; }
  const email = $("email").value.trim(), password = $("password").value;
  if (!email || password.length < 6) { $("status").textContent = "Escribe un correo válido y una contraseña de al menos 6 caracteres."; return; }
  setBusy(true);
@@ -133,7 +133,7 @@ $("register").addEventListener("click", async () => {
 });
 $("forgot").addEventListener("click", async () => {
  $("status").textContent = "";
- if (!auth) return;
+ if (!auth) { $("status").textContent = "Firebase no está disponible. " + (firebaseInitError && firebaseInitError.message ? firebaseInitError.message : "Comprueba tu conexión a Internet y vuelve a abrir klk."); return; }
  const email = $("email").value.trim();
  if (!email) { $("status").textContent = "Escribe primero tu correo electrónico y vuelve a pulsar aquí."; $("email").focus(); return; }
  setBusy(true);
