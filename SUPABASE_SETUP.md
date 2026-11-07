@@ -4,7 +4,7 @@ Firebase Authentication y Cloud Firestore siguen gestionando las cuentas y los m
 
 ## Configuración necesaria en Supabase
 
-1. En Storage, crea un bucket llamado `klk-media` y déjalo **Private**.
+1. En Storage, crea un bucket llamado `Chat-media` y déjalo **Private**.
 2. Configura un máximo de 20 MB por archivo. Si el panel permite restringir MIME, permite imágenes y audio.
 3. En Edge Functions → Secrets, agrega:
    - `FIREBASE_PROJECT_ID` = `klk-familia`
