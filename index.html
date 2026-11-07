@@ -127,7 +127,7 @@ $("authForm").addEventListener("submit", async event => {
 });
 $("register").addEventListener("click", async () => {
  $("status").textContent = "";
- if (!auth) return;
+ if (!auth) { $("status").textContent = "Firebase no está disponible. " + (firebaseInitError && firebaseInitError.message ? firebaseInitError.message : "Comprueba tu conexión a Internet y vuelve a abrir klk."); return; }
  const email = $("email").value.trim(), password = $("password").value;
  if (!email || password.length < 6) { $("status").textContent = "Escribe un correo válido y una contraseña de al menos 6 caracteres."; return; }
  setBusy(true);
@@ -137,7 +137,7 @@ $("register").addEventListener("click", async () => {
 });
 $("forgot").addEventListener("click", async () => {
  $("status").textContent = "";
- if (!auth) return;
+ if (!auth) { $("status").textContent = "Firebase no está disponible. " + (firebaseInitError && firebaseInitError.message ? firebaseInitError.message : "Comprueba tu conexión a Internet y vuelve a abrir klk."); return; }
  const email = $("email").value.trim();
  if (!email) { $("status").textContent = "Escribe primero tu correo electrónico y vuelve a pulsar aquí."; $("email").focus(); return; }
  setBusy(true);
