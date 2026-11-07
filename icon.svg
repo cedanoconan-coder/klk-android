@@ -1,16 +1,23 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
 <defs>
- <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#20e85b"/><stop offset="1" stop-color="#008b35"/></linearGradient>
- <linearGradient id="bubble" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#14d94e"/><stop offset="1" stop-color="#007d32"/></linearGradient>
+ <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#24f45d"/><stop offset=".48" stop-color="#00c947"/><stop offset="1" stop-color="#008d35"/></linearGradient>
+ <radialGradient id="glow" cx=".5" cy=".35" r=".75"><stop stop-color="#63ff83" stop-opacity=".75"/><stop offset="1" stop-color="#006c2b" stop-opacity=".1"/></radialGradient>
+ <linearGradient id="bubble" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#09d943"/><stop offset="1" stop-color="#009333"/></linearGradient>
+ <filter id="shadow" x="-30%" y="-30%" width="160%" height="170%"><feGaussianBlur in="SourceAlpha" stdDeviation="8"/><feOffset dy="8"/><feComponentTransfer><feFuncA type="linear" slope=".38"/></feComponentTransfer><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>
 </defs>
-<rect width="512" height="512" rx="112" fill="url(#bg)"/>
-<g fill="#a8ffba" opacity=".95">
- <circle cx="256" cy="128" r="48"/><circle cx="151" cy="174" r="38"/><circle cx="361" cy="174" r="38"/>
- <path d="M181 236c0-42 34-70 75-70s75 28 75 70v18H181z"/>
- <path d="M93 272c0-37 26-62 58-62s58 25 58 62v16H93zM303 272c0-37 26-62 58-62s58 25 58 62v16H303z"/>
+<rect width="512" height="512" rx="104" fill="url(#bg)"/>
+<rect width="512" height="512" rx="104" fill="url(#glow)"/>
+<g fill="#9dffb4" opacity=".88">
+ <circle cx="256" cy="105" r="42"/><circle cx="164" cy="142" r="36"/><circle cx="348" cy="142" r="36"/>
+ <path d="M192 226c0-55 26-83 64-83s64 28 64 83v28H192z"/>
+ <path d="M100 267c0-54 25-82 64-82s64 28 64 82v24H100zM284 267c0-54 25-82 64-82s64 28 64 82v24H284z"/>
 </g>
-<path d="M77 279c0-40 32-72 72-72h214c40 0 72 32 72 72v88c0 40-32 72-72 72H205l-85 42 17-52c-36-9-60-41-60-78z" fill="#fff"/>
-<path d="M94 281c0-31 25-56 56-56h206c31 0 56 25 56 56v82c0 31-25 56-56 56H200l-54 27 10-37c-35-3-62-31-62-66z" fill="url(#bubble)"/>
-<text x="256" y="346" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="148" font-weight="900" letter-spacing="-9" fill="#fff" stroke="#003d24" stroke-width="10" paint-order="stroke">klk</text>
-<circle cx="216" cy="386" r="8" fill="#fff"/><circle cx="256" cy="386" r="8" fill="#fff"/><circle cx="296" cy="386" r="8" fill="#fff"/>
+<g fill="#ffd500" stroke="#f9bd00" stroke-width="3" stroke-linecap="round">
+ <path d="M425 101l-11 45" stroke-width="20"/><path d="M465 135l-37 29" stroke-width="20"/>
+</g>
+<path d="M53 276c0-54 43-97 97-97h211c54 0 98 43 98 97v76c0 54-44 98-98 98H180l-113 45 22-68c-22-18-36-45-36-75z" fill="#fff" filter="url(#shadow)"/>
+<path d="M72 278c0-43 35-78 78-78h211c43 0 78 35 78 78v71c0 43-35 78-78 78H180l-79 31 16-49c-27-13-45-34-45-61z" fill="url(#bubble)"/>
+<path d="M72 278c0-43 35-78 78-78h211c43 0 78 35 78 78v71c0 43-35 78-78 78H180l-79 31 16-49c-27-13-45-34-45-61z" fill="none" stroke="#00a83e" stroke-width="3"/>
+<text x="256" y="350" text-anchor="middle" font-family="Arial Rounded MT Bold,Arial,sans-serif" font-size="166" font-weight="900" letter-spacing="-12" fill="#fff" stroke="#003c25" stroke-width="13" stroke-linejoin="round" paint-order="stroke">klk</text>
+<g fill="#fff"><circle cx="216" cy="389" r="12"/><circle cx="256" cy="389" r="12"/><circle cx="296" cy="389" r="12"/></g>
 </svg>
