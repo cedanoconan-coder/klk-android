@@ -2,6 +2,8 @@ name: Construir APK de klk
 
 on:
   push:
+    branches: ["main", "integrar-supabase-storage", "integrar-supabase-final"]
+  pull_request:
     branches: ["main"]
   workflow_dispatch:
 

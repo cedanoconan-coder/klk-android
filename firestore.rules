@@ -5,7 +5,7 @@ service cloud.firestore {
       allow read: if request.auth != null;
       allow create: if request.auth != null
         && request.resource.data.keys().hasOnly([
-          'type', 'text', 'mediaUrl', 'storagePath', 'mimeType', 'fileName',
+          'type', 'text', 'storagePath', 'mimeType', 'fileName',
           'size', 'duration', 'email', 'uid', 'createdAt'
         ])
         && request.resource.data.keys().hasAll(['type', 'email', 'uid', 'createdAt'])
@@ -20,18 +20,18 @@ service cloud.firestore {
             && request.resource.data.text.size() <= 2000)
           ||
           (request.resource.data.type == 'image'
-            && request.resource.data.keys().hasAll(['mediaUrl', 'storagePath', 'mimeType', 'size'])
-            && request.resource.data.mediaUrl is string
+            && request.resource.data.keys().hasAll(['storagePath', 'mimeType', 'size'])
             && request.resource.data.storagePath is string
+            && request.resource.data.storagePath.matches(request.auth.uid + '/.*')
             && request.resource.data.mimeType.matches('image/.*')
             && request.resource.data.size is int
             && request.resource.data.size > 0
             && request.resource.data.size <= 10485760)
           ||
           (request.resource.data.type == 'audio'
-            && request.resource.data.keys().hasAll(['mediaUrl', 'storagePath', 'mimeType', 'size'])
-            && request.resource.data.mediaUrl is string
+            && request.resource.data.keys().hasAll(['storagePath', 'mimeType', 'size'])
             && request.resource.data.storagePath is string
+            && request.resource.data.storagePath.matches(request.auth.uid + '/.*')
             && request.resource.data.mimeType.matches('audio/.*')
             && request.resource.data.size is int
             && request.resource.data.size > 0
