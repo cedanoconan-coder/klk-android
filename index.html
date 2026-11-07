@@ -279,6 +279,7 @@ async function getMediaUrl(path, conversationId = null) {
  return result.signedUrl;
 }
 function loadMessages() {
+ window.klkNotificationsReady = false;
  if (unsubscribe) unsubscribe();
  $("messages").textContent = "Cargando mensajes...";
  unsubscribe = messagesCollection().orderBy("createdAt").limit(100).onSnapshot(async snapshot => {
