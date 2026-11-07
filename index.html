@@ -34,6 +34,12 @@ button{background:#075e54;color:white;border:0;font-weight:700;cursor:pointer}bu
 #recordStatus{padding:0 12px;margin:0;background:#f0f2f5;min-height:18px}.chatFoot{padding:4px 12px 10px;background:#f0f2f5}
 .muted{color:#68736f;font-size:12px}#status{color:#a12b2b;overflow-wrap:anywhere;min-height:18px}.hint{font-size:13px;color:#68736f;line-height:1.45}button[hidden]{display:none!important}#installApp{margin-top:0}
 @media(max-width:420px){main{padding:8px 0}.card{border-radius:0;margin-top:8px}#chat{margin-top:0}#messages{height:calc(100dvh - 220px);max-height:none}}
+
+#chatNav{display:flex;gap:8px;padding:10px;background:#e3f2ed}
+#chatNav button{margin:0;padding:10px 8px;font-size:13px}
+#dmPanel{display:none;background:#fff;padding:12px;max-height:55vh;overflow:auto}
+.memberBtn{display:block;width:100%;text-align:left;background:#f4f7f6;color:#17211e;border-radius:10px;margin:6px 0;padding:13px}
+.memberBtn small{display:block;color:#68736f;font-weight:400;margin-top:4px}
 </style>
 </head>
 <body>
@@ -53,7 +59,9 @@ button{background:#075e54;color:white;border:0;font-weight:700;cursor:pointer}bu
 <p class="hint">Necesitas conexión a internet para iniciar sesión y enviar mensajes.</p>
 </section>
 <section id="chat" class="card">
-<div class="chatTop"><h2>👨‍👩‍👧‍👦 Familia klk</h2><p id="who" class="muted"></p></div>
+<div class="chatTop"><h2 id="chatTitle">👨‍👩‍👧‍👦 Familia klk</h2><p id="who" class="muted"></p></div>
+<div id="chatNav"><button id="showGroup" type="button">👨‍👩‍👧‍👦 Chat familiar</button><button id="showPeople" type="button" class="secondary">💬 Conversaciones privadas</button></div>
+<div id="dmPanel"><p class="hint">Elige un miembro de la familia para abrir una conversación privada.</p><div id="peopleList">Cargando miembros...</div></div>
 <div id="messages" aria-live="polite"><p class="muted">Cargando mensajes...</p></div>
 <div class="composer">
  <button id="pickPhoto" class="iconBtn" type="button" aria-label="Elegir foto" title="Elegir foto">＋</button>
@@ -98,6 +106,7 @@ function getSupabaseClient() {
 }
 const mediaUrlCache = new Map();
 let auth, db, firebaseInitError = null, unsubscribe = null, sending = false, mediaRecorder = null, audioStream = null, audioBlob = null, audioStartedAt = 0;
+let activeConversationId = null, activeConversationName = null, peopleUnsubscribe = null;
 function showError(target, error) {
  console.error("Error de klk/Firebase:", error);
  const messages = {
@@ -162,13 +171,75 @@ $("forgot").addEventListener("click", async () => {
  } finally { setBusy(false); }
 });
 $("logout").onclick = async () => { if (unsubscribe) { unsubscribe(); unsubscribe = null; } await auth.signOut(); };
-auth && auth.onAuthStateChanged(user => {
+auth && auth.onAuthStateChanged(async user => {
  $("login").style.display = user ? "none" : "block";
  $("chat").style.display = user ? "block" : "none";
- if (user) { $("who").textContent = "Conectado: " + (user.email || "usuario"); loadMessages(); }
- else { if (unsubscribe) unsubscribe(); unsubscribe = null; $("messages").innerHTML = ""; }
+ if (user) {
+  $("who").textContent = "Conectado: " + (user.email || "usuario");
+  activeConversationId = null; activeConversationName = null;
+  $("chatTitle").textContent = "👨‍👩‍👧‍👦 Familia klk"; $("dmPanel").style.display = "none"; $("messages").style.display = "block";
+  try {
+   await db.collection("users").doc(user.uid).set({uid:user.uid,email:user.email || "",displayName:user.displayName || (user.email || "Miembro").split("@")[0],updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
+   loadPeople(); loadMessages();
+  } catch(error) { showError("chatStatus",error); }
+ } else {
+  if (unsubscribe) unsubscribe(); unsubscribe = null;
+  if (peopleUnsubscribe) peopleUnsubscribe(); peopleUnsubscribe = null;
+  activeConversationId = null; $("messages").innerHTML = "";
+ }
 });
-async function getMediaUrl(path) {
+function messagesCollection() {
+ return activeConversationId
+  ? db.collection("conversations").doc(activeConversationId).collection("messages")
+  : db.collection("messages");
+}
+function loadPeople() {
+ if (peopleUnsubscribe) peopleUnsubscribe();
+ $("peopleList").textContent = "Cargando miembros...";
+ peopleUnsubscribe = db.collection("users").orderBy("displayName").onSnapshot(snapshot => {
+  const list = $("peopleList"); list.innerHTML = "";
+  const others = snapshot.docs.filter(doc => doc.id !== auth.currentUser.uid);
+  if (!others.length) { list.textContent = "Todavía no hay otros miembros registrados. Cuando alguien cree su cuenta aparecerá aquí."; return; }
+  for (const doc of others) {
+   const person = doc.data(), button = document.createElement("button");
+   button.type = "button"; button.className = "memberBtn";
+   const name = document.createElement("strong"); name.textContent = person.displayName || person.email || "Miembro";
+   const email = document.createElement("small"); email.textContent = person.email || "";
+   button.append(name,email); button.onclick = () => openPrivateConversation(doc.id, person.displayName || person.email || "Conversación");
+   list.appendChild(button);
+  }
+ }, error => showError("chatStatus",error));
+}
+async function openPrivateConversation(otherUid, otherName) {
+ const user = auth.currentUser;
+ if (!user || !otherUid || otherUid === user.uid) return;
+ const members = [user.uid,otherUid].sort();
+ const conversationId = members.join("__");
+ $("chatStatus").textContent = "Abriendo conversación privada...";
+ try {
+  const ref = db.collection("conversations").doc(conversationId);
+  const existing = await ref.get();
+  if (!existing.exists) await ref.set({members,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+  activeConversationId = conversationId; activeConversationName = otherName;
+  $("chatTitle").textContent = "💬 " + otherName;
+  $("dmPanel").style.display = "none"; $("messages").style.display = "block";
+  $("chatStatus").textContent = "Conversación privada con " + otherName;
+  loadMessages();
+ } catch(error) { showError("chatStatus",error); }
+}
+$("showGroup").onclick = () => {
+ activeConversationId = null; activeConversationName = null;
+ $("chatTitle").textContent = "👨‍👩‍👧‍👦 Familia klk";
+ $("dmPanel").style.display = "none"; $("messages").style.display = "block";
+ $("chatStatus").textContent = "Chat familiar grupal";
+ loadMessages();
+};
+$("showPeople").onclick = () => {
+ if (unsubscribe) { unsubscribe(); unsubscribe = null; }
+ $("messages").style.display = "none"; $("dmPanel").style.display = "block";
+ $("chatStatus").textContent = "Selecciona un miembro para conversar en privado.";
+};
+async function getMediaUrl(path, conversationId = null) {
  if (!path) return "";
  const cached = mediaUrlCache.get(path);
  if (cached && cached.expiresAt > Date.now() + 60000) return cached.url;
@@ -178,7 +249,7 @@ async function getMediaUrl(path) {
  const response = await fetch(SUPABASE_URL + "/functions/v1/media", {
   method: "POST",
   headers: { "Content-Type": "application/json", "apikey": SUPABASE_PUBLISHABLE_KEY, "Authorization": "Bearer " + idToken },
-  body: JSON.stringify({ action: "create-download-url", path })
+  body: JSON.stringify({ action: "create-download-url", path, ...(conversationId ? {conversationId} : {}) })
  });
  const result = await response.json().catch(() => ({}));
  if (!response.ok || !result.signedUrl) throw new Error(result.error || "No se pudo abrir el archivo multimedia.");
@@ -188,7 +259,7 @@ async function getMediaUrl(path) {
 function loadMessages() {
  if (unsubscribe) unsubscribe();
  $("messages").textContent = "Cargando mensajes...";
- unsubscribe = db.collection("messages").orderBy("createdAt").limit(100).onSnapshot(async snapshot => {
+ unsubscribe = messagesCollection().orderBy("createdAt").limit(100).onSnapshot(async snapshot => {
   $("messages").innerHTML = "";
   if (snapshot.empty) { $("messages").textContent = "Todavía no hay mensajes. ¡Envía el primero!"; return; }
   for (const doc of snapshot.docs) {
@@ -198,7 +269,7 @@ function loadMessages() {
    if ((data.type === "image" || data.type === "audio") && (data.storagePath || data.mediaUrl)) {
     const placeholder = document.createElement("p"); placeholder.textContent = "Cargando archivo..."; item.appendChild(placeholder); $("messages").appendChild(item);
     try {
-     const url = data.storagePath ? await getMediaUrl(data.storagePath) : data.mediaUrl; placeholder.remove();
+     const url = data.storagePath ? await getMediaUrl(data.storagePath, data.conversationId || null) : data.mediaUrl; placeholder.remove();
      if (data.type === "image") { const img = document.createElement("img"); img.src = url; img.alt = "Foto compartida"; img.loading = "lazy"; item.appendChild(img); }
      else { const audio = document.createElement("audio"); audio.controls = true; audio.preload = "metadata"; audio.src = url; item.appendChild(audio); }
     } catch(error) { placeholder.textContent = "No se pudo cargar: " + error.message; }
@@ -212,7 +283,7 @@ $("send").onclick = async () => {
  if (!text || !user || sending) return;
  sending = true; $("send").disabled = true; $("chatStatus").textContent = "";
  try {
-  await db.collection("messages").add({type:"text", text, email:user.email || "", uid:user.uid, createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+  await messagesCollection().add({type:"text", text, email:user.email || "", uid:user.uid, createdAt:firebase.firestore.FieldValue.serverTimestamp()});
   $("message").value = "";
  } catch(error) { showError("chatStatus", error); }
  finally { sending = false; $("send").disabled = false; }
@@ -268,15 +339,15 @@ async function uploadMedia(file, type, durationSeconds = null) {
   const response = await fetch(SUPABASE_URL + "/functions/v1/media", {
    method: "POST",
    headers: { "Content-Type": "application/json", "apikey": SUPABASE_PUBLISHABLE_KEY, "Authorization": "Bearer " + idToken },
-   body: JSON.stringify({ action: "create-upload", type, size: uploadFile.size, mimeType })
+   body: JSON.stringify({ action: "create-upload", type, size: uploadFile.size, mimeType, ...(activeConversationId ? {conversationId:activeConversationId} : {}) })
   });
   const signed = await response.json().catch(() => ({}));
   if (!response.ok || !signed.path || !signed.token) throw new Error(signed.error || "No se pudo preparar la carga en Supabase.");
   $("chatStatus").textContent = type === "image" ? "Subiendo foto optimizada..." : "Subiendo archivo...";
   const { error: uploadError } = await getSupabaseClient().storage.from("Chat-media").uploadToSignedUrl(signed.path, signed.token, uploadFile, { contentType: mimeType });
   if (uploadError) throw uploadError;
-  await db.collection("messages").add({
-   type, storagePath: signed.path, mimeType, fileName: uploadFile.name || (type === "image" ? "foto" : "nota-de-voz"),
+  await messagesCollection().add({
+   type, storagePath: signed.path, ...(activeConversationId ? {conversationId:activeConversationId} : {}), mimeType, fileName: uploadFile.name || (type === "image" ? "foto" : "nota-de-voz"),
    size: uploadFile.size, ...(durationSeconds === null ? {} : {duration:durationSeconds}),
    email:user.email || "", uid:user.uid, createdAt:firebase.firestore.FieldValue.serverTimestamp()
   });
