@@ -40,6 +40,14 @@ button{background:#075e54;color:white;border:0;font-weight:700;cursor:pointer}bu
 #dmPanel{display:none;background:#fff;padding:12px;max-height:55vh;overflow:auto}
 .memberBtn{display:block;width:100%;text-align:left;background:#f4f7f6;color:#17211e;border-radius:10px;margin:6px 0;padding:13px}
 .memberBtn small{display:block;color:#68736f;font-weight:400;margin-top:4px}
+
+/* Ajustes y notificaciones klk */
+.settingsToggle{width:auto;margin:0 0 0 auto;padding:9px 14px;background:#fff;color:#075e54;border-radius:20px;font-size:14px}
+#settingsPanel{display:none;background:#fff;padding:16px;border-top:1px solid #dce4e1}
+#settingsPanel h3{margin:4px 0 12px;color:#075e54}
+.settingRow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid #edf0ef;font-size:14px}
+.settingRow input[type=checkbox]{width:22px;height:22px;margin:0;accent-color:#075e54}
+.settingRow select{width:auto;max-width:145px;margin:0;padding:8px;border-radius:10px;border:1px solid #d6dce0;background:#fff}
 </style>
 </head>
 <body>
@@ -59,7 +67,7 @@ button{background:#075e54;color:white;border:0;font-weight:700;cursor:pointer}bu
 <p class="hint">Necesitas conexión a internet para iniciar sesión y enviar mensajes.</p>
 </section>
 <section id="chat" class="card">
-<div class="chatTop"><h2 id="chatTitle">👨‍👩‍👧‍👦 Familia klk</h2><p id="who" class="muted"></p></div>
+<div class="chatTop"><div style="display:flex;align-items:center;gap:8px"><h2 id="chatTitle" style="flex:1">👨‍👩‍👧‍👦 Familia klk</h2><button id="settingsToggle" class="settingsToggle" type="button">⚙️ Ajustes</button></div><p id="who" class="muted"></p></div>
 <div id="chatNav"><button id="showGroup" type="button">👨‍👩‍👧‍👦 Chat familiar</button><button id="showPeople" type="button" class="secondary">💬 Conversaciones privadas</button></div>
 <div id="dmPanel"><p class="hint">Elige un miembro de la familia para abrir una conversación privada.</p><div id="peopleList">Cargando miembros...</div></div>
 <div id="messages" aria-live="polite"><p class="muted">Cargando mensajes...</p></div>
@@ -76,6 +84,17 @@ button{background:#075e54;color:white;border:0;font-weight:700;cursor:pointer}bu
 <input id="galleryInput" type="file" accept="image/*" hidden>
 <input id="cameraInput" type="file" accept="image/*" capture="environment" hidden>
 <p id="recordStatus" class="hint" role="status" aria-live="polite"></p>
+<section id="settingsPanel" aria-label="Configuración de klk">
+ <h3>⚙️ Configuración de klk</h3>
+ <div class="settingRow"><span>Sonido de mensajes</span><input id="settingSound" type="checkbox" checked></div>
+ <div class="settingRow"><span>Vibración</span><input id="settingVibration" type="checkbox" checked></div>
+ <div class="settingRow"><span>Notificaciones del teléfono</span><button id="enableNotifications" type="button" style="width:auto;margin:0;padding:9px 12px">Activar</button></div>
+ <div class="settingRow"><span>Vista previa de mensajes</span><input id="settingPreview" type="checkbox" checked></div>
+ <div class="settingRow"><span>Tamaño del texto</span><select id="settingTextSize"><option value="15">Normal</option><option value="17">Grande</option><option value="19">Muy grande</option></select></div>
+ <div class="settingRow"><span>Tema</span><select id="settingTheme"><option value="light">Claro</option><option value="dark">Oscuro</option></select></div>
+ <p id="settingsStatus" class="hint" role="status" aria-live="polite">Los cambios se guardan en este teléfono.</p>
+ <button id="closeSettings" class="secondary" type="button">Cerrar ajustes</button>
+</section>
 <div class="chatFoot"><p id="chatStatus" class="hint" role="status" aria-live="polite"></p><button id="logout" class="secondary" type="button">Cerrar sesión</button></div>
 </section>
 </main>
@@ -175,6 +194,7 @@ auth && auth.onAuthStateChanged(async user => {
  $("login").style.display = user ? "none" : "block";
  $("chat").style.display = user ? "block" : "none";
  if (user) {
+  window.klkSetCurrentUid && window.klkSetCurrentUid(user.uid);
   $("who").textContent = "Conectado: " + (user.email || "usuario");
   activeConversationId = null; activeConversationName = null;
   $("chatTitle").textContent = "👨‍👩‍👧‍👦 Familia klk"; $("dmPanel").style.display = "none"; $("messages").style.display = "block";
@@ -183,6 +203,7 @@ auth && auth.onAuthStateChanged(async user => {
    loadPeople(); loadMessages();
   } catch(error) { showError("chatStatus",error); }
  } else {
+  window.klkSetCurrentUid && window.klkSetCurrentUid(null);
   if (unsubscribe) unsubscribe(); unsubscribe = null;
   if (peopleUnsubscribe) peopleUnsubscribe(); peopleUnsubscribe = null;
   activeConversationId = null; $("messages").innerHTML = "";
@@ -260,9 +281,13 @@ async function getMediaUrl(path, conversationId = null) {
  return result.signedUrl;
 }
 function loadMessages() {
+ window.klkNotificationsReady = false;
  if (unsubscribe) unsubscribe();
  $("messages").textContent = "Cargando mensajes...";
  unsubscribe = messagesCollection().orderBy("createdAt").limit(100).onSnapshot(async snapshot => {
+  const changes = snapshot.docChanges();
+  if (window.klkNotificationsReady) changes.filter(change => change.type === "added").forEach(change => window.klkNotifyIncoming && window.klkNotifyIncoming(change.doc.data(), change.doc.id));
+  else window.klkNotificationsReady = true;
   $("messages").innerHTML = "";
   if (snapshot.empty) { $("messages").textContent = "Todavía no hay mensajes. ¡Envía el primero!"; return; }
   for (const doc of snapshot.docs) {
@@ -447,4 +472,26 @@ if (window.matchMedia("(display-mode: standalone)").matches || window.navigator.
  $("installApp").hidden = true;
 }
 </script>
-</body></html>
+<script>
+(function(){
+ const $=id=>document.getElementById(id), defaults={sound:true,vibration:true,preview:true,textSize:"15",theme:"light"};
+ let prefs={...defaults};try{prefs={...defaults,...JSON.parse(localStorage.getItem("klk-settings")||"{}")};}catch(e){}
+ function apply(){
+  $("settingSound").checked=!!prefs.sound;$("settingVibration").checked=!!prefs.vibration;$("settingPreview").checked=!!prefs.preview;
+  $("settingTextSize").value=prefs.textSize;$("settingTheme").value=prefs.theme;
+  document.querySelectorAll(".msg p").forEach(el=>el.style.fontSize=prefs.textSize+"px");
+  document.body.style.background=prefs.theme==="dark"?"#101b20":"#efeae2";document.body.style.color=prefs.theme==="dark"?"#e9edef":"#111b21";
+  document.querySelectorAll(".card,#settingsPanel").forEach(el=>{el.style.background=prefs.theme==="dark"?"#1f2c33":"";el.style.color=prefs.theme==="dark"?"#e9edef":"";});
+ }
+ function save(){localStorage.setItem("klk-settings",JSON.stringify(prefs));apply();}
+ ["settingSound","settingVibration","settingPreview"].forEach(id=>$(id).addEventListener("change",()=>{prefs[id.slice(7).toLowerCase()]=$(id).checked;save();}));
+ $("settingTextSize").addEventListener("change",e=>{prefs.textSize=e.target.value;save();});$("settingTheme").addEventListener("change",e=>{prefs.theme=e.target.value;save();});
+ $("settingsToggle").addEventListener("click",()=>{$("settingsPanel").style.display=$("settingsPanel").style.display==="block"?"none":"block";});
+ $("closeSettings").addEventListener("click",()=>{$("settingsPanel").style.display="none";});
+ function permissionButton(){ $("enableNotifications").textContent=("Notification" in window && Notification.permission==="granted")?"Activadas":"Activar";}
+ $("enableNotifications").addEventListener("click",async()=>{if(!("Notification" in window)){$("settingsStatus").textContent="Este dispositivo no admite notificaciones web.";return;}try{const p=await Notification.requestPermission();$("settingsStatus").textContent=p==="granted"?"Permiso concedido. Para avisos con la app cerrada falta activar el envío push de Firebase.":"Permiso no concedido; puedes cambiarlo en los ajustes del teléfono.";permissionButton();}catch(e){$("settingsStatus").textContent="No se pudo solicitar el permiso."; }});
+ function tone(){if(!prefs.sound)return;try{const C=window.AudioContext||window.webkitAudioContext;if(!C)return;const x=new C(),o=x.createOscillator(),g=x.createGain();o.frequency.value=880;g.gain.setValueAtTime(.0001,x.currentTime);g.gain.exponentialRampToValueAtTime(.1,x.currentTime+.02);g.gain.exponentialRampToValueAtTime(.0001,x.currentTime+.2);o.connect(g);g.connect(x.destination);o.start();o.stop(x.currentTime+.22);o.onended=()=>x.close();}catch(e){}}
+ window.klkNotifyIncoming=(data,id)=>{if(!data||data.uid===window.klkCurrentUid)return;tone();if(prefs.vibration&&navigator.vibrate)navigator.vibrate([100,60,100]);if("Notification"in window&&Notification.permission==="granted"&&document.visibilityState!=="visible"){const body=prefs.preview?(data.text||(data.type==="image"?"📷 Foto":data.type==="audio"?"🎙️ Nota de voz":"Nuevo mensaje")):"Tienes un mensaje nuevo";try{new Notification("klk · "+(data.email||"Mensaje nuevo"),{body,tag:"klk-"+id});}catch(e){}}};
+ window.klkSetCurrentUid=uid=>{window.klkCurrentUid=uid||null;};apply();permissionButton();
+})();
+</script></body></html>
