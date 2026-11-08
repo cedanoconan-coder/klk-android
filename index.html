@@ -567,11 +567,16 @@ function syncConversationListeners(){
  for(const [id,entry] of conversationSubscriptions){if(!wanted.has(id)){if(entry.messages)entry.messages();if(entry.conversation)entry.conversation();conversationSubscriptions.delete(id);conversationCache.delete(id);}}
  for(const [uid,person] of accepted){
   const id=[user.uid,uid].sort().join("__");if(conversationSubscriptions.has(id))continue;
-  const entry={conversation:null,messages:null};conversationSubscriptions.set(id,entry);
+  const entry={conversation:null,messages:null,lastMessageId:null,messagesInitialized:false};conversationSubscriptions.set(id,entry);
   entry.conversation=db.collection("conversations").doc(id).onSnapshot(snapshot=>{
    if(!snapshot.exists){if(entry.messages){entry.messages();entry.messages=null;}conversationCache.delete(id);renderConversations();return;}
    if(!entry.messages){entry.messages=db.collection("conversations").doc(id).collection("messages").orderBy("createdAt","desc").limit(1).onSnapshot(messages=>{
-    const last=messages.empty?null:messages.docs[0].data();
+    const lastDoc=messages.empty?null:messages.docs[0];
+    const last=lastDoc?lastDoc.data():null;
+    if(entry.messagesInitialized&&lastDoc&&lastDoc.id!==entry.lastMessageId&&last&&last.uid!==user.uid){
+     if(window.klkPlayNotificationSound)window.klkPlayNotificationSound();
+    }
+    entry.messagesInitialized=true;entry.lastMessageId=lastDoc?lastDoc.id:null;
     const latestPerson=peopleCache.get(uid)||person;
     conversationCache.set(id,{uid,name:latestPerson.displayName||latestPerson.email||"Contacto",photoUrl:null,preview:last?(last.type==="image"?"📷 Foto":last.type==="audio"?"🎙️ Nota de voz":last.text||"Mensaje"):"Todavía no hay mensajes",time:last?formatConversationTime(last.createdAt):"",sortTime:last&&last.createdAt&&last.createdAt.toMillis?last.createdAt.toMillis():0});
     const cached=conversationCache.get(id);
@@ -932,7 +937,7 @@ if (window.matchMedia("(display-mode: standalone)").matches || window.navigator.
  window.klkStartIncomingCallSound=startCallRingtone;
  window.klkStopIncomingCallSound=stopCallRingtone;
  function tone(){playChime();}
- window.klkNotifyIncoming=(data,id)=>{if(!data||data.uid===window.klkCurrentUid)return;tone();if(prefs.vibration&&navigator.vibrate)navigator.vibrate([100,60,100]);if("Notification"in window&&Notification.permission==="granted"&&document.visibilityState!=="visible"){const body=prefs.preview?(data.text||(data.type==="image"?"📷 Foto":data.type==="audio"?"🎙️ Nota de voz":"Nuevo mensaje")):"Tienes un mensaje nuevo";try{new Notification("klk · "+(data.email||"Mensaje nuevo"),{body,tag:"klk-"+id});}catch(e){}}};
+ window.klkNotifyIncoming=(data,id)=>{if(!data||data.uid===window.klkCurrentUid)return;if(prefs.vibration&&navigator.vibrate)navigator.vibrate([100,60,100]);if("Notification"in window&&Notification.permission==="granted"&&document.visibilityState!=="visible"){const body=prefs.preview?(data.text||(data.type==="image"?"📷 Foto":data.type==="audio"?"🎙️ Nota de voz":"Nuevo mensaje")):"Tienes un mensaje nuevo";try{new Notification("klk · "+(data.email||"Mensaje nuevo"),{body,tag:"klk-"+id});}catch(e){}}};
  window.klkSetCurrentUid=uid=>{window.klkCurrentUid=uid||null;};apply();permissionButton();
 })();
 
