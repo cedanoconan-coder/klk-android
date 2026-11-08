@@ -70,6 +70,7 @@ jobs:
           for script in /tmp/klk-inline-*.js; do
             node --check "$script"
           done
+          node --check calls.js
 
       - name: Generar proyecto Android
         run: npx cap add android
