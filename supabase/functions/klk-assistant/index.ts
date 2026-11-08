@@ -4,7 +4,7 @@ const PROJECT_ID = "klk-familia";
 const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY") ?? "";
 const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY") ?? "";
 const AI_PROVIDER = (Deno.env.get("AI_PROVIDER") ?? (GEMINI_API_KEY ? "gemini" : "openai")).toLowerCase();
-const GEMINI_MODEL = Deno.env.get("GEMINI_MODEL") ?? "gemini-3.8-flash";
+const GEMINI_MODEL = Deno.env.get("GEMINI_MODEL") ?? "gemini-3.5-flash-lite";
 const OPENAI_MODEL = Deno.env.get("OPENAI_MODEL") ?? "gpt-4.1-mini";
 const providerKey = AI_PROVIDER === "gemini" ? GEMINI_API_KEY : AI_PROVIDER === "openai" ? OPENAI_API_KEY : "";
 const activeModel = AI_PROVIDER === "gemini" ? GEMINI_MODEL : OPENAI_MODEL;
