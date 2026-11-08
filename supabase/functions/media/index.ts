@@ -135,10 +135,10 @@ Deno.serve(async (request) => {
     } else if (path.startsWith("avatars/")) {
       const avatarPrefix = `avatars/${uid}/`;
       const avatarName = path.slice(avatarPrefix.length);
-      if (!path.startsWith(avatarPrefix) || !/^[A-Za-z0-9-]{16,64}\\.[a-z0-9]{1,8}$/i.test(avatarName)) {
+      if (!path.startsWith(avatarPrefix) || !/^[A-Za-z0-9-]{16,64}\.[a-z0-9]{1,8}$/i.test(avatarName)) {
         return reply(403, { error: "No tienes permiso para acceder a esta foto de perfil." });
       }
-    } else if (!/^[^/]{1,128}\\/[A-Za-z0-9-]{16,64}\\.[a-z0-9]{1,8}$/i.test(path)) {
+    } else if (!/^[^/]{1,128}\/[A-Za-z0-9-]{16,64}\.[a-z0-9]{1,8}$/i.test(path)) {
       return reply(403, { error: "Ruta de archivo no válida o sin permiso." });
     }
     const { data, error } = await admin.storage.from(BUCKET).createSignedUrl(path, 60 * 60);
