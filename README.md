@@ -1,6 +1,6 @@
-# klk — Chat familiar
+# klk — Mensajería privada individual
 
-Aplicación web instalable (PWA) para iniciar sesión y conversar en un chat familiar.
+Aplicación web instalable (PWA) para iniciar sesión y mantener conversaciones privadas individuales entre dos cuentas.
 
 ## Tecnologías
 - HTML, CSS y JavaScript
@@ -28,7 +28,7 @@ Aplicación web instalable (PWA) para iniciar sesión y conversar en un chat fam
 6. Esperar a que el flujo **Publicar klk en GitHub Pages** termine correctamente.
 
 ## Seguridad
-Las reglas incluidas requieren que el usuario haya iniciado sesión y validan que cada mensaje pertenezca al usuario autenticado. Esta primera versión permite que cualquier cuenta autenticada del proyecto lea el chat; para un chat estrictamente privado entre familiares se debe añadir una lista administrada de miembros autorizados antes de invitar a otras personas.
+Las reglas incluidas requieren autenticación y limitan la lectura y escritura de cada conversación a sus dos miembros. Los perfiles son visibles para usuarios autenticados para poder descubrir contactos. Las consultas de llamadas entrantes se limitan al destinatario; el emisor accede a su llamada mediante el documento individual.
 
 ## Instalar en Android
 Cuando GitHub Pages publique el sitio por HTTPS, abrir la dirección en Chrome para Android y usar el menú **⋮ → Instalar aplicación** o **Añadir a pantalla de inicio**, según la versión de Chrome.
