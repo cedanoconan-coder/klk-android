@@ -68,7 +68,7 @@ main{scrollbar-gutter:stable}
 <main>
 <button id="installApp" class="secondary" type="button" hidden>Instalar klk en este teléfono</button>
 <section id="login" class="card">
-<h2>Bienvenido a klk</h2><p>Entra o crea tu cuenta familiar.</p>
+<h2>Bienvenido a klk</h2><p>Entra o crea tu cuenta para enviar mensajes privados.</p>
 <form id="authForm">
 <input id="email" type="email" autocomplete="email" placeholder="Correo electrónico" required>
 <input id="password" type="password" autocomplete="current-password" placeholder="Contraseña (mínimo 6 caracteres)" minlength="6" required>
@@ -80,9 +80,8 @@ main{scrollbar-gutter:stable}
 <p class="hint">Necesitas conexión a internet para iniciar sesión y enviar mensajes.</p>
 </section>
 <section id="chat" class="card">
-<div class="chatTop"><div style="display:flex;align-items:center;gap:8px"><h2 id="chatTitle" style="flex:1">👨‍👩‍👧‍👦 Familia klk</h2><button id="settingsToggle" class="settingsToggle" type="button">⚙️ Ajustes</button></div><p id="who" class="muted"></p></div>
-<div id="chatNav"><button id="showGroup" type="button">👨‍👩‍👧‍👦 Chat familiar</button><button id="showPeople" type="button" class="secondary">💬 Conversaciones privadas</button></div>
-<div id="dmPanel"><p class="hint">Elige un miembro de la familia para abrir una conversación privada.</p><div id="peopleList">Cargando miembros...</div></div>
+<div class="chatTop"><div style="display:flex;align-items:center;gap:8px"><h2 id="chatTitle" style="flex:1">💬 Mensajes privados</h2><button id="settingsToggle" class="settingsToggle" type="button">⚙️ Ajustes</button></div><p id="who" class="muted"></p></div>
+<div id="dmPanel"><h3>💬 Mensajes individuales</h3><p class="hint">Selecciona una persona para iniciar una conversación privada.</p><div id="peopleList">Cargando contactos...</div></div>
 <div id="messages" aria-live="polite"><p class="muted">Cargando mensajes...</p></div>
 <div class="composer">
  <button id="pickPhoto" class="iconBtn" type="button" aria-label="Elegir foto" title="Elegir foto">＋</button>
@@ -216,13 +215,14 @@ auth && auth.onAuthStateChanged(async user => {
   window.klkSetCurrentUid && window.klkSetCurrentUid(user.uid);
   $("who").textContent = "Conectado: " + (user.email || "usuario");
   activeConversationId = null; activeConversationName = null;
-  $("chatTitle").textContent = "👨‍👩‍👧‍👦 Familia klk"; $("dmPanel").style.display = "none"; $("messages").style.display = "block";
+  $("chatTitle").textContent = "💬 Mensajes privados"; $("dmPanel").style.display = "block"; $("messages").style.display = "none";
+  document.querySelector(".composer").style.display = "none"; $("mediaActions").style.display = "none"; $("recordStatus").style.display = "none";
   try {
    const userRef = db.collection("users").doc(user.uid);
    const userSnap = await userRef.get(), profile = userSnap.exists ? userSnap.data() : {};
    await userRef.set({uid:user.uid,email:user.email || "",displayName:user.displayName || profile.displayName || (user.email || "Miembro").split("@")[0],updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
    if (profile.photoPath) getMediaUrl(profile.photoPath).then(url => { if (url) $("profilePreview").src = url; }).catch(error => console.warn("Foto propia:", error));
-   loadPeople(); loadMessages();
+   loadPeople();
   } catch(error) { showError("chatStatus",error); }
  } else {
   window.klkSetCurrentUid && window.klkSetCurrentUid(null);
@@ -232,9 +232,7 @@ auth && auth.onAuthStateChanged(async user => {
  }
 });
 function messagesCollection() {
- return activeConversationId
-  ? db.collection("conversations").doc(activeConversationId).collection("messages")
-  : db.collection("messages");
+ return activeConversationId ? db.collection("conversations").doc(activeConversationId).collection("messages") : null;
 }
 function loadPeople() {
  if (peopleUnsubscribe) peopleUnsubscribe();
@@ -277,19 +275,12 @@ async function openPrivateConversation(otherUid, otherName) {
   loadMessages();
  } catch(error) { showError("chatStatus",error); }
 }
-$("showGroup").onclick = () => {
- activeConversationId = null; activeConversationName = null;
- $("chatTitle").textContent = "👨‍👩‍👧‍👦 Familia klk";
- $("dmPanel").style.display = "none"; $("messages").style.display = "block";
- document.querySelector(".composer").style.display = "flex"; $("mediaActions").style.display = "flex"; $("recordStatus").style.display = "block";
- $("chatStatus").textContent = "Chat familiar grupal";
- loadMessages();
-};
 $("showPeople").onclick = () => {
  if (unsubscribe) { unsubscribe(); unsubscribe = null; }
- $("messages").style.display = "none"; $("dmPanel").style.display = "block";
+ activeConversationId = null; activeConversationName = null;
+ $("messages").style.display = "none"; $("dmPanel").style.display = "block"; $("chatTitle").textContent = "💬 Mensajes privados";
  document.querySelector(".composer").style.display = "none"; $("mediaActions").style.display = "none"; $("recordStatus").style.display = "none";
- $("chatStatus").textContent = "Selecciona un miembro para conversar en privado.";
+ $("chatStatus").textContent = "Selecciona una persona para conversar en privado.";
 };
 async function getMediaUrl(path, conversationId = null) {
  if (!path) return "";
@@ -309,6 +300,7 @@ async function getMediaUrl(path, conversationId = null) {
  return result.signedUrl;
 }
 function loadMessages() {
+ if (!activeConversationId) return;
  window.klkNotificationsReady = false;
  if (unsubscribe) unsubscribe();
  $("messages").textContent = "Cargando mensajes...";
@@ -337,6 +329,7 @@ function loadMessages() {
 $("send").onclick = async () => {
  const text = $("message").value.trim(), user = auth && auth.currentUser;
  if (!text || !user || sending) return;
+ if (!activeConversationId) { $("chatStatus").textContent = "Abre una conversación individual antes de enviar mensajes."; return; }
  sending = true; $("send").disabled = true; $("chatStatus").textContent = "";
  try {
   await messagesCollection().add({type:"text", text, email:user.email || "", uid:user.uid, createdAt:firebase.firestore.FieldValue.serverTimestamp()});
@@ -381,6 +374,7 @@ async function compressImage(file) {
 async function uploadMedia(file, type, durationSeconds = null) {
  const user = auth && auth.currentUser;
  if (!user || !file || sending) return;
+ if (!activeConversationId) { $("chatStatus").textContent = "Abre una conversación individual antes de enviar archivos."; return; }
  if (type === "image" && !file.type.startsWith("image/")) { $("chatStatus").textContent = "Selecciona un archivo de imagen."; return; }
  if (type === "audio" && !file.type.startsWith("audio/")) { $("chatStatus").textContent = "No se pudo reconocer el formato del audio."; return; }
  sending = true;
