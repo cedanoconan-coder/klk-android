@@ -188,6 +188,9 @@ html[data-density="comfortable"] .chatRow,html[data-density="comfortable"] #peop
 .aiActions button{flex:1;min-width:140px;margin:4px 0}
 #assistantStatus{min-height:20px;overflow-wrap:anywhere}
 
+
+/* Panel de perfil klk, inspirado en una experiencia de mensajería */
+#homeProfilePanel{display:none;margin:0 12px 18px;padding:18px;background:var(--klk-surface);border-radius:18px;border:1px solid var(--klk-border,#e2e8e5)}.profileHero{display:flex;align-items:center;gap:14px;padding:10px 4px 18px;border-bottom:1px solid #e2e8e5}.profileHero img{width:76px;height:76px;border-radius:50%;object-fit:cover;background:#edf2ef}.profileHero strong{display:block;font-size:19px}.profileHero small{display:block;color:#66736f;margin-top:5px}.profileSection{padding:14px 0;border-bottom:1px solid #e2e8e5}.profileSection h3{font-size:14px;color:var(--klk-accent);margin:0 0 10px;text-transform:uppercase;letter-spacing:.5px}.profileField{display:block;margin:10px 0}.profileField span{display:block;font-size:12px;color:#66736f;margin-bottom:5px}.profileField input,.profileField textarea{width:100%;box-sizing:border-box;padding:12px;border:1px solid #ccd7d2;border-radius:10px;background:var(--klk-surface);color:var(--klk-text)}.profileField textarea{min-height:76px;resize:vertical}.profileAction{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:13px 4px;border:0;border-bottom:1px solid #e2e8e5;background:transparent;color:var(--klk-text);text-align:left}.profileAction small{display:block;color:#66736f;margin-top:3px}.profileButtons{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.profileButtons button{flex:1;min-width:120px}
 </style>
 </head>
 <body>
@@ -220,7 +223,9 @@ html[data-density="comfortable"] .chatRow,html[data-density="comfortable"] #peop
   <button id="shareInvite" class="secondary" type="button" hidden>Compartir invitación</button>
   <p id="inviteStatus" class="hint" role="status" aria-live="polite"></p>
  </section>
- <div class="homeSearch"><input id="chatSearch" type="search" placeholder="Buscar..." aria-label="Buscar conversaciones"></div>
+ 
+<section id="homeProfilePanel" aria-label="Mi perfil y configuración"><div style="display:flex;align-items:center;gap:10px;margin-bottom:12px"><button id="profileClose" class="secondary" type="button" style="width:auto;margin:0">‹ Volver</button><h2 style="margin:0;font-size:20px">Mi perfil</h2></div><div class="profileHero"><img id="profilePanelPhoto" alt="Foto de perfil"><div><strong id="profilePanelName">Mi perfil</strong><small id="profilePanelEmail">Cuenta klk</small><button id="profileChangePhoto" class="secondary" type="button" style="width:auto;margin:8px 0 0;padding:8px 12px">Cambiar foto</button></div></div><div class="profileSection"><h3>Información personal</h3><label class="profileField"><span>Nombre</span><input id="profileNameInput" maxlength="60" autocomplete="name" placeholder="Tu nombre"></label><label class="profileField"><span>Info. / Acerca de ti</span><textarea id="profileAboutInput" maxlength="139" placeholder="¡Hola! Estoy usando klk."></textarea></label><div class="profileButtons"><button id="profileSave" type="button">Guardar cambios</button></div><p id="profileStatus" class="hint" role="status" aria-live="polite"></p></div><div class="profileSection"><h3>Cuenta y seguridad</h3><button id="profilePassword" class="profileAction" type="button"><span>🔐 Cambiar contraseña<small>Recibirás un enlace seguro en tu correo</small></span><b>›</b></button><button id="profileEmail" class="profileAction" type="button"><span>✉️ Correo de la cuenta<small id="profileEmailValue">—</small></span><b>›</b></button></div><div class="profileSection"><h3>Privacidad y notificaciones</h3><button id="profilePrivacyInfo" class="profileAction" type="button"><span>🛡️ Privacidad<small>Información sobre los controles disponibles</small></span><b>›</b></button><button id="profileOpenSettings" class="profileAction" type="button"><span>🔔 Notificaciones y apariencia<small>Sonidos, vibración, tema, tamaño y fondo</small></span><b>›</b></button><p id="profilePrivacyStatus" class="hint" hidden>Los controles avanzados de privacidad todavía no están activos en klk; no mostraremos opciones que no se apliquen realmente.</p></div><div class="profileSection"><h3>Sesión</h3><button id="profileLogout" class="profileAction" type="button"><span>↪️ Cerrar sesión<small>Salir de esta cuenta en este teléfono</small></span><b>›</b></button></div></section>
+<div class="homeSearch"><input id="chatSearch" type="search" placeholder="Buscar..." aria-label="Buscar conversaciones"></div>
  <p id="homeStatus" class="hint" role="status" aria-live="polite" style="padding:0 20px;min-height:18px"></p>
  <div class="homeFilters" role="group" aria-label="Secciones de klk">
   <button type="button" class="active" data-filter="chats">Chats</button><button type="button" data-filter="requests">Solicitudes</button><button type="button" data-filter="people">Personas</button>
@@ -502,7 +507,15 @@ function loadMyProfile() {
  const user = auth && auth.currentUser;
  if (!user) return;
  myProfileUnsubscribe = db.collection("users").doc(user.uid).onSnapshot(async snapshot => {
-  const path = snapshot.exists ? snapshot.data().photoPath : "";
+  const profileData = snapshot.exists ? snapshot.data() : {};
+  const path = profileData.photoPath || "";
+  const profileName = profileData.displayName || user.displayName || (user.email || "Miembro").split("@")[0];
+  if ($("profilePanelName")) $("profilePanelName").textContent = profileName;
+  if ($("profileNameInput") && document.activeElement !== $("profileNameInput")) $("profileNameInput").value = profileName;
+  if ($("profilePanelEmail")) $("profilePanelEmail").textContent = user.email || "Cuenta klk";
+  if ($("profileEmailValue")) $("profileEmailValue").textContent = user.email || "No disponible";
+  if ($("profilePanelPhoto")) { const panelPhoto=$("profilePanelPhoto"); if ($("myProfilePhoto").src) panelPhoto.src=$("myProfilePhoto").src; else panelPhoto.removeAttribute("src"); }
+
   const image = $("myProfilePhoto");
   if (!image) return;
   if (!path) { image.removeAttribute("src"); image.alt = "Sin foto de perfil"; return; }
@@ -542,7 +555,14 @@ async function uploadProfilePhoto(file) {
   $("homeStatus").textContent = "No se pudo guardar la foto: " + (error.message || "Error desconocido");
  } finally { button.disabled = false; }
 }
-$("profileButton").addEventListener("click", () => $("profilePhotoInput").click());
+$("profileButton").addEventListener("click", openKlkProfilePanel);
+function openKlkProfilePanel(){const panel=$("homeProfilePanel");if(!panel)return;panel.style.display="block";["homeSearch","homeStatus"].forEach(id=>{const el=$(id);if(el)el.style.display="none";});document.querySelectorAll(".homeFilters,#chatsPanel,#requestsPanel,#peopleList,#callsPanel,#updatesPanel,#toolsPanel,#assistantPanel").forEach(el=>el.style.display="none");panel.scrollIntoView({block:"start",behavior:"smooth"});}
+function closeKlkProfilePanel(){const panel=$("homeProfilePanel");if(panel)panel.style.display="none";["homeSearch","homeStatus"].forEach(id=>{const el=$(id);if(el)el.style.display="";});document.querySelectorAll(".homeFilters").forEach(el=>el.style.display="");const active=document.querySelector('.homeFilters button.active');const filter=active?active.dataset.filter:"chats";$("chatsPanel").style.display=filter==="chats"?"block":"none";$("requestsPanel").style.display=filter==="requests"?"block":"none";$("peopleList").style.display=filter==="people"?"block":"none";}
+$("profileClose").addEventListener("click",closeKlkProfilePanel);$("profileChangePhoto").addEventListener("click",()=>$("profilePhotoInput").click());
+$("profileSave").addEventListener("click",async()=>{const user=auth&&auth.currentUser;if(!user)return;const name=$("profileNameInput").value.trim();if(name.length<2){$("profileStatus").textContent="Escribe un nombre de al menos 2 caracteres.";return;}const button=$("profileSave");button.disabled=true;$("profileStatus").textContent="Guardando perfil...";try{await user.updateProfile({displayName:name});await db.collection("users").doc(user.uid).set({uid:user.uid,email:user.email||"",displayName:name,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});$("profilePanelName").textContent=name;$("profileStatus").textContent="Perfil actualizado correctamente.";}catch(error){$("profileStatus").textContent="No se pudo guardar: "+(error.message||"inténtalo de nuevo");}finally{button.disabled=false;}});
+$("profileAboutInput").value=localStorage.getItem("klk-profile-about")||"¡Hola! Estoy usando klk.";$("profileAboutInput").addEventListener("change",()=>{try{localStorage.setItem("klk-profile-about",$("profileAboutInput").value.trim());$("profileStatus").textContent="Tu información se guardó en este teléfono.";}catch(e){$("profileStatus").textContent="No se pudo guardar esta información.";}});
+$("profilePassword").addEventListener("click",async()=>{const user=auth&&auth.currentUser;if(!user||!user.email)return;$("profileStatus").textContent="Enviando enlace de cambio de contraseña...";try{await auth.sendPasswordResetEmail(user.email);$("profileStatus").textContent="Enviamos un enlace seguro a "+user.email+".";}catch(error){$("profileStatus").textContent="No se pudo enviar el correo: "+(error.message||"inténtalo más tarde");}});
+$("profileEmail").addEventListener("click",()=>{$("profileStatus").textContent="El correo de acceso no se puede cambiar desde este panel.";});$("profilePrivacyInfo").addEventListener("click",()=>{$("profilePrivacyStatus").hidden=!$("profilePrivacyStatus").hidden;});$("profileOpenSettings").addEventListener("click",()=>{closeKlkProfilePanel();toggleKlkSettings();$("settingsPanel").scrollIntoView({block:"start",behavior:"smooth"});});$("profileLogout").addEventListener("click",()=>$("logout").click());
 $("profilePhotoInput").addEventListener("change", async event => {
  const file = event.target.files && event.target.files[0];
  if (file) await uploadProfilePhoto(file);
