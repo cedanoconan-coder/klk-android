@@ -23,20 +23,41 @@ service cloud.firestore {
 
     match /users/{userId} {
       allow read: if signedIn();
-      allow create, update: if signedIn()
+
+      allow create: if signedIn()
         && request.auth.uid == userId
         && request.resource.data.keys().hasOnly([
+          'uid', 'email', 'displayName', 'updatedAt', 'photoPath', 'photoUpdatedAt'
+        ])
+        && request.resource.data.keys().hasAll(['uid', 'email', 'displayName', 'updatedAt'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.email == request.auth.token.email
+        && (!('photoPath' in request.resource.data) || request.resource.data.photoPath is string)
+        && (!('photoUpdatedAt' in request.resource.data) || request.resource.data.photoUpdatedAt is timestamp);
+
+      // Permite actualizar el perfil propio sin fallar por campos antiguos
+      // que ya existan en el documento y no estén siendo modificados.
+      allow update: if signedIn()
+        && request.auth.uid == userId
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
           'uid', 'email', 'displayName', 'updatedAt', 'photoPath', 'photoUpdatedAt'
         ])
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.email == request.auth.token.email
         && (!('photoPath' in request.resource.data) || request.resource.data.photoPath is string)
         && (!('photoUpdatedAt' in request.resource.data) || request.resource.data.photoUpdatedAt is timestamp);
+
       allow delete: if false;
     }
 
     match /conversations/{conversationId} {
-      allow read: if isConversationMember(conversationId);
+      // Permite comprobar si una conversación aún no existe; si existe,
+      // solo sus dos miembros pueden leerla.
+      allow get: if signedIn()
+        && (!exists(/databases/$(database)/documents/conversations/$(conversationId))
+          || isConversationMember(conversationId));
+      allow list: if isConversationMember(conversationId);
+
       allow create: if signedIn()
         && request.resource.data.keys().hasOnly(['members', 'createdAt'])
         && request.resource.data.keys().hasAll(['members', 'createdAt'])
