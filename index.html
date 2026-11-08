@@ -82,7 +82,18 @@ main{scrollbar-gutter:stable}
 </section>
 <section id="chat" class="card">
 <div class="chatTop"><div style="display:flex;align-items:center;gap:8px"><h2 id="chatTitle" style="flex:1">💬 Mensajes privados</h2><button id="backToContacts" class="callBtn" type="button" hidden aria-label="Volver a contactos">←</button><button id="audioCallBtn" class="callBtn" type="button" title="Llamada de voz" aria-label="Llamada de voz">📞</button><button id="videoCallBtn" class="callBtn" type="button" title="Videollamada" aria-label="Videollamada">📹</button><button id="settingsToggle" class="settingsToggle" type="button">⚙️ Ajustes</button></div><p id="who" class="muted"></p></div>
-<div id="dmPanel"><h3>💬 Mensajes individuales</h3><p class="hint">Selecciona una persona para iniciar una conversación privada.</p><div id="peopleList">Cargando contactos...</div></div>
+<div id="dmPanel">
+<section id="phoneLinkPanel" class="card" hidden style="margin:0 0 14px;padding:14px;border:1px solid #d6e8e1">
+ <h3>📱 Vincula tu número de teléfono</h3>
+ <p class="hint">Tu cuenta actual se creó con correo. Verifica tu número para poder volver a entrar solo con SMS y conservar tus conversaciones.</p>
+ <input id="linkPhoneNumber" type="tel" inputmode="tel" autocomplete="tel" placeholder="Número internacional (+1809...)" pattern="^\+[1-9][0-9]{7,14}$">
+ <div id="linkRecaptcha"></div>
+ <button id="sendLinkCode" type="button">Enviar código SMS</button>
+ <input id="linkVerificationCode" type="text" inputmode="numeric" autocomplete="one-time-code" placeholder="Código SMS de 6 dígitos" maxlength="6" hidden>
+ <button id="confirmLinkCode" type="button" hidden>Verificar y vincular número</button>
+ <p id="linkStatus" class="hint" role="status" aria-live="polite"></p>
+</section>
+<h3>💬 Mensajes individuales</h3><p class="hint">Selecciona una persona para iniciar una conversación privada.</p><div id="peopleList">Cargando contactos...</div></div>
 <div id="messages" aria-live="polite"><p class="muted">Cargando mensajes...</p></div>
 <div class="composer">
  <button id="pickPhoto" class="iconBtn" type="button" aria-label="Elegir foto" title="Elegir foto">＋</button>
@@ -190,6 +201,7 @@ function showError(target, error) {
  $(target).textContent = (messages[code] || detail || "Ocurrió un error. Inténtalo de nuevo.") + " [ " + code + " ]";
 }
 let confirmationResult = null, recaptchaVerifier = null;
+let linkConfirmationResult = null, linkRecaptchaVerifier = null;
 function setBusy(busy) { $("enter").disabled = busy; }
 try {
  firebase.initializeApp(firebaseConfig);
@@ -229,6 +241,42 @@ $("authForm").addEventListener("submit", async event => {
   }
  } finally { setBusy(false); }
 });
+$("sendLinkCode").addEventListener("click", async () => {
+ const user = auth && auth.currentUser, phone = $("linkPhoneNumber").value.replace(/[\s()-]/g, "");
+ $("linkStatus").textContent = "";
+ if (!user) { $("linkStatus").textContent = "Inicia sesión primero."; return; }
+ if (user.phoneNumber) { $("linkStatus").textContent = "Esta cuenta ya tiene un número verificado."; $("phoneLinkPanel").hidden = true; return; }
+ if (!/^\+[1-9][0-9]{7,14}$/.test(phone)) { $("linkStatus").textContent = "Escribe el número en formato internacional, por ejemplo +18095551234."; return; }
+ $("sendLinkCode").disabled = true;
+ try {
+  if (!linkRecaptchaVerifier) linkRecaptchaVerifier = new firebase.auth.RecaptchaVerifier("linkRecaptcha", {size:"normal"});
+  await linkRecaptchaVerifier.render();
+  linkConfirmationResult = await user.linkWithPhoneNumber(phone, linkRecaptchaVerifier);
+  $("linkVerificationCode").hidden = false;
+  $("confirmLinkCode").hidden = false;
+  $("linkStatus").textContent = "Enviamos un código a " + phone + ".";
+ } catch(error) {
+  $("linkStatus").textContent = (error.message || "No se pudo enviar el SMS.") + (error.code ? " [" + error.code + "]" : "");
+  if (linkRecaptchaVerifier && error.code === "auth/captcha-check-failed") { try { linkRecaptchaVerifier.clear(); } catch(e) {} linkRecaptchaVerifier = null; $("linkRecaptcha").innerHTML = ""; }
+ } finally { $("sendLinkCode").disabled = false; }
+});
+$("confirmLinkCode").addEventListener("click", async () => {
+ const code = $("linkVerificationCode").value.trim();
+ if (!linkConfirmationResult) { $("linkStatus").textContent = "Solicita primero el código SMS."; return; }
+ if (!/^\d{6}$/.test(code)) { $("linkStatus").textContent = "El código debe tener 6 dígitos."; return; }
+ $("confirmLinkCode").disabled = true;
+ try {
+  const result = await linkConfirmationResult.confirm(code);
+  await result.user.getIdToken(true);
+  await db.collection("users").doc(result.user.uid).set({phoneNumber:result.user.phoneNumber,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
+  $("who").textContent = "Conectado: " + result.user.phoneNumber;
+  $("phoneLinkPanel").hidden = true;
+  $("linkStatus").textContent = "Número vinculado correctamente. Tus conversaciones se conservaron.";
+  linkConfirmationResult = null;
+ } catch(error) {
+  $("linkStatus").textContent = (error.message || "No se pudo verificar el código.") + (error.code ? " [" + error.code + "]" : "");
+ } finally { $("confirmLinkCode").disabled = false; }
+});
 $("logout").onclick = async () => { if (unsubscribe) { unsubscribe(); unsubscribe = null; } await auth.signOut(); };
 auth && auth.onAuthStateChanged(async user => {
  $("login").style.display = user ? "none" : "block";
@@ -237,6 +285,7 @@ auth && auth.onAuthStateChanged(async user => {
   window.klkSetCurrentUid && window.klkSetCurrentUid(user.uid);
   watchIncomingCalls(user);
   $("who").textContent = "Conectado: " + (user.phoneNumber || user.email || "usuario");
+  $("phoneLinkPanel").hidden = !!user.phoneNumber;
   activeConversationId = null; activeConversationName = null;
   $("chatTitle").textContent = "💬 Mensajes privados"; $("dmPanel").style.display = "block"; $("messages").style.display = "none"; $("backToContacts").hidden = true; $("audioCallBtn").disabled = true; $("videoCallBtn").disabled = true;
   document.querySelector(".composer").style.display = "none"; $("mediaActions").style.display = "none"; $("recordStatus").style.display = "none";
