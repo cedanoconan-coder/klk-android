@@ -148,7 +148,8 @@ service cloud.firestore {
       function callParticipant() {
         return signedIn() && (resource.data.callerUid == request.auth.uid || resource.data.calleeUid == request.auth.uid);
       }
-      allow get, list: if callParticipant();
+      allow get: if callParticipant();
+      allow list: if signedIn() && resource.data.calleeUid == request.auth.uid;
       allow create: if signedIn()
         && request.resource.data.keys().hasOnly(['callerUid','calleeUid','conversationId','mode','status','offer','createdAt','updatedAt'])
         && request.resource.data.keys().hasAll(['callerUid','calleeUid','conversationId','mode','status','offer','createdAt','updatedAt'])
@@ -193,8 +194,12 @@ service cloud.firestore {
         && request.resource.data.updatedAt == request.time;
       allow delete: if false;
       match /{candidateCollection}/{candidateId} {
-        allow read: if callParticipant();
-        allow create: if callParticipant()
+        function parentCallParticipant() {
+          let parentCall = get(/databases/$(database)/documents/calls/$(callId)).data;
+          return signedIn() && (parentCall.callerUid == request.auth.uid || parentCall.calleeUid == request.auth.uid);
+        }
+        allow read: if parentCallParticipant();
+        allow create: if parentCallParticipant()
           && candidateCollection in ['callerCandidates','calleeCandidates']
           && ((candidateCollection == 'callerCandidates' && request.auth.uid == get(/databases/$(database)/documents/calls/$(callId)).data.callerUid)
             || (candidateCollection == 'calleeCandidates' && request.auth.uid == get(/databases/$(database)/documents/calls/$(callId)).data.calleeUid))
