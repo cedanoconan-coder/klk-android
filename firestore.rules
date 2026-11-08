@@ -37,10 +37,10 @@ service cloud.firestore {
         && request.resource.data.members is list
         && request.resource.data.members.size() == 2
         && request.resource.data.requestId is string
-        && exists(/databases/$(database)/documents/contactRequests/$(request.resource.data.requestId))
-        && get(/databases/$(database)/documents/contactRequests/$(request.resource.data.requestId)).data.status == 'accepted'
-        && get(/databases/$(database)/documents/contactRequests/$(request.resource.data.requestId)).data.senderId in request.resource.data.members
-        && get(/databases/$(database)/documents/contactRequests/$(request.resource.data.requestId)).data.recipientId in request.resource.data.members;
+        && existsAfter(/databases/$(database)/documents/contactRequests/$(request.resource.data.requestId))
+        && getAfter(/databases/$(database)/documents/contactRequests/$(request.resource.data.requestId)).data.status == 'accepted'
+        && getAfter(/databases/$(database)/documents/contactRequests/$(request.resource.data.requestId)).data.senderId in request.resource.data.members
+        && getAfter(/databases/$(database)/documents/contactRequests/$(request.resource.data.requestId)).data.recipientId in request.resource.data.members;
       allow update, delete: if false;
     }
     match /conversations/{conversationId} {
@@ -49,8 +49,8 @@ service cloud.firestore {
         && request.auth.uid in request.resource.data.members
         && request.resource.data.members is list
         && request.resource.data.members.size() == 2
-        && exists(/databases/$(database)/documents/contacts/$(conversationId))
-        && request.resource.data.members == get(/databases/$(database)/documents/contacts/$(conversationId)).data.members;
+        && existsAfter(/databases/$(database)/documents/contacts/$(conversationId))
+        && request.resource.data.members == getAfter(/databases/$(database)/documents/contacts/$(conversationId)).data.members;
       allow update: if signedIn() && request.auth.uid in resource.data.members
         && request.resource.data.members == resource.data.members;
       allow delete: if false;
