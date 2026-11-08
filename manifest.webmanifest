@@ -1,8 +1,8 @@
 {
   "id": "./",
-  "name": "klk - Chat familiar",
+  "name": "klk - Mensajes privados",
   "short_name": "klk",
-  "description": "Chat para mantener a la familia conectada.",
+  "description": "Mensajería privada uno a uno.",
   "lang": "es",
   "start_url": "./",
   "scope": "./",
