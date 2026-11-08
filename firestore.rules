@@ -18,9 +18,11 @@ service cloud.firestore {
       allow read: if signedIn();
       allow create, update: if signedIn()
         && request.auth.uid == userId
-        && request.resource.data.keys().hasOnly(['uid','email','displayName','updatedAt'])
+        && request.resource.data.keys().hasOnly(['uid','email','displayName','updatedAt','photoPath','photoUpdatedAt'])
         && request.resource.data.uid == request.auth.uid
-        && request.resource.data.email == request.auth.token.email;
+        && request.resource.data.email == request.auth.token.email
+        && (!('photoPath' in request.resource.data) || request.resource.data.photoPath is string)
+        && (!('photoUpdatedAt' in request.resource.data) || request.resource.data.photoUpdatedAt == request.time);
       allow delete: if false;
     }
     match /conversations/{conversationId} {
