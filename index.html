@@ -248,6 +248,7 @@ html[data-density="comfortable"] .chatRow,html[data-density="comfortable"] #peop
  <div class="settingRow"><span>Vista previa de mensajes</span><input id="settingPreview" type="checkbox" checked></div>
  <div class="settingRow"><span>Vibración</span><input id="settingVibration" type="checkbox" checked></div>
  <div class="settingRow"><span>Sonido de mensajes</span><input id="settingSound" type="checkbox" checked></div>
+ <div class="settingRow"><span>Probar sonido</span><button id="testNotificationSound" type="button" style="width:auto;margin:0;padding:9px 12px">▶ Reproducir</button></div>
  <div class="settingRow"><span>Notificaciones del teléfono</span><button id="enableNotifications" type="button" style="width:auto;margin:0;padding:9px 12px">Activar</button></div>
  <p id="settingsStatus" class="hint" role="status" aria-live="polite">Los cambios se guardan automáticamente en este teléfono.</p>
  <button id="resetSettings" class="secondary" type="button">Restablecer ajustes</button>
@@ -897,7 +898,40 @@ if (window.matchMedia("(display-mode: standalone)").matches || window.navigator.
  function permissionButton(){ $("enableNotifications").textContent=("Notification" in window && Notification.permission==="granted")?"Activadas":"Activar";}
  $("enableNotifications").addEventListener("click",async()=>{if(!("Notification" in window)){$("settingsStatus").textContent="Este dispositivo no admite notificaciones web.";return;}try{const p=await Notification.requestPermission();$("settingsStatus").textContent=p==="granted"?"Permiso concedido. Para avisos con la app cerrada falta activar el envío push de Firebase.":"Permiso no concedido; puedes cambiarlo en los ajustes del teléfono.";permissionButton();}catch(e){$("settingsStatus").textContent="No se pudo solicitar el permiso."; }});
  if(window.matchMedia){const media=window.matchMedia("(prefers-color-scheme: dark)");if(media.addEventListener)media.addEventListener("change",()=>{if(prefs.theme==="system")apply();});}
- function tone(){if(!prefs.sound)return;try{const C=window.AudioContext||window.webkitAudioContext;if(!C)return;const x=new C(),o=x.createOscillator(),g=x.createGain();o.frequency.value=880;g.gain.setValueAtTime(.0001,x.currentTime);g.gain.exponentialRampToValueAtTime(.1,x.currentTime+.02);g.gain.exponentialRampToValueAtTime(.0001,x.currentTime+.2);o.connect(g);g.connect(x.destination);o.start();o.stop(x.currentTime+.22);o.onended=()=>x.close();}catch(e){}}
+ let notificationAudioContext=null, callRingtoneTimer=null;
+ function getNotificationAudioContext(){
+  if(!prefs.sound)return null;
+  const AudioContextClass=window.AudioContext||window.webkitAudioContext;
+  if(!AudioContextClass)return null;
+  try{
+   if(!notificationAudioContext)notificationAudioContext=new AudioContextClass();
+   if(notificationAudioContext.state==="suspended")notificationAudioContext.resume().catch(()=>{});
+   return notificationAudioContext;
+  }catch(error){console.warn("Audio de notificaciones no disponible:",error);return null;}
+ }
+ function playChime(){
+  const context=getNotificationAudioContext();if(!context)return;
+  const start=context.currentTime;
+  [880,1174].forEach((frequency,index)=>{
+   const oscillator=context.createOscillator(),gain=context.createGain(),at=start+index*.14;
+   oscillator.type="sine";oscillator.frequency.setValueAtTime(frequency,at);
+   gain.gain.setValueAtTime(.0001,at);gain.gain.exponentialRampToValueAtTime(.13,at+.025);gain.gain.exponentialRampToValueAtTime(.0001,at+.24);
+   oscillator.connect(gain);gain.connect(context.destination);oscillator.start(at);oscillator.stop(at+.25);
+  });
+ }
+ function stopCallRingtone(){if(callRingtoneTimer!==null){window.clearInterval(callRingtoneTimer);callRingtoneTimer=null;}}
+ function startCallRingtone(){
+  if(!prefs.sound)return;
+  stopCallRingtone();
+  const ring=()=>{if(!prefs.sound){stopCallRingtone();return;}playChime();window.setTimeout(()=>{if(prefs.sound)playChime();},420);};
+  ring();callRingtoneTimer=window.setInterval(ring,1900);
+ }
+ document.addEventListener("pointerdown",()=>{getNotificationAudioContext();},{once:true,passive:true});
+ $("testNotificationSound").addEventListener("click",()=>{if(!prefs.sound){$("settingsStatus").textContent="Activa primero «Sonido de mensajes».";return;}playChime();$("settingsStatus").textContent="Reproduciendo el sonido de klk.";});
+ window.klkPlayNotificationSound=playChime;
+ window.klkStartIncomingCallSound=startCallRingtone;
+ window.klkStopIncomingCallSound=stopCallRingtone;
+ function tone(){playChime();}
  window.klkNotifyIncoming=(data,id)=>{if(!data||data.uid===window.klkCurrentUid)return;tone();if(prefs.vibration&&navigator.vibrate)navigator.vibrate([100,60,100]);if("Notification"in window&&Notification.permission==="granted"&&document.visibilityState!=="visible"){const body=prefs.preview?(data.text||(data.type==="image"?"📷 Foto":data.type==="audio"?"🎙️ Nota de voz":"Nuevo mensaje")):"Tienes un mensaje nuevo";try{new Notification("klk · "+(data.email||"Mensaje nuevo"),{body,tag:"klk-"+id});}catch(e){}}};
  window.klkSetCurrentUid=uid=>{window.klkCurrentUid=uid||null;};apply();permissionButton();
 })();
