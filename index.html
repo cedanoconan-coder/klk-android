@@ -1050,7 +1050,12 @@ document.querySelectorAll(".homeFilters button").forEach(button=>button.addEvent
 }));
 $("chatsPanel").style.display="block";$("requestsPanel").style.display="none";$("peopleList").style.display="none";
 function setHomeTab(tab){
- ["chatsPanel","requestsPanel","peopleList","callsPanel","updatesPanel","toolsPanel"].forEach(id=>{const el=$(id);if(el)el.style.display="none";});
+ // Quita el atributo hidden antes de cambiar display: hidden puede mantener
+ // la sección invisible incluso cuando se asigna display:block.
+ ["chatsPanel","requestsPanel","peopleList","callsPanel","updatesPanel","toolsPanel"].forEach(id=>{
+  const el=$(id);
+  if(el){el.hidden=false;el.style.display="none";}
+ });
  const isChats=tab==="chats";
  $("homeSearch").style.display=isChats?"block":"none";
  $("homeStatus").style.display=isChats?"block":"none";
