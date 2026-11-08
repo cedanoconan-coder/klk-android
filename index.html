@@ -88,6 +88,13 @@ header small{display:none}
 .homeBottom button{width:25%;margin:0;padding:7px 2px;background:transparent;color:#59636a;border-radius:14px;font-size:12px;font-weight:600}
 .homeBottom button.active{background:#f0f2f2;color:#075e54}
 .homeBottom button span{display:block;font-size:23px;margin-bottom:3px}
+.homeUtilityPanel{padding:18px 20px 110px;background:var(--klk-surface);min-height:55vh}
+.homeUtilityPanel h2{font-size:23px;margin:8px 0;color:var(--klk-text)}
+.toolGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:20px}
+.toolGrid button{display:flex;align-items:center;gap:12px;min-height:76px;margin:0;padding:14px;border-radius:16px;background:var(--klk-message-bg);color:var(--klk-text);text-align:left;font-size:15px}
+.toolGrid button span{font-size:25px}
+#callsPanel{min-height:55vh}
+
 #chat.room-open .homeView{display:none}
 #chat:not(.room-open) .chatTop,#chat:not(.room-open) #chatNav,#chat:not(.room-open) #dmPanel,#chat:not(.room-open) #messages,#chat:not(.room-open) .composer,#chat:not(.room-open) #mediaActions,#chat:not(.room-open) #recordStatus{display:none!important}
 #chat:not(.room-open) .chatFoot{display:block!important;position:relative;padding:4px 20px 92px;background:#fff}
@@ -211,6 +218,16 @@ html[data-density="comfortable"] .chatRow,html[data-density="comfortable"] #peop
  <section id="requestsPanel" style="padding:8px 20px"><h3 style="font-size:16px;margin:8px 0">Solicitudes recibidas</h3><div id="requestsList" class="hint">Cargando solicitudes...</div></section>
  <div id="peopleList" aria-label="Personas registradas">Cargando personas...</div>
  <section id="callsPanel" aria-label="Llamadas"><h3>Llamadas</h3><p class="hint">Llama por voz o video a tus contactos aceptados.</p><div id="callContacts" class="hint">Cargando contactos...</div><p id="callsStatus" class="hint" role="status" aria-live="polite"></p></section>
+ <section id="updatesPanel" class="homeUtilityPanel" aria-label="Novedades" hidden><h2>Novedades</h2><p class="hint">Próximamente podrás consultar aquí las novedades de tu familia.</p><button type="button" data-go-tab="chats">Ir a mis chats</button></section>
+ <section id="toolsPanel" class="homeUtilityPanel" aria-label="Herramientas" hidden>
+  <h2>Herramientas</h2><p class="hint">Accesos rápidos para moverte por klk.</p>
+  <div class="toolGrid">
+   <button type="button" data-go-tab="chats"><span>💬</span>Mis chats</button><button type="button" data-go-tab="calls"><span>☎️</span>Llamadas</button>
+   <button type="button" data-go-filter="people"><span>👥</span>Personas</button><button type="button" data-go-filter="requests"><span>✉️</span>Solicitudes</button>
+   <button type="button" data-tool-action="settings"><span>⚙️</span>Ajustes</button><button type="button" data-tool-action="invite"><span>＋</span>Invitar</button>
+   <button type="button" data-tool-action="profile"><span>🖼️</span>Mi perfil</button><button type="button" data-tool-action="top"><span>⬆️</span>Ir arriba</button>
+  </div>
+ </section>
  <nav class="homeBottom" aria-label="Navegación principal">
   <button type="button" class="active" data-tab="chats"><span>▤</span>Chats</button>
   <button type="button" data-tab="calls"><span>☎</span>Llamadas</button>
@@ -248,7 +265,10 @@ html[data-density="comfortable"] .chatRow,html[data-density="comfortable"] #peop
  <div class="settingRow"><span>Vista previa de mensajes</span><input id="settingPreview" type="checkbox" checked></div>
  <div class="settingRow"><span>Vibración</span><input id="settingVibration" type="checkbox" checked></div>
  <div class="settingRow"><span>Sonido de mensajes</span><input id="settingSound" type="checkbox" checked></div>
- <div class="settingRow"><span>Probar sonido</span><button id="testNotificationSound" type="button" style="width:auto;margin:0;padding:9px 12px">▶ Reproducir</button></div>
+ <div class="settingRow"><span>Sonido de mensajes</span><select id="settingMessageTone"><option value="classic">Clásico</option><option value="bell">Campanita</option><option value="digital">Digital</option><option value="soft">Suave</option><option value="urgent">Alerta</option></select></div>
+ <div class="settingRow"><span>Sonido de llamadas</span><select id="settingCallTone"><option value="classic">Clásico</option><option value="bell">Campanita</option><option value="digital">Digital</option><option value="soft">Suave</option><option value="urgent">Alerta</option></select></div>
+ <div class="settingRow"><span>Probar sonido de mensaje</span><button id="testNotificationSound" type="button" style="width:auto;margin:0;padding:9px 12px">▶ Probar</button></div>
+ <div class="settingRow"><span>Probar sonido de llamada</span><button id="testCallSound" type="button" style="width:auto;margin:0;padding:9px 12px">▶ Probar</button></div>
  <div class="settingRow"><span>Notificaciones del teléfono</span><button id="enableNotifications" type="button" style="width:auto;margin:0;padding:9px 12px">Activar</button></div>
  <p id="settingsStatus" class="hint" role="status" aria-live="polite">Los cambios se guardan automáticamente en este teléfono.</p>
  <button id="resetSettings" class="secondary" type="button">Restablecer ajustes</button>
@@ -877,7 +897,7 @@ if (window.matchMedia("(display-mode: standalone)").matches || window.navigator.
 <script>
 (function(){
  const $=id=>document.getElementById(id);
- const defaults={sound:true,vibration:true,preview:true,textSize:"15",theme:"light",accent:"teal",density:"comfortable",wallpaper:"pattern"};
+ const defaults={sound:true,vibration:true,preview:true,messageTone:"classic",callTone:"bell",textSize:"15",theme:"light",accent:"teal",density:"comfortable",wallpaper:"pattern"};
  let prefs={...defaults};
  try{prefs={...defaults,...JSON.parse(localStorage.getItem("klk-settings")||"{}")};}catch(e){}
  const accents={teal:["#075e54","#e3f2ed"],blue:["#1769aa","#e4f1fc"],purple:["#7046a8","#efe7fa"],rose:["#b33b65","#fae8ef"],orange:["#b45b16","#fff0df"]};
@@ -891,12 +911,13 @@ if (window.matchMedia("(display-mode: standalone)").matches || window.navigator.
   root.style.setProperty("--klk-message-bg",dark?"#142127":(prefs.wallpaper==="gradient"?"#f1f5f4":prefs.wallpaper==="plain"?"#f6f7f7":"#f6f7f7"));
   document.querySelectorAll(".msg p").forEach(el=>el.style.fontSize=prefs.textSize+"px");
   $("settingSound").checked=!!prefs.sound;$("settingVibration").checked=!!prefs.vibration;$("settingPreview").checked=!!prefs.preview;
+  $("settingMessageTone").value=prefs.messageTone||"classic";$("settingCallTone").value=prefs.callTone||"bell";
   $("settingTextSize").value=prefs.textSize;$("settingTheme").value=prefs.theme;$("settingAccent").value=prefs.accent;$("settingDensity").value=prefs.density;$("settingWallpaper").value=prefs.wallpaper;
   document.body.style.fontSize=prefs.textSize+"px";
  }
  function save(){try{localStorage.setItem("klk-settings",JSON.stringify(prefs));}catch(e){$("settingsStatus").textContent="No se pudieron guardar los cambios en este teléfono.";}apply();$("settingsStatus").textContent="Ajustes guardados automáticamente en este teléfono.";}
  ["settingSound","settingVibration","settingPreview"].forEach(id=>$(id).addEventListener("change",()=>{prefs[id.slice(7).toLowerCase()]=$(id).checked;save();}));
- [["settingTextSize","textSize"],["settingTheme","theme"],["settingAccent","accent"],["settingDensity","density"],["settingWallpaper","wallpaper"]].forEach(([id,key])=>$(id).addEventListener("change",e=>{prefs[key]=e.target.value;save();}));
+ [["settingTextSize","textSize"],["settingTheme","theme"],["settingAccent","accent"],["settingDensity","density"],["settingWallpaper","wallpaper"],["settingMessageTone","messageTone"],["settingCallTone","callTone"]].forEach(([id,key])=>$(id).addEventListener("change",e=>{prefs[key]=e.target.value;save();}));
  $("settingsToggle").addEventListener("click",()=>{const panel=$("settingsPanel");panel.style.display=panel.style.display==="block"?"none":"block";if(panel.style.display==="block")panel.scrollTop=0;});
  $("closeSettings").addEventListener("click",()=>{$("settingsPanel").style.display="none";});
  $("resetSettings").addEventListener("click",()=>{prefs={...defaults};save();$("settingsStatus").textContent="Se restauró la apariencia original de klk.";});
@@ -914,25 +935,35 @@ if (window.matchMedia("(display-mode: standalone)").matches || window.navigator.
    return notificationAudioContext;
   }catch(error){console.warn("Audio de notificaciones no disponible:",error);return null;}
  }
- function playChime(){
+ const soundPatterns={
+  classic:{wave:"sine",notes:[{f:880,t:0,d:.17},{f:1174,t:.16,d:.2}]},
+  bell:{wave:"sine",notes:[{f:1318,t:0,d:.34},{f:1760,t:.08,d:.42}]},
+  digital:{wave:"square",notes:[{f:660,t:0,d:.11},{f:990,t:.13,d:.11},{f:1320,t:.26,d:.15}]},
+  soft:{wave:"sine",notes:[{f:523,t:0,d:.24},{f:659,t:.2,d:.3}]},
+  urgent:{wave:"triangle",notes:[{f:1046,t:0,d:.12},{f:784,t:.15,d:.12},{f:1046,t:.3,d:.12},{f:784,t:.45,d:.16}]}
+ };
+ function playPattern(kind){
   const context=getNotificationAudioContext();if(!context)return;
-  const start=context.currentTime;
-  [880,1174].forEach((frequency,index)=>{
-   const oscillator=context.createOscillator(),gain=context.createGain(),at=start+index*.14;
-   oscillator.type="sine";oscillator.frequency.setValueAtTime(frequency,at);
-   gain.gain.setValueAtTime(.0001,at);gain.gain.exponentialRampToValueAtTime(.13,at+.025);gain.gain.exponentialRampToValueAtTime(.0001,at+.24);
-   oscillator.connect(gain);gain.connect(context.destination);oscillator.start(at);oscillator.stop(at+.25);
+  const pattern=soundPatterns[kind]||soundPatterns.classic,base=context.currentTime;
+  pattern.notes.forEach(note=>{
+   const oscillator=context.createOscillator(),gain=context.createGain(),at=base+note.t;
+   oscillator.type=pattern.wave;oscillator.frequency.setValueAtTime(note.f,at);
+   gain.gain.setValueAtTime(.0001,at);gain.gain.exponentialRampToValueAtTime(.105,at+.018);gain.gain.exponentialRampToValueAtTime(.0001,at+note.d);
+   oscillator.connect(gain);gain.connect(context.destination);oscillator.start(at);oscillator.stop(at+note.d+.02);
   });
  }
+ function playChime(){if(prefs.sound)playPattern(prefs.messageTone);}
+ function playCallChime(){if(prefs.sound)playPattern(prefs.callTone);}
  function stopCallRingtone(){if(callRingtoneTimer!==null){window.clearInterval(callRingtoneTimer);callRingtoneTimer=null;}}
  function startCallRingtone(){
   if(!prefs.sound)return;
   stopCallRingtone();
-  const ring=()=>{if(!prefs.sound){stopCallRingtone();return;}playChime();window.setTimeout(()=>{if(prefs.sound)playChime();},420);};
+  const ring=()=>{if(!prefs.sound){stopCallRingtone();return;}playCallChime();window.setTimeout(()=>{if(prefs.sound)playCallChime();},420);};
   ring();callRingtoneTimer=window.setInterval(ring,1900);
  }
  document.addEventListener("pointerdown",()=>{getNotificationAudioContext();},{once:true,passive:true});
- $("testNotificationSound").addEventListener("click",()=>{if(!prefs.sound){$("settingsStatus").textContent="Activa primero «Sonido de mensajes».";return;}playChime();$("settingsStatus").textContent="Reproduciendo el sonido de klk.";});
+ $("testNotificationSound").addEventListener("click",()=>{if(!prefs.sound){$("settingsStatus").textContent="Activa primero «Sonido de mensajes».";return;}playChime();$("settingsStatus").textContent="Probando sonido de mensaje: "+$("settingMessageTone").selectedOptions[0].text+".";});
+ $("testCallSound").addEventListener("click",()=>{if(!prefs.sound){$("settingsStatus").textContent="Activa primero «Sonido de mensajes».";return;}playCallChime();$("settingsStatus").textContent="Probando sonido de llamada: "+$("settingCallTone").selectedOptions[0].text+".";});
  window.klkPlayNotificationSound=playChime;
  window.klkStartIncomingCallSound=startCallRingtone;
  window.klkStopIncomingCallSound=stopCallRingtone;
@@ -1019,22 +1050,34 @@ document.querySelectorAll(".homeFilters button").forEach(button=>button.addEvent
  $("chatStatus").textContent="";
 }));
 $("chatsPanel").style.display="block";$("requestsPanel").style.display="none";$("peopleList").style.display="none";
-document.querySelectorAll(".homeBottom button").forEach(button=>button.addEventListener("click",()=>{
- document.querySelectorAll(".homeBottom button").forEach(b=>b.classList.toggle("active",b===button));
- const tab=button.dataset.tab;
+function setHomeTab(tab){
+ ["chatsPanel","requestsPanel","peopleList","callsPanel","updatesPanel","toolsPanel"].forEach(id=>{const el=$(id);if(el)el.style.display="none";});
+ const isChats=tab==="chats";
+ $("homeSearch").style.display=isChats?"block":"none";
+ $("homeStatus").style.display=isChats?"block":"none";
+ document.querySelector(".homeFilters").style.display=isChats?"flex":"none";
  if(tab==="chats"){
-  const chatsButton=document.querySelector('.homeFilters button[data-filter="chats"]');
-  if(chatsButton)chatsButton.click();
-  $("homeStatus").textContent="";
-  return;
- }
- if(tab==="updates"){
-  $("homeStatus").textContent="La sección de novedades todavía no está activada. Tus chats y contactos siguen disponibles.";
-  return;
- }
- if(tab==="calls"){ $("homeStatus").textContent=""; return; }
- $("homeStatus").textContent="";
- $("settingsToggle").click();
+  $("chatsPanel").style.display="block";
+  const filter=document.querySelector('.homeFilters button[data-filter="chats"]');if(filter)filter.click();
+ }else if(tab==="calls")$("callsPanel").style.display="block";
+ else if(tab==="updates")$("updatesPanel").style.display="block";
+ else if(tab==="tools")$("toolsPanel").style.display="block";
+ document.querySelectorAll(".homeBottom button").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));
+}
+document.querySelectorAll(".homeBottom button").forEach(button=>button.addEventListener("click",()=>setHomeTab(button.dataset.tab)));
+document.querySelectorAll("[data-go-tab]").forEach(button=>button.addEventListener("click",()=>setHomeTab(button.dataset.goTab)));
+document.querySelectorAll("[data-go-filter]").forEach(button=>button.addEventListener("click",()=>{
+ setHomeTab("chats");
+ const filter=document.querySelector('.homeFilters button[data-filter="'+button.dataset.goFilter+'"]');if(filter)filter.click();
+ window.scrollTo({top:0,behavior:"smooth"});
 }));
+document.querySelectorAll("[data-tool-action]").forEach(button=>button.addEventListener("click",()=>{
+ const action=button.dataset.toolAction;
+ if(action==="settings")$("homeMenu").click();
+ if(action==="invite"){$("inviteMember").click();window.scrollTo({top:0,behavior:"smooth"});}
+ if(action==="profile")$("profileButton").click();
+ if(action==="top")window.scrollTo({top:0,behavior:"smooth"});
+}));
+
 
 </script></body></html>
