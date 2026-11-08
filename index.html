@@ -48,6 +48,51 @@ button{background:#075e54;color:white;border:0;font-weight:700;cursor:pointer}bu
 .settingRow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid #edf0ef;font-size:14px}
 .settingRow input[type=checkbox]{width:22px;height:22px;margin:0;accent-color:#075e54}
 .settingRow select{width:auto;max-width:145px;margin:0;padding:8px;border-radius:10px;border:1px solid #d6dce0;background:#fff}
+
+/* Inicio estilo mensajería moderna para klk */
+header{background:#fff;color:#111b21;box-shadow:none;padding:calc(18px + env(safe-area-inset-top)) 20px 12px;font-size:30px}
+header small{display:none}
+#chat{background:#fff;box-shadow:none;border-radius:0;margin:0;max-width:none;min-height:calc(100dvh - 75px)}
+.homeView{display:block;background:#fff;padding:0 0 82px}
+.homeTitle{display:flex;align-items:center;justify-content:space-between;padding:8px 20px 14px}
+.homeTitle h1{font-size:30px;line-height:1.1;margin:0;font-weight:750;letter-spacing:-.7px}
+.homeActions{display:flex;gap:18px;align-items:center}
+.homeActions button{width:34px;height:38px;margin:0;padding:0;background:transparent;color:#182126;font-size:23px}
+.homeSearch{margin:8px 20px 18px;position:relative}
+.homeSearch input{width:100%;margin:0;border:0;border-radius:28px;background:#f3f4f4;padding:15px 18px 15px 50px;font-size:17px}
+.homeSearch:before{content:"⌕";position:absolute;left:17px;top:4px;font-size:32px;color:#59636a;z-index:1}
+.homeFilters{display:flex;gap:9px;overflow-x:auto;padding:0 20px 18px;scrollbar-width:none}
+.homeFilters::-webkit-scrollbar{display:none}
+.homeFilters button{white-space:nowrap;width:auto;margin:0;padding:10px 18px;border:1px solid #d8dcde;border-radius:24px;background:#fff;color:#59636a;font-weight:600;font-size:15px}
+.homeFilters button.active{background:#f0f1f1;color:#20282c;border-color:#c9cdcf}
+.homeGroup{display:flex;align-items:center;gap:14px;width:100%;margin:0;padding:13px 20px;border-radius:0;background:#fff;color:#111b21;text-align:left;font-size:16px}
+.homeAvatar{width:56px;height:56px;flex:0 0 56px;border-radius:50%;display:grid;place-items:center;background:#e8f4ef;color:#087568;font-size:26px}
+.homeGroupText{flex:1;min-width:0}
+.homeGroupText strong{display:block;font-size:17px;font-weight:650}
+.homeGroupText small{display:block;color:#667078;font-size:14px;font-weight:400;margin-top:5px}
+.homeGroup time{align-self:flex-start;color:#667078;font-size:12px;font-weight:400}
+#peopleList{padding:0 0 10px}
+#peopleList .memberBtn{display:flex;align-items:center;gap:14px;width:100%;padding:12px 20px;margin:0;border:0;border-radius:0;background:#fff;color:#111b21;font-size:16px}
+#peopleList .memberBtn:before{content:"👤";width:56px;height:56px;flex:0 0 56px;border-radius:50%;display:grid;place-items:center;background:#edf2ef;font-size:24px}
+#peopleList .memberBtn strong{font-size:17px;font-weight:650}
+#peopleList .memberBtn small{font-size:13px;color:#68736f}
+#peopleList .memberBtn:active,.homeGroup:active{background:#f4f6f6}
+.homeBottom{position:fixed;z-index:8;bottom:0;left:0;right:0;display:flex;justify-content:space-around;align-items:center;padding:8px 8px calc(8px + env(safe-area-inset-bottom));background:#fff;border-top:1px solid #eceeef}
+.homeBottom button{width:25%;margin:0;padding:7px 2px;background:transparent;color:#59636a;border-radius:14px;font-size:12px;font-weight:600}
+.homeBottom button.active{background:#f0f2f2;color:#075e54}
+.homeBottom button span{display:block;font-size:23px;margin-bottom:3px}
+#chat.room-open .homeView{display:none}
+#chat:not(.room-open) .chatTop,#chat:not(.room-open) #chatNav,#chat:not(.room-open) #dmPanel,#chat:not(.room-open) #messages,#chat:not(.room-open) .composer,#chat:not(.room-open) #mediaActions,#chat:not(.room-open) #recordStatus,#chat:not(.room-open) #settingsPanel,#chat:not(.room-open) .chatFoot{display:none!important}
+#chat.room-open .homeBottom{display:none}
+#chat.room-open .chatTop{background:#fff;color:#111b21;border-bottom:1px solid #edf0f0}
+#chat.room-open .chatTop .muted{color:#68736f}
+#chat.room-open #chatNav{background:#fff}
+#chat.room-open #messages{background-color:#f6f7f7}
+#chat.room-open .msg{box-shadow:0 1px 2px #00000012}
+#chat.room-open .msg.mine{background:#d9fdd3}
+#chat.room-open .composer,#chat.room-open #mediaActions,#chat.room-open .chatFoot{background:#f3f4f4}
+@media(max-width:420px){main{padding:0}.card{border-radius:0;margin-top:0}#chat{margin-top:0}.homeTitle h1{font-size:29px}}
+
 </style>
 </head>
 <body>
@@ -67,9 +112,26 @@ button{background:#075e54;color:white;border:0;font-weight:700;cursor:pointer}bu
 <p class="hint">Necesitas conexión a internet para iniciar sesión y enviar mensajes.</p>
 </section>
 <section id="chat" class="card">
+
+<div id="homeView" class="homeView">
+ <div class="homeTitle"><h1>klk</h1><div class="homeActions"><button type="button" id="homeCamera" aria-label="Cámara">▣</button><button type="button" id="homeMenu" aria-label="Ajustes">⋮</button></div></div>
+ <div class="homeSearch"><input id="chatSearch" type="search" placeholder="Buscar..." aria-label="Buscar conversaciones"></div>
+ <div class="homeFilters" role="group" aria-label="Filtros de conversaciones">
+  <button type="button" class="active" data-filter="all">Todos</button><button type="button" data-filter="unread">No leídos</button><button type="button" data-filter="favorites">Favoritos</button><button type="button" data-filter="groups">Grupos</button><button type="button" data-filter="people">＋</button>
+ </div>
+ <button id="homeGroup" class="homeGroup" type="button"><span class="homeAvatar">👨‍👩‍👧‍👦</span><span class="homeGroupText"><strong>Familia klk</strong><small>Chat familiar · Abrir conversación</small></span><time>Grupo</time></button>
+ <div id="peopleList" aria-label="Conversaciones privadas">Cargando miembros...</div>
+ <nav class="homeBottom" aria-label="Navegación principal">
+  <button type="button" class="active" data-tab="chats"><span>▤</span>Chats</button>
+  <button type="button" data-tab="calls"><span>☎</span>Llamadas</button>
+  <button type="button" data-tab="updates"><span>◉</span>Novedades</button>
+  <button type="button" data-tab="tools"><span>▣</span>Herramientas</button>
+ </nav>
+</div>
+
 <div class="chatTop"><div style="display:flex;align-items:center;gap:8px"><h2 id="chatTitle" style="flex:1">👨‍👩‍👧‍👦 Familia klk</h2><button id="settingsToggle" class="settingsToggle" type="button">⚙️ Ajustes</button></div><p id="who" class="muted"></p></div>
 <div id="chatNav"><button id="showGroup" type="button">👨‍👩‍👧‍👦 Chat familiar</button><button id="showPeople" type="button" class="secondary">💬 Conversaciones privadas</button></div>
-<div id="dmPanel"><p class="hint">Elige un miembro de la familia para abrir una conversación privada.</p><div id="peopleList">Cargando miembros...</div></div>
+<div id="dmPanel"><p class="hint">Elige un miembro de la familia para abrir una conversación privada.</p></div>
 <div id="messages" aria-live="polite"><p class="muted">Cargando mensajes...</p></div>
 <div class="composer">
  <button id="pickPhoto" class="iconBtn" type="button" aria-label="Elegir foto" title="Elegir foto">＋</button>
@@ -197,6 +259,7 @@ auth && auth.onAuthStateChanged(async user => {
   window.klkSetCurrentUid && window.klkSetCurrentUid(user.uid);
   $("who").textContent = "Conectado: " + (user.email || "usuario");
   activeConversationId = null; activeConversationName = null;
+  $("chat").classList.remove("room-open");
   $("chatTitle").textContent = "👨‍👩‍👧‍👦 Familia klk"; $("dmPanel").style.display = "none"; $("messages").style.display = "block";
   try {
    await db.collection("users").doc(user.uid).set({uid:user.uid,email:user.email || "",displayName:user.displayName || (user.email || "Miembro").split("@")[0],updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
@@ -242,6 +305,7 @@ async function openPrivateConversation(otherUid, otherName) {
   const existing = await ref.get();
   if (!existing.exists) await ref.set({members,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
   activeConversationId = conversationId; activeConversationName = otherName;
+  $("chat").classList.add("room-open");
   $("chatTitle").textContent = "💬 " + otherName;
   $("dmPanel").style.display = "none"; $("messages").style.display = "block";
   document.querySelector(".composer").style.display = "flex"; $("mediaActions").style.display = "flex"; $("recordStatus").style.display = "block";
@@ -251,18 +315,14 @@ async function openPrivateConversation(otherUid, otherName) {
 }
 $("showGroup").onclick = () => {
  activeConversationId = null; activeConversationName = null;
+ $("chat").classList.add("room-open");
  $("chatTitle").textContent = "👨‍👩‍👧‍👦 Familia klk";
  $("dmPanel").style.display = "none"; $("messages").style.display = "block";
  document.querySelector(".composer").style.display = "flex"; $("mediaActions").style.display = "flex"; $("recordStatus").style.display = "block";
  $("chatStatus").textContent = "Chat familiar grupal";
  loadMessages();
 };
-$("showPeople").onclick = () => {
- if (unsubscribe) { unsubscribe(); unsubscribe = null; }
- $("messages").style.display = "none"; $("dmPanel").style.display = "block";
- document.querySelector(".composer").style.display = "none"; $("mediaActions").style.display = "none"; $("recordStatus").style.display = "none";
- $("chatStatus").textContent = "Selecciona un miembro para conversar en privado.";
-};
+$("showPeople").onclick = () => { $("chat").classList.remove("room-open"); $("chatSearch").focus(); $("chatStatus").textContent = "Selecciona un miembro para conversar en privado."; };
 async function getMediaUrl(path, conversationId = null) {
  if (!path) return "";
  const cached = mediaUrlCache.get(path);
@@ -494,4 +554,28 @@ if (window.matchMedia("(display-mode: standalone)").matches || window.navigator.
  window.klkNotifyIncoming=(data,id)=>{if(!data||data.uid===window.klkCurrentUid)return;tone();if(prefs.vibration&&navigator.vibrate)navigator.vibrate([100,60,100]);if("Notification"in window&&Notification.permission==="granted"&&document.visibilityState!=="visible"){const body=prefs.preview?(data.text||(data.type==="image"?"📷 Foto":data.type==="audio"?"🎙️ Nota de voz":"Nuevo mensaje")):"Tienes un mensaje nuevo";try{new Notification("klk · "+(data.email||"Mensaje nuevo"),{body,tag:"klk-"+id});}catch(e){}}};
  window.klkSetCurrentUid=uid=>{window.klkCurrentUid=uid||null;};apply();permissionButton();
 })();
+
+$("homeGroup").addEventListener("click",()=>$("showGroup").click());
+$("homeMenu").addEventListener("click",()=>$("settingsToggle").click());
+$("homeCamera").addEventListener("click",()=>$("cameraInput").click());
+$("chatSearch").addEventListener("input",event=>{
+ const q=event.target.value.trim().toLocaleLowerCase();
+ $("homeGroup").style.display=(!q||"familia klk chat familiar".includes(q))?"flex":"none";
+ document.querySelectorAll("#peopleList .memberBtn").forEach(row=>{row.style.display=row.textContent.toLocaleLowerCase().includes(q)?"flex":"none";});
+});
+document.querySelectorAll(".homeFilters button").forEach(button=>button.addEventListener("click",()=>{
+ document.querySelectorAll(".homeFilters button").forEach(b=>b.classList.toggle("active",b===button));
+ const filter=button.dataset.filter;
+ $("homeGroup").style.display=(filter==="people")?"none":"flex";
+ $("peopleList").style.display=(filter==="groups")?"none":"block";
+ $("chatStatus").textContent=(filter==="unread"||filter==="favorites")?"Este filtro estará disponible cuando klk tenga estados de lectura y favoritos.":"";
+}));
+document.querySelectorAll(".homeBottom button").forEach(button=>button.addEventListener("click",()=>{
+ document.querySelectorAll(".homeBottom button").forEach(b=>b.classList.toggle("active",b===button));
+ const tab=button.dataset.tab;
+ if(tab==="chats"){ $("chatStatus").textContent=""; return; }
+ $("chatStatus").textContent=tab==="calls"?"Las llamadas estarán disponibles en una próxima actualización.":tab==="updates"?"Los estados y novedades estarán disponibles en una próxima actualización.":"Abre Ajustes para configurar klk.";
+ if(tab==="tools") $("settingsToggle").click();
+}));
+
 </script></body></html>
