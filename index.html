@@ -273,7 +273,8 @@ function loadPeople() {
  };
  unsubs.push(db.collection("users").orderBy("displayName").onSnapshot(s=>{state.users=s.docs;render();},e=>showError("chatStatus",e)));
  unsubs.push(db.collection("connectionRequests").where("recipientId","==",uid).where("status","==","pending").onSnapshot(s=>{state.incoming=s.docs;render();},e=>showError("chatStatus",e)));
- unsubs.push(db.collection("connectionRequests").where("participants","array-contains",uid).where("status","==","accepted").onSnapshot(s=>{state.accepted=new Set();s.docs.forEach(d=>{const x=d.data();state.accepted.add(x.senderId===uid?x.recipientId:x.senderId);});render();},e=>showError("chatStatus",e)));
+ unsubs.push(db.collection("connectionRequests").where("senderId","==",uid).where("status","==","accepted").onSnapshot(s=>{s.docs.forEach(d=>state.accepted.add(d.data().recipientId));render();},e=>showError("chatStatus",e)));
+ unsubs.push(db.collection("connectionRequests").where("recipientId","==",uid).where("status","==","accepted").onSnapshot(s=>{s.docs.forEach(d=>state.accepted.add(d.data().senderId));render();},e=>showError("chatStatus",e)));
  unsubs.push(db.collection("connectionRequests").where("senderId","==",uid).where("status","==","pending").onSnapshot(s=>{state.outgoing=new Set(s.docs.map(d=>d.data().recipientId));render();},e=>showError("chatStatus",e)));
  peopleUnsubscribe=()=>unsubs.forEach(fn=>fn());
 }
