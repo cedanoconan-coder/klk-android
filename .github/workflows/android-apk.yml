@@ -1,15 +1,17 @@
 name: Construir APK de klk
 
 on:
-  push:
+  pull_request:
     branches: ["main"]
+  push:
+    branches: ["main", "fix/klk-private-chat"]
   workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  build-apk:
+  validate-and-build:
     runs-on: ubuntu-latest
     steps:
       - name: Descargar proyecto
@@ -25,6 +27,19 @@ jobs:
         with:
           distribution: temurin
           java-version: 21
+
+      - name: Validar sintaxis JavaScript
+        run: |
+          python3 - <<'PY'
+          import re
+          from pathlib import Path
+          html = Path("index.html").read_text()
+          scripts = re.findall(r"<script>([\s\S]*?)</script>", html)
+          if not scripts:
+              raise SystemExit("No se encontró el código JavaScript principal")
+          Path("/tmp/klk-app.js").write_text(scripts[-1])
+          PY
+          node --check /tmp/klk-app.js
 
       - name: Instalar dependencias
         run: npm install
