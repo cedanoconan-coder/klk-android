@@ -84,12 +84,17 @@ header small{display:none}
 #peopleList .memberBtn strong{font-size:17px;font-weight:650}
 #peopleList .memberBtn small{font-size:13px;color:#68736f}
 #peopleList .memberBtn:active,.homeGroup:active{background:#f4f6f6}
-.homeBottom{position:fixed;z-index:30;bottom:0;left:0;right:0;display:flex;justify-content:space-around;align-items:stretch;gap:4px;padding:7px 8px calc(7px + env(safe-area-inset-bottom));background:var(--klk-surface,#fff);border-top:1px solid var(--klk-line,#eceeef);box-shadow:0 -4px 18px #0000000a}
-.homeBottom button{flex:1;min-width:0;min-height:58px;width:20%;margin:0;padding:6px 2px;background:transparent;color:var(--klk-muted,#59636a);border:1px solid transparent;border-radius:14px;font-size:11px;line-height:1.2;font-weight:650;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;touch-action:manipulation}
-.homeBottom button.active{background:var(--klk-soft,#f0f2f2);color:var(--klk-accent,#075e54);border-color:var(--klk-line,#eceeef)}
+.homeBottom{position:fixed;z-index:50;left:10px;right:10px;bottom:calc(8px + env(safe-area-inset-bottom));display:grid;grid-template-columns:repeat(5,minmax(0,1fr));align-items:center;gap:3px;padding:8px 6px;background:var(--klk-surface,#fff);border:1px solid var(--klk-line,#e7ebea);border-radius:22px;box-shadow:0 8px 28px #10201c20;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+.homeBottom button{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-width:0;min-height:62px;width:100%;margin:0;padding:5px 1px;background:transparent;color:var(--klk-muted,#66736f);border:0;border-radius:16px;font-size:10px;line-height:1.15;font-weight:650;white-space:nowrap;touch-action:manipulation;transition:background .18s ease,color .18s ease,transform .18s ease}
+.homeBottom button .navIcon{display:grid;place-items:center;width:34px;height:28px;border-radius:12px;font-size:21px;line-height:1;transition:background .18s ease,transform .18s ease}
+.homeBottom button .navLabel{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.homeBottom button.active{color:var(--klk-accent,#075e54);background:transparent}
+.homeBottom button.active .navIcon{background:var(--klk-soft,#e7f3ef);transform:translateY(-1px);font-weight:800}
+.homeBottom button:active{transform:scale(.96)}
 .homeBottom button:focus-visible,.homeFilters button:focus-visible,.toolGrid button:focus-visible{outline:3px solid var(--klk-accent,#075e54);outline-offset:2px}
-.homeBottom button span{display:block;font-size:22px;line-height:1.1;margin:0}
-@media(max-width:360px){.homeBottom{gap:1px;padding-left:4px;padding-right:4px}.homeBottom button{font-size:10px}.homeBottom button span{font-size:20px}}
+.homeView{padding-bottom:104px}
+#callsPanel{padding:18px 20px 110px;background:var(--klk-surface);min-height:55vh}
+@media(max-width:360px){.homeBottom{left:5px;right:5px;gap:0;padding-left:3px;padding-right:3px;border-radius:18px}.homeBottom button{font-size:9px;min-height:60px}.homeBottom button .navIcon{width:30px;height:26px;font-size:19px}}
 .homeUtilityPanel{padding:18px 20px 110px;background:var(--klk-surface);min-height:55vh}
 .homeUtilityPanel h2{font-size:23px;margin:8px 0;color:var(--klk-text)}
 .toolGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:20px}
@@ -269,11 +274,11 @@ html[data-density="comfortable"] .chatRow,html[data-density="comfortable"] #peop
  </section>
 
  <nav class="homeBottom" aria-label="Navegación principal" role="navigation">
-  <button type="button" class="active" data-tab="chats"><span>▤</span>Chats</button>
-  <button type="button" data-tab="calls"><span>☎</span>Llamadas</button>
-  <button type="button" data-tab="updates"><span>◉</span>Novedades</button>
-  <button type="button" data-tab="tools"><span>▣</span>Herramientas</button>
-  <button type="button" data-tab="assistant"><span>🤖</span>Asistente IA</button>
+  <button type="button" class="active" data-tab="chats" aria-current="page"><span class="navIcon" aria-hidden="true">▤</span><span class="navLabel">Chats</span></button>
+  <button type="button" data-tab="calls"><span class="navIcon" aria-hidden="true">☎</span><span class="navLabel">Llamadas</span></button>
+  <button type="button" data-tab="updates"><span class="navIcon" aria-hidden="true">◉</span><span class="navLabel">Novedades</span></button>
+  <button type="button" data-tab="tools"><span class="navIcon" aria-hidden="true">▦</span><span class="navLabel">Herramientas</span></button>
+  <button type="button" data-tab="assistant"><span class="navIcon" aria-hidden="true">✦</span><span class="navLabel">Asistente IA</span></button>
  </nav>
 </div>
 
@@ -1122,43 +1127,30 @@ document.querySelectorAll(".homeFilters button").forEach(button=>button.addEvent
 }));
 $("chatsPanel").style.display="block";$("requestsPanel").style.display="none";$("peopleList").style.display="none";
 function setHomeTab(tab){
- // Quita el atributo hidden antes de cambiar display: hidden puede mantener
- // la sección invisible incluso cuando se asigna display:block.
- ["chatsPanel","requestsPanel","peopleList","callsPanel","updatesPanel","toolsPanel","assistantPanel"].forEach(id=>{
-  const el=$(id);
-  if(el){el.hidden=false;el.style.display="none";}
- });
+ const validTabs=["chats","calls","updates","tools","assistant"];
+ if(!validTabs.includes(tab)) return;
+ const panelIds=["chatsPanel","requestsPanel","peopleList","callsPanel","updatesPanel","toolsPanel","assistantPanel"];
+ panelIds.forEach(id=>{const el=$(id);if(el){el.hidden=false;el.style.display="none";}});
  const isChats=tab==="chats";
  $("homeSearch").style.display=isChats?"block":"none";
  $("homeStatus").style.display=isChats?"block":"none";
  document.querySelector(".homeFilters").style.display=isChats?"flex":"none";
- if(tab==="chats"){
+ if(isChats){
   $("chatsPanel").style.display="block";
-  const filter=document.querySelector('.homeFilters button[data-filter="chats"]');if(filter)filter.click();
- }else if(tab==="calls")$("callsPanel").style.display="block";
- else if(tab==="updates")$("updatesPanel").style.display="block";
- else if(tab==="tools")$("toolsPanel").style.display="block";
- else if(tab==="assistant")$("assistantPanel").style.display="block";
- document.querySelectorAll(".homeBottom button").forEach(b=>{const active=b.dataset.tab===tab;b.classList.toggle("active",active);if(active)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current");});
+  const filter=document.querySelector('.homeFilters button[data-filter="'+(activeHomeFilter||"chats")+'"]');
+  if(filter)filter.click();
+ }else{
+  const panel=$(tab==="calls"?"callsPanel":tab==="updates"?"updatesPanel":tab==="tools"?"toolsPanel":"assistantPanel");
+  if(panel){panel.hidden=false;panel.style.display="block";}
+ }
+ document.querySelectorAll(".homeBottom button").forEach(b=>{
+  const active=b.dataset.tab===tab;
+  b.classList.toggle("active",active);
+  if(active)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current");
+ });
+ if(tab!=="chats") window.scrollTo({top:0,behavior:"smooth"});
 }
 document.querySelectorAll(".homeBottom button").forEach(button=>button.addEventListener("click",()=>setHomeTab(button.dataset.tab)));
-// Acceso reforzado al asistente: garantiza que el panel se muestre incluso
-// si el navegador conserva el estado visual de una sección anterior.
-const assistantNavButton=document.querySelector('.homeBottom button[data-tab="assistant"]');
-if(assistantNavButton) assistantNavButton.addEventListener("click",()=>{
- const panel=$("assistantPanel");
- const home=$("homeView");
- if(home) home.style.display="block";
- if(panel){panel.hidden=false;panel.style.removeProperty("display");panel.style.display="block";}
- ["chatsPanel","requestsPanel","peopleList","callsPanel","updatesPanel","toolsPanel"].forEach(id=>{
-  const el=$(id);if(el){el.hidden=false;el.style.display="none";}
- });
- $("homeSearch").style.display="none";
- $("homeStatus").style.display="none";
- document.querySelector(".homeFilters").style.display="none";
- document.querySelectorAll(".homeBottom button").forEach(b=>b.classList.toggle("active",b===assistantNavButton));
- requestAnimationFrame(()=>panel&&panel.scrollIntoView({block:"start",behavior:"smooth"}));
-});
 document.querySelectorAll("[data-go-tab]").forEach(button=>button.addEventListener("click",()=>setHomeTab(button.dataset.goTab)));
 document.querySelectorAll("[data-go-filter]").forEach(button=>button.addEventListener("click",()=>{
  setHomeTab("chats");
