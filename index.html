@@ -82,7 +82,7 @@ main{scrollbar-gutter:stable}
 <p class="hint">Necesitas conexión a internet para iniciar sesión y enviar mensajes.</p>
 </section>
 <section id="chat" class="card">
-<div class="chatTop"><div style="display:flex;align-items:center;gap:8px"><h2 id="chatTitle" style="flex:1">💬 Mensajes privados</h2><button id="audioCallBtn" class="callBtn" type="button" title="Llamada de voz" aria-label="Llamada de voz">📞</button><button id="videoCallBtn" class="callBtn" type="button" title="Videollamada" aria-label="Videollamada">📹</button><button id="settingsToggle" class="settingsToggle" type="button">⚙️ Ajustes</button></div><p id="who" class="muted"></p></div>
+<div class="chatTop"><div style="display:flex;align-items:center;gap:8px"><h2 id="chatTitle" style="flex:1">💬 Mensajes privados</h2><button id="backToContacts" class="callBtn" type="button" hidden aria-label="Volver a contactos">←</button><button id="audioCallBtn" class="callBtn" type="button" title="Llamada de voz" aria-label="Llamada de voz">📞</button><button id="videoCallBtn" class="callBtn" type="button" title="Videollamada" aria-label="Videollamada">📹</button><button id="settingsToggle" class="settingsToggle" type="button">⚙️ Ajustes</button></div><p id="who" class="muted"></p></div>
 <div id="dmPanel"><h3>💬 Mensajes individuales</h3><p class="hint">Selecciona una persona para iniciar una conversación privada.</p><div id="peopleList">Cargando contactos...</div></div>
 <div id="messages" aria-live="polite"><p class="muted">Cargando mensajes...</p></div>
 <div class="composer">
@@ -235,7 +235,7 @@ auth && auth.onAuthStateChanged(async user => {
   watchIncomingCalls(user);
   $("who").textContent = "Conectado: " + (user.email || "usuario");
   activeConversationId = null; activeConversationName = null;
-  $("chatTitle").textContent = "💬 Mensajes privados"; $("dmPanel").style.display = "block"; $("messages").style.display = "none";
+  $("chatTitle").textContent = "💬 Mensajes privados"; $("dmPanel").style.display = "block"; $("messages").style.display = "none"; $("backToContacts").hidden = true; $("audioCallBtn").disabled = true; $("videoCallBtn").disabled = true;
   document.querySelector(".composer").style.display = "none"; $("mediaActions").style.display = "none"; $("recordStatus").style.display = "none";
   try {
    const userRef = db.collection("users").doc(user.uid);
@@ -289,7 +289,7 @@ async function openPrivateConversation(otherUid, otherName) {
   const existing = await ref.get();
   if (!existing.exists) await ref.set({members,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
   activeConversationId = conversationId; activeConversationName = otherName;
-  $("chatTitle").textContent = "💬 " + otherName;
+  $("chatTitle").textContent = "💬 " + otherName; $("backToContacts").hidden = false; $("audioCallBtn").disabled = false; $("videoCallBtn").disabled = false;
   $("dmPanel").style.display = "none"; $("messages").style.display = "block";
   document.querySelector(".composer").style.display = "flex"; $("mediaActions").style.display = "flex"; $("recordStatus").style.display = "block";
   $("chatStatus").textContent = "Conversación privada con " + otherName;
@@ -441,10 +441,10 @@ $("muteCallBtn").addEventListener("click",()=>{
 $("cameraCallBtn").addEventListener("click",()=>{
  if(!activeLocalStream)return;const track=activeLocalStream.getVideoTracks()[0];if(!track)return;track.enabled=!track.enabled;$("cameraCallBtn").textContent=track.enabled?"📷 Cámara":"🚫 Activar cámara";
 });
-$("showPeople").onclick = () => {
+$("backToContacts").onclick = () => {
  if (unsubscribe) { unsubscribe(); unsubscribe = null; }
  activeConversationId = null; activeConversationName = null;
- $("messages").style.display = "none"; $("dmPanel").style.display = "block"; $("chatTitle").textContent = "💬 Mensajes privados";
+ $("messages").style.display = "none"; $("dmPanel").style.display = "block"; $("chatTitle").textContent = "💬 Mensajes privados"; $("backToContacts").hidden = true; $("audioCallBtn").disabled = true; $("videoCallBtn").disabled = true;
  document.querySelector(".composer").style.display = "none"; $("mediaActions").style.display = "none"; $("recordStatus").style.display = "none";
  $("chatStatus").textContent = "Selecciona una persona para conversar en privado.";
 };
