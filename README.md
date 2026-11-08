@@ -4,7 +4,7 @@ Aplicación web instalable (PWA) para iniciar sesión y mantener conversaciones 
 
 ## Tecnologías
 - HTML, CSS y JavaScript
-- Firebase Authentication (número de teléfono y código SMS)
+- Firebase Authentication (correo electrónico y contraseña)
 - Cloud Firestore
 - Supabase Storage para fotos y notas de voz
 - Capacitor para generar una aplicación Android instalable
@@ -19,20 +19,19 @@ Aplicación web instalable (PWA) para iniciar sesión y mantener conversaciones 
 - `.github/workflows/pages.yml`: publicación automática en GitHub Pages.
 - `.github/workflows/android-apk.yml`: compilación automática de un APK de prueba para Android.
 
-## Pasos pendientes para activar el servicio
+## Configuración de Firebase
 1. En Firebase Console, abrir el proyecto `klk-familia`.
-2. En Authentication → Sign-in method, habilitar **Phone** y permitir SMS para República Dominicana (+1).
-3. En Authentication → Settings, agregar el dominio donde se publica klk a **Authorized domains**.
-4. Revisar la política de regiones SMS y habilitar República Dominicana. Configurar facturación si Firebase lo solicita para el envío de SMS.
-5. Crear la base de datos de Cloud Firestore.
-6. Publicar las reglas actualizadas de `firestore.rules` desde Firebase Console o con Firebase CLI.
-7. En GitHub, abrir **Settings → Pages** y seleccionar **GitHub Actions** como fuente de publicación.
-8. Esperar a que el flujo **Publicar klk en GitHub Pages** termine correctamente.
+2. En Authentication → Método de acceso, habilitar **Correo electrónico/contraseña**.
+3. En Authentication → Configuración, agregar el dominio donde se publica klk a **Dominios autorizados**.
+4. Crear la base de datos de Cloud Firestore.
+5. Publicar las reglas actualizadas de `firestore.rules` desde Firebase Console o con Firebase CLI.
+6. En GitHub, abrir **Settings → Pages** y seleccionar **GitHub Actions** como fuente de publicación.
+7. Esperar a que el flujo **Publicar klk en GitHub Pages** termine correctamente.
 
-## Acceso por teléfono
-Los usuarios escriben su número en formato internacional E.164 (por ejemplo, `+1809...`) y verifican el acceso con un código SMS. Firebase Authentication crea la cuenta si el número todavía no existe o inicia sesión si ya está registrado. La verificación web utiliza reCAPTCHA.
+## Acceso con correo electrónico
+Los usuarios pueden crear una cuenta con correo electrónico y contraseña, iniciar sesión y solicitar un enlace para restablecer la contraseña. Firebase Authentication conserva un UID único para cada cuenta, que se utiliza para proteger las conversaciones privadas.
 
-Las cuentas antiguas creadas con correo no se convierten automáticamente en cuentas telefónicas. La aplicación muestra un panel para vincular el número a la cuenta antigua mientras la sesión siga abierta. Hazlo antes de cerrar sesión para conservar el mismo UID y el historial de conversaciones.
+El acceso por teléfono queda pospuesto y no es necesario habilitar SMS, reCAPTCHA telefónico ni regiones SMS para probar esta versión.
 
 ## Seguridad
 Las reglas incluidas requieren autenticación y limitan la lectura y escritura de cada conversación a sus dos miembros. Los perfiles son visibles para usuarios autenticados para poder descubrir contactos. Las consultas de llamadas entrantes se limitan al destinatario; el emisor accede a su llamada mediante el documento individual.
