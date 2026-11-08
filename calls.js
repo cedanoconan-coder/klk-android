@@ -6,7 +6,7 @@
  let currentUid=null, incomingUnsub=null, activeCallUnsub=null, localStream=null, peer=null, callRef=null;
  let callPeople=new Map(), callIncomingRequests=new Map(), callOutgoingRequests=new Map();
  let callPeopleUnsub=null, callIncomingRequestsUnsub=null, callOutgoingRequestsUnsub=null;
- let callRole=null, callMode="audio", callState=null, remoteCandidatesUnsub=null, localCandidatesUnsub=null, queuedCandidates=[];
+ let callRole=null, callMode="audio", callState=null, callStarting=false, remoteCandidatesUnsub=null, localCandidatesUnsub=null, queuedCandidates=[];
  let incomingCall=null, incomingDocUnsub=null, ringTimeout=null, muted=false, cameraOff=false, ending=false, pendingLocalCandidates=[];
  const overlay=$("callOverlay");
  const setStatus=(message)=>{if($("callsStatus"))$("callsStatus").textContent=message||"";};
@@ -65,6 +65,7 @@
   $("localVideo").style.display=callMode==="video"?"block":"none";
  }
  function cleanup(){
+  callStarting=false;
   if(window.klkStopIncomingCallSound)window.klkStopIncomingCallSound();
   if(activeCallUnsub){activeCallUnsub();activeCallUnsub=null;}
   if(incomingDocUnsub){incomingDocUnsub();incomingDocUnsub=null;}
@@ -139,8 +140,9 @@
  }
  function setTimeoutSafeCleanup(){window.setTimeout(cleanup,1600);}
  async function startCall(uid,name,mode){
-  if(callRef){setStatus("Ya tienes una llamada en curso.");return;}
+  if(callRef||callStarting){setStatus("Ya tienes una llamada en curso o preparándose.");return;}
   if(!auth||!auth.currentUser||!isCallContactAccepted(uid)){setStatus("Solo puedes llamar a contactos que hayan aceptado tu solicitud.");return;}
+  callStarting=true;
   try{
    callMode=mode;callRole="caller";showOverlay(name,mode==="video"?"Solicitando cámara y micrófono...":"Solicitando micrófono...");
    localStream=await getLocalMedia(mode);createPeer();
@@ -158,6 +160,7 @@
    $("endCall").hidden=false;watchCallDocument();watchRemoteCandidates();
    ringTimeout=window.setTimeout(()=>{if(callRef&&callRole==="caller"&&(callState==="ringing"||!callState)){ $("callStatus").textContent="No hubo respuesta.";endCall();}},45000);
   }catch(error){console.error("No se pudo iniciar la llamada:",error);$("callStatus").textContent=permissionMessage(error);setTimeoutSafeCleanup();}
+  finally{callStarting=false;}
  }
  function permissionMessage(error){
   if(error&&error.name==="NotAllowedError")return "Permite el acceso al micrófono"+(callMode==="video"?" y a la cámara":"")+" en los permisos de klk/Chrome.";
@@ -166,7 +169,8 @@
   return error&&error.message?error.message:"No se pudo iniciar la llamada.";
  }
  async function acceptCall(){
-  if(!incomingCall||callRef)return;
+  if(!incomingCall||callRef||callStarting)return;
+  callStarting=true;
   if(window.klkStopIncomingCallSound)window.klkStopIncomingCallSound();
   if(incomingDocUnsub){incomingDocUnsub();incomingDocUnsub=null;}
   if(ringTimeout){window.clearTimeout(ringTimeout);ringTimeout=null;}
@@ -181,6 +185,7 @@
    showActiveControls();$("callStatus").textContent="Conectando...";
    watchCallDocument();watchRemoteCandidates();
   }catch(error){console.error("No se pudo responder:",error);$("callStatus").textContent=permissionMessage(error);try{await callRef.update({status:"ended",updatedAt:firebase.firestore.FieldValue.serverTimestamp()});}catch(e){}setTimeoutSafeCleanup();}
+  finally{callStarting=false;}
  }
  async function rejectCall(){
   if(!incomingCall)return;
@@ -239,6 +244,32 @@
   if(!user){if(callRef)endCall();cleanup();callPeople.clear();callIncomingRequests.clear();callOutgoingRequests.clear();[callPeopleUnsub,callIncomingRequestsUnsub,callOutgoingRequestsUnsub].forEach(stop=>{if(stop)stop();});callPeopleUnsub=callIncomingRequestsUnsub=callOutgoingRequestsUnsub=null;renderCallContacts();return;}
   listenIncoming(user.uid);watchCallContacts(user.uid);renderCallContacts();
  });
+
+ async function runCallDiagnostics(){
+  const output=$("callDiagnosticsStatus");if(!output)return;
+  const checks=[];
+  const add=(label,ok,detail)=>checks.push((ok?"✓ ":"⚠ ")+label+": "+detail);
+  add("Conexión segura",!!window.isSecureContext,window.isSecureContext?"HTTPS activo":"Abre klk desde su enlace HTTPS");
+  add("Sesión",!!(auth&&auth.currentUser),auth&&auth.currentUser?"Sesión iniciada":"Inicia sesión primero");
+  add("Micrófono",!!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia),"getUserMedia "+(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia?"disponible":"no disponible"));
+  add("WebRTC",!!window.RTCPeerConnection,window.RTCPeerConnection?"RTCPeerConnection disponible":"Navegador sin soporte WebRTC");
+  let devices=[];
+  try{if(navigator.mediaDevices&&navigator.mediaDevices.enumerateDevices)devices=await navigator.mediaDevices.enumerateDevices();}
+  catch(error){add("Dispositivos",false,error.message);}
+  if(devices.length){add("Micrófono detectado",devices.some(d=>d.kind==="audioinput"),devices.filter(d=>d.kind==="audioinput").length+" entrada(s)");add("Cámara detectada",devices.some(d=>d.kind==="videoinput"),devices.filter(d=>d.kind==="videoinput").length+" cámara(s)");}
+  if(navigator.permissions&&navigator.permissions.query){
+   for(const [name,label] of [["microphone","Permiso de micrófono"],["camera","Permiso de cámara"]]){
+    try{const p=await navigator.permissions.query({name});add(label,p.state!=="denied",p.state);}catch(error){add(label,true,"el navegador no permite consultar este permiso");}
+   }
+  }
+  add("STUN",true,"servidores públicos configurados");
+  add("TURN",configuredTurn.length>0,configuredTurn.length?"servidor TURN configurado":"no configurado; algunas redes pueden impedir la conexión");
+  output.textContent=checks.join("\n");
+  output.style.whiteSpace="pre-line";
+  setStatus("Diagnóstico terminado. Las llamadas todavía deben probarse entre dos teléfonos.");
+ }
+ $("callDiagnostics")?.addEventListener("click",runCallDiagnostics);
+
  // La pantalla de llamadas mantiene sus propias suscripciones a Firestore.
  window.klkRefreshCallContacts=renderCallContacts;
 })();
