@@ -99,7 +99,7 @@ service cloud.firestore {
           allow read: if callMember();
           allow create: if callMember()
             && request.resource.data.uid == request.auth.uid
-            && request.resource.data.candidate is string;
+            && request.resource.data.candidate is map;
           allow update, delete: if false;
         }
       }
