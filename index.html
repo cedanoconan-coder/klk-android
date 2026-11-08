@@ -89,7 +89,15 @@ header small{display:none}
 .homeBottom button.active{background:#f0f2f2;color:#075e54}
 .homeBottom button span{display:block;font-size:23px;margin-bottom:3px}
 #chat.room-open .homeView{display:none}
-#chat:not(.room-open) .chatTop,#chat:not(.room-open) #chatNav,#chat:not(.room-open) #dmPanel,#chat:not(.room-open) #messages,#chat:not(.room-open) .composer,#chat:not(.room-open) #mediaActions,#chat:not(.room-open) #recordStatus,#chat:not(.room-open) .chatFoot{display:none!important}
+#chat:not(.room-open) .chatTop,#chat:not(.room-open) #chatNav,#chat:not(.room-open) #dmPanel,#chat:not(.room-open) #messages,#chat:not(.room-open) .composer,#chat:not(.room-open) #mediaActions,#chat:not(.room-open) #recordStatus{display:none!important}
+#chat:not(.room-open) .chatFoot{display:block!important;position:relative;padding:4px 20px 92px;background:#fff}
+#chat:not(.room-open) .chatFoot #logout{display:none!important}
+.chatBack{width:40px;height:40px;flex:0 0 40px;margin:0;padding:0;border-radius:50%;background:#f0f2f2;color:#1f2b30;font-size:23px}
+.chatTop .chatHeading{display:flex;align-items:center;gap:10px}
+#chat.room-open .chatTop .chatHeading{min-width:0}
+#chat.room-open #chatTitle{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#homeStatus{overflow-wrap:anywhere}
+@media(max-width:420px){#chat.room-open .chatTop{padding:10px 12px}.chatBack{width:38px;height:38px;flex-basis:38px}}
 #chat.room-open .homeBottom{display:none}
 #chat.room-open .chatTop{background:#fff;color:#111b21;border-bottom:1px solid #edf0f0}
 #chat.room-open .chatTop .muted{color:#68736f}
@@ -139,7 +147,7 @@ header small{display:none}
  </nav>
 </div>
 
-<div class="chatTop"><div style="display:flex;align-items:center;gap:8px"><h2 id="chatTitle" style="flex:1">👨‍👩‍👧‍👦 Familia klk</h2><button id="settingsToggle" class="settingsToggle" type="button">⚙️ Ajustes</button></div><p id="who" class="muted"></p></div>
+<div class="chatTop"><div class="chatHeading"><button id="backToChats" class="chatBack" type="button" aria-label="Volver a chats" title="Volver">‹</button><h2 id="chatTitle" style="flex:1">👨‍👩‍👧‍👦 Familia klk</h2><button id="settingsToggle" class="settingsToggle" type="button">⚙️ Ajustes</button></div><p id="who" class="muted"></p></div>
 <div id="chatNav"><button id="showGroup" type="button" hidden>Chat grupal desactivado</button><button id="showPeople" type="button" class="secondary">💬 Conversaciones privadas</button></div>
 <div id="dmPanel"><p class="hint">Elige un miembro de la familia para abrir una conversación privada.</p></div>
 <div id="messages" aria-live="polite"><p class="muted">Cargando mensajes...</p></div>
@@ -725,6 +733,16 @@ if (window.matchMedia("(display-mode: standalone)").matches || window.navigator.
 $("homeGroup").addEventListener("click",()=>{ $("chatStatus").textContent="klk funciona con conversaciones privadas entre contactos aceptados."; });
 function toggleKlkSettings(){const panel=$("settingsPanel");panel.style.display=panel.style.display==="block"?"none":"block";if(panel.style.display==="block")panel.scrollTop=0;}
 $("homeMenu").addEventListener("click",toggleKlkSettings);
+$("backToChats").addEventListener("click",()=>{
+ if(unsubscribe){unsubscribe();unsubscribe=null;}
+ activeConversationId=null;activeConversationName=null;
+ $("chat").classList.remove("room-open");
+ $("messages").innerHTML="";
+ const chatsButton=document.querySelector('.homeFilters button[data-filter="chats"]');
+ if(chatsButton)chatsButton.click();
+ $("chatSearch").value="";
+ $("homeStatus").textContent="";
+});
 $("homeCamera").addEventListener("click",()=>$("profilePhotoInput").click());
 $("chatSearch").addEventListener("input",event=>{
  const q=event.target.value.trim().toLocaleLowerCase();
@@ -745,9 +763,18 @@ $("chatsPanel").style.display="block";$("requestsPanel").style.display="none";$(
 document.querySelectorAll(".homeBottom button").forEach(button=>button.addEventListener("click",()=>{
  document.querySelectorAll(".homeBottom button").forEach(b=>b.classList.toggle("active",b===button));
  const tab=button.dataset.tab;
- if(tab==="chats"){ $("chatStatus").textContent=""; return; }
- $("chatStatus").textContent=tab==="calls"?"Las llamadas estarán disponibles en una próxima actualización.":tab==="updates"?"Los estados y novedades estarán disponibles en una próxima actualización.":"Abre Ajustes para configurar klk.";
- if(tab==="tools") $("settingsToggle").click();
+ if(tab==="chats"){
+  const chatsButton=document.querySelector('.homeFilters button[data-filter="chats"]');
+  if(chatsButton)chatsButton.click();
+  $("homeStatus").textContent="";
+  return;
+ }
+ if(tab==="calls"||tab==="updates"){
+  $("homeStatus").textContent=tab==="calls"?"Las llamadas de voz y video todavía no están activadas. Tus chats privados siguen disponibles.":"La sección de novedades todavía no está activada. Tus chats y contactos siguen disponibles.";
+  return;
+ }
+ $("homeStatus").textContent="";
+ $("settingsToggle").click();
 }));
 
 </script></body></html>
