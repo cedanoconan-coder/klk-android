@@ -210,6 +210,7 @@ html[data-density="comfortable"] .chatRow,html[data-density="comfortable"] #peop
  <section id="chatsPanel" style="padding:4px 0 12px"><div id="chatsList" aria-label="Conversaciones recientes" class="hint" style="padding:12px 20px">Cargando conversaciones...</div></section>
  <section id="requestsPanel" style="padding:8px 20px"><h3 style="font-size:16px;margin:8px 0">Solicitudes recibidas</h3><div id="requestsList" class="hint">Cargando solicitudes...</div></section>
  <div id="peopleList" aria-label="Personas registradas">Cargando personas...</div>
+ <section id="callsPanel" aria-label="Llamadas"><h3>Llamadas</h3><p class="hint">Llama por voz o video a tus contactos aceptados.</p><div id="callContacts" class="hint">Cargando contactos...</div><p id="callsStatus" class="hint" role="status" aria-live="polite"></p></section>
  <nav class="homeBottom" aria-label="Navegación principal">
   <button type="button" class="active" data-tab="chats"><span>▤</span>Chats</button>
   <button type="button" data-tab="calls"><span>☎</span>Llamadas</button>
@@ -536,6 +537,7 @@ function renderPeople() {
   row.append(action); list.append(row);
  }
  syncConversationListeners();
+ if(window.klkRefreshCallContacts)window.klkRefreshCallContacts();
 }
 function formatConversationTime(value) {
  if (!value || typeof value.toDate !== "function") return "";
@@ -987,10 +989,11 @@ document.querySelectorAll(".homeBottom button").forEach(button=>button.addEventL
   $("homeStatus").textContent="";
   return;
  }
- if(tab==="calls"||tab==="updates"){
-  $("homeStatus").textContent=tab==="calls"?"Las llamadas de voz y video todavía no están activadas. Tus chats privados siguen disponibles.":"La sección de novedades todavía no está activada. Tus chats y contactos siguen disponibles.";
+ if(tab==="updates"){
+  $("homeStatus").textContent="La sección de novedades todavía no está activada. Tus chats y contactos siguen disponibles.";
   return;
  }
+ if(tab==="calls"){ $("homeStatus").textContent=""; return; }
  $("homeStatus").textContent="";
  $("settingsToggle").click();
 }));
