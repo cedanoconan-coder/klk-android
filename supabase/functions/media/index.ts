@@ -21,6 +21,7 @@ try {
 const BUCKET = "Chat-media";
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 const MAX_AUDIO_BYTES = 20 * 1024 * 1024;
+const MAX_FILE_BYTES = 20 * 1024 * 1024;
 const MAX_AVATAR_BYTES = 5 * 1024 * 1024;
 const firebaseKeys = createRemoteJWKSet(
   new URL("https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com"),
@@ -93,11 +94,12 @@ Deno.serve(async (request) => {
     const mimeType = typeof body.mimeType === "string" ? body.mimeType.toLowerCase() : "";
     const isImage = type === "image" && mimeType.startsWith("image/");
     const isAudio = type === "audio" && mimeType.startsWith("audio/");
+    const isFile = type === "file" && mimeType.length > 0 && mimeType.length <= 128;
     const isAvatar = type === "avatar" && mimeType.startsWith("image/");
-    if ((!isImage && !isAudio && !isAvatar) || !Number.isSafeInteger(size) || size <= 0) {
+    if ((!isImage && !isAudio && !isAvatar && !isFile) || !Number.isSafeInteger(size) || size <= 0) {
       return reply(400, { error: "Tipo o tamaño de archivo no válido." });
     }
-    if ((isImage && size > MAX_IMAGE_BYTES) || (isAudio && size > MAX_AUDIO_BYTES) || (isAvatar && size > MAX_AVATAR_BYTES)) {
+    if ((isImage && size > MAX_IMAGE_BYTES) || (isAudio && size > MAX_AUDIO_BYTES) || (isAvatar && size > MAX_AVATAR_BYTES) || (isFile && size > MAX_FILE_BYTES)) {
       return reply(413, { error: "El archivo supera el límite permitido." });
     }
 
