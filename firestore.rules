@@ -35,8 +35,6 @@ service cloud.firestore {
         && (!('photoPath' in request.resource.data) || request.resource.data.photoPath is string)
         && (!('photoUpdatedAt' in request.resource.data) || request.resource.data.photoUpdatedAt is timestamp);
 
-      // Permite actualizar el perfil propio sin fallar por campos antiguos
-      // que ya existan en el documento y no estén siendo modificados.
       allow update: if signedIn()
         && request.auth.uid == userId
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
@@ -51,8 +49,6 @@ service cloud.firestore {
     }
 
     match /conversations/{conversationId} {
-      // Permite comprobar si una conversación aún no existe; si existe,
-      // solo sus dos miembros pueden leerla.
       allow get: if signedIn()
         && (!exists(/databases/$(database)/documents/conversations/$(conversationId))
           || isConversationMember(conversationId));
@@ -133,7 +129,12 @@ service cloud.firestore {
         && request.resource.data.kind in ['audio', 'video']
         && request.resource.data.status == 'preparing'
         && request.resource.data.createdAt == request.time;
-      allow read: if isCallParticipant();
+
+      // El destinatario escucha una consulta filtrada por calleeId.
+      // El emisor accede a su llamada mediante la referencia directa al documento.
+      allow get: if isCallParticipant();
+      allow list: if signedIn() && resource.data.calleeId == request.auth.uid;
+
       allow update: if isCallParticipant()
         && request.resource.data.callerId == resource.data.callerId
         && request.resource.data.calleeId == resource.data.calleeId
