@@ -48,7 +48,7 @@ service cloud.firestore {
         && isConversationMember(request.resource.data.conversationId)
         && get(/databases/$(database)/documents/conversations/$(request.resource.data.conversationId)).data.members.hasAny([request.resource.data.calleeId])
         && request.resource.data.kind in ['audio','video']
-        && request.resource.data.status == 'ringing'
+        && request.resource.data.status == 'preparing'
         && request.resource.data.createdAt == request.time;
       allow read: if isCallParticipant();
       allow update: if isCallParticipant()
@@ -58,7 +58,7 @@ service cloud.firestore {
         && request.resource.data.kind == resource.data.kind
         && request.resource.data.createdAt == resource.data.createdAt
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['offer','answer','status','endedAt'])
-        && request.resource.data.status in ['ringing','accepted','rejected','ended'];
+        && request.resource.data.status in ['preparing','ringing','accepted','rejected','ended'];
       allow delete: if false;
       match /callerCandidates/{candidateId} {
         allow read, create: if callParticipantById(callId);
