@@ -43,7 +43,7 @@ button{background:#075e54;color:white;border:0;font-weight:700;cursor:pointer}bu
 
 /* Ajustes y notificaciones klk */
 .settingsToggle{width:auto;margin:0 0 0 auto;padding:9px 14px;background:#fff;color:#075e54;border-radius:20px;font-size:14px}
-#settingsPanel{display:none;background:#fff;padding:16px;border-top:1px solid #dce4e1}
+#settingsPanel{display:none;position:fixed;z-index:20;inset:env(safe-area-inset-top) 0 0;overflow:auto;background:#fff;padding:22px 18px 32px;border-top:1px solid #dce4e1;box-shadow:0 8px 30px #0003}
 #settingsPanel h3{margin:4px 0 12px;color:#075e54}
 .settingRow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid #edf0ef;font-size:14px}
 .settingRow input[type=checkbox]{width:22px;height:22px;margin:0;accent-color:#075e54}
@@ -87,7 +87,7 @@ header small{display:none}
 .homeBottom button.active{background:#f0f2f2;color:#075e54}
 .homeBottom button span{display:block;font-size:23px;margin-bottom:3px}
 #chat.room-open .homeView{display:none}
-#chat:not(.room-open) .chatTop,#chat:not(.room-open) #chatNav,#chat:not(.room-open) #dmPanel,#chat:not(.room-open) #messages,#chat:not(.room-open) .composer,#chat:not(.room-open) #mediaActions,#chat:not(.room-open) #recordStatus,#chat:not(.room-open) #settingsPanel,#chat:not(.room-open) .chatFoot{display:none!important}
+#chat:not(.room-open) .chatTop,#chat:not(.room-open) #chatNav,#chat:not(.room-open) #dmPanel,#chat:not(.room-open) #messages,#chat:not(.room-open) .composer,#chat:not(.room-open) #mediaActions,#chat:not(.room-open) #recordStatus,#chat:not(.room-open) .chatFoot{display:none!important}
 #chat.room-open .homeBottom{display:none}
 #chat.room-open .chatTop{background:#fff;color:#111b21;border-bottom:1px solid #edf0f0}
 #chat.room-open .chatTop .muted{color:#68736f}
@@ -121,6 +121,7 @@ header small{display:none}
 <div id="homeView" class="homeView">
  <div class="homeTitle"><h1>klk</h1><div class="homeActions"><button type="button" id="profileButton" class="profileButton" aria-label="Cambiar foto de perfil"><img id="myProfilePhoto" alt="Foto de perfil"><span>Mi perfil</span></button><input id="profilePhotoInput" type="file" accept="image/*" hidden><button type="button" id="homeCamera" aria-label="Cámara">▣</button><button type="button" id="homeMenu" aria-label="Ajustes">⋮</button></div></div>
  <div class="homeSearch"><input id="chatSearch" type="search" placeholder="Buscar..." aria-label="Buscar conversaciones"></div>
+ <p id="homeStatus" class="hint" role="status" aria-live="polite" style="padding:0 20px;min-height:18px"></p>
  <div class="homeFilters" role="group" aria-label="Filtros de conversaciones">
   <button type="button" class="active" data-filter="all">Todos</button><button type="button" data-filter="requests">Solicitudes</button><button type="button" data-filter="people">Personas</button>
  </div>
@@ -317,7 +318,7 @@ async function uploadProfilePhoto(file) {
  if (file.size > 10 * 1024 * 1024) { $("chatStatus").textContent = "La foto original no puede superar 10 MB."; return; }
  const button = $("profileButton");
  button.disabled = true;
- $("chatStatus").textContent = "Preparando tu foto de perfil...";
+ $("homeStatus").textContent = "Preparando tu foto de perfil...";
  try {
   const uploadFile = await compressImage(file);
   if (uploadFile.size > 5 * 1024 * 1024) throw new Error("La foto de perfil debe pesar menos de 5 MB después de optimizarla.");
@@ -339,7 +340,7 @@ async function uploadProfilePhoto(file) {
   $("chatStatus").textContent = "Foto de perfil actualizada.";
  } catch(error) {
   console.error("Error al actualizar foto de perfil:", error);
-  $("chatStatus").textContent = "No se pudo guardar la foto: " + (error.message || "Error desconocido");
+  $("homeStatus").textContent = "No se pudo guardar la foto: " + (error.message || "Error desconocido");
  } finally { button.disabled = false; }
 }
 $("profileButton").addEventListener("click", () => $("profilePhotoInput").click());
@@ -662,7 +663,7 @@ if (window.matchMedia("(display-mode: standalone)").matches || window.navigator.
  function save(){localStorage.setItem("klk-settings",JSON.stringify(prefs));apply();}
  ["settingSound","settingVibration","settingPreview"].forEach(id=>$(id).addEventListener("change",()=>{prefs[id.slice(7).toLowerCase()]=$(id).checked;save();}));
  $("settingTextSize").addEventListener("change",e=>{prefs.textSize=e.target.value;save();});$("settingTheme").addEventListener("change",e=>{prefs.theme=e.target.value;save();});
- $("settingsToggle").addEventListener("click",()=>{$("settingsPanel").style.display=$("settingsPanel").style.display==="block"?"none":"block";});
+ $("settingsToggle").addEventListener("click",()=>{const panel=$("settingsPanel");panel.style.display=panel.style.display==="block"?"none":"block";});
  $("closeSettings").addEventListener("click",()=>{$("settingsPanel").style.display="none";});
  function permissionButton(){ $("enableNotifications").textContent=("Notification" in window && Notification.permission==="granted")?"Activadas":"Activar";}
  $("enableNotifications").addEventListener("click",async()=>{if(!("Notification" in window)){$("settingsStatus").textContent="Este dispositivo no admite notificaciones web.";return;}try{const p=await Notification.requestPermission();$("settingsStatus").textContent=p==="granted"?"Permiso concedido. Para avisos con la app cerrada falta activar el envío push de Firebase.":"Permiso no concedido; puedes cambiarlo en los ajustes del teléfono.";permissionButton();}catch(e){$("settingsStatus").textContent="No se pudo solicitar el permiso."; }});
@@ -672,8 +673,9 @@ if (window.matchMedia("(display-mode: standalone)").matches || window.navigator.
 })();
 
 $("homeGroup").addEventListener("click",()=>{ $("chatStatus").textContent="klk funciona con conversaciones privadas entre contactos aceptados."; });
-$("homeMenu").addEventListener("click",()=>$("settingsToggle").click());
-$("homeCamera").addEventListener("click",()=>$("cameraInput").click());
+function toggleKlkSettings(){const panel=$("settingsPanel");panel.style.display=panel.style.display==="block"?"none":"block";if(panel.style.display==="block")panel.scrollTop=0;}
+$("homeMenu").addEventListener("click",toggleKlkSettings);
+$("homeCamera").addEventListener("click",()=>$("profilePhotoInput").click());
 $("chatSearch").addEventListener("input",event=>{
  const q=event.target.value.trim().toLocaleLowerCase();
  $("homeGroup").style.display="none";
