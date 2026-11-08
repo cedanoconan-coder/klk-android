@@ -4,28 +4,28 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#075e54">
-<meta name="description" content="Chat privado para mantener a la familia conectada.">
+<meta name="description" content="Mensajería privada individual de klk.">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="icon" href="./icon.svg" type="image/svg+xml">
-<title>klk - Chat familiar</title>
+<title>klk - Mensajes privados</title>
 <style>
-*{box-sizing:border-box}html{min-height:100%;background:#efeae2}body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#efeae2;color:#111b21;min-height:100vh;min-height:100dvh;padding-bottom:env(safe-area-inset-bottom)}
+*{box-sizing:border-box}html{min-height:100%;background:#efeae2}body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#efeae2;color:#111b21;min-height:100vh;min-height:100dvh;height:100dvh;overflow:hidden;padding-bottom:env(safe-area-inset-bottom);display:flex;flex-direction:column}
 header{position:sticky;top:0;z-index:5;background:#075e54;color:white;padding:calc(14px + env(safe-area-inset-top)) 18px 14px;font-size:25px;font-weight:700;box-shadow:0 2px 5px #0002}
 header small{display:block;font-size:13px;font-weight:400;opacity:.9;margin-top:3px}
-main{max-width:760px;margin:auto;padding:12px 10px calc(12px + env(safe-area-inset-bottom))}.card{background:#fff;padding:20px;border-radius:12px;margin-top:16px;box-shadow:0 2px 8px #00000012}
+main{width:100%;max-width:760px;flex:1 1 auto;min-height:0;margin:0 auto;padding:12px 10px calc(12px + env(safe-area-inset-bottom));overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}.card{background:#fff;padding:20px;border-radius:12px;margin-top:16px;box-shadow:0 2px 8px #00000012}
 h2{margin-top:0}input,button{width:100%;padding:14px;margin:7px 0;border-radius:24px;font-size:16px}
 input{border:1px solid #d6dce0;background:#fff;color:#17211e}input:focus{outline:2px solid #128c7e;border-color:transparent}
 button{background:#075e54;color:white;border:0;font-weight:700;cursor:pointer}button.secondary{background:#e3f2ed;color:#075e54}button:disabled{opacity:.55}
-#chat{display:none;padding:0;overflow:hidden;background:#efeae2}
+#chat{display:none;flex-direction:column;min-height:0;height:100%;padding:0;overflow:hidden;background:#efeae2}
 .chatTop{background:#075e54;color:#fff;padding:14px 16px}.chatTop h2{font-size:18px;margin:0 0 3px}.chatTop .muted{color:#d6eee8}
 #messages{height:58vh;height:58dvh;max-height:650px;min-height:260px;overflow:auto;padding:14px 12px;background-color:#efeae2;background-image:radial-gradient(#d8d0c5 0.7px,transparent 0.7px);background-size:18px 18px}
 .msg{background:#fff;padding:9px 12px;border-radius:3px 12px 12px 12px;margin:8px 0;overflow-wrap:anywhere;max-width:88%;width:fit-content;box-shadow:0 1px 1px #00000012}
 .msg.mine{background:#d9fdd3;margin-left:auto;border-radius:12px 3px 12px 12px}
 .msg b{font-size:12px;color:#087568}.msg p{margin:5px 0 0;white-space:pre-wrap;font-size:15px;line-height:1.35}
-#messages img{display:block;max-width:100%;max-height:340px;border-radius:8px;margin-top:7px}#messages audio{display:block;width:min(260px,70vw);max-width:100%;margin-top:7px}
+.avatar{width:42px;height:42px;flex:0 0 42px;border-radius:50%;object-fit:cover;background:#dce8e4;border:1px solid #d4dfda}.memberLine{display:flex;align-items:center;gap:10px;text-align:left}.memberInfo{min-width:0;display:flex;flex-direction:column;gap:3px}.memberInfo small{overflow-wrap:anywhere}#profilePreview{width:76px;height:76px;border-radius:50%;object-fit:cover;background:#e3f2ed;border:2px solid #c9ddd6}#messages img{display:block;max-width:100%;max-height:340px;border-radius:8px;margin-top:7px}#messages audio{display:block;width:min(260px,70vw);max-width:100%;margin-top:7px}
 .composer{display:flex;align-items:center;gap:7px;padding:9px;background:#f0f2f5}
 .composer input{flex:1;min-width:0;margin:0;border:0;border-radius:24px;padding:13px 16px;background:#fff}
 .iconBtn{width:44px;height:44px;flex:0 0 44px;margin:0;padding:0;border-radius:50%;font-size:20px;background:#fff;color:#54656f}
@@ -33,27 +33,67 @@ button{background:#075e54;color:white;border:0;font-weight:700;cursor:pointer}bu
 #mediaActions{display:flex;gap:7px;padding:0 12px 8px;background:#f0f2f5}#mediaActions button{width:auto;flex:1;margin:0;padding:9px 5px;border-radius:20px;font-size:13px}
 #recordStatus{padding:0 12px;margin:0;background:#f0f2f5;min-height:18px}.chatFoot{padding:4px 12px 10px;background:#f0f2f5}
 .muted{color:#68736f;font-size:12px}#status{color:#a12b2b;overflow-wrap:anywhere;min-height:18px}.hint{font-size:13px;color:#68736f;line-height:1.45}button[hidden]{display:none!important}#installApp{margin-top:0}
-@media(max-width:420px){main{padding:8px 0}.card{border-radius:0;margin-top:8px}#chat{margin-top:0}#messages{height:calc(100dvh - 220px);max-height:none}}
+@media(max-width:420px){main{padding:8px 0}.card{border-radius:0;margin-top:8px}#chat{margin-top:0}}
+
+/* Desplazamiento interno: el encabezado y los controles permanecen visibles. */
+#chat{margin-top:0}
+html,body{height:100%;overscroll-behavior:none}
+header{flex:0 0 auto}
+main{scrollbar-gutter:stable}
+#chat{display:none}
+#chat[style*="display: flex"]{display:flex!important}
+.chatTop,#chatNav,.composer,#mediaActions,.chatFoot{flex:0 0 auto}
+#messages{flex:1 1 auto;height:auto;min-height:140px;max-height:none;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+#dmPanel{flex:1 1 auto;min-height:0;max-height:none;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+#settingsPanel{flex:0 1 auto;max-height:42dvh;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+@media(max-width:420px){#messages{min-height:120px}}
+
+#chatNav{display:flex;gap:8px;padding:10px;background:#e3f2ed}
+#chatNav button{margin:0;padding:10px 8px;font-size:13px}
+#dmPanel{display:none;background:#fff;padding:12px;max-height:55vh;overflow:auto}
+.memberBtn{display:block;width:100%;text-align:left;background:#f4f7f6;color:#17211e;border-radius:10px;margin:6px 0;padding:13px}
+.memberBtn small{display:block;color:#68736f;font-weight:400;margin-top:4px}
+
+/* Ajustes y notificaciones klk */
+.settingsToggle{width:auto;margin:0 0 0 auto;padding:9px 14px;background:#fff;color:#075e54;border-radius:20px;font-size:14px}
+#settingsPanel{display:none;background:#fff;padding:16px;border-top:1px solid #dce4e1}
+#settingsPanel h3{margin:4px 0 12px;color:#075e54}
+.settingRow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid #edf0ef;font-size:14px}
+.settingRow input[type=checkbox]{width:22px;height:22px;margin:0;accent-color:#075e54}
+.settingRow select{width:auto;max-width:145px;margin:0;padding:8px;border-radius:10px;border:1px solid #d6dce0;background:#fff}
+
+.callBtn{width:auto;min-width:42px;padding:9px 11px;margin:0;border-radius:22px;font-size:18px;background:#0b806f}.callOverlay{position:fixed;inset:0;z-index:30;background:#071b19ed;display:flex;align-items:center;justify-content:center;padding:18px}.callOverlay[hidden]{display:none}.callCard{width:100%;max-width:480px;background:#fff;color:#17211e;border-radius:20px;padding:18px;text-align:center;max-height:92dvh;overflow:auto}.callCard h2{margin:4px 0}.callCard p{margin:8px}.callCard video{display:none;width:100%;max-height:45dvh;object-fit:cover;background:#101b20;border-radius:12px;margin:8px 0}.callCard video#remoteVideo{display:block}.callCard video#localVideo{position:absolute;right:28px;bottom:130px;width:110px;max-height:150px;border:2px solid white}.callControls{display:flex;gap:7px;flex-wrap:wrap;justify-content:center;margin-top:14px}.callControls button{width:auto;min-width:105px;margin:3px;padding:12px}.callControls #endCallBtn,.callControls #rejectCallBtn{background:#b3261e}.callControls #acceptCallBtn{background:#087e50}@media(max-width:420px){.callCard{padding:12px}.callCard video#localVideo{width:85px;bottom:150px}}
 </style>
 </head>
 <body>
-<header>klk <small>Tu familia, siempre conectada ❤️</small></header>
+<header>klk <small>Mensajes privados, siempre conectados</small></header>
 <main>
 <button id="installApp" class="secondary" type="button" hidden>Instalar klk en este teléfono</button>
 <section id="login" class="card">
-<h2>Bienvenido a klk</h2><p>Entra o crea tu cuenta familiar.</p>
+<h2>Bienvenido a klk</h2><p>Entra o crea tu cuenta para enviar mensajes privados.</p>
 <form id="authForm">
-<input id="email" type="email" autocomplete="email" placeholder="Correo electrónico" required>
-<input id="password" type="password" autocomplete="current-password" placeholder="Contraseña (mínimo 6 caracteres)" minlength="6" required>
-<button id="enter" type="submit">Iniciar sesión</button>
+<input id="phoneNumber" type="tel" inputmode="tel" autocomplete="tel" placeholder="Número con código de país (+1809...)" required>
+<input id="verificationCode" type="text" inputmode="numeric" autocomplete="one-time-code" placeholder="Código de 6 dígitos recibido por SMS" maxlength="6" hidden>
+<button id="enter" type="submit">Enviar código SMS</button>
 </form>
-<button id="register" class="secondary" type="button">Crear cuenta</button>
-<button id="forgot" class="secondary" type="button">Olvidé mi contraseña</button>
+<div id="recaptcha-container"></div>
 <p id="status" role="status" aria-live="polite"></p>
-<p class="hint">Necesitas conexión a internet para iniciar sesión y enviar mensajes.</p>
+<p class="hint">Regístrate o inicia sesión con tu número. Recibirás un código por SMS. Usa el código del país, por ejemplo +1 809, +1 829 o +1 849. Tu operador podría cobrar los SMS.</p>
 </section>
 <section id="chat" class="card">
-<div class="chatTop"><h2>👨‍👩‍👧‍👦 Familia klk</h2><p id="who" class="muted"></p></div>
+<div class="chatTop"><div style="display:flex;align-items:center;gap:8px"><h2 id="chatTitle" style="flex:1">💬 Mensajes privados</h2><button id="backToContacts" class="callBtn" type="button" hidden aria-label="Volver a contactos">←</button><button id="audioCallBtn" class="callBtn" type="button" title="Llamada de voz" aria-label="Llamada de voz">📞</button><button id="videoCallBtn" class="callBtn" type="button" title="Videollamada" aria-label="Videollamada">📹</button><button id="settingsToggle" class="settingsToggle" type="button">⚙️ Ajustes</button></div><p id="who" class="muted"></p></div>
+<div id="dmPanel">
+<section id="phoneLinkPanel" class="card" hidden style="margin:0 0 14px;padding:14px;border:1px solid #d6e8e1">
+ <h3>📱 Vincula tu número de teléfono</h3>
+ <p class="hint">Tu cuenta actual se creó con correo. Verifica tu número para poder volver a entrar solo con SMS y conservar tus conversaciones.</p>
+ <input id="linkPhoneNumber" type="tel" inputmode="tel" autocomplete="tel" placeholder="Número internacional (+1809...)" pattern="^\+[1-9][0-9]{7,14}$">
+ <div id="linkRecaptcha"></div>
+ <button id="sendLinkCode" type="button">Enviar código SMS</button>
+ <input id="linkVerificationCode" type="text" inputmode="numeric" autocomplete="one-time-code" placeholder="Código SMS de 6 dígitos" maxlength="6" hidden>
+ <button id="confirmLinkCode" type="button" hidden>Verificar y vincular número</button>
+ <p id="linkStatus" class="hint" role="status" aria-live="polite"></p>
+</section>
+<h3>💬 Mensajes individuales</h3><p class="hint">Selecciona una persona para iniciar una conversación privada.</p><div id="peopleList">Cargando contactos...</div></div>
 <div id="messages" aria-live="polite"><p class="muted">Cargando mensajes...</p></div>
 <div class="composer">
  <button id="pickPhoto" class="iconBtn" type="button" aria-label="Elegir foto" title="Elegir foto">＋</button>
@@ -68,13 +108,46 @@ button{background:#075e54;color:white;border:0;font-weight:700;cursor:pointer}bu
 <input id="galleryInput" type="file" accept="image/*" hidden>
 <input id="cameraInput" type="file" accept="image/*" capture="environment" hidden>
 <p id="recordStatus" class="hint" role="status" aria-live="polite"></p>
+<section id="callOverlay" class="callOverlay" hidden aria-live="polite">
+ <div class="callCard">
+  <h2 id="callTitle">Llamada de klk</h2><p id="callPeer">Contacto</p>
+  <p id="callStatus">Conectando...</p>
+  <video id="remoteVideo" autoplay playsinline></video>
+  <video id="localVideo" autoplay muted playsinline></video>
+  <audio id="remoteAudio" autoplay></audio>
+  <div class="callControls">
+   <button id="acceptCallBtn" type="button" hidden>Contestar</button>
+   <button id="rejectCallBtn" type="button" hidden>Rechazar</button>
+   <button id="muteCallBtn" type="button" hidden>🎙️ Silenciar</button>
+   <button id="cameraCallBtn" type="button" hidden>📷 Cámara</button>
+   <button id="endCallBtn" type="button" hidden>🔴 Colgar</button>
+  </div>
+ </div>
+</section>
+<section id="settingsPanel" aria-label="Configuración de klk">
+ <h3>⚙️ Configuración de klk</h3>
+ <div class="settingRow"><span>Sonido de mensajes</span><input id="settingSound" type="checkbox" checked></div>
+ <div class="settingRow"><span>Vibración</span><input id="settingVibration" type="checkbox" checked></div>
+ <div class="settingRow"><span>Notificaciones del teléfono</span><button id="enableNotifications" type="button" style="width:auto;margin:0;padding:9px 12px">Activar</button></div>
+ <div class="settingRow"><span>Vista previa de mensajes</span><input id="settingPreview" type="checkbox" checked></div>
+ <div class="settingRow"><span>Tamaño del texto</span><select id="settingTextSize"><option value="15">Normal</option><option value="17">Grande</option><option value="19">Muy grande</option></select></div>
+ <div class="settingRow"><span>Tema</span><select id="settingTheme"><option value="light">Claro</option><option value="dark">Oscuro</option></select></div>
+ <h3>👤 Foto de perfil</h3>
+ <div style="display:flex;align-items:center;gap:12px;margin:8px 0 14px">
+  <img id="profilePreview" alt="Mi foto de perfil" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'%3E%3Ccircle cx='40' cy='40' r='40' fill='%23dce8e4'/%3E%3Ccircle cx='40' cy='29' r='14' fill='%2389a99e'/%3E%3Cpath d='M13 75c2-17 13-25 27-25s25 8 27 25' fill='%2389a99e'/%3E%3C/svg%3E">
+  <div style="flex:1"><button id="changeProfilePhoto" type="button" style="margin:0 0 6px">📷 Cambiar foto</button><p class="hint" style="margin:0">JPG, PNG o WebP. Máximo 5 MB.</p></div>
+ </div>
+ <input id="profilePhotoInput" type="file" accept="image/*" hidden>
+ <p id="settingsStatus" class="hint" role="status" aria-live="polite">Los cambios se guardan en este teléfono.</p>
+ <button id="closeSettings" class="secondary" type="button">Cerrar ajustes</button>
+</section>
 <div class="chatFoot"><p id="chatStatus" class="hint" role="status" aria-live="polite"></p><button id="logout" class="secondary" type="button">Cerrar sesión</button></div>
 </section>
 </main>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const firebaseConfig = {
  apiKey: "AIzaSyAgMkDOS77y-jHnzCEteQW1UgC90gShjuU",
@@ -86,7 +159,20 @@ const firebaseConfig = {
  measurementId: "G-DXX2PHDNN0"
 };
 const $ = id => document.getElementById(id);
-let auth, db, storage, firebaseInitError = null, unsubscribe = null, sending = false, mediaRecorder = null, audioStream = null, audioBlob = null, audioStartedAt = 0;
+const SUPABASE_URL = "https://nrnqzzhhvjramxkahkqs.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_mV8KjGyjKOd6rDLTtNUBnQ_dvUIHItV";
+let supabaseClient = null;
+function getSupabaseClient() {
+ if (!window.supabase || typeof window.supabase.createClient !== "function") {
+  throw new Error("No se pudo cargar el servicio de archivos. Revisa tu conexión e inténtalo de nuevo.");
+ }
+ if (!supabaseClient) supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+ return supabaseClient;
+}
+const mediaUrlCache = new Map();
+let profileUrlCache = new Map();
+let auth, db, firebaseInitError = null, unsubscribe = null, sending = false, mediaRecorder = null, audioStream = null, audioBlob = null, audioStartedAt = 0;
+let activeConversationId = null, activeConversationName = null, peopleUnsubscribe = null;
 function showError(target, error) {
  console.error("Error de klk/Firebase:", error);
  const messages = {
@@ -98,7 +184,15 @@ function showError(target, error) {
   "auth/invalid-credential":"El correo o la contraseña son incorrectos.",
   "auth/network-request-failed":"Firebase no respondió a la solicitud. Comprueba la conexión, la fecha y hora automáticas del teléfono y que no haya un DNS privado o bloqueador filtrando Google.",
   "auth/unauthorized-domain":"Firebase no autorizó el dominio de esta aplicación. Hay que corregir los dominios autorizados del proyecto.",
-  "auth/operation-not-allowed":"El inicio de sesión por correo y contraseña no está activado en Firebase.",
+  "auth/operation-not-allowed":"El acceso por teléfono no está activado en Firebase. Activa Phone en Authentication > Sign-in method.",
+  "auth/invalid-phone-number":"El número no es válido. Incluye el código del país, por ejemplo +1809...",
+  "auth/missing-phone-number":"Escribe tu número de teléfono.",
+  "auth/invalid-verification-code":"El código SMS es incorrecto. Revísalo e inténtalo otra vez.",
+  "auth/code-expired":"El código venció. Vuelve a solicitar otro SMS.",
+  "auth/too-many-requests":"Hubo demasiados intentos. Espera un momento antes de solicitar otro código.",
+  "auth/quota-exceeded":"Firebase agotó la cuota de SMS disponible para este proyecto.",
+  "auth/captcha-check-failed":"No se pudo verificar el CAPTCHA. Recarga la página e inténtalo otra vez.",
+  "auth/billing-not-enabled":"Firebase requiere configurar la facturación para enviar SMS en este proyecto.",
   "auth/api-key-not-valid.-please-pass-a-valid-api-key.":"La clave de Firebase no es válida.",
   "permission-denied":"Firebase bloqueó la operación. Hay que revisar las reglas de seguridad."
  };
@@ -106,110 +200,432 @@ function showError(target, error) {
  const detail = error && error.message ? error.message : "Sin detalle técnico";
  $(target).textContent = (messages[code] || detail || "Ocurrió un error. Inténtalo de nuevo.") + " [ " + code + " ]";
 }
-function setBusy(busy) {
- $("enter").disabled = busy; $("register").disabled = busy; $("forgot").disabled = busy;
-}
+let confirmationResult = null, recaptchaVerifier = null;
+let linkConfirmationResult = null, linkRecaptchaVerifier = null;
+function setBusy(busy) { $("enter").disabled = busy; }
 try {
  firebase.initializeApp(firebaseConfig);
- auth = firebase.auth(); db = firebase.firestore(); storage = firebase.storage();
+ auth = firebase.auth(); db = firebase.firestore();
+ auth.languageCode = "es";
 } catch (error) { firebaseInitError = error; $("status").textContent = "No se pudo iniciar Firebase. Comprueba la conexión a Internet y vuelve a abrir klk. Detalle: " + error.message; }
 $("authForm").addEventListener("submit", async event => {
  event.preventDefault(); $("status").textContent = "";
- if (!auth) { $("status").textContent = "Firebase no está disponible. " + (firebaseInitError && firebaseInitError.message ? firebaseInitError.message : "Comprueba tu conexión a Internet y vuelve a abrir klk."); return; }
- setBusy(true);
- try { await auth.signInWithEmailAndPassword($("email").value.trim(), $("password").value); }
- catch(error) { showError("status", error); }
- finally { setBusy(false); }
-});
-$("register").addEventListener("click", async () => {
- $("status").textContent = "";
- if (!auth) { $("status").textContent = "Firebase no está disponible. " + (firebaseInitError && firebaseInitError.message ? firebaseInitError.message : "Comprueba tu conexión a Internet y vuelve a abrir klk."); return; }
- const email = $("email").value.trim(), password = $("password").value;
- if (!email || password.length < 6) { $("status").textContent = "Escribe un correo válido y una contraseña de al menos 6 caracteres."; return; }
- setBusy(true);
- try { await auth.createUserWithEmailAndPassword(email, password); $("status").textContent = "Cuenta creada correctamente."; }
- catch(error) { showError("status", error); }
- finally { setBusy(false); }
-});
-$("forgot").addEventListener("click", async () => {
- $("status").textContent = "";
- if (!auth) { $("status").textContent = "Firebase no está disponible. " + (firebaseInitError && firebaseInitError.message ? firebaseInitError.message : "Comprueba tu conexión a Internet y vuelve a abrir klk."); return; }
- const email = $("email").value.trim();
- if (!email) { $("status").textContent = "Escribe primero tu correo electrónico y vuelve a pulsar aquí."; $("email").focus(); return; }
+ if (!auth) { $("status").textContent = "Firebase no está disponible. Comprueba tu conexión e inténtalo de nuevo."; return; }
  setBusy(true);
  try {
-  await auth.sendPasswordResetEmail(email);
-  $("status").textContent = "Si el correo está registrado, Firebase enviará un enlace para cambiar la contraseña. Revisa también Spam o Correo no deseado.";
+  if (!confirmationResult) {
+   const phone = $("phoneNumber").value.replace(/[\s()-]/g, "");
+   if (!/^\+[1-9][0-9]{7,14}$/.test(phone)) throw new Error("Escribe el número en formato internacional, por ejemplo +18095551234.");
+   if (!recaptchaVerifier) recaptchaVerifier = new firebase.auth.RecaptchaVerifier("recaptcha-container", {size:"normal"});
+   await recaptchaVerifier.render();
+   confirmationResult = await auth.signInWithPhoneNumber(phone, recaptchaVerifier);
+   $("verificationCode").hidden = false;
+   $("verificationCode").required = true;
+   $("enter").textContent = "Verificar código";
+   $("status").textContent = "Enviamos un SMS a " + phone + ". Escribe el código de 6 dígitos.";
+   $("verificationCode").focus();
+  } else {
+   const code = $("verificationCode").value.trim();
+   if (!/^\d{6}$/.test(code)) throw new Error("El código debe tener 6 dígitos.");
+   await confirmationResult.confirm(code);
+   confirmationResult = null;
+   $("status").textContent = "Número verificado. Tu cuenta está lista.";
+  }
  } catch(error) {
-  const messages = {
-   "auth/invalid-email":"El correo electrónico no es válido.",
-   "auth/user-not-found":"No encontramos una cuenta con ese correo.",
-   "auth/too-many-requests":"Se hicieron demasiados intentos. Espera un momento e inténtalo de nuevo.",
-   "auth/network-request-failed":"No hay conexión. Revisa tu internet e inténtalo de nuevo."
-  };
-  $("status").textContent = messages[error.code] || "No se pudo enviar el correo. Inténtalo de nuevo.";
+  showError("status", error);
+  if (error.code && ["auth/invalid-verification-code","auth/code-expired"].includes(error.code)) $("verificationCode").value = "";
+  if (!confirmationResult && recaptchaVerifier) {
+   try { recaptchaVerifier.clear(); } catch(e) {}
+   recaptchaVerifier = null;
+   $("recaptcha-container").innerHTML = "";
+  }
  } finally { setBusy(false); }
 });
-$("logout").onclick = async () => { if (unsubscribe) { unsubscribe(); unsubscribe = null; } await auth.signOut(); };
-auth && auth.onAuthStateChanged(user => {
- $("login").style.display = user ? "none" : "block";
- $("chat").style.display = user ? "block" : "none";
- if (user) { $("who").textContent = "Conectado: " + (user.email || "usuario"); loadMessages(); }
- else { if (unsubscribe) unsubscribe(); unsubscribe = null; $("messages").innerHTML = ""; }
+$("sendLinkCode").addEventListener("click", async () => {
+ const user = auth && auth.currentUser, phone = $("linkPhoneNumber").value.replace(/[\s()-]/g, "");
+ $("linkStatus").textContent = "";
+ if (!user) { $("linkStatus").textContent = "Inicia sesión primero."; return; }
+ if (user.phoneNumber) { $("linkStatus").textContent = "Esta cuenta ya tiene un número verificado."; $("phoneLinkPanel").hidden = true; return; }
+ if (!/^\+[1-9][0-9]{7,14}$/.test(phone)) { $("linkStatus").textContent = "Escribe el número en formato internacional, por ejemplo +18095551234."; return; }
+ $("sendLinkCode").disabled = true;
+ try {
+  if (!linkRecaptchaVerifier) linkRecaptchaVerifier = new firebase.auth.RecaptchaVerifier("linkRecaptcha", {size:"normal"});
+  await linkRecaptchaVerifier.render();
+  linkConfirmationResult = await user.linkWithPhoneNumber(phone, linkRecaptchaVerifier);
+  $("linkVerificationCode").hidden = false;
+  $("confirmLinkCode").hidden = false;
+  $("linkStatus").textContent = "Enviamos un código a " + phone + ".";
+ } catch(error) {
+  $("linkStatus").textContent = (error.message || "No se pudo enviar el SMS.") + (error.code ? " [" + error.code + "]" : "");
+  if (linkRecaptchaVerifier) { try { linkRecaptchaVerifier.clear(); } catch(e) {} linkRecaptchaVerifier = null; $("linkRecaptcha").innerHTML = ""; }
+ } finally { $("sendLinkCode").disabled = false; }
 });
+$("confirmLinkCode").addEventListener("click", async () => {
+ const code = $("linkVerificationCode").value.trim();
+ if (!linkConfirmationResult) { $("linkStatus").textContent = "Solicita primero el código SMS."; return; }
+ if (!/^\d{6}$/.test(code)) { $("linkStatus").textContent = "El código debe tener 6 dígitos."; return; }
+ $("confirmLinkCode").disabled = true;
+ try {
+  const result = await linkConfirmationResult.confirm(code);
+  await result.user.getIdToken(true);
+  await db.collection("users").doc(result.user.uid).set({phoneNumber:result.user.phoneNumber,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
+  $("who").textContent = "Conectado: " + result.user.phoneNumber;
+  $("phoneLinkPanel").hidden = true;
+  $("linkStatus").textContent = "Número vinculado correctamente. Tus conversaciones se conservaron.";
+  linkConfirmationResult = null;
+ } catch(error) {
+  $("linkStatus").textContent = (error.message || "No se pudo verificar el código.") + (error.code ? " [" + error.code + "]" : "");
+ } finally { $("confirmLinkCode").disabled = false; }
+});
+$("logout").onclick = async () => { if (unsubscribe) { unsubscribe(); unsubscribe = null; } await auth.signOut(); };
+auth && auth.onAuthStateChanged(async user => {
+ $("login").style.display = user ? "none" : "block";
+ $("chat").style.display = user ? "flex" : "none";
+ if (user) {
+  window.klkSetCurrentUid && window.klkSetCurrentUid(user.uid);
+  watchIncomingCalls(user);
+  $("who").textContent = "Conectado: " + (user.phoneNumber || user.email || "usuario");
+  $("phoneLinkPanel").hidden = !!user.phoneNumber;
+  activeConversationId = null; activeConversationName = null;
+  $("chatTitle").textContent = "💬 Mensajes privados"; $("dmPanel").style.display = "block"; $("messages").style.display = "none"; $("backToContacts").hidden = true; $("audioCallBtn").disabled = true; $("videoCallBtn").disabled = true;
+  document.querySelector(".composer").style.display = "none"; $("mediaActions").style.display = "none"; $("recordStatus").style.display = "none";
+  try {
+   const userRef = db.collection("users").doc(user.uid);
+   const userSnap = await userRef.get(), profile = userSnap.exists ? userSnap.data() : {};
+   await userRef.set({uid:user.uid,...(user.phoneNumber ? {phoneNumber:user.phoneNumber} : {email:user.email || ""}),displayName:user.displayName || profile.displayName || user.phoneNumber || (user.email || "Miembro").split("@")[0],updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
+   if (profile.photoPath) getMediaUrl(profile.photoPath).then(url => { if (url) $("profilePreview").src = url; }).catch(error => console.warn("Foto propia:", error));
+   loadPeople();
+  } catch(error) { showError("chatStatus",error); }
+ } else {
+  window.klkSetCurrentUid && window.klkSetCurrentUid(null);
+  if(incomingCallUnsubscribe){incomingCallUnsubscribe();incomingCallUnsubscribe=null;} clearCallMedia();
+  if (unsubscribe) unsubscribe(); unsubscribe = null;
+  if (peopleUnsubscribe) peopleUnsubscribe(); peopleUnsubscribe = null;
+  activeConversationId = null; $("messages").innerHTML = "";
+ }
+});
+function messagesCollection() {
+ return activeConversationId ? db.collection("conversations").doc(activeConversationId).collection("messages") : null;
+}
+function loadPeople() {
+ if (peopleUnsubscribe) peopleUnsubscribe();
+ $("peopleList").textContent = "Cargando miembros...";
+ peopleUnsubscribe = db.collection("users").orderBy("displayName").onSnapshot(snapshot => {
+  const list = $("peopleList"); list.innerHTML = "";
+  const others = snapshot.docs.filter(doc => doc.id !== auth.currentUser.uid);
+  if (!others.length) { list.textContent = "Todavía no hay otros miembros registrados. Cuando alguien cree su cuenta aparecerá aquí."; return; }
+  for (const doc of others) {
+   const person = doc.data(), button = document.createElement("button");
+   button.type = "button"; button.className = "memberBtn";
+   const line = document.createElement("span"); line.className = "memberLine";
+   const avatar = document.createElement("img"); avatar.className = "avatar"; avatar.alt = "Foto de perfil";
+   avatar.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'%3E%3Ccircle cx='40' cy='40' r='40' fill='%23dce8e4'/%3E%3Ccircle cx='40' cy='29' r='14' fill='%2389a99e'/%3E%3Cpath d='M13 75c2-17 13-25 27-25s25 8 27 25' fill='%2389a99e'/%3E%3C/svg%3E";
+   if (person.photoPath) getMediaUrl(person.photoPath).then(url => { if (url) avatar.src = url; }).catch(error => console.warn("Foto de perfil:", error));
+   const info = document.createElement("span"); info.className = "memberInfo";
+   const name = document.createElement("strong"); name.textContent = person.displayName || person.phoneNumber || person.email || "Miembro";
+   const phone = document.createElement("small"); phone.textContent = person.phoneNumber || person.email || "";
+   info.append(name,phone); line.append(avatar,info); button.append(line);
+   button.onclick = () => openPrivateConversation(doc.id, person.displayName || person.phoneNumber || person.email || "Conversación");
+   list.appendChild(button);
+  }
+ }, error => showError("chatStatus",error));
+}
+async function openPrivateConversation(otherUid, otherName) {
+ const user = auth.currentUser;
+ if (!user || !otherUid || otherUid === user.uid) return;
+ const members = [user.uid,otherUid].sort();
+ const conversationId = members.join("__");
+ $("chatStatus").textContent = "Abriendo conversación privada...";
+ try {
+  const ref = db.collection("conversations").doc(conversationId);
+  const existing = await ref.get();
+  if (!existing.exists) await ref.set({members,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+  activeConversationId = conversationId; activeConversationName = otherName;
+  $("chatTitle").textContent = "💬 " + otherName; $("backToContacts").hidden = false; $("audioCallBtn").disabled = false; $("videoCallBtn").disabled = false;
+  $("dmPanel").style.display = "none"; $("messages").style.display = "block";
+  document.querySelector(".composer").style.display = "flex"; $("mediaActions").style.display = "flex"; $("recordStatus").style.display = "block";
+  $("chatStatus").textContent = "Conversación privada con " + otherName;
+  loadMessages();
+ } catch(error) { showError("chatStatus",error); }
+}
+
+
+let incomingCallUnsubscribe = null, activeCallUnsubscribes = [], activeCallRef = null;
+let activePeerConnection = null, activeLocalStream = null, activeRemoteStream = null, activeCallRole = null, activeCallKind = null;
+const callIceConfig = {iceServers:[{urls:["stun:stun.l.google.com:19302","stun:stun1.l.google.com:19302"]}]};
+function showCallOverlay(title, peer, status) {
+ $("callOverlay").hidden = false; $("callTitle").textContent = title; $("callPeer").textContent = peer || "";
+ $("callStatus").textContent = status || "";
+}
+function stopCallListeners() { activeCallUnsubscribes.forEach(fn=>{try{fn();}catch(e){}}); activeCallUnsubscribes=[]; }
+function clearCallMedia() {
+ stopCallListeners();
+ if(activePeerConnection){try{activePeerConnection.close();}catch(e){} activePeerConnection=null;}
+ if(activeLocalStream) activeLocalStream.getTracks().forEach(track=>track.stop());
+ activeLocalStream=null; activeRemoteStream=null; activeCallRef=null; activeCallRole=null; activeCallKind=null;
+ ["remoteVideo","localVideo","remoteAudio"].forEach(id=>{const el=$(id);try{el.pause();}catch(e){}el.srcObject=null;});
+ $("callOverlay").hidden=true;
+ ["acceptCallBtn","rejectCallBtn","muteCallBtn","cameraCallBtn","endCallBtn"].forEach(id=>$(id).hidden=true);
+ $("audioCallBtn").disabled=false; $("videoCallBtn").disabled=false;
+}
+function setCallMedia(stream, kind) {
+ activeRemoteStream=stream;
+ $("remoteVideo").srcObject=stream; $("remoteAudio").srcObject=stream;
+ $("remoteVideo").style.display=kind==="video"?"block":"none";
+ $("remoteAudio").style.display=kind==="audio"?"block":"none";
+ if(kind==="video" && activeLocalStream){$("localVideo").srcObject=activeLocalStream;$("localVideo").style.display="block";}
+ else $("localVideo").style.display="none";
+}
+function setupPeerConnection(callRef, role, kind) {
+ const pc=new RTCPeerConnection(callIceConfig);
+ activePeerConnection=pc;
+ activeLocalStream.getTracks().forEach(track=>pc.addTrack(track,activeLocalStream));
+ pc.ontrack=event=>{
+  const stream=event.streams&&event.streams[0];
+  if(stream){setCallMedia(stream,kind);$("callStatus").textContent="Conectado";}
+ };
+ pc.onicecandidate=event=>{
+  if(!event.candidate)return;
+  const collection=role==="caller"?"callerCandidates":"calleeCandidates";
+  callRef.collection(collection).add({...event.candidate.toJSON(),createdAt:firebase.firestore.FieldValue.serverTimestamp()}).catch(error=>console.warn("ICE candidate:",error));
+ };
+ pc.onconnectionstatechange=()=>{
+  if(pc.connectionState==="connected")$("callStatus").textContent="Conectado";
+  if(["failed","disconnected"].includes(pc.connectionState))$("callStatus").textContent="Conexión inestable. Comprueba tu Internet.";
+  if(pc.connectionState==="closed")$("callStatus").textContent="Llamada finalizada";
+ };
+ return pc;
+}
+function listenForCandidates(callRef, collectionName, pc) {
+ const unsub=callRef.collection(collectionName).onSnapshot(snapshot=>{
+  snapshot.docChanges().forEach(change=>{
+   if(change.type!=="added")return;
+   const data=change.doc.data();
+   const candidate=new RTCIceCandidate({candidate:data.candidate,sdpMid:data.sdpMid,sdpMLineIndex:data.sdpMLineIndex});
+   if(!pc.remoteDescription){pc._pendingIceCandidates=pc._pendingIceCandidates||[];pc._pendingIceCandidates.push(candidate);}
+   else pc.addIceCandidate(candidate).catch(error=>console.warn("ICE:",error));
+  });
+ },error=>{$("callStatus").textContent="No se pudo establecer la conexión.";console.error(error);});
+ activeCallUnsubscribes.push(unsub);
+}
+async function startCall(kind) {
+ const user=auth&&auth.currentUser;
+ if(!user||!activeConversationId){$("chatStatus").textContent="Abre primero una conversación individual.";return;}
+ if(activeCallRef){$("chatStatus").textContent="Ya hay una llamada activa.";return;}
+ if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){$("chatStatus").textContent="Este dispositivo no permite acceder a cámara y micrófono. Abre klk mediante HTTPS o la app instalada.";return;}
+ $("audioCallBtn").disabled=true;$("videoCallBtn").disabled=true;
+ try{
+  activeCallKind=kind;activeCallRole="caller";
+  activeLocalStream=await navigator.mediaDevices.getUserMedia({audio:true,video:kind==="video"});
+  const members=[user.uid,...activeConversationId.split("__").filter(id=>id!==user.uid)];
+  const calleeId=members.find(id=>id!==user.uid);
+  if(!calleeId)throw new Error("No se encontró al destinatario.");
+  const callRef=db.collection("calls").doc();activeCallRef=callRef;
+  await callRef.set({callerId:user.uid,calleeId,conversationId:activeConversationId,kind,status:"preparing",createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+  showCallOverlay(kind==="video"?"Videollamada":"Llamada de voz",activeConversationName,"Llamando...");
+  $("localVideo").srcObject=activeLocalStream;$("localVideo").style.display=kind==="video"?"block":"none";
+  $("endCallBtn").hidden=false;$("muteCallBtn").hidden=false;$("cameraCallBtn").hidden=kind!=="video";
+  const pc=setupPeerConnection(callRef,"caller",kind);
+  listenForCandidates(callRef,"calleeCandidates",pc);
+  const offer=await pc.createOffer();await pc.setLocalDescription(offer);
+  await callRef.update({offer:{type:offer.type,sdp:offer.sdp},status:"ringing"});
+  const unsub=callRef.onSnapshot(async snap=>{
+   if(!snap.exists)return;const data=snap.data();
+   if(data.status==="rejected"){ $("callStatus").textContent="La llamada fue rechazada.";setTimeout(clearCallMedia,900);return;}
+   if(data.status==="ended"){ $("callStatus").textContent="La llamada terminó.";setTimeout(clearCallMedia,500);return;}
+   if(data.answer&&pc.signalingState==="have-local-offer"){
+    try{await pc.setRemoteDescription(new RTCSessionDescription(data.answer));for(const candidate of (pc._pendingIceCandidates||[]))await pc.addIceCandidate(candidate);pc._pendingIceCandidates=[];$("callStatus").textContent="Conectando...";}
+    catch(error){console.error(error);}
+   }
+  },error=>{$("callStatus").textContent="Error de señalización: "+error.message;});
+  activeCallUnsubscribes.push(unsub);
+ }catch(error){
+  console.error("No se pudo iniciar llamada:",error);$("chatStatus").textContent="No se pudo iniciar la llamada: "+(error.message||"Comprueba los permisos.");
+  if(activeCallRef)activeCallRef.update({status:"ended"}).catch(()=>{});
+  clearCallMedia();
+ }
+}
+async function acceptIncomingCall() {
+ if(!activeCallRef||activeCallRole!=="callee")return;
+ try{
+  const snap=await activeCallRef.get();if(!snap.exists)throw new Error("La llamada ya no está disponible.");
+  const data=snap.data();activeCallKind=data.kind;
+  activeLocalStream=await navigator.mediaDevices.getUserMedia({audio:true,video:activeCallKind==="video"});
+  const pc=setupPeerConnection(activeCallRef,"callee",activeCallKind);
+  await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
+  listenForCandidates(activeCallRef,"callerCandidates",pc);
+  const answer=await pc.createAnswer();await pc.setLocalDescription(answer);
+  await activeCallRef.update({answer:{type:answer.type,sdp:answer.sdp},status:"accepted"});
+  $("acceptCallBtn").hidden=true;$("rejectCallBtn").hidden=true;$("endCallBtn").hidden=false;$("muteCallBtn").hidden=false;$("cameraCallBtn").hidden=activeCallKind!=="video";
+  $("localVideo").srcObject=activeLocalStream;$("localVideo").style.display=activeCallKind==="video"?"block":"none";
+  $("callStatus").textContent="Conectando...";
+ }catch(error){console.error(error);$("callStatus").textContent="No se pudo contestar: "+(error.message||"Comprueba los permisos.");}
+}
+async function finishCall(status="ended") {
+ const ref=activeCallRef;
+ if(ref)try{await ref.update({status,endedAt:firebase.firestore.FieldValue.serverTimestamp()});}catch(error){console.warn("Finalizar llamada:",error);}
+ clearCallMedia();
+}
+async function rejectIncomingCall(){await finishCall("rejected");}
+function watchIncomingCalls(user) {
+ if(incomingCallUnsubscribe)incomingCallUnsubscribe();
+ incomingCallUnsubscribe=db.collection("calls").where("calleeId","==",user.uid).onSnapshot(snapshot=>{
+  snapshot.docChanges().forEach(change=>{
+   if(change.type!=="added"&&change.type!=="modified")return;
+   const data=change.doc.data();
+   if(data.status!=="ringing"||activeCallRef)return;
+   activeCallRef=change.doc.ref;activeCallRole="callee";activeCallKind=data.kind;
+   const callerName=activeConversationId===data.conversationId?activeConversationName:"Un contacto";
+   showCallOverlay(data.kind==="video"?"Videollamada entrante":"Llamada de voz entrante",callerName,"Te están llamando");
+   $("acceptCallBtn").hidden=false;$("rejectCallBtn").hidden=false;
+   $("endCallBtn").hidden=true;$("muteCallBtn").hidden=true;$("cameraCallBtn").hidden=true;
+  });
+ },error=>console.error("Escucha de llamadas entrantes:",error));
+}
+$("audioCallBtn").addEventListener("click",()=>startCall("audio"));
+$("videoCallBtn").addEventListener("click",()=>startCall("video"));
+$("acceptCallBtn").addEventListener("click",acceptIncomingCall);
+$("rejectCallBtn").addEventListener("click",rejectIncomingCall);
+$("endCallBtn").addEventListener("click",()=>finishCall("ended"));
+$("muteCallBtn").addEventListener("click",()=>{
+ if(!activeLocalStream)return;const track=activeLocalStream.getAudioTracks()[0];if(!track)return;track.enabled=!track.enabled;$("muteCallBtn").textContent=track.enabled?"🎙️ Silenciar":"🔇 Activar micrófono";
+});
+$("cameraCallBtn").addEventListener("click",()=>{
+ if(!activeLocalStream)return;const track=activeLocalStream.getVideoTracks()[0];if(!track)return;track.enabled=!track.enabled;$("cameraCallBtn").textContent=track.enabled?"📷 Cámara":"🚫 Activar cámara";
+});
+$("backToContacts").onclick = () => {
+ if (unsubscribe) { unsubscribe(); unsubscribe = null; }
+ activeConversationId = null; activeConversationName = null;
+ $("messages").style.display = "none"; $("dmPanel").style.display = "block"; $("chatTitle").textContent = "💬 Mensajes privados"; $("backToContacts").hidden = true; $("audioCallBtn").disabled = true; $("videoCallBtn").disabled = true;
+ document.querySelector(".composer").style.display = "none"; $("mediaActions").style.display = "none"; $("recordStatus").style.display = "none";
+ $("chatStatus").textContent = "Selecciona una persona para conversar en privado.";
+};
+async function getMediaUrl(path, conversationId = null) {
+ if (!path) return "";
+ const cached = mediaUrlCache.get(path);
+ if (cached && cached.expiresAt > Date.now() + 60000) return cached.url;
+ const user = auth && auth.currentUser;
+ if (!user) return "";
+ const idToken = await user.getIdToken();
+ const response = await fetch(SUPABASE_URL + "/functions/v1/media", {
+  method: "POST",
+  headers: { "Content-Type": "application/json", "apikey": SUPABASE_PUBLISHABLE_KEY, "Authorization": "Bearer " + idToken },
+  body: JSON.stringify({ action: "create-download-url", path, ...(conversationId ? {conversationId} : {}) })
+ });
+ const result = await response.json().catch(() => ({}));
+ if (!response.ok || !result.signedUrl) throw new Error(result.error || "No se pudo abrir el archivo multimedia.");
+ mediaUrlCache.set(path, { url: result.signedUrl, expiresAt: Date.now() + Number(result.expiresIn || 3600) * 1000 });
+ return result.signedUrl;
+}
 function loadMessages() {
+ if (!activeConversationId) return;
+ window.klkNotificationsReady = false;
  if (unsubscribe) unsubscribe();
  $("messages").textContent = "Cargando mensajes...";
- unsubscribe = db.collection("messages").orderBy("createdAt").limit(100).onSnapshot(snapshot => {
+ unsubscribe = messagesCollection().orderBy("createdAt").limit(100).onSnapshot(async snapshot => {
+  const changes = snapshot.docChanges();
+  if (window.klkNotificationsReady) changes.filter(change => change.type === "added").forEach(change => window.klkNotifyIncoming && window.klkNotifyIncoming(change.doc.data(), change.doc.id));
+  else window.klkNotificationsReady = true;
   $("messages").innerHTML = "";
   if (snapshot.empty) { $("messages").textContent = "Todavía no hay mensajes. ¡Envía el primero!"; return; }
-  snapshot.forEach(doc => {
+  for (const doc of snapshot.docs) {
    const data = doc.data(), item = document.createElement("div");
    item.className = "msg" + (auth.currentUser && data.uid === auth.currentUser.uid ? " mine" : "");
-   const sender = document.createElement("b"); sender.textContent = data.email || "Familia";
-   item.appendChild(sender);
-   if (data.type === "image" && data.mediaUrl) { const img = document.createElement("img"); img.src = data.mediaUrl; img.alt = "Foto compartida"; img.loading = "lazy"; item.appendChild(img); }
-   else if (data.type === "audio" && data.mediaUrl) { const audio = document.createElement("audio"); audio.controls = true; audio.preload = "metadata"; audio.src = data.mediaUrl; item.appendChild(audio); }
-   else { const body = document.createElement("p"); body.textContent = data.text || ""; item.appendChild(body); }
-   $("messages").appendChild(item);
-  });
+   const sender = document.createElement("b"); sender.textContent = data.phoneNumber || data.email || "Usuario"; item.appendChild(sender);
+   if ((data.type === "image" || data.type === "audio") && (data.storagePath || data.mediaUrl)) {
+    const placeholder = document.createElement("p"); placeholder.textContent = "Cargando archivo..."; item.appendChild(placeholder); $("messages").appendChild(item);
+    try {
+     const url = data.storagePath ? await getMediaUrl(data.storagePath, data.conversationId || null) : data.mediaUrl; placeholder.remove();
+     if (data.type === "image") { const img = document.createElement("img"); img.src = url; img.alt = "Foto compartida"; img.loading = "lazy"; item.appendChild(img); }
+     else { const audio = document.createElement("audio"); audio.controls = true; audio.preload = "metadata"; audio.src = url; item.appendChild(audio); }
+    } catch(error) { placeholder.textContent = "No se pudo cargar: " + error.message; }
+   } else { const body = document.createElement("p"); body.textContent = data.text || ""; item.appendChild(body); $("messages").appendChild(item); }
+  }
   $("messages").scrollTop = $("messages").scrollHeight;
  }, error => showError("chatStatus", error));
 }
 $("send").onclick = async () => {
  const text = $("message").value.trim(), user = auth && auth.currentUser;
  if (!text || !user || sending) return;
+ if (!activeConversationId) { $("chatStatus").textContent = "Abre una conversación individual antes de enviar mensajes."; return; }
  sending = true; $("send").disabled = true; $("chatStatus").textContent = "";
  try {
-  await db.collection("messages").add({type:"text", text, email:user.email || "", uid:user.uid, createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+  await messagesCollection().add({type:"text", text, ...(user.phoneNumber ? {phoneNumber:user.phoneNumber} : {email:user.email || ""}), uid:user.uid, createdAt:firebase.firestore.FieldValue.serverTimestamp()});
   $("message").value = "";
  } catch(error) { showError("chatStatus", error); }
  finally { sending = false; $("send").disabled = false; }
 };
 
+async function compressImage(file) {
+ if (!file || !file.type.startsWith("image/") || file.size < 900 * 1024) return file;
+ let bitmap, objectUrl;
+ try {
+  if ("createImageBitmap" in window) bitmap = await createImageBitmap(file);
+  else {
+   const img = new Image();
+   objectUrl = URL.createObjectURL(file);
+   await new Promise((resolve, reject) => { img.onload = resolve; img.onerror = reject; img.src = objectUrl; });
+   bitmap = img;
+  }
+  const maxSide = 1600, scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
+  if (scale === 1 && file.size < 1.5 * 1024 * 1024) return file;
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+  canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return file;
+  ctx.fillStyle = "#fff";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", 0.78));
+  if (!blob || blob.size >= file.size) return file;
+  const baseName = (file.name || "foto").replace(/\.[^.]+$/, "");
+  return new File([blob], baseName + ".jpg", {type:"image/jpeg", lastModified:Date.now()});
+ } catch (error) {
+  console.warn("No se pudo optimizar la foto; se enviará original:", error);
+  return file;
+ } finally {
+  if (bitmap && bitmap.close) bitmap.close();
+  if (objectUrl) URL.revokeObjectURL(objectUrl);
+ }
+}
 async function uploadMedia(file, type, durationSeconds = null) {
  const user = auth && auth.currentUser;
- if (!user || !file) return;
- const maxBytes = type === "image" ? 10 * 1024 * 1024 : 20 * 1024 * 1024;
- if (file.size > maxBytes) { $("chatStatus").textContent = type === "image" ? "La foto debe pesar menos de 10 MB." : "La nota de voz debe pesar menos de 20 MB."; return; }
+ if (!user || !file || sending) return;
+ if (!activeConversationId) { $("chatStatus").textContent = "Abre una conversación individual antes de enviar archivos."; return; }
  if (type === "image" && !file.type.startsWith("image/")) { $("chatStatus").textContent = "Selecciona un archivo de imagen."; return; }
  if (type === "audio" && !file.type.startsWith("audio/")) { $("chatStatus").textContent = "No se pudo reconocer el formato del audio."; return; }
- $("chatStatus").textContent = type === "image" ? "Subiendo foto..." : "Subiendo nota de voz...";
- $("send").disabled = true; $("pickPhoto").disabled = true; $("takePhoto").disabled = true; $("recordAudio").disabled = true;
+ sending = true;
+ $("chatStatus").textContent = type === "image" ? "Optimizando foto..." : "Preparando archivo...";
+ $("send").disabled = true; $("pickPhoto").disabled = true; $("takePhoto").disabled = true; $("recordAudio").disabled = true; $("sendAudio").disabled = true;
  try {
-  const ext = (file.name && file.name.includes(".") ? file.name.split(".").pop() : (type === "image" ? "jpg" : "webm")).replace(/[^a-z0-9]/gi,"").toLowerCase();
-  const path = "messages/" + user.uid + "/" + Date.now() + "-" + Math.random().toString(36).slice(2) + "." + ext;
-  const ref = storage.ref().child(path);
-  await ref.put(file, {contentType:file.type || (type === "image" ? "image/jpeg" : "audio/webm")});
-  const mediaUrl = await ref.getDownloadURL();
-  await db.collection("messages").add({
-   type, mediaUrl, storagePath:path, mimeType:file.type || "", fileName:file.name || (type === "image" ? "foto" : "nota-de-voz"),
-   size:file.size, ...(durationSeconds === null ? {} : {duration:durationSeconds}),
-   email:user.email || "", uid:user.uid, createdAt:firebase.firestore.FieldValue.serverTimestamp()
+  const uploadFile = type === "image" ? await compressImage(file) : file;
+  const maxBytes = type === "image" ? 10 * 1024 * 1024 : 20 * 1024 * 1024;
+  if (uploadFile.size > maxBytes) throw new Error(type === "image" ? "La foto pesa más de 10 MB incluso después de optimizarla." : "La nota de voz debe pesar menos de 20 MB.");
+  const mimeType = uploadFile.type || (type === "image" ? "image/jpeg" : "audio/webm");
+  const idToken = await user.getIdToken();
+  const response = await fetch(SUPABASE_URL + "/functions/v1/media", {
+   method: "POST",
+   headers: { "Content-Type": "application/json", "apikey": SUPABASE_PUBLISHABLE_KEY, "Authorization": "Bearer " + idToken },
+   body: JSON.stringify({ action: "create-upload", type, size: uploadFile.size, mimeType, ...(activeConversationId ? {conversationId:activeConversationId} : {}) })
+  });
+  const signed = await response.json().catch(() => ({}));
+  if (!response.ok || !signed.path || !signed.token) throw new Error(signed.error || "No se pudo preparar la carga en Supabase.");
+  $("chatStatus").textContent = type === "image" ? "Subiendo foto optimizada..." : "Subiendo archivo...";
+  const { error: uploadError } = await getSupabaseClient().storage.from("Chat-media").uploadToSignedUrl(signed.path, signed.token, uploadFile, { contentType: mimeType });
+  if (uploadError) throw uploadError;
+  await messagesCollection().add({
+   type, storagePath: signed.path, ...(activeConversationId ? {conversationId:activeConversationId} : {}), mimeType, fileName: uploadFile.name || (type === "image" ? "foto" : "nota-de-voz"),
+   size: uploadFile.size, ...(durationSeconds === null ? {} : {duration:durationSeconds}),
+   ...(user.phoneNumber ? {phoneNumber:user.phoneNumber} : {email:user.email || ""}), uid:user.uid, createdAt:firebase.firestore.FieldValue.serverTimestamp()
   });
   $("chatStatus").textContent = type === "image" ? "Foto enviada." : "Nota de voz enviada.";
- } catch(error) { showError("chatStatus", error); }
- finally { $("send").disabled = false; $("pickPhoto").disabled = false; $("takePhoto").disabled = false; $("recordAudio").disabled = false; }
+ } catch(error) {
+  console.error("Error al enviar archivo:", error);
+  $("chatStatus").textContent = "No se pudo enviar el archivo: " + (error.message || "Error desconocido");
+ } finally {
+  sending = false; $("send").disabled = false; $("pickPhoto").disabled = false; $("takePhoto").disabled = false; $("recordAudio").disabled = false; $("sendAudio").disabled = !audioBlob;
+ }
 }
 $("pickPhoto").onclick = () => $("galleryInput").click();
 $("takePhoto").onclick = () => $("cameraInput").click();
@@ -261,9 +677,35 @@ $("sendAudio").onclick = async () => {
  $("sendAudio").disabled = true;
  await uploadMedia(file,"audio",duration);
  audioBlob = null;
+ $("sendAudio").disabled = true;
  $("recordStatus").textContent = "";
  $("recordAudio").textContent = "🎙️ Grabar audio";
 };
+
+
+$("changeProfilePhoto").addEventListener("click",()=>$("profilePhotoInput").click());
+$("profilePhotoInput").addEventListener("change",async event=>{
+ const file=event.target.files&&event.target.files[0]; event.target.value="";
+ const user=auth&&auth.currentUser;
+ if(!file||!user)return;
+ if(!file.type.startsWith("image/")){$("settingsStatus").textContent="Selecciona una imagen válida.";return;}
+ if(file.size>5*1024*1024){$("settingsStatus").textContent="La foto debe pesar 5 MB o menos.";return;}
+ $("changeProfilePhoto").disabled=true;$("settingsStatus").textContent="Subiendo foto de perfil...";
+ try{
+  const optimized=await compressImage(file);
+  const mimeType=optimized.type||"image/jpeg", idToken=await user.getIdToken();
+  const response=await fetch(SUPABASE_URL+"/functions/v1/media",{method:"POST",headers:{"Content-Type":"application/json","apikey":SUPABASE_PUBLISHABLE_KEY,"Authorization":"Bearer "+idToken},body:JSON.stringify({action:"create-upload",type:"avatar",size:optimized.size,mimeType})});
+  const signed=await response.json().catch(()=>({}));
+  if(!response.ok||!signed.path||!signed.token)throw new Error(signed.error||"No se pudo preparar la foto.");
+  const {error}=await getSupabaseClient().storage.from("Chat-media").uploadToSignedUrl(signed.path,signed.token,optimized,{contentType:mimeType});
+  if(error)throw error;
+  await db.collection("users").doc(user.uid).set({photoPath:signed.path,photoUpdatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
+  mediaUrlCache.delete(signed.path);
+  const url=await getMediaUrl(signed.path);if(url)$("profilePreview").src=url;
+  $("settingsStatus").textContent="Foto de perfil actualizada. Ya pueden verla los demás miembros.";
+ }catch(error){console.error(error);$("settingsStatus").textContent="No se pudo actualizar la foto: "+(error.message||"Error desconocido");}
+ finally{$("changeProfilePhoto").disabled=false;}
+});
 
 $("message").addEventListener("keydown", event => { if (event.key === "Enter") $("send").click(); });
 </script>
@@ -295,4 +737,26 @@ if (window.matchMedia("(display-mode: standalone)").matches || window.navigator.
  $("installApp").hidden = true;
 }
 </script>
-</body></html>
+<script>
+(function(){
+ const $=id=>document.getElementById(id), defaults={sound:true,vibration:true,preview:true,textSize:"15",theme:"light"};
+ let prefs={...defaults};try{prefs={...defaults,...JSON.parse(localStorage.getItem("klk-settings")||"{}")};}catch(e){}
+ function apply(){
+  $("settingSound").checked=!!prefs.sound;$("settingVibration").checked=!!prefs.vibration;$("settingPreview").checked=!!prefs.preview;
+  $("settingTextSize").value=prefs.textSize;$("settingTheme").value=prefs.theme;
+  document.querySelectorAll(".msg p").forEach(el=>el.style.fontSize=prefs.textSize+"px");
+  document.body.style.background=prefs.theme==="dark"?"#101b20":"#efeae2";document.body.style.color=prefs.theme==="dark"?"#e9edef":"#111b21";
+  document.querySelectorAll(".card,#settingsPanel").forEach(el=>{el.style.background=prefs.theme==="dark"?"#1f2c33":"";el.style.color=prefs.theme==="dark"?"#e9edef":"";});
+ }
+ function save(){localStorage.setItem("klk-settings",JSON.stringify(prefs));apply();}
+ ["settingSound","settingVibration","settingPreview"].forEach(id=>$(id).addEventListener("change",()=>{prefs[id.slice(7).toLowerCase()]=$(id).checked;save();}));
+ $("settingTextSize").addEventListener("change",e=>{prefs.textSize=e.target.value;save();});$("settingTheme").addEventListener("change",e=>{prefs.theme=e.target.value;save();});
+ $("settingsToggle").addEventListener("click",()=>{$("settingsPanel").style.display=$("settingsPanel").style.display==="block"?"none":"block";});
+ $("closeSettings").addEventListener("click",()=>{$("settingsPanel").style.display="none";});
+ function permissionButton(){ $("enableNotifications").textContent=("Notification" in window && Notification.permission==="granted")?"Activadas":"Activar";}
+ $("enableNotifications").addEventListener("click",async()=>{if(!("Notification" in window)){$("settingsStatus").textContent="Este dispositivo no admite notificaciones web.";return;}try{const p=await Notification.requestPermission();$("settingsStatus").textContent=p==="granted"?"Permiso concedido. Para avisos con la app cerrada falta activar el envío push de Firebase.":"Permiso no concedido; puedes cambiarlo en los ajustes del teléfono.";permissionButton();}catch(e){$("settingsStatus").textContent="No se pudo solicitar el permiso."; }});
+ function tone(){if(!prefs.sound)return;try{const C=window.AudioContext||window.webkitAudioContext;if(!C)return;const x=new C(),o=x.createOscillator(),g=x.createGain();o.frequency.value=880;g.gain.setValueAtTime(.0001,x.currentTime);g.gain.exponentialRampToValueAtTime(.1,x.currentTime+.02);g.gain.exponentialRampToValueAtTime(.0001,x.currentTime+.2);o.connect(g);g.connect(x.destination);o.start();o.stop(x.currentTime+.22);o.onended=()=>x.close();}catch(e){}}
+ window.klkNotifyIncoming=(data,id)=>{if(!data||data.uid===window.klkCurrentUid)return;tone();if(prefs.vibration&&navigator.vibrate)navigator.vibrate([100,60,100]);if("Notification"in window&&Notification.permission==="granted"&&document.visibilityState!=="visible"){const body=prefs.preview?(data.text||(data.type==="image"?"📷 Foto":data.type==="audio"?"🎙️ Nota de voz":"Nuevo mensaje")):"Tienes un mensaje nuevo";try{new Notification("klk · "+(data.phoneNumber||data.email||"Mensaje nuevo"),{body,tag:"klk-"+id});}catch(e){}}};
+ window.klkSetCurrentUid=uid=>{window.klkCurrentUid=uid||null;};apply();permissionButton();
+})();
+</script></body></html>
