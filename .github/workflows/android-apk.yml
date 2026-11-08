@@ -27,10 +27,49 @@ jobs:
           java-version: 21
 
       - name: Instalar dependencias
-        run: npm install
+        run: npm install --no-audit --no-fund
 
       - name: Preparar archivos web
         run: mkdir -p www && cp index.html icon.svg manifest.webmanifest sw.js www/
+
+      - name: Verificar sintaxis JavaScript
+        run: |
+          python3 - <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+
+          class InlineScripts(HTMLParser):
+              def __init__(self):
+                  super().__init__()
+                  self.capture = False
+                  self.current = []
+                  self.scripts = []
+
+              def handle_starttag(self, tag, attrs):
+                  if tag == "script":
+                      self.capture = not any(name.lower() == "src" for name, _ in attrs)
+                      self.current = []
+
+              def handle_data(self, data):
+                  if self.capture:
+                      self.current.append(data)
+
+              def handle_endtag(self, tag):
+                  if tag == "script" and self.capture:
+                      self.scripts.append("".join(self.current))
+                      self.capture = False
+
+          parser = InlineScripts()
+          parser.feed(Path("index.html").read_text(encoding="utf-8"))
+          if not parser.scripts:
+              raise SystemExit("No se encontraron scripts JavaScript para verificar.")
+          for number, script in enumerate(parser.scripts, 1):
+              Path(f"/tmp/klk-inline-{number}.js").write_text(script, encoding="utf-8")
+          print(f"Se encontraron {len(parser.scripts)} bloques JavaScript.")
+          PY
+          for script in /tmp/klk-inline-*.js; do
+            node --check "$script"
+          done
 
       - name: Generar proyecto Android
         run: npx cap add android
@@ -77,6 +116,9 @@ jobs:
       - name: Compilar APK de prueba
         working-directory: android
         run: chmod +x gradlew && ./gradlew assembleDebug
+
+      - name: Verificar APK generado
+        run: test -s android/app/build/outputs/apk/debug/app-debug.apk && ls -lh android/app/build/outputs/apk/debug/app-debug.apk
 
       - name: Guardar APK
         uses: actions/upload-artifact@v4
