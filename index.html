@@ -294,8 +294,13 @@ $("authForm").addEventListener("submit", async event => {
  finally { setBusy(false); }
 });
 let invitationActivationInProgress = false;
-const inviteFromUrl = new URLSearchParams(window.location.search).get("invite");
-if (inviteFromUrl) $("invitationCode").value = inviteFromUrl.toUpperCase();
+const inviteParams = new URLSearchParams(window.location.search);
+const inviteFromUrl = inviteParams.get("invite") || new URLSearchParams((window.location.hash || "").replace(/^#\\??/,"")).get("invite");
+if (inviteFromUrl) {
+ $("invitationCode").value = inviteFromUrl.trim().toUpperCase();
+ $("status").textContent = "Invitación recibida. Escribe tu correo y crea una contraseña para unirte a klk.";
+ $("invitationCode").scrollIntoView({behavior:"smooth",block:"center"});
+}
 $("register").addEventListener("click", async () => {
  $("status").textContent = "";
  if (!auth || !db) { $("status").textContent = "Firebase no está disponible. Comprueba tu conexión e inténtalo de nuevo."; return; }
@@ -876,7 +881,9 @@ $("createInvite").addEventListener("click",async()=>{
 });
 $("shareInvite").addEventListener("click",async()=>{
  if(!latestInviteCode)return;
- const link=window.location.origin+window.location.pathname+"?invite="+encodeURIComponent(latestInviteCode);
+ // Compartir siempre la URL pública, incluso cuando klk está instalada como app Capacitor.
+ const inviteBase="https://cedanoconan-coder.github.io/klk-android/";
+ const link=inviteBase+"?invite="+encodeURIComponent(latestInviteCode);
  const message="Te invito a unirte a klk. Abre este enlace y crea tu cuenta: "+link+"\nCódigo: "+latestInviteCode;
  $("shareInvite").disabled=true;
  try{
