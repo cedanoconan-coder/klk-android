@@ -49,7 +49,8 @@ service cloud.firestore {
         && request.auth.uid in request.resource.data.members
         && request.resource.data.members is list
         && request.resource.data.members.size() == 2
-        && exists(/databases/$(database)/documents/contacts/$(conversationId));
+        && exists(/databases/$(database)/documents/contacts/$(conversationId))
+        && request.resource.data.members == get(/databases/$(database)/documents/contacts/$(conversationId)).data.members;
       allow update: if signedIn() && request.auth.uid in resource.data.members
         && request.resource.data.members == resource.data.members;
       allow delete: if false;
@@ -77,10 +78,30 @@ service cloud.firestore {
         allow update, delete: if false;
       }
       match /calls/{callId} {
-        allow read: if isMember(conversationId);
-        allow create, update: if isMember(conversationId)
-          && request.resource.data.callerId in get(/databases/$(database)/documents/conversations/$(conversationId)).data.members;
+        function callMember() {
+          return isMember(conversationId)
+            && request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.members;
+        }
+        allow read: if callMember();
+        allow create: if callMember()
+          && request.resource.data.conversationId == conversationId
+          && request.resource.data.callerId == request.auth.uid
+          && request.resource.data.calleeId in get(/databases/$(database)/documents/conversations/$(conversationId)).data.members
+          && request.resource.data.calleeId != request.auth.uid
+          && request.resource.data.status == 'ringing';
+        allow update: if callMember()
+          && request.resource.data.conversationId == resource.data.conversationId
+          && request.resource.data.callerId == resource.data.callerId
+          && request.resource.data.calleeId == resource.data.calleeId
+          && request.resource.data.status in ['ringing','accepted','rejected','ended','missed'];
         allow delete: if false;
+        match /candidates/{candidateId} {
+          allow read: if callMember();
+          allow create: if callMember()
+            && request.resource.data.uid == request.auth.uid
+            && request.resource.data.candidate is string;
+          allow update, delete: if false;
+        }
       }
     }
   }
