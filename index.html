@@ -4,13 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#075e54">
-<meta name="description" content="Chat privado para mantener a la familia conectada.">
+<meta name="description" content="Mensajería privada individual de klk.">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="icon" href="./icon.svg" type="image/svg+xml">
-<title>klk - Chat familiar</title>
+<title>klk - Mensajes privados</title>
 <style>
 *{box-sizing:border-box}html{min-height:100%;background:#efeae2}body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#efeae2;color:#111b21;min-height:100vh;min-height:100dvh;height:100dvh;overflow:hidden;padding-bottom:env(safe-area-inset-bottom);display:flex;flex-direction:column}
 header{position:sticky;top:0;z-index:5;background:#075e54;color:white;padding:calc(14px + env(safe-area-inset-top)) 18px 14px;font-size:25px;font-weight:700;box-shadow:0 2px 5px #0002}
@@ -66,7 +66,7 @@ main{scrollbar-gutter:stable}
 </style>
 </head>
 <body>
-<header>klk <small>Tu familia, siempre conectada ❤️</small></header>
+<header>klk <small>Mensajes privados, siempre conectados</small></header>
 <main>
 <button id="installApp" class="secondary" type="button" hidden>Instalar klk en este teléfono</button>
 <section id="login" class="card">
@@ -479,7 +479,7 @@ function loadMessages() {
   for (const doc of snapshot.docs) {
    const data = doc.data(), item = document.createElement("div");
    item.className = "msg" + (auth.currentUser && data.uid === auth.currentUser.uid ? " mine" : "");
-   const sender = document.createElement("b"); sender.textContent = data.email || "Familia"; item.appendChild(sender);
+   const sender = document.createElement("b"); sender.textContent = data.email || "Usuario"; item.appendChild(sender);
    if ((data.type === "image" || data.type === "audio") && (data.storagePath || data.mediaUrl)) {
     const placeholder = document.createElement("p"); placeholder.textContent = "Cargando archivo..."; item.appendChild(placeholder); $("messages").appendChild(item);
     try {
