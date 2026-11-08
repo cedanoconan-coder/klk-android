@@ -198,7 +198,38 @@ html[data-density="comfortable"] .chatRow,html[data-density="comfortable"] #peop
 
 /* Panel de perfil klk, inspirado en una experiencia de mensajería */
 #homeProfilePanel{display:none;margin:0 12px 18px;padding:18px;background:var(--klk-surface);border-radius:18px;border:1px solid var(--klk-border,#e2e8e5)}.profileHero{display:flex;align-items:center;gap:14px;padding:10px 4px 18px;border-bottom:1px solid #e2e8e5}.profileHero img{width:76px;height:76px;border-radius:50%;object-fit:cover;background:#edf2ef}.profileHero strong{display:block;font-size:19px}.profileHero small{display:block;color:#66736f;margin-top:5px}.profileSection{padding:14px 0;border-bottom:1px solid #e2e8e5}.profileSection h3{font-size:14px;color:var(--klk-accent);margin:0 0 10px;text-transform:uppercase;letter-spacing:.5px}.profileField{display:block;margin:10px 0}.profileField span{display:block;font-size:12px;color:#66736f;margin-bottom:5px}.profileField input,.profileField textarea{width:100%;box-sizing:border-box;padding:12px;border:1px solid #ccd7d2;border-radius:10px;background:var(--klk-surface);color:var(--klk-text)}.profileField textarea{min-height:76px;resize:vertical}.profileAction{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:13px 4px;border:0;border-bottom:1px solid #e2e8e5;background:transparent;color:var(--klk-text);text-align:left}.profileAction small{display:block;color:#66736f;margin-top:3px}.profileButtons{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.profileButtons button{flex:1;min-width:120px}
-.contactProfilePanel{display:none;background:var(--klk-surface);color:var(--klk-text);padding:0 0 28px;margin:0;min-height:70vh;overflow:hidden;border-top:1px solid var(--klk-line)}.contactProfileTop{position:sticky;top:0;z-index:4;display:flex;align-items:center;gap:14px;padding:12px 16px;background:var(--klk-surface);color:var(--klk-text);border-bottom:1px solid var(--klk-line)}.contactProfileTop button{width:40px;height:40px;flex:0 0 40px;margin:0;padding:0;border-radius:50%;background:var(--klk-message-bg);color:var(--klk-text);font-size:24px}.contactProfileTop strong{font-size:17px;font-weight:650}.contactProfileHero{text-align:center;padding:28px 16px 20px}.contactProfileHero img{width:132px;height:132px;object-fit:cover;border-radius:50%;background:var(--klk-message-bg);box-shadow:0 2px 10px #00000012}.contactProfileHero h2{margin:14px 0 5px;font-size:24px;font-weight:650}.contactProfileHero p{margin:0;color:var(--klk-muted);font-size:14px}.contactProfileActions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;padding:4px 18px 20px}.contactProfileActions button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;min-height:70px;margin:0;padding:10px 5px;border:1px solid var(--klk-line);border-radius:14px;background:var(--klk-surface);color:var(--klk-accent);font-size:13px}.contactProfileActions button:disabled{opacity:.45}.contactProfileSection{border-top:8px solid var(--klk-message-bg);padding:18px 16px}.contactProfileSection h3{font-size:16px;font-weight:650;margin:0 0 14px}.contactMediaTabs{display:flex;gap:8px;border-bottom:1px solid var(--klk-line)}.contactMediaTabs button{margin:0;padding:10px 8px;flex:1;border-radius:10px 10px 0 0;background:transparent;color:var(--klk-muted);font-size:13px}.contactMediaTabs button.active{background:var(--klk-soft);color:var(--klk-accent)}.contactSharedMedia{padding:14px 0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;min-height:72px}.contactSharedMedia img{width:100%;height:104px;object-fit:cover;border-radius:9px;background:var(--klk-message-bg)}.contactSharedMedia a{grid-column:1/-1;color:var(--klk-accent);overflow-wrap:anywhere;padding:13px;background:var(--klk-message-bg);border-radius:10px;text-decoration:none}.contactProfileInfo{margin:0 16px;padding:15px 2px;border-top:1px solid var(--klk-line);color:var(--klk-muted);font-size:13px;line-height:1.5}#chat.room-open .chatTop #chatTitle{cursor:pointer}#chat.room-open .chatTop #chatTitle:active{opacity:.7}
+/* Perfil de contacto estilo WhatsApp: cabecera, identidad, acciones e información */
+.contactProfilePanel{display:none;background:var(--klk-message-bg);color:var(--klk-text);padding:0 0 32px;margin:0;min-height:75vh;overflow:hidden;border:0}
+.contactProfileTop{position:sticky;top:0;z-index:4;display:flex;align-items:center;gap:14px;padding:10px 16px;background:var(--klk-surface);color:var(--klk-text);border-bottom:1px solid var(--klk-line)}
+.contactProfileTop button{width:42px;height:42px;flex:0 0 42px;margin:0;padding:0;border-radius:50%;background:transparent!important;color:var(--klk-text);font-size:27px}
+.contactProfileTop strong{font-size:18px;font-weight:650}
+.contactProfileHero{display:flex;flex-direction:column;align-items:center;text-align:center;padding:30px 18px 24px;background:var(--klk-surface)}
+.contactProfileHero img{width:116px;height:116px;object-fit:cover;border-radius:50%;background:var(--klk-message-bg);box-shadow:0 2px 12px #00000012}
+.contactProfileHero h2{margin:16px 0 5px;font-size:25px;font-weight:650;letter-spacing:-.35px}
+.contactProfileHero p{margin:3px 0;color:var(--klk-muted);font-size:14px;overflow-wrap:anywhere}
+.contactProfileActions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;padding:4px 12px 18px;background:var(--klk-surface)}
+.contactProfileActions button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-height:76px;margin:0;padding:9px 3px;border:1px solid var(--klk-line);border-radius:13px;background:var(--klk-surface)!important;color:var(--klk-accent);font-size:12px;font-weight:600}
+.contactProfileActions button span:first-child{font-size:23px}
+.contactProfileActions button:disabled{opacity:.42}
+.contactProfileSection{margin-top:9px;padding:18px 16px;background:var(--klk-surface);border:0}
+.contactProfileSection h3{font-size:16px;font-weight:650;margin:0 0 14px}
+.contactMediaTabs{display:flex;gap:8px;border-bottom:1px solid var(--klk-line)}
+.contactMediaTabs button{margin:0;padding:10px 8px;flex:1;border-radius:10px 10px 0 0;background:transparent!important;color:var(--klk-muted);font-size:13px}
+.contactMediaTabs button.active{background:var(--klk-soft)!important;color:var(--klk-accent)}
+.contactSharedMedia{padding:14px 0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;min-height:72px}
+.contactSharedMedia img{width:100%;height:104px;object-fit:cover;border-radius:8px;background:var(--klk-message-bg)}
+.contactSharedMedia a{grid-column:1/-1;color:var(--klk-accent);overflow-wrap:anywhere;padding:13px;background:var(--klk-message-bg);border-radius:10px;text-decoration:none}
+.contactInfoRow{display:flex;align-items:flex-start;gap:14px;padding:13px 0;border-bottom:1px solid var(--klk-line)}
+.contactInfoRow:last-child{border-bottom:0}
+.contactInfoIcon{width:26px;flex:0 0 26px;text-align:center;font-size:19px;color:var(--klk-muted)}
+.contactInfoText{min-width:0;flex:1}
+.contactInfoText small{display:block;color:var(--klk-muted);font-size:12px;margin-bottom:5px}
+.contactInfoText strong{display:block;font-size:15px;font-weight:500;overflow-wrap:anywhere}
+.contactProfileInfo{margin:9px 0 0;padding:15px 18px;background:var(--klk-surface);color:var(--klk-muted);font-size:13px;line-height:1.5}
+#contactProfileStatus{padding:12px 18px!important;margin:0;background:var(--klk-surface)}
+#chat.room-open .chatTop #chatTitle{cursor:pointer}
+#chat.room-open .chatTop #chatTitle:active{opacity:.7}
+@media(max-width:360px){.contactProfileActions{gap:5px;padding-left:8px;padding-right:8px}.contactProfileActions button{font-size:11px}.contactProfileHero img{width:104px;height:104px}}
 </style>
 </head>
 <body>
@@ -242,7 +273,18 @@ html[data-density="comfortable"] .chatRow,html[data-density="comfortable"] #peop
  <section id="chatsPanel" style="padding:4px 0 12px"><div id="chatsList" aria-label="Conversaciones recientes" class="hint" style="padding:12px 20px">Cargando conversaciones...</div></section>
  <section id="requestsPanel" style="padding:8px 20px"><h3 style="font-size:16px;margin:8px 0">Solicitudes recibidas</h3><div id="requestsList" class="hint">Cargando solicitudes...</div></section>
  <div id="peopleList" aria-label="Personas registradas">Cargando personas...</div>
-<section id="contactProfilePanel" class="contactProfilePanel" aria-label="Perfil del contacto" hidden><div class="contactProfileTop"><button id="contactProfileBack" class="secondary" type="button">‹ Volver</button><strong>Información del contacto</strong></div><div class="contactProfileHero"><img id="contactProfilePhoto" alt="Foto del contacto"><h2 id="contactProfileName">Contacto</h2><p id="contactProfileAbout">Miembro de klk</p></div><div class="contactProfileActions"><button id="contactProfileMessage" type="button"><span>💬</span><span>Mensaje</span></button><button id="contactProfileVoice" type="button"><span>☎️</span><span>Audio</span></button><button id="contactProfileVideo" type="button"><span>📹</span><span>Video</span></button></div><div class="contactProfileSection"><h3>Archivos, enlaces y contenido multimedia</h3><div class="contactMediaTabs"><button type="button" data-media-tab="image" class="active">Fotos</button><button type="button" data-media-tab="file">Documentos</button><button type="button" data-media-tab="all">Todo</button></div><div id="contactSharedMedia" class="contactSharedMedia">Selecciona una conversación.</div></div><p class="contactProfileInfo">Los archivos que aparecen aquí son los compartidos en esta conversación privada de klk.</p><p id="contactProfileStatus" class="hint" role="status" style="padding:0 16px"></p></section>
+<section id="contactProfilePanel" class="contactProfilePanel" aria-label="Perfil del contacto" hidden>
+<div class="contactProfileTop"><button id="contactProfileBack" class="secondary" type="button" aria-label="Volver">‹</button><strong>Info. del contacto</strong></div>
+<div class="contactProfileHero"><img id="contactProfilePhoto" alt="Foto del contacto"><h2 id="contactProfileName">Contacto</h2><p id="contactProfileEmail"></p><p id="contactProfileAbout">Miembro de klk</p></div>
+<div class="contactProfileActions">
+<button id="contactProfileMessage" type="button"><span>💬</span><span>Mensaje</span></button>
+<button id="contactProfileVoice" type="button"><span>☎️</span><span>Audio</span></button>
+<button id="contactProfileVideo" type="button"><span>📹</span><span>Video</span></button>
+<button id="contactProfileShare" type="button"><span>↗️</span><span>Compartir</span></button>
+</div>
+<div class="contactProfileSection"><h3>Archivos, enlaces y contenido multimedia</h3><div class="contactMediaTabs"><button type="button" data-media-tab="image" class="active">Fotos</button><button type="button" data-media-tab="file">Documentos</button><button type="button" data-media-tab="all">Todo</button></div><div id="contactSharedMedia" class="contactSharedMedia">Selecciona una conversación.</div></div>
+<div class="contactProfileSection"><h3>Información</h3><div class="contactInfoRow"><span class="contactInfoIcon">✉</span><div class="contactInfoText"><small>Correo electrónico</small><strong id="contactProfileEmailDetail">No disponible</strong></div></div><div class="contactInfoRow"><span class="contactInfoIcon">ℹ</span><div class="contactInfoText"><small>Info. / Acerca de</small><strong id="contactProfileAboutDetail">Miembro de klk</strong></div></div></div>
+<p class="contactProfileInfo">Este es el perfil de contacto de klk. Aquí puedes iniciar una conversación, llamar y consultar el contenido compartido.</p><p id="contactProfileStatus" class="hint" role="status" aria-live="polite"></p></section>
  <section id="callsPanel" aria-label="Llamadas"><h3>Llamadas</h3><p class="hint">Llama por voz o video a tus contactos aceptados.</p><button id="callDiagnostics" type="button" class="secondary">Comprobar mi teléfono</button><p id="callDiagnosticsStatus" class="hint" role="status" aria-live="polite">Comprueba HTTPS, sesión, micrófono, cámara y compatibilidad WebRTC antes de llamar.</p><div id="callContacts" class="hint">Cargando contactos...</div><p id="callsStatus" class="hint" role="status" aria-live="polite"></p></section>
  <section id="updatesPanel" class="homeUtilityPanel" aria-label="Novedades" hidden><h2>Novedades</h2><p class="hint">Próximamente podrás consultar aquí las novedades de tu familia.</p><button type="button" data-go-tab="chats">Ir a mis chats</button></section>
  <section id="toolsPanel" class="homeUtilityPanel" aria-label="Herramientas" hidden>
@@ -580,7 +622,38 @@ $("profilePhotoInput").addEventListener("change", async event => {
 });
 let activeContactProfileUid=null,contactProfileReturnTo="people";
 function closeContactProfile(){ $("contactProfilePanel").hidden=true; $("contactProfilePanel").style.display="none"; if(contactProfileReturnTo==="chat"&&activeConversationId){$("chat").classList.add("room-open");$("peopleList").style.display="none";}else{$("chat").classList.remove("room-open");$("peopleList").style.display="";document.querySelectorAll(".homeFilters").forEach(el=>el.style.display="");} }
-async function openContactProfile(uid,person,returnTo="people"){activeContactProfileUid=uid;contactProfileReturnTo=returnTo;$("homeProfilePanel").style.display="none";$("peopleList").style.display="none";document.querySelectorAll(".homeFilters").forEach(el=>el.style.display="none");$("contactProfilePanel").hidden=false;$("contactProfilePanel").style.display="block";$("contactProfileName").textContent=person.displayName||person.email||"Contacto";$("contactProfileAbout").textContent=person.about||"Miembro de klk";$("contactProfilePhoto").src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ctext x='32' y='45' text-anchor='middle' font-size='44'%3E%F0%9F%91%A4%3C/text%3E%3C/svg%3E";if(person.photoPath)try{$("contactProfilePhoto").src=await getMediaUrl(person.photoPath);}catch(e){}const ok=isAcceptedContact(uid);["contactProfileMessage","contactProfileVoice","contactProfileVideo"].forEach(id=>$(id).disabled=!ok);$("contactProfileStatus").textContent=ok?"Contacto aceptado":"Acepta la solicitud para iniciar una conversación o llamar.";$("contactProfileMessage").onclick=()=>{closeContactProfile();openPrivateConversation(uid,person.displayName||person.email||"Conversación");};$("contactProfileVoice").onclick=()=>window.klkStartCall&&window.klkStartCall(uid,person.displayName||"Contacto","audio");$("contactProfileVideo").onclick=()=>window.klkStartCall&&window.klkStartCall(uid,person.displayName||"Contacto","video");await renderContactSharedMedia("image");$("contactProfilePanel").scrollIntoView({block:"start",behavior:"smooth"});}
+async function openContactProfile(uid,person,returnTo="people"){
+ activeContactProfileUid=uid;contactProfileReturnTo=returnTo;
+ $("homeProfilePanel").style.display="none";$("peopleList").style.display="none";
+ document.querySelectorAll(".homeFilters").forEach(el=>el.style.display="none");
+ $("contactProfilePanel").hidden=false;$("contactProfilePanel").style.display="block";
+ const displayName=person.displayName||person.email||"Contacto";
+ const email=person.email||"No disponible";
+ const about=person.about||"Miembro de klk";
+ $("contactProfileName").textContent=displayName;
+ $("contactProfileEmail").textContent=email;
+ $("contactProfileAbout").textContent=about;
+ $("contactProfileEmailDetail").textContent=email;
+ $("contactProfileAboutDetail").textContent=about;
+ $("contactProfilePhoto").src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ctext x='32' y='45' text-anchor='middle' font-size='44'%3E%F0%9F%91%A4%3C/text%3E%3C/svg%3E";
+ if(person.photoPath)try{$("contactProfilePhoto").src=await getMediaUrl(person.photoPath);}catch(e){}
+ const ok=isAcceptedContact(uid);
+ ["contactProfileMessage","contactProfileVoice","contactProfileVideo","contactProfileShare"].forEach(id=>$(id).disabled=!ok);
+ $("contactProfileStatus").textContent=ok?"Contacto aceptado":"Acepta la solicitud para iniciar una conversación o llamar.";
+ $("contactProfileMessage").onclick=()=>{closeContactProfile();openPrivateConversation(uid,displayName||"Conversación");};
+ $("contactProfileVoice").onclick=()=>window.klkStartCall&&window.klkStartCall(uid,displayName,"audio");
+ $("contactProfileVideo").onclick=()=>window.klkStartCall&&window.klkStartCall(uid,displayName,"video");
+ $("contactProfileShare").onclick=async()=>{
+  const shareText="Contacto de klk: "+displayName+(person.email?" · "+person.email:"");
+  try{
+   if(navigator.share){await navigator.share({title:"Contacto de klk",text:shareText});$("contactProfileStatus").textContent="Contacto compartido.";}
+   else if(navigator.clipboard&&navigator.clipboard.writeText){await navigator.clipboard.writeText(shareText);$("contactProfileStatus").textContent="Datos del contacto copiados.";}
+   else{window.prompt("Copia los datos del contacto:",shareText);}
+  }catch(error){if(error&&error.name!=="AbortError")$("contactProfileStatus").textContent="No se pudo compartir el contacto.";}
+ };
+ await renderContactSharedMedia("image");
+ $("contactProfilePanel").scrollIntoView({block:"start",behavior:"smooth"});
+}
 async function renderContactSharedMedia(type){document.querySelectorAll(".contactMediaTabs button").forEach(b=>b.classList.toggle("active",b.dataset.mediaTab===type));const box=$("contactSharedMedia");if(!activeContactProfileUid||!auth.currentUser||!isAcceptedContact(activeContactProfileUid)){box.textContent="El contenido compartido estará disponible cuando el contacto esté aceptado.";return;}box.textContent="Cargando contenido...";const cid=[auth.currentUser.uid,activeContactProfileUid].sort().join("__");try{const snap=await db.collection("conversations").doc(cid).collection("messages").orderBy("createdAt","desc").limit(100).get();box.innerHTML="";const data=snap.docs.map(d=>d.data()).filter(d=>d.type==="image"||d.type==="file").filter(d=>type==="all"||d.type===type);if(!data.length){box.textContent=type==="image"?"No hay fotos compartidas.":type==="file"?"No hay documentos compartidos.":"No hay contenido compartido.";return;}for(const item of data){try{const url=await getMediaUrl(item.storagePath,cid);if(item.type==="image"){const img=document.createElement("img");img.src=url;img.alt=item.fileName||"Foto compartida";img.loading="lazy";img.onclick=()=>window.open(url,"_blank","noopener");box.append(img);}else{const a=document.createElement("a");a.href=url;a.target="_blank";a.rel="noopener";a.textContent="📄 "+(item.fileName||"Documento");box.append(a);}}catch(e){const p=document.createElement("p");p.textContent="Archivo no disponible";box.append(p);}}}catch(e){box.textContent="No se pudo consultar el contenido: "+e.message;}}
 $("contactProfileBack").addEventListener("click",closeContactProfile);$("chatTitle").addEventListener("click",()=>{if(!activeConversationId||!auth.currentUser)return;const uid=activeConversationId.split("__").find(id=>id!==auth.currentUser.uid);const person=peopleCache.get(uid);if(uid&&person)openContactProfile(uid,person,"chat");});document.querySelectorAll(".contactMediaTabs button").forEach(b=>b.addEventListener("click",()=>renderContactSharedMedia(b.dataset.mediaTab)));
 
