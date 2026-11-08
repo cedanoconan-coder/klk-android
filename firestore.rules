@@ -22,7 +22,7 @@ service cloud.firestore {
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.email == request.auth.token.email
         && (!('photoPath' in request.resource.data) || request.resource.data.photoPath is string)
-        && (!('photoUpdatedAt' in request.resource.data) || request.resource.data.photoUpdatedAt == request.time);
+        && (!('photoUpdatedAt' in request.resource.data) || request.resource.data.photoUpdatedAt is timestamp);
       allow delete: if false;
     }
     match /conversations/{conversationId} {
