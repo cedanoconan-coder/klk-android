@@ -44,6 +44,7 @@
   $("localVideo").style.display=callMode==="video"?"block":"none";
  }
  function cleanup(){
+  if(window.klkStopIncomingCallSound)window.klkStopIncomingCallSound();
   if(activeCallUnsub){activeCallUnsub();activeCallUnsub=null;}
   if(incomingDocUnsub){incomingDocUnsub();incomingDocUnsub=null;}
   if(ringTimeout){window.clearTimeout(ringTimeout);ringTimeout=null;}
@@ -145,6 +146,7 @@
  }
  async function acceptCall(){
   if(!incomingCall||callRef)return;
+  if(window.klkStopIncomingCallSound)window.klkStopIncomingCallSound();
   if(incomingDocUnsub){incomingDocUnsub();incomingDocUnsub=null;}
   if(ringTimeout){window.clearTimeout(ringTimeout);ringTimeout=null;}
   const data=incomingCall.data;callRef=incomingCall.ref;callRole="callee";callMode=data.mode==="video"?"video":"audio";
@@ -161,6 +163,7 @@
  }
  async function rejectCall(){
   if(!incomingCall)return;
+  if(window.klkStopIncomingCallSound)window.klkStopIncomingCallSound();
   try{await incomingCall.ref.update({status:"rejected",updatedAt:firebase.firestore.FieldValue.serverTimestamp()});}catch(error){console.warn(error);}
   cleanup();
  }
@@ -182,6 +185,7 @@
    callMode=data.mode==="video"?"video":"audio";
    const person=peopleCache.get(data.callerUid)||{};
    showOverlay(person.displayName||person.email||"Llamada entrante",callMode==="video"?"Videollamada entrante":"Llamada de voz entrante");
+   if(window.klkStartIncomingCallSound)window.klkStartIncomingCallSound();
    $("answerCall").hidden=false;$("rejectCall").hidden=false;
    $("answerCall").textContent="Responder";$("rejectCall").textContent="Rechazar";
    if(navigator.vibrate)navigator.vibrate([250,120,250]);
