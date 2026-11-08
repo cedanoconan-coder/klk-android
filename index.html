@@ -1028,8 +1028,7 @@ $("backToChats").addEventListener("click",()=>{
  activeConversationId=null;activeConversationName=null;
  $("chat").classList.remove("room-open");
  $("messages").innerHTML="";
- const chatsButton=document.querySelector('.homeFilters button[data-filter="chats"]');
- if(chatsButton)chatsButton.click();
+ setHomeTab("chats");
  $("chatSearch").value="";
  $("homeStatus").textContent="";
 });
