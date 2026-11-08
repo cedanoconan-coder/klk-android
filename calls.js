@@ -5,7 +5,7 @@
  const ICE_CONFIG={iceServers:[{urls:["stun:stun.l.google.com:19302","stun:stun1.l.google.com:19302"]},...configuredTurn]};
  let currentUid=null, incomingUnsub=null, activeCallUnsub=null, localStream=null, peer=null, callRef=null;
  let callRole=null, callMode="audio", callState=null, remoteCandidatesUnsub=null, localCandidatesUnsub=null, queuedCandidates=[];
- let incomingCall=null, muted=false, cameraOff=false, ending=false, pendingLocalCandidates=[];
+ let incomingCall=null, incomingDocUnsub=null, ringTimeout=null, muted=false, cameraOff=false, ending=false, pendingLocalCandidates=[];
  const overlay=$("callOverlay");
  const setStatus=(message)=>{if($("callsStatus"))$("callsStatus").textContent=message||"";};
  function acceptedPeople(){return [...peopleCache.entries()].filter(([uid])=>uid!==currentUid&&isAcceptedContact(uid));}
@@ -33,7 +33,7 @@
   overlay.classList.add("visible");
   $("answerCall").hidden=true;$("rejectCall").hidden=true;$("muteCall").hidden=true;$("cameraCall").hidden=true;$("endCall").hidden=true;
   $("callAvatar").style.display="grid";$("remoteVideo").style.display="none";$("localVideo").style.display="none";
-  $("remoteAudio").srcObject=null;$("remoteVideo").srcObject=null;$("localVideo").srcObject=null;
+  $("remoteAudio").srcObject=null;$("remoteVideo").srcObject=null;$("remoteVideo").muted=true;$("localVideo").srcObject=null;
  }
  function showActiveControls(){
   $("answerCall").hidden=true;$("rejectCall").hidden=true;$("endCall").hidden=false;$("muteCall").hidden=false;
@@ -45,6 +45,8 @@
  }
  function cleanup(){
   if(activeCallUnsub){activeCallUnsub();activeCallUnsub=null;}
+  if(incomingDocUnsub){incomingDocUnsub();incomingDocUnsub=null;}
+  if(ringTimeout){window.clearTimeout(ringTimeout);ringTimeout=null;}
   if(remoteCandidatesUnsub){remoteCandidatesUnsub();remoteCandidatesUnsub=null;}
   if(localCandidatesUnsub){localCandidatesUnsub();localCandidatesUnsub=null;}
   if(peer){try{peer.ontrack=null;peer.onicecandidate=null;peer.close();}catch(e){}peer=null;}
@@ -104,6 +106,7 @@
   activeCallUnsub=callRef.onSnapshot(async snap=>{
    if(!snap.exists){cleanup();return;}
    const data=snap.data();callState=data.status;
+   if(data.status==="active"&&ringTimeout){window.clearTimeout(ringTimeout);ringTimeout=null;}
    if(data.status==="rejected"){ $("callStatus").textContent="La otra persona rechazó la llamada.";setTimeoutSafeCleanup();return; }
    if(data.status==="ended"){ $("callStatus").textContent="La llamada finalizó.";setTimeoutSafeCleanup();return; }
    if(callRole==="caller"&&data.answer&&peer&&!peer.remoteDescription){
@@ -127,6 +130,7 @@
    await flushLocalCandidates();
    $("callStatus").textContent="Llamando a "+name+"...";
    $("endCall").hidden=false;watchCallDocument();watchRemoteCandidates();
+   ringTimeout=window.setTimeout(()=>{if(callRef&&callRole==="caller"&&callState==="ringing"){ $("callStatus").textContent="No hubo respuesta.";endCall();}},45000);
   }catch(error){console.error("No se pudo iniciar la llamada:",error);$("callStatus").textContent=permissionMessage(error);setTimeoutSafeCleanup();}
  }
  function permissionMessage(error){
@@ -137,6 +141,7 @@
  }
  async function acceptCall(){
   if(!incomingCall||callRef)return;
+  if(incomingDocUnsub){incomingDocUnsub();incomingDocUnsub=null;}
   const data=incomingCall.data;callRef=incomingCall.ref;callRole="callee";callMode=data.mode==="video"?"video":"audio";
   try{
    $("callStatus").textContent=callMode==="video"?"Activando cámara y micrófono...":"Activando micrófono...";
@@ -164,9 +169,10 @@
  function listenIncoming(uid){
   if(incomingUnsub)incomingUnsub();
   incomingUnsub=db.collection("calls").where("calleeUid","==",uid).limit(20).onSnapshot(snapshot=>{
-   const doc=snapshot.docs.find(d=>d.data().status==="ringing"&&!callRef);
+   const doc=snapshot.docs.find(d=>d.data().status==="ringing"&&!callRef&&!incomingCall);
    if(!doc)return;
    const data=doc.data();incomingCall={ref:doc.ref,data};
+   incomingDocUnsub=doc.ref.onSnapshot(s=>{if(!s.exists||s.data().status!=="ringing"){if(incomingCall&&incomingCall.ref.id===doc.id){incomingCall=null;cleanup();}}},error=>{console.warn("No se pudo seguir la llamada entrante:",error);});
    callMode=data.mode==="video"?"video":"audio";
    const person=peopleCache.get(data.callerUid)||{};
    showOverlay(person.displayName||person.email||"Llamada entrante",callMode==="video"?"Videollamada entrante":"Llamada de voz entrante");
