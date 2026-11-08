@@ -72,27 +72,19 @@ main{scrollbar-gutter:stable}
 <section id="login" class="card">
 <h2>Bienvenido a klk</h2><p>Entra o crea tu cuenta para enviar mensajes privados.</p>
 <form id="authForm">
-<input id="phoneNumber" type="tel" inputmode="tel" autocomplete="tel" placeholder="Número con código de país (+1809...)" required>
-<input id="verificationCode" type="text" inputmode="numeric" autocomplete="one-time-code" placeholder="Código de 6 dígitos recibido por SMS" maxlength="6" hidden>
-<button id="enter" type="submit">Enviar código SMS</button>
+<input id="email" type="email" autocomplete="email" placeholder="Correo electrónico" required>
+<input id="password" type="password" autocomplete="current-password" placeholder="Contraseña (mínimo 6 caracteres)" minlength="6" required>
+<button id="enter" type="submit">Iniciar sesión</button>
 </form>
-<div id="recaptcha-container"></div>
+<button id="register" class="secondary" type="button">Crear cuenta</button>
+<button id="forgot" class="secondary" type="button">Olvidé mi contraseña</button>
 <p id="status" role="status" aria-live="polite"></p>
-<p class="hint">Regístrate o inicia sesión con tu número. Recibirás un código por SMS. Usa el código del país, por ejemplo +1 809, +1 829 o +1 849. Tu operador podría cobrar los SMS.</p>
+<p class="hint">Accede con tu correo electrónico y contraseña. Si todavía no tienes cuenta, pulsa «Crear cuenta».</p>
 </section>
 <section id="chat" class="card">
 <div class="chatTop"><div style="display:flex;align-items:center;gap:8px"><h2 id="chatTitle" style="flex:1">💬 Mensajes privados</h2><button id="backToContacts" class="callBtn" type="button" hidden aria-label="Volver a contactos">←</button><button id="audioCallBtn" class="callBtn" type="button" title="Llamada de voz" aria-label="Llamada de voz">📞</button><button id="videoCallBtn" class="callBtn" type="button" title="Videollamada" aria-label="Videollamada">📹</button><button id="settingsToggle" class="settingsToggle" type="button">⚙️ Ajustes</button></div><p id="who" class="muted"></p></div>
 <div id="dmPanel">
-<section id="phoneLinkPanel" class="card" hidden style="margin:0 0 14px;padding:14px;border:1px solid #d6e8e1">
- <h3>📱 Vincula tu número de teléfono</h3>
- <p class="hint">Tu cuenta actual se creó con correo. Verifica tu número para poder volver a entrar solo con SMS y conservar tus conversaciones.</p>
- <input id="linkPhoneNumber" type="tel" inputmode="tel" autocomplete="tel" placeholder="Número internacional (+1809...)" pattern="^\+[1-9][0-9]{7,14}$">
- <div id="linkRecaptcha"></div>
- <button id="sendLinkCode" type="button">Enviar código SMS</button>
- <input id="linkVerificationCode" type="text" inputmode="numeric" autocomplete="one-time-code" placeholder="Código SMS de 6 dígitos" maxlength="6" hidden>
- <button id="confirmLinkCode" type="button" hidden>Verificar y vincular número</button>
- <p id="linkStatus" class="hint" role="status" aria-live="polite"></p>
-</section>
+
 <h3>💬 Mensajes individuales</h3><p class="hint">Selecciona una persona para iniciar una conversación privada.</p><div id="peopleList">Cargando contactos...</div></div>
 <div id="messages" aria-live="polite"><p class="muted">Cargando mensajes...</p></div>
 <div class="composer">
@@ -184,7 +176,7 @@ function showError(target, error) {
   "auth/invalid-credential":"El correo o la contraseña son incorrectos.",
   "auth/network-request-failed":"Firebase no respondió a la solicitud. Comprueba la conexión, la fecha y hora automáticas del teléfono y que no haya un DNS privado o bloqueador filtrando Google.",
   "auth/unauthorized-domain":"Firebase no autorizó el dominio de esta aplicación. Hay que corregir los dominios autorizados del proyecto.",
-  "auth/operation-not-allowed":"El acceso por teléfono no está activado en Firebase. Activa Phone en Authentication > Sign-in method.",
+  "auth/operation-not-allowed":"El acceso por correo y contraseña no está activado en Firebase. Actívalo en Authentication > Método de acceso.",
   "auth/invalid-phone-number":"El número no es válido. Incluye el código del país, por ejemplo +1809...",
   "auth/missing-phone-number":"Escribe tu número de teléfono.",
   "auth/invalid-verification-code":"El código SMS es incorrecto. Revísalo e inténtalo otra vez.",
@@ -200,9 +192,7 @@ function showError(target, error) {
  const detail = error && error.message ? error.message : "Sin detalle técnico";
  $(target).textContent = (messages[code] || detail || "Ocurrió un error. Inténtalo de nuevo.") + " [ " + code + " ]";
 }
-let confirmationResult = null, recaptchaVerifier = null;
-let linkConfirmationResult = null, linkRecaptchaVerifier = null;
-function setBusy(busy) { $("enter").disabled = busy; }
+function setBusy(busy) { $("enter").disabled = busy; $("register").disabled = busy; $("forgot").disabled = busy; }
 try {
  firebase.initializeApp(firebaseConfig);
  auth = firebase.auth(); db = firebase.firestore();
@@ -213,69 +203,28 @@ $("authForm").addEventListener("submit", async event => {
  if (!auth) { $("status").textContent = "Firebase no está disponible. Comprueba tu conexión e inténtalo de nuevo."; return; }
  setBusy(true);
  try {
-  if (!confirmationResult) {
-   const phone = $("phoneNumber").value.replace(/[\s()-]/g, "");
-   if (!/^\+[1-9][0-9]{7,14}$/.test(phone)) throw new Error("Escribe el número en formato internacional, por ejemplo +18095551234.");
-   if (!recaptchaVerifier) recaptchaVerifier = new firebase.auth.RecaptchaVerifier("recaptcha-container", {size:"normal"});
-   await recaptchaVerifier.render();
-   confirmationResult = await auth.signInWithPhoneNumber(phone, recaptchaVerifier);
-   $("verificationCode").hidden = false;
-   $("verificationCode").required = true;
-   $("enter").textContent = "Verificar código";
-   $("status").textContent = "Enviamos un SMS a " + phone + ". Escribe el código de 6 dígitos.";
-   $("verificationCode").focus();
-  } else {
-   const code = $("verificationCode").value.trim();
-   if (!/^\d{6}$/.test(code)) throw new Error("El código debe tener 6 dígitos.");
-   await confirmationResult.confirm(code);
-   confirmationResult = null;
-   $("status").textContent = "Número verificado. Tu cuenta está lista.";
-  }
- } catch(error) {
-  showError("status", error);
-  if (error.code && ["auth/invalid-verification-code","auth/code-expired"].includes(error.code)) $("verificationCode").value = "";
-  if (!confirmationResult && recaptchaVerifier) {
-   try { recaptchaVerifier.clear(); } catch(e) {}
-   recaptchaVerifier = null;
-   $("recaptcha-container").innerHTML = "";
-  }
- } finally { setBusy(false); }
+  await auth.signInWithEmailAndPassword($("email").value.trim(), $("password").value);
+ } catch(error) { showError("status", error); }
+ finally { setBusy(false); }
 });
-$("sendLinkCode").addEventListener("click", async () => {
- const user = auth && auth.currentUser, phone = $("linkPhoneNumber").value.replace(/[\s()-]/g, "");
- $("linkStatus").textContent = "";
- if (!user) { $("linkStatus").textContent = "Inicia sesión primero."; return; }
- if (user.phoneNumber) { $("linkStatus").textContent = "Esta cuenta ya tiene un número verificado."; $("phoneLinkPanel").hidden = true; return; }
- if (!/^\+[1-9][0-9]{7,14}$/.test(phone)) { $("linkStatus").textContent = "Escribe el número en formato internacional, por ejemplo +18095551234."; return; }
- $("sendLinkCode").disabled = true;
+$("register").addEventListener("click", async () => {
+ $("status").textContent = "";
+ if (!auth) { $("status").textContent = "Firebase no está disponible. Comprueba tu conexión e inténtalo de nuevo."; return; }
+ setBusy(true);
  try {
-  if (!linkRecaptchaVerifier) linkRecaptchaVerifier = new firebase.auth.RecaptchaVerifier("linkRecaptcha", {size:"normal"});
-  await linkRecaptchaVerifier.render();
-  linkConfirmationResult = await user.linkWithPhoneNumber(phone, linkRecaptchaVerifier);
-  $("linkVerificationCode").hidden = false;
-  $("confirmLinkCode").hidden = false;
-  $("linkStatus").textContent = "Enviamos un código a " + phone + ".";
- } catch(error) {
-  $("linkStatus").textContent = (error.message || "No se pudo enviar el SMS.") + (error.code ? " [" + error.code + "]" : "");
-  if (linkRecaptchaVerifier) { try { linkRecaptchaVerifier.clear(); } catch(e) {} linkRecaptchaVerifier = null; $("linkRecaptcha").innerHTML = ""; }
- } finally { $("sendLinkCode").disabled = false; }
+  await auth.createUserWithEmailAndPassword($("email").value.trim(), $("password").value);
+  $("status").textContent = "Cuenta creada correctamente.";
+ } catch(error) { showError("status", error); }
+ finally { setBusy(false); }
 });
-$("confirmLinkCode").addEventListener("click", async () => {
- const code = $("linkVerificationCode").value.trim();
- if (!linkConfirmationResult) { $("linkStatus").textContent = "Solicita primero el código SMS."; return; }
- if (!/^\d{6}$/.test(code)) { $("linkStatus").textContent = "El código debe tener 6 dígitos."; return; }
- $("confirmLinkCode").disabled = true;
+$("forgot").addEventListener("click", async () => {
+ $("status").textContent = "";
+ const email = $("email").value.trim();
+ if (!email) { $("status").textContent = "Escribe tu correo electrónico y vuelve a pulsar «Olvidé mi contraseña»."; return; }
  try {
-  const result = await linkConfirmationResult.confirm(code);
-  await result.user.getIdToken(true);
-  await db.collection("users").doc(result.user.uid).set({phoneNumber:result.user.phoneNumber,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
-  $("who").textContent = "Conectado: " + result.user.phoneNumber;
-  $("phoneLinkPanel").hidden = true;
-  $("linkStatus").textContent = "Número vinculado correctamente. Tus conversaciones se conservaron.";
-  linkConfirmationResult = null;
- } catch(error) {
-  $("linkStatus").textContent = (error.message || "No se pudo verificar el código.") + (error.code ? " [" + error.code + "]" : "");
- } finally { $("confirmLinkCode").disabled = false; }
+  await auth.sendPasswordResetEmail(email);
+  $("status").textContent = "Enviamos un enlace para restablecer tu contraseña. Revisa tu correo.";
+ } catch(error) { showError("status", error); }
 });
 $("logout").onclick = async () => { if (unsubscribe) { unsubscribe(); unsubscribe = null; } await auth.signOut(); };
 auth && auth.onAuthStateChanged(async user => {
@@ -284,15 +233,14 @@ auth && auth.onAuthStateChanged(async user => {
  if (user) {
   window.klkSetCurrentUid && window.klkSetCurrentUid(user.uid);
   watchIncomingCalls(user);
-  $("who").textContent = "Conectado: " + (user.phoneNumber || user.email || "usuario");
-  $("phoneLinkPanel").hidden = !!user.phoneNumber;
+  $("who").textContent = "Conectado: " + (user.email || "usuario");
   activeConversationId = null; activeConversationName = null;
   $("chatTitle").textContent = "💬 Mensajes privados"; $("dmPanel").style.display = "block"; $("messages").style.display = "none"; $("backToContacts").hidden = true; $("audioCallBtn").disabled = true; $("videoCallBtn").disabled = true;
   document.querySelector(".composer").style.display = "none"; $("mediaActions").style.display = "none"; $("recordStatus").style.display = "none";
   try {
    const userRef = db.collection("users").doc(user.uid);
    const userSnap = await userRef.get(), profile = userSnap.exists ? userSnap.data() : {};
-   await userRef.set({uid:user.uid,...(user.phoneNumber ? {phoneNumber:user.phoneNumber} : {email:user.email || ""}),displayName:user.displayName || profile.displayName || user.phoneNumber || (user.email || "Miembro").split("@")[0],updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
+   await userRef.set({uid:user.uid,email:user.email || "",displayName:user.displayName || profile.displayName || (user.email || "Miembro").split("@")[0],updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
    if (profile.photoPath) getMediaUrl(profile.photoPath).then(url => { if (url) $("profilePreview").src = url; }).catch(error => console.warn("Foto propia:", error));
    loadPeople();
   } catch(error) { showError("chatStatus",error); }
