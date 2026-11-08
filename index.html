@@ -4,13 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#075e54">
-<meta name="description" content="Mensajería privada individual de klk.">
+<meta name="description" content="Chats privados, llamadas y contactos en klk.">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="icon" href="./icon.svg" type="image/svg+xml">
-<title>klk - Mensajes privados</title>
+<title>klk - Chats</title>
 <style>
 *{box-sizing:border-box}html{min-height:100%;background:#efeae2}body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#efeae2;color:#111b21;min-height:100vh;min-height:100dvh;height:100dvh;overflow:hidden;padding-bottom:env(safe-area-inset-bottom);display:flex;flex-direction:column}
 header{position:sticky;top:0;z-index:5;background:#075e54;color:white;padding:calc(14px + env(safe-area-inset-top)) 18px 14px;font-size:25px;font-weight:700;box-shadow:0 2px 5px #0002}
@@ -44,13 +44,13 @@ main{scrollbar-gutter:stable}
 #chat[style*="display: flex"]{display:flex!important}
 .chatTop,#chatNav,.composer,#mediaActions,.chatFoot{flex:0 0 auto}
 #messages{flex:1 1 auto;height:auto;min-height:140px;max-height:none;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
-#dmPanel{flex:1 1 auto;min-height:0;max-height:none;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+#dmPanel,#homePanel{flex:1 1 auto;min-height:0;max-height:none;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}#homePanel{display:block;background:#fff;padding:12px}#chatList{display:flex;flex-direction:column;gap:4px}.chatListItem{display:flex;align-items:center;gap:12px;width:100%;margin:0;padding:12px 8px;border-radius:0;border-bottom:1px solid #edf0ef;background:#fff;color:#17211e;text-align:left}.chatListItem .memberInfo{flex:1}.chatListItem small{display:block;color:#68736f;font-weight:400;margin-top:4px}
 #settingsPanel{flex:0 1 auto;max-height:42dvh;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
 @media(max-width:420px){#messages{min-height:120px}}
 
-#chatNav{display:flex;gap:8px;padding:10px;background:#e3f2ed}
+#chatNav{display:flex;gap:8px;padding:10px;background:#e3f2ed}#chatNav button{flex:1}
 #chatNav button{margin:0;padding:10px 8px;font-size:13px}
-#dmPanel{display:none;background:#fff;padding:12px;max-height:55vh;overflow:auto}
+#dmPanel{display:none;background:#fff;padding:12px;max-height:none;overflow:auto}
 .memberBtn{display:block;width:100%;text-align:left;background:#f4f7f6;color:#17211e;border-radius:10px;margin:6px 0;padding:13px}
 .memberBtn small{display:block;color:#68736f;font-weight:400;margin-top:4px}
 
@@ -66,11 +66,11 @@ main{scrollbar-gutter:stable}
 </style>
 </head>
 <body>
-<header>klk <small>Mensajes privados, siempre conectados</small></header>
+<header>klk <small>Chats y llamadas, siempre conectados</small></header>
 <main>
 <button id="installApp" class="secondary" type="button" hidden>Instalar klk en este teléfono</button>
 <section id="login" class="card">
-<h2>Bienvenido a klk</h2><p>Entra o crea tu cuenta para enviar mensajes privados.</p>
+<h2>Bienvenido a klk</h2><p>Entra o crea tu cuenta para chatear y llamar a tus contactos.</p>
 <form id="authForm">
 <input id="email" type="email" autocomplete="email" placeholder="Correo electrónico" required>
 <input id="password" type="password" autocomplete="current-password" placeholder="Contraseña (mínimo 6 caracteres)" minlength="6" required>
@@ -82,10 +82,12 @@ main{scrollbar-gutter:stable}
 <p class="hint">Accede con tu correo electrónico y contraseña. Si todavía no tienes cuenta, pulsa «Crear cuenta».</p>
 </section>
 <section id="chat" class="card">
-<div class="chatTop"><div style="display:flex;align-items:center;gap:8px"><h2 id="chatTitle" style="flex:1">💬 Mensajes privados</h2><button id="backToContacts" class="callBtn" type="button" hidden aria-label="Volver a contactos">←</button><button id="audioCallBtn" class="callBtn" type="button" title="Llamada de voz" aria-label="Llamada de voz">📞</button><button id="videoCallBtn" class="callBtn" type="button" title="Videollamada" aria-label="Videollamada">📹</button><button id="settingsToggle" class="settingsToggle" type="button">⚙️ Ajustes</button></div><p id="who" class="muted"></p></div>
+<div class="chatTop"><div style="display:flex;align-items:center;gap:8px"><h2 id="chatTitle" style="flex:1">💬 Chats</h2><button id="backToContacts" class="callBtn" type="button" hidden aria-label="Volver a contactos">←</button><button id="audioCallBtn" class="callBtn" type="button" title="Llamada de voz" aria-label="Llamada de voz">📞</button><button id="videoCallBtn" class="callBtn" type="button" title="Videollamada" aria-label="Videollamada">📹</button><button id="settingsToggle" class="settingsToggle" type="button">⚙️ Ajustes</button></div><p id="who" class="muted"></p></div>
+<div id="homePanel"><h3>💬 Chats</h3><p class="hint">Tus conversaciones aparecerán aquí. Solo se permiten chats privados entre dos personas.</p><div id="chatList">Cargando chats...</div></div>
 <div id="dmPanel">
 
 <h3>👥 Solicitudes recibidas</h3><div id="incomingRequests">Cargando solicitudes...</div><h3>💬 Personas</h3><p class="hint">Envía una solicitud. Solo podrán hablar cuando la otra persona la acepte.</p><div id="peopleList">Cargando miembros...</div></div>
+<div id="chatNav"><button id="showChats" type="button">💬 Chats</button><button id="showContacts" type="button" class="secondary">👥 Contactos</button></div>
 <div id="messages" aria-live="polite"><p class="muted">Cargando mensajes...</p></div>
 <div class="composer">
  <button id="pickPhoto" class="iconBtn" type="button" aria-label="Elegir foto" title="Elegir foto">＋</button>
@@ -164,7 +166,7 @@ function getSupabaseClient() {
 const mediaUrlCache = new Map();
 let profileUrlCache = new Map();
 let auth, db, firebaseInitError = null, unsubscribe = null, sending = false, mediaRecorder = null, audioStream = null, audioBlob = null, audioStartedAt = 0;
-let activeConversationId = null, activeConversationName = null, peopleUnsubscribe = null;
+let activeConversationId = null, activeConversationName = null, peopleUnsubscribe = null, chatsUnsubscribe = null;
 function showError(target, error) {
  console.error("Error de klk/Firebase:", error);
  const messages = {
@@ -242,16 +244,38 @@ auth && auth.onAuthStateChanged(async user => {
    const userSnap = await userRef.get(), profile = userSnap.exists ? userSnap.data() : {};
    await userRef.set({uid:user.uid,email:user.email || "",displayName:user.displayName || profile.displayName || (user.email || "Miembro").split("@")[0],updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
    if (profile.photoPath) getMediaUrl(profile.photoPath).then(url => { if (url) $("profilePreview").src = url; }).catch(error => console.warn("Foto propia:", error));
-   loadPeople();
+   loadPeople(); loadChats();
   } catch(error) { showError("chatStatus",error); }
  } else {
   window.klkSetCurrentUid && window.klkSetCurrentUid(null);
   if(incomingCallUnsubscribe){incomingCallUnsubscribe();incomingCallUnsubscribe=null;} clearCallMedia();
   if (unsubscribe) unsubscribe(); unsubscribe = null;
-  if (peopleUnsubscribe) peopleUnsubscribe(); peopleUnsubscribe = null;
+  if (peopleUnsubscribe) peopleUnsubscribe(); peopleUnsubscribe = null; if(chatsUnsubscribe)chatsUnsubscribe();chatsUnsubscribe=null;
   activeConversationId = null; $("messages").innerHTML = "";
  }
 });
+
+$("showChats").onclick=()=>{$("homePanel").style.display="block";$("dmPanel").style.display="none";$("chatTitle").textContent="💬 Chats";$("showChats").classList.remove("secondary");$("showContacts").classList.add("secondary");};
+$("showContacts").onclick=()=>{$("homePanel").style.display="none";$("dmPanel").style.display="block";$("chatTitle").textContent="👥 Contactos";$("showContacts").classList.remove("secondary");$("showChats").classList.add("secondary");};
+function loadChats(){
+ if(chatsUnsubscribe)chatsUnsubscribe();
+ const uid=auth.currentUser.uid;
+ chatsUnsubscribe=db.collection("conversations").where("members","array-contains",uid).onSnapshot(async snapshot=>{
+  const list=$("chatList");list.innerHTML="";
+  const conversations=snapshot.docs.filter(doc=>Array.isArray(doc.data().members)&&doc.data().members.length===2);
+  if(!conversations.length){list.textContent="Todavía no tienes chats. Entra en Contactos para enviar o aceptar una solicitud.";return;}
+  for(const conversation of conversations){
+   const members=conversation.data().members,peerId=members.find(id=>id!==uid);if(!peerId)continue;
+   const row=document.createElement("button");row.type="button";row.className="chatListItem";
+   const avatar=document.createElement("img");avatar.className="avatar";avatar.alt="Foto de perfil";avatar.src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'%3E%3Ccircle cx='40' cy='40' r='40' fill='%23dce8e4'/%3E%3Ccircle cx='40' cy='29' r='14' fill='%2389a99e'/%3E%3Cpath d='M13 75c2-17 13-25 27-25s25 8 27 25' fill='%2389a99e'/%3E%3C/svg%3E";
+   const info=document.createElement("span");info.className="memberInfo";const name=document.createElement("strong");name.textContent="Contacto";const preview=document.createElement("small");preview.textContent="Conversación privada";
+   try{const profile=await db.collection("users").doc(peerId).get();if(profile.exists){const data=profile.data();name.textContent=data.displayName||data.email||"Contacto";if(data.photoPath){const url=await getMediaUrl(data.photoPath);if(url)avatar.src=url;}}}catch(error){console.warn("No se pudo cargar el contacto",error);}
+   try{const last=await conversation.ref.collection("messages").orderBy("createdAt","desc").limit(1).get();if(!last.empty){const message=last.docs[0].data();preview.textContent=message.type==="image"?"📷 Foto":message.type==="audio"?"🎙️ Audio":message.text||"Mensaje";}}catch(error){console.warn("No se pudo cargar la vista previa",error);}
+   info.append(name,preview);row.append(avatar,info);row.onclick=()=>openPrivateConversation(peerId,name.textContent);list.append(row);
+  }
+ },error=>showError("chatStatus",error));
+}
+
 function messagesCollection() {
  return activeConversationId ? db.collection("conversations").doc(activeConversationId).collection("messages") : null;
 }
@@ -280,7 +304,7 @@ function loadPeople() {
 }
 async function openPrivateConversation(otherUid,otherName){
  const user=auth.currentUser;if(!user||!otherUid||otherUid===user.uid)return;const members=[user.uid,otherUid].sort(),conversationId=members.join("__");$("chatStatus").textContent="Abriendo conversación privada...";
- try{const ids=[user.uid+"__"+otherUid,otherUid+"__"+user.uid],checks=await Promise.all(ids.map(id=>db.collection("connectionRequests").doc(id).get()));if(!checks.some(s=>s.exists&&s.data().status==="accepted"))throw new Error("Primero deben aceptar la solicitud de contacto.");const ref=db.collection("conversations").doc(conversationId),existing=await ref.get();if(!existing.exists)await ref.set({members,createdAt:firebase.firestore.FieldValue.serverTimestamp()});activeConversationId=conversationId;activeConversationName=otherName;$("chatTitle").textContent="💬 "+otherName;$("backToContacts").hidden=false;$("audioCallBtn").disabled=false;$("videoCallBtn").disabled=false;$("dmPanel").style.display="none";$("messages").style.display="block";document.querySelector(".composer").style.display="flex";$("mediaActions").style.display="flex";$("recordStatus").style.display="block";$("chatStatus").textContent="Contacto aceptado. Conversación privada con "+otherName;loadMessages();}catch(error){showError("chatStatus",error);}
+ try{const ids=[user.uid+"__"+otherUid,otherUid+"__"+user.uid],checks=await Promise.all(ids.map(id=>db.collection("connectionRequests").doc(id).get()));if(!checks.some(s=>s.exists&&s.data().status==="accepted"))throw new Error("Primero deben aceptar la solicitud de contacto.");const ref=db.collection("conversations").doc(conversationId),existing=await ref.get();if(!existing.exists)await ref.set({members,createdAt:firebase.firestore.FieldValue.serverTimestamp()});activeConversationId=conversationId;activeConversationName=otherName;$("homePanel").style.display="none";$("dmPanel").style.display="none";$("chatNav").style.display="none";$("chatTitle").textContent=otherName;$("backToContacts").hidden=false;$("audioCallBtn").disabled=false;$("videoCallBtn").disabled=false;$("dmPanel").style.display="none";$("messages").style.display="block";document.querySelector(".composer").style.display="flex";$("mediaActions").style.display="flex";$("recordStatus").style.display="block";$("chatStatus").textContent="Contacto aceptado. Conversación privada con "+otherName;loadMessages();}catch(error){showError("chatStatus",error);}
 }
 
 
@@ -430,9 +454,9 @@ $("cameraCallBtn").addEventListener("click",()=>{
 $("backToContacts").onclick = () => {
  if (unsubscribe) { unsubscribe(); unsubscribe = null; }
  activeConversationId = null; activeConversationName = null;
- $("messages").style.display = "none"; $("dmPanel").style.display = "block"; $("chatTitle").textContent = "💬 Mensajes privados"; $("backToContacts").hidden = true; $("audioCallBtn").disabled = true; $("videoCallBtn").disabled = true;
+ $("messages").style.display = "none"; $("homePanel").style.display="block"; $("dmPanel").style.display = "none"; $("chatNav").style.display="flex"; $("chatTitle").textContent = "💬 Chats"; $("backToContacts").hidden = true; $("audioCallBtn").disabled = true; $("videoCallBtn").disabled = true;
  document.querySelector(".composer").style.display = "none"; $("mediaActions").style.display = "none"; $("recordStatus").style.display = "none";
- $("chatStatus").textContent = "Selecciona una persona para conversar en privado.";
+ $("chatStatus").textContent = "Tus conversaciones privadas.";
 };
 async function getMediaUrl(path, conversationId = null) {
  if (!path) return "";
