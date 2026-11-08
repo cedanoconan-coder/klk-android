@@ -30,7 +30,7 @@ jobs:
         run: npm install --no-audit --no-fund
 
       - name: Preparar archivos web
-        run: mkdir -p www && cp index.html icon.svg manifest.webmanifest sw.js www/
+        run: mkdir -p www && cp index.html calls.js icon.svg manifest.webmanifest sw.js www/
 
       - name: Verificar sintaxis JavaScript
         run: |
