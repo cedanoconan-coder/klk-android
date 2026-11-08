@@ -1,4 +1,4 @@
-const CACHE_NAME = "klk-shell-v5";
+const CACHE_NAME = "klk-shell-v6";
 const APP_SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon.svg"];
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_SHELL)));
@@ -13,8 +13,12 @@ self.addEventListener("fetch", event => {
   if (request.method !== "GET" || new URL(request.url).origin !== self.location.origin) return;
   event.respondWith(fetch(request).then(response => {
     if (response && response.ok) {
-      const copy = response.clone();
-      caches.open(CACHE_NAME).then(cache => cache.put(request, copy));
+      // No guardar enlaces de invitación: contienen códigos privados de un solo uso.
+      const hasInviteCode = new URL(request.url).searchParams.has("invite");
+      if (!hasInviteCode) {
+        const copy = response.clone();
+        caches.open(CACHE_NAME).then(cache => cache.put(request, copy));
+      }
     }
     return response;
   }).catch(() => caches.match(request).then(cached => cached || caches.match("./index.html"))));
