@@ -158,7 +158,9 @@ html[data-density="comfortable"] .chatRow,html[data-density="comfortable"] #peop
 <input id="password" type="password" autocomplete="current-password" placeholder="Contraseña (mínimo 6 caracteres)" minlength="6" required>
 <button id="enter" type="submit">Iniciar sesión</button>
 </form>
-<button id="register" class="secondary" type="button">Crear cuenta</button>
+<input id="invitationCode" type="text" autocomplete="one-time-code" autocapitalize="characters" placeholder="Código de invitación para crear cuenta">
+<button id="register" class="secondary" type="button">Crear cuenta con invitación</button>
+<p class="hint">El registro está cerrado: necesitas un código de invitación de un miembro de klk.</p>
 <button id="forgot" class="secondary" type="button">Olvidé mi contraseña</button>
 <p id="status" role="status" aria-live="polite"></p>
 <p class="hint">Necesitas conexión a internet para iniciar sesión y enviar mensajes.</p>
@@ -166,7 +168,15 @@ html[data-density="comfortable"] .chatRow,html[data-density="comfortable"] #peop
 <section id="chat" class="card">
 
 <div id="homeView" class="homeView">
- <div class="homeTitle"><h1>klk</h1><div class="homeActions"><button type="button" id="profileButton" class="profileButton" aria-label="Cambiar foto de perfil"><img id="myProfilePhoto" alt="Foto de perfil"><span>Mi perfil</span></button><input id="profilePhotoInput" type="file" accept="image/*" hidden><button type="button" id="homeCamera" aria-label="Cámara">▣</button><button type="button" id="homeMenu" aria-label="Ajustes">⋮</button></div></div>
+ <div class="homeTitle"><h1>klk</h1><div class="homeActions"><button type="button" id="inviteMember" aria-label="Invitar a klk" title="Invitar a klk">＋</button><button type="button" id="profileButton" class="profileButton" aria-label="Cambiar foto de perfil"><img id="myProfilePhoto" alt="Foto de perfil"><span>Mi perfil</span></button><input id="profilePhotoInput" type="file" accept="image/*" hidden><button type="button" id="homeCamera" aria-label="Cámara">▣</button><button type="button" id="homeMenu" aria-label="Ajustes">⋮</button></div></div>
+ <section id="invitePanel" class="card" style="display:none;margin:0 16px 14px;padding:14px">
+  <strong>Invitar a klk</strong>
+  <p class="hint">Crea un código de un solo uso, válido durante 7 días. Compártelo solo con la persona que deseas agregar.</p>
+  <p id="inviteCodeDisplay" style="font-size:22px;font-weight:700;letter-spacing:2px;text-align:center"></p>
+  <button id="createInvite" type="button">Crear invitación</button>
+  <button id="shareInvite" class="secondary" type="button" hidden>Compartir invitación</button>
+  <p id="inviteStatus" class="hint" role="status" aria-live="polite"></p>
+ </section>
  <div class="homeSearch"><input id="chatSearch" type="search" placeholder="Buscar..." aria-label="Buscar conversaciones"></div>
  <p id="homeStatus" class="hint" role="status" aria-live="polite" style="padding:0 20px;min-height:18px"></p>
  <div class="homeFilters" role="group" aria-label="Secciones de klk">
@@ -283,15 +293,45 @@ $("authForm").addEventListener("submit", async event => {
  catch(error) { showError("status", error); }
  finally { setBusy(false); }
 });
+let invitationActivationInProgress = false;
+const inviteFromUrl = new URLSearchParams(window.location.search).get("invite");
+if (inviteFromUrl) $("invitationCode").value = inviteFromUrl.toUpperCase();
 $("register").addEventListener("click", async () => {
  $("status").textContent = "";
- if (!auth) { $("status").textContent = "Firebase no está disponible. " + (firebaseInitError && firebaseInitError.message ? firebaseInitError.message : "Comprueba tu conexión a Internet y vuelve a abrir klk."); return; }
+ if (!auth || !db) { $("status").textContent = "Firebase no está disponible. Comprueba tu conexión e inténtalo de nuevo."; return; }
  const email = $("email").value.trim(), password = $("password").value;
+ const code = $("invitationCode").value.trim().toUpperCase();
  if (!email || password.length < 6) { $("status").textContent = "Escribe un correo válido y una contraseña de al menos 6 caracteres."; return; }
+ if (!/^[A-Z0-9]{8,16}$/.test(code)) { $("status").textContent = "Escribe un código de invitación válido."; return; }
  setBusy(true);
- try { const credential = await auth.createUserWithEmailAndPassword(email, password); const newUser = credential.user; await db.collection("users").doc(newUser.uid).set({uid:newUser.uid,email:newUser.email || email,displayName:newUser.displayName || email.split("@")[0],updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true}); $("status").textContent = "Cuenta creada correctamente. Tu perfil ya aparece en klk."; loadPeople(); }
- catch(error) { showError("status", error); }
- finally { setBusy(false); }
+ try {
+  const invitationRef = db.collection("invitations").doc(code);
+  const invitationSnapshot = await invitationRef.get();
+  if (!invitationSnapshot.exists) throw new Error("El código de invitación no existe.");
+  const invitation = invitationSnapshot.data();
+  if (invitation.redeemedBy || !invitation.expiresAt || invitation.expiresAt.toDate() <= new Date()) throw new Error("Este código ya se utilizó o ha caducado. Pide otra invitación.");
+  invitationActivationInProgress = true;
+  const credential = await auth.createUserWithEmailAndPassword(email, password);
+  const newUser = credential.user;
+  await db.runTransaction(async transaction => {
+   const fresh = await transaction.get(invitationRef);
+   if (!fresh.exists || fresh.data().redeemedBy || !fresh.data().expiresAt || fresh.data().expiresAt.toDate() <= new Date()) throw new Error("La invitación ya no está disponible.");
+   transaction.update(invitationRef,{redeemedBy:newUser.uid,redeemedAt:firebase.firestore.FieldValue.serverTimestamp()});
+   transaction.set(db.collection("users").doc(newUser.uid),{
+    uid:newUser.uid,email:newUser.email || email,displayName:newUser.displayName || email.split("@")[0],
+    inviteCode:code,invitedBy:fresh.data().createdBy,
+    updatedAt:firebase.firestore.FieldValue.serverTimestamp()
+   });
+  });
+  invitationActivationInProgress = false;
+  $("status").textContent = "¡Bienvenido a klk! Tu invitación fue aceptada.";
+  window.history.replaceState({},document.title,window.location.pathname);
+  window.location.reload();
+ } catch(error) {
+  invitationActivationInProgress = false;
+  if (auth.currentUser && !await db.collection("users").doc(auth.currentUser.uid).get().then(s=>s.exists).catch(()=>false)) await auth.signOut();
+  $("status").textContent = error.message || "No se pudo completar el registro. Revisa el código e inténtalo de nuevo.";
+ } finally { setBusy(false); }
 });
 $("forgot").addEventListener("click", async () => {
  $("status").textContent = "";
@@ -314,6 +354,7 @@ $("forgot").addEventListener("click", async () => {
 });
 $("logout").onclick = async () => { if (unsubscribe) { unsubscribe(); unsubscribe = null; } await auth.signOut(); };
 auth && auth.onAuthStateChanged(async user => {
+ if (user && invitationActivationInProgress) { $("login").style.display="none"; $("chat").style.display="none"; return; }
  $("login").style.display = user ? "none" : "block";
  $("chat").style.display = user ? "block" : "none";
  if (user) {
@@ -322,13 +363,17 @@ auth && auth.onAuthStateChanged(async user => {
   activeConversationId = null; activeConversationName = null;
   $("chat").classList.remove("room-open");
   $("chatTitle").textContent = "👨‍👩‍👧‍👦 Familia klk"; $("dmPanel").style.display = "none"; $("messages").style.display = "block";
-  // Iniciar las lecturas independientemente de la sincronización del perfil.
-  // Así un error al guardar el perfil no deja las listas eternamente cargando.
-  loadPeople();
-  loadContactRequests();
   try {
-   await db.collection("users").doc(user.uid).set({uid:user.uid,email:user.email || "",displayName:user.displayName || (user.email || "Miembro").split("@")[0],updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
-   loadMyProfile();
+   const profileRef = db.collection("users").doc(user.uid);
+   const profileSnapshot = await profileRef.get();
+   if (!profileSnapshot.exists) {
+    $("login").style.display="block"; $("chat").style.display="none";
+    $("status").textContent="Esta cuenta todavía no tiene una invitación activada. Cierra sesión y crea una cuenta con un código válido.";
+    await auth.signOut();
+    return;
+   }
+   await profileRef.set({uid:user.uid,email:user.email || "",displayName:user.displayName || (user.email || "Miembro").split("@")[0],updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
+   loadPeople(); loadContactRequests(); loadMyProfile();
   } catch(error) {
    showError("chatStatus",error);
   }
@@ -782,6 +827,35 @@ if (window.matchMedia("(display-mode: standalone)").matches || window.navigator.
  window.klkSetCurrentUid=uid=>{window.klkCurrentUid=uid||null;};apply();permissionButton();
 })();
 
+$("inviteMember").addEventListener("click",()=>{ $("invitePanel").style.display=$("invitePanel").style.display==="block"?"none":"block"; $("inviteStatus").textContent=""; });
+let latestInviteCode = "";
+$("createInvite").addEventListener("click",async()=>{
+ const user=auth&&auth.currentUser;
+ if(!user){$("inviteStatus").textContent="Inicia sesión para crear invitaciones.";return;}
+ $("createInvite").disabled=true;$("inviteStatus").textContent="Creando código seguro...";
+ try{
+  const alphabet="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const bytes=new Uint8Array(10);
+  if(window.crypto&&crypto.getRandomValues)crypto.getRandomValues(bytes);else for(let i=0;i<bytes.length;i++)bytes[i]=Math.floor(Math.random()*256);
+  latestInviteCode=Array.from(bytes,b=>alphabet[b%alphabet.length]).join("");
+  const expiresAt=firebase.firestore.Timestamp.fromDate(new Date(Date.now()+7*24*60*60*1000));
+  await db.collection("invitations").doc(latestInviteCode).set({createdBy:user.uid,createdAt:firebase.firestore.FieldValue.serverTimestamp(),expiresAt,redeemedBy:null,redeemedAt:null});
+  $("inviteCodeDisplay").textContent=latestInviteCode;
+  $("shareInvite").hidden=false;
+  $("inviteStatus").textContent="Código creado. Solo puede utilizarse una vez y caduca en 7 días.";
+ }catch(error){showError("inviteStatus",error);}
+ finally{$("createInvite").disabled=false;}
+});
+$("shareInvite").addEventListener("click",async()=>{
+ if(!latestInviteCode)return;
+ const link=window.location.origin+window.location.pathname+"?invite="+encodeURIComponent(latestInviteCode);
+ const message="Te invito a unirte a klk. Abre este enlace y crea tu cuenta: "+link+"\nCódigo: "+latestInviteCode;
+ try{
+  if(navigator.share)await navigator.share({title:"Invitación a klk",text:message,url:link});
+  else if(navigator.clipboard&&navigator.clipboard.writeText){await navigator.clipboard.writeText(message);$("inviteStatus").textContent="Invitación copiada. Envíala por WhatsApp.";}
+  else {$("inviteStatus").textContent="Comparte este enlace: "+link+" | Código: "+latestInviteCode;}
+ }catch(error){if(error.name!=="AbortError")$("inviteStatus").textContent="Código: "+latestInviteCode+" · Enlace: "+link;}
+});
 $("homeGroup").addEventListener("click",()=>{ $("chatStatus").textContent="klk funciona con conversaciones privadas entre contactos aceptados."; });
 function toggleKlkSettings(){const panel=$("settingsPanel");panel.style.display=panel.style.display==="block"?"none":"block";if(panel.style.display==="block")panel.scrollTop=0;}
 $("homeMenu").addEventListener("click",toggleKlkSettings);

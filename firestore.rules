@@ -26,6 +26,34 @@ service cloud.firestore {
           || (request.resource.data.photoPath is string
             && request.resource.data.photoPath.matches('avatars/' + request.auth.uid + '/[^/]+')));
     }
+    function validInvitationForProfile() {
+      return request.resource.data.inviteCode is string
+        && existsAfter(/databases/$(database)/documents/invitations/$(request.resource.data.inviteCode))
+        && getAfter(/databases/$(database)/documents/invitations/$(request.resource.data.inviteCode)).data.redeemedBy == request.auth.uid;
+    }
+
+    match /invitations/{code} {
+      // Solo se permite consultar un código concreto; no se puede listar invitaciones.
+      allow get: if resource.data.redeemedBy == null;
+      allow list: if false;
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['createdBy','createdAt','expiresAt','redeemedBy','redeemedAt'])
+        && request.resource.data.keys().hasAll(['createdBy','createdAt','expiresAt','redeemedBy','redeemedAt'])
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.expiresAt is timestamp
+        && request.resource.data.expiresAt > request.time
+        && request.resource.data.expiresAt <= request.time + duration.value(8, 'd')
+        && request.resource.data.redeemedBy == null
+        && request.resource.data.redeemedAt == null;
+      allow update: if signedIn()
+        && resource.data.redeemedBy == null
+        && resource.data.expiresAt > request.time
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['redeemedBy','redeemedAt'])
+        && request.resource.data.redeemedBy == request.auth.uid
+        && request.resource.data.redeemedAt == request.time;
+      allow delete: if false;
+    }
 
     match /users/{userId} {
       // The signed-in member directory is required by the Personas screen.
@@ -33,8 +61,9 @@ service cloud.firestore {
 
       // New profiles may contain only fields managed by klk.
       allow create: if validUserProfile(userId)
-        && request.resource.data.keys().hasOnly(['uid','email','displayName','photoPath','updatedAt'])
-        && request.resource.data.keys().hasAll(['uid','email','displayName','updatedAt'])
+        && validInvitationForProfile()
+        && request.resource.data.keys().hasOnly(['uid','email','displayName','photoPath','updatedAt','inviteCode','invitedBy'])
+        && request.resource.data.keys().hasAll(['uid','email','displayName','updatedAt','inviteCode','invitedBy'])
         && request.resource.data.updatedAt == request.time;
 
       // On legacy profiles, validate only changed fields. This lets users add
