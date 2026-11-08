@@ -24,7 +24,7 @@ service cloud.firestore {
         && request.resource.data.email == request.auth.token.email
         && (!request.resource.data.keys().hasAny(['photoPath'])
           || (request.resource.data.photoPath is string
-            && request.resource.data.photoPath.matches(request.auth.uid + '/[^/]+')));
+            && request.resource.data.photoPath.matches('avatars/' + request.auth.uid + '/[^/]+')));
       allow delete: if false;
     }
     match /contactRequests/{requestId} {
