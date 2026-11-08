@@ -902,7 +902,7 @@ $("shareInvite").addEventListener("click",async()=>{
  $("shareInvite").disabled=true;
  try{
   if(typeof navigator.share==="function"){
-   await navigator.share({title:"Invitación a klk",text:message,url:link});
+   await navigator.share({title:"Invitación a klk",text:message});
    $("inviteStatus").textContent="Invitación compartida.";
    return;
   }
