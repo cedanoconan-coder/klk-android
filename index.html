@@ -176,6 +176,18 @@ html[data-density="comfortable"] .chatRow,html[data-density="comfortable"] #peop
 #muteCall.muted{background:#59656b!important}
 @media(max-width:420px){#callVideoStage{max-height:55vh}#callPeerName{font-size:21px}}
 
+
+/* Asistente inteligente de klk */
+#assistantPanel .assistantCard{background:var(--klk-surface);border:1px solid var(--klk-line);border-radius:16px;padding:14px;margin-top:14px}
+#assistantMessages{display:flex;flex-direction:column;gap:9px;max-height:42vh;overflow:auto;padding:4px 0 12px}
+.aiBubble{max-width:92%;padding:11px 13px;border-radius:14px;background:var(--klk-message-bg);color:var(--klk-text);white-space:pre-wrap;overflow-wrap:anywhere;font-size:14px;line-height:1.45}
+.aiBubble.user{align-self:flex-end;background:var(--klk-soft)}
+.aiBubble.assistant{align-self:flex-start}
+#assistantQuestion{width:100%;min-height:74px;margin:8px 0;border:1px solid var(--klk-line);border-radius:14px;padding:12px;background:var(--klk-surface);color:var(--klk-text);font:inherit;resize:vertical}
+.aiActions{display:flex;gap:8px;flex-wrap:wrap}
+.aiActions button{flex:1;min-width:140px;margin:4px 0}
+#assistantStatus{min-height:20px;overflow-wrap:anywhere}
+
 </style>
 </head>
 <body>
@@ -222,12 +234,31 @@ html[data-density="comfortable"] .chatRow,html[data-density="comfortable"] #peop
  <section id="toolsPanel" class="homeUtilityPanel" aria-label="Herramientas" hidden>
   <h2>Herramientas</h2><p class="hint">Accesos rápidos para moverte por klk.</p>
   <div class="toolGrid">
-   <button type="button" data-go-tab="chats"><span>💬</span>Mis chats</button><button type="button" data-go-tab="calls"><span>☎️</span>Llamadas</button>
+   <button type="button" data-go-tab="chats"><span>💬</span>Mis chats</button><button type="button" data-go-tab="calls"><span>☎️</span>Llamadas</button><button type="button" data-go-tab="assistant"><span>🤖</span>Asistente IA</button>
    <button type="button" data-go-filter="people"><span>👥</span>Personas</button><button type="button" data-go-filter="requests"><span>✉️</span>Solicitudes</button>
    <button type="button" data-tool-action="settings"><span>⚙️</span>Ajustes</button><button type="button" data-tool-action="invite"><span>＋</span>Invitar</button>
    <button type="button" data-tool-action="profile"><span>🖼️</span>Mi perfil</button><button type="button" data-tool-action="top"><span>⬆️</span>Ir arriba</button>
   </div>
  </section>
+
+ <section id="assistantPanel" class="homeUtilityPanel" aria-label="Asistente inteligente" hidden>
+  <h2>🤖 Asistente inteligente</h2>
+  <p class="hint">Te ayuda a usar klk, revisar fallos y encontrar soluciones. La revisión automática solo aplica arreglos seguros; los cambios de servidor o código requieren pruebas.</p>
+  <div class="assistantCard">
+   <div class="aiActions">
+    <button id="assistantDiagnose" type="button" class="secondary">🔎 Revisar y reparar</button>
+    <button id="assistantCheck" type="button" class="secondary">Comprobar IA</button>
+   </div>
+   <p id="assistantStatus" class="hint" role="status" aria-live="polite">Preparado para revisar este teléfono.</p>
+   <div id="assistantMessages" aria-live="polite">
+    <div class="aiBubble assistant">¡Hola! Soy el asistente de klk. Puedo ayudarte con contactos, invitaciones, mensajes, sonidos, permisos y llamadas. Pulsa «Revisar y reparar» para comprobar este teléfono.</div>
+   </div>
+   <label for="assistantQuestion" class="hint">Escribe tu consulta</label>
+   <textarea id="assistantQuestion" rows="3" maxlength="1600" placeholder="Ejemplo: no puedo hacer llamadas con otro teléfono..."></textarea>
+   <button id="assistantSend" type="button">Enviar consulta</button>
+  </div>
+ </section>
+
  <nav class="homeBottom" aria-label="Navegación principal">
   <button type="button" class="active" data-tab="chats"><span>▤</span>Chats</button>
   <button type="button" data-tab="calls"><span>☎</span>Llamadas</button>
@@ -1052,7 +1083,7 @@ $("chatsPanel").style.display="block";$("requestsPanel").style.display="none";$(
 function setHomeTab(tab){
  // Quita el atributo hidden antes de cambiar display: hidden puede mantener
  // la sección invisible incluso cuando se asigna display:block.
- ["chatsPanel","requestsPanel","peopleList","callsPanel","updatesPanel","toolsPanel"].forEach(id=>{
+ ["chatsPanel","requestsPanel","peopleList","callsPanel","updatesPanel","toolsPanel","assistantPanel"].forEach(id=>{
   const el=$(id);
   if(el){el.hidden=false;el.style.display="none";}
  });
@@ -1066,6 +1097,7 @@ function setHomeTab(tab){
  }else if(tab==="calls")$("callsPanel").style.display="block";
  else if(tab==="updates")$("updatesPanel").style.display="block";
  else if(tab==="tools")$("toolsPanel").style.display="block";
+ else if(tab==="assistant")$("assistantPanel").style.display="block";
  document.querySelectorAll(".homeBottom button").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));
 }
 document.querySelectorAll(".homeBottom button").forEach(button=>button.addEventListener("click",()=>setHomeTab(button.dataset.tab)));
@@ -1083,5 +1115,130 @@ document.querySelectorAll("[data-tool-action]").forEach(button=>button.addEventL
  if(action==="top")window.scrollTo({top:0,behavior:"smooth"});
 }));
 
+
+
+/* Asistente IA klk: diagnóstico local, recuperación segura y ayuda */
+const KLK_ASSISTANT_URL = SUPABASE_URL + "/functions/v1/klk-assistant";
+let klkAiHistory = [];
+let klkLastDiagnostics = null;
+function klkAssistantBubble(role, content) {
+ const box=$("assistantMessages");
+ if(!box)return;
+ const item=document.createElement("div");
+ item.className="aiBubble "+(role==="user"?"user":"assistant");
+ item.textContent=content;
+ box.append(item);
+ box.scrollTop=box.scrollHeight;
+}
+async function klkAssistantRequest(payload) {
+ if(!auth || !auth.currentUser) throw new Error("Inicia sesión en klk para usar el asistente.");
+ const token=await auth.currentUser.getIdToken();
+ const response=await fetch(KLK_ASSISTANT_URL,{
+  method:"POST",
+  headers:{"Content-Type":"application/json","apikey":SUPABASE_PUBLISHABLE_KEY,"Authorization":"Bearer "+token},
+  body:JSON.stringify(payload)
+ });
+ const data=await response.json().catch(()=>({}));
+ if(!response.ok) {
+  const error=new Error(data.error||"No se pudo contactar con el asistente.");
+  error.code=data.code||"";
+  throw error;
+ }
+ return data;
+}
+async function klkRunSafeDiagnostics() {
+ const checks={
+  internet:navigator.onLine,
+  secureContext:window.isSecureContext===true,
+  firebaseSession:Boolean(auth&&auth.currentUser),
+  microphoneSupport:Boolean(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia),
+  videoCallSupport:typeof window.RTCPeerConnection==="function",
+  notificationsSupport:"Notification" in window,
+  serviceWorkerSupport:"serviceWorker" in navigator,
+  serviceWorkerControlled:Boolean(navigator.serviceWorker&&navigator.serviceWorker.controller),
+  browser:navigator.userAgent.includes("Android")?"Android":"Navegador móvil o escritorio"
+ };
+ const repairs=[];
+ if(checks.firebaseSession) {
+  try { await auth.currentUser.getIdToken(true); repairs.push("Sesión de Firebase renovada."); }
+  catch(error) { repairs.push("No se pudo renovar la sesión: "+(error.message||"error de sesión")); }
+ }
+ if(checks.serviceWorkerSupport) {
+  try {
+   const registration=await navigator.serviceWorker.getRegistration();
+   if(registration) { await registration.update(); repairs.push("Se comprobó si hay una actualización de klk."); }
+   else repairs.push("No hay un Service Worker registrado en este navegador.");
+  } catch(error) { repairs.push("No se pudo comprobar la actualización de klk."); }
+ }
+ if(!checks.internet) repairs.push("El teléfono aparece sin conexión a Internet.");
+ if(!checks.secureContext) repairs.push("La aplicación no está abierta en un contexto HTTPS seguro.");
+ if(!checks.firebaseSession) repairs.push("No hay una sesión activa; inicia sesión nuevamente.");
+ klkLastDiagnostics={checks,repairs,checkedAt:new Date().toISOString()};
+ return klkLastDiagnostics;
+}
+$("assistantCheck").addEventListener("click",async()=>{
+ $("assistantCheck").disabled=true;
+ $("assistantStatus").textContent="Comprobando el servicio seguro...";
+ try {
+  const result=await klkAssistantRequest({action:"health"});
+  $("assistantStatus").textContent=result.aiConfigured
+   ?"La conexión con el servidor de IA está configurada. Modelo: "+result.model
+   :"El asistente está instalado, pero falta la clave OPENAI_API_KEY en los secretos de Supabase.";
+ } catch(error) {
+  $("assistantStatus").textContent=error.message;
+ } finally {$("assistantCheck").disabled=false;}
+});
+$("assistantDiagnose").addEventListener("click",async()=>{
+ const button=$("assistantDiagnose");
+ button.disabled=true;
+ $("assistantStatus").textContent="Revisando conexión, sesión y actualización de klk...";
+ try {
+  klkLastDiagnostics=await klkRunSafeDiagnostics();
+  const result=await klkAssistantRequest({action:"health"});
+  const summary=[
+   "Internet: "+(klkLastDiagnostics.checks.internet?"conectado":"sin conexión"),
+   "HTTPS seguro: "+(klkLastDiagnostics.checks.secureContext?"sí":"no"),
+   "Sesión Firebase: "+(klkLastDiagnostics.checks.firebaseSession?"activa":"no iniciada"),
+   "Micrófono: "+(klkLastDiagnostics.checks.microphoneSupport?"compatible":"no compatible"),
+   "Llamadas WebRTC: "+(klkLastDiagnostics.checks.videoCallSupport?"compatible":"no compatible"),
+   "Service Worker: "+(klkLastDiagnostics.checks.serviceWorkerSupport?"disponible":"no disponible"),
+   ...klkLastDiagnostics.repairs
+  ].join("\n");
+  klkAssistantBubble("assistant","Resultado de la revisión:\n"+summary);
+  if(result.aiConfigured) {
+   $("assistantStatus").textContent="Revisión terminada. Consultando a la IA...";
+   const ai=await klkAssistantRequest({action:"chat",message:"Analiza este diagnóstico y dime qué problemas encontraste y qué puedo hacer ahora.",diagnostics:klkLastDiagnostics});
+   klkAssistantBubble("assistant",ai.answer);
+   $("assistantStatus").textContent="Revisión terminada.";
+  } else {
+   $("assistantStatus").textContent="Revisión terminada. Para activar las respuestas de IA falta configurar OPENAI_API_KEY en Supabase.";
+  }
+ } catch(error) {
+  $("assistantStatus").textContent=error.message;
+ } finally {button.disabled=false;}
+});
+$("assistantSend").addEventListener("click",async()=>{
+ const question=$("assistantQuestion").value.trim();
+ if(!question)return;
+ const button=$("assistantSend");
+ button.disabled=true;
+ $("assistantQuestion").disabled=true;
+ klkAssistantBubble("user",question);
+ $("assistantQuestion").value="";
+ $("assistantStatus").textContent="El asistente está preparando la respuesta...";
+ try {
+  const result=await klkAssistantRequest({action:"chat",message:question,history:klkAiHistory,diagnostics:klkLastDiagnostics});
+  klkAiHistory.push({role:"user",content:question},{role:"assistant",content:result.answer});
+  klkAiHistory=klkAiHistory.slice(-8);
+  klkAssistantBubble("assistant",result.answer);
+  $("assistantStatus").textContent="Respuesta recibida.";
+ } catch(error) {
+  klkAssistantBubble("assistant",error.message);
+  $("assistantStatus").textContent=error.code==="AI_NOT_CONFIGURED"?"Falta configurar la clave segura de OpenAI en Supabase.":error.message;
+ } finally {button.disabled=false;$("assistantQuestion").disabled=false;$("assistantQuestion").focus();}
+});
+$("assistantQuestion").addEventListener("keydown",event=>{
+ if(event.key==="Enter"&&!event.shiftKey){event.preventDefault();$("assistantSend").click();}
+});
 
 </script></body></html>
