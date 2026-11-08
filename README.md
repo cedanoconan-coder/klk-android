@@ -1,34 +1,52 @@
-# klk — Chat familiar
+# klk — Chat privado
 
-Aplicación web instalable (PWA) para iniciar sesión y conversar en un chat familiar.
+klk es una aplicación web instalable (PWA) preparada para empaquetarse como APK Android. Su objetivo es permitir conversaciones privadas entre dos personas que se aceptan como contactos.
 
-## Tecnologías
-- HTML, CSS y JavaScript
-- Firebase Authentication (correo y contraseña)
-- Cloud Firestore
-- Service Worker y Web App Manifest
+## Funciones incluidas en esta rama
 
-## Archivos principales
-- `index.html`: interfaz, autenticación y chat.
-- `manifest.webmanifest`: configuración de instalación.
-- `icon.svg`: icono de la aplicación.
-- `sw.js`: caché básica de la aplicación.
-- `firestore.rules`: reglas de seguridad propuestas para Firestore.
-- `firebase.json`: configuración para Firebase CLI.
-- `.github/workflows/pages.yml`: publicación automática en GitHub Pages.
+- Registro, inicio de sesión y recuperación de contraseña con Firebase Authentication (correo y contraseña).
+- Perfil básico de usuario y búsqueda por correo de personas registradas.
+- Solicitudes de contacto con aceptar o rechazar.
+- Conversaciones privadas de dos miembros, creadas al aceptar una solicitud.
+- Mensajes de texto en tiempo real.
+- Envío de imágenes y archivos de audio por Firebase Storage.
+- Grabación y envío de notas de voz desde el navegador/dispositivo.
+- Señalización de llamadas de voz y videollamadas mediante WebRTC y Firestore.
+- Reglas de Firestore y Storage limitadas a los miembros de cada conversación.
+- PWA instalable y workflow de GitHub Actions para validar JavaScript y compilar un APK debug.
 
-## Pasos pendientes para activar el servicio
-1. En Firebase Console, abrir el proyecto `klk-familia`.
-2. Confirmar que Authentication tenga habilitado el proveedor **Correo electrónico/Contraseña**.
-3. Crear la base de datos de Cloud Firestore.
-4. Publicar las reglas de `firestore.rules` desde Firebase Console o con Firebase CLI.
-5. En GitHub, abrir **Settings → Pages** y seleccionar **GitHub Actions** como fuente de publicación.
-6. Esperar a que el flujo **Publicar klk en GitHub Pages** termine correctamente.
+## Servicios que debes habilitar en Firebase
 
-## Seguridad
-Las reglas incluidas requieren que el usuario haya iniciado sesión y validan que cada mensaje pertenezca al usuario autenticado. Esta primera versión permite que cualquier cuenta autenticada del proyecto lea el chat; para un chat estrictamente privado entre familiares se debe añadir una lista administrada de miembros autorizados antes de invitar a otras personas.
+1. Authentication → Sign-in method → **Correo electrónico/Contraseña**.
+2. Cloud Firestore → crear la base de datos.
+3. Firebase Storage → crear el bucket del proyecto.
+4. Publicar las reglas y los índices de este repositorio:
+   - `firestore.rules`
+   - `storage.rules`
+   - `firestore.indexes.json`
 
-## Instalar en Android
-Cuando GitHub Pages publique el sitio por HTTPS, abrir la dirección en Chrome para Android y usar el menú **⋮ → Instalar aplicación** o **Añadir a pantalla de inicio**, según la versión de Chrome.
+Desde Firebase Console, abre Firestore → Rules y copia el contenido de `firestore.rules`; abre Storage → Rules y copia `storage.rules`. Para índices, despliega `firestore.indexes.json` con Firebase CLI (`firebase deploy --only firestore:indexes`). Para desplegar reglas e índices juntos con Firebase CLI: `firebase deploy --only firestore:rules,firestore:indexes,storage`.
 
-Esta versión es una PWA. No es todavía un APK nativo.
+El proyecto Firebase configurado en la app es `klk-familia`. No publiques reglas hasta revisar que el proyecto seleccionado en Firebase Console sea ese.
+
+## Llamadas
+
+La rama incluye señalización WebRTC de voz y video usando Firestore y el servidor STUN público de Google. Esto permite iniciar pruebas, pero **no garantiza conexión en todas las redes**. Para llamadas confiables en redes móviles, NAT estrictos o firewalls, configura un servidor TURN (por ejemplo, coturn o un proveedor TURN) y agrega sus credenciales a la configuración ICE. Las llamadas todavía necesitan pruebas entre dos dispositivos reales. Las notificaciones push de llamadas no están implementadas; el usuario debe tener la app abierta para recibir la señalización en tiempo real.
+
+## Validación y APK
+
+El workflow `.github/workflows/android-apk.yml` se ejecuta en Pull Requests hacia `main`, en pushes a `main` y a la rama de trabajo, y manualmente desde Actions. Valida la sintaxis del JavaScript y construye un APK debug con Capacitor. El APK queda como artefacto descargable del workflow si la compilación termina correctamente.
+
+Para publicar la PWA en GitHub Pages, configura Settings → Pages → GitHub Actions. El workflow de Pages publica desde `main`.
+
+## Pruebas obligatorias antes de darla por terminada
+
+- Publicar reglas e índices en Firebase.
+- Crear dos cuentas distintas en dos dispositivos.
+- Verificar solicitud, aceptación y rechazo de contacto.
+- Comprobar que una cuenta ajena no puede leer contactos, conversaciones, mensajes ni archivos.
+- Probar texto, imagen, nota de voz, llamada de voz y videollamada.
+- Repetir las llamadas usando datos móviles y Wi-Fi; configurar TURN si no conectan.
+- Instalar el APK en Android y comprobar permisos de micrófono/cámara.
+
+Esta rama no debe considerarse lista para producción hasta completar esas pruebas.
