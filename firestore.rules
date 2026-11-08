@@ -93,7 +93,10 @@ service cloud.firestore {
       allow get: if signedIn()
         && (!exists(/databases/$(database)/documents/conversations/$(conversationId))
           || isConversationMember(conversationId));
-      allow list: if isConversationMember(conversationId);
+      // Las consultas de la bandeja filtran por members array-contains uid.
+      // La regla debe validar el documento consultado directamente para que Firestore
+      // pueda demostrar que cada resultado pertenece al usuario autenticado.
+      allow list: if signedIn() && request.auth.uid in resource.data.members;
 
       allow create: if signedIn()
         && request.resource.data.keys().hasOnly(['members', 'createdAt'])
