@@ -15,16 +15,36 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/conversations/$(conversationId)).data.members is list
         && request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.members;
     }
-    match /users/{userId} {
-      allow read: if signedIn();
-      allow create, update: if signedIn()
+    function validUserProfile(userId) {
+      return signedIn()
         && request.auth.uid == userId
-        && request.resource.data.keys().hasOnly(['uid','email','displayName','photoPath','updatedAt'])
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.email == request.auth.token.email
+        && request.resource.data.displayName is string
+        && request.resource.data.displayName.size() <= 100
         && (!request.resource.data.keys().hasAny(['photoPath'])
           || (request.resource.data.photoPath is string
             && request.resource.data.photoPath.matches('avatars/' + request.auth.uid + '/[^/]+')));
+    }
+
+    match /users/{userId} {
+      // The signed-in member directory is required by the Personas screen.
+      allow read: if signedIn();
+
+      // New profiles may contain only fields managed by klk.
+      allow create: if validUserProfile(userId)
+        && request.resource.data.keys().hasOnly(['uid','email','displayName','photoPath','updatedAt'])
+        && request.resource.data.keys().hasAll(['uid','email','displayName','updatedAt'])
+        && request.resource.data.updatedAt == request.time;
+
+      // On legacy profiles, validate only changed fields. This lets users add
+      // photoPath without failing because older documents contain old fields.
+      allow update: if validUserProfile(userId)
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['uid','email','displayName','photoPath','updatedAt'])
+        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['updatedAt'])
+          || request.resource.data.updatedAt == request.time);
+
       allow delete: if false;
     }
     match /contactRequests/{requestId} {
@@ -50,7 +70,7 @@ service cloud.firestore {
       // Permite comprobar si todavía no existe una conversación, sin revelar documentos existentes.
       allow get: if isConversationMember(conversationId)
         || (signedIn() && !exists(/databases/$(database)/documents/conversations/$(conversationId)));
-      allow list: if isConversationMember(conversationId);
+      allow list: if signedIn() && resource.data.members is list && request.auth.uid in resource.data.members;
       allow create: if signedIn()
         && request.resource.data.keys().hasOnly(['members','createdAt'])
         && request.resource.data.keys().hasAll(['members','createdAt'])
