@@ -29,6 +29,9 @@ jobs:
       - name: Instalar dependencias
         run: npm install --no-audit --no-fund
 
+      - name: Probar reglas de seguridad de Firestore
+        run: npm run test:rules
+
       - name: Preparar archivos web
         run: mkdir -p www && cp index.html calls.js icon.svg manifest.webmanifest sw.js www/
 
