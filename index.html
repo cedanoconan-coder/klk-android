@@ -85,7 +85,7 @@ main{scrollbar-gutter:stable}
 <div class="chatTop"><div style="display:flex;align-items:center;gap:8px"><h2 id="chatTitle" style="flex:1">💬 Mensajes privados</h2><button id="backToContacts" class="callBtn" type="button" hidden aria-label="Volver a contactos">←</button><button id="audioCallBtn" class="callBtn" type="button" title="Llamada de voz" aria-label="Llamada de voz">📞</button><button id="videoCallBtn" class="callBtn" type="button" title="Videollamada" aria-label="Videollamada">📹</button><button id="settingsToggle" class="settingsToggle" type="button">⚙️ Ajustes</button></div><p id="who" class="muted"></p></div>
 <div id="dmPanel">
 
-<h3>💬 Mensajes individuales</h3><p class="hint">Selecciona una persona para iniciar una conversación privada.</p><div id="peopleList">Cargando contactos...</div></div>
+<h3>👥 Solicitudes recibidas</h3><div id="incomingRequests">Cargando solicitudes...</div><h3>💬 Personas</h3><p class="hint">Envía una solicitud. Solo podrán hablar cuando la otra persona la acepte.</p><div id="peopleList">Cargando miembros...</div></div>
 <div id="messages" aria-live="polite"><p class="muted">Cargando mensajes...</p></div>
 <div class="composer">
  <button id="pickPhoto" class="iconBtn" type="button" aria-label="Elegir foto" title="Elegir foto">＋</button>
@@ -256,45 +256,30 @@ function messagesCollection() {
  return activeConversationId ? db.collection("conversations").doc(activeConversationId).collection("messages") : null;
 }
 function loadPeople() {
- if (peopleUnsubscribe) peopleUnsubscribe();
- $("peopleList").textContent = "Cargando miembros...";
- peopleUnsubscribe = db.collection("users").orderBy("displayName").onSnapshot(snapshot => {
-  const list = $("peopleList"); list.innerHTML = "";
-  const others = snapshot.docs.filter(doc => doc.id !== auth.currentUser.uid);
-  if (!others.length) { list.textContent = "Todavía no hay otros miembros registrados. Cuando alguien cree su cuenta aparecerá aquí."; return; }
-  for (const doc of others) {
-   const person = doc.data(), button = document.createElement("button");
-   button.type = "button"; button.className = "memberBtn";
-   const line = document.createElement("span"); line.className = "memberLine";
-   const avatar = document.createElement("img"); avatar.className = "avatar"; avatar.alt = "Foto de perfil";
-   avatar.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'%3E%3Ccircle cx='40' cy='40' r='40' fill='%23dce8e4'/%3E%3Ccircle cx='40' cy='29' r='14' fill='%2389a99e'/%3E%3Cpath d='M13 75c2-17 13-25 27-25s25 8 27 25' fill='%2389a99e'/%3E%3C/svg%3E";
-   if (person.photoPath) getMediaUrl(person.photoPath).then(url => { if (url) avatar.src = url; }).catch(error => console.warn("Foto de perfil:", error));
-   const info = document.createElement("span"); info.className = "memberInfo";
-   const name = document.createElement("strong"); name.textContent = person.displayName || person.phoneNumber || person.email || "Miembro";
-   const phone = document.createElement("small"); phone.textContent = person.phoneNumber || person.email || "";
-   info.append(name,phone); line.append(avatar,info); button.append(line);
-   button.onclick = () => openPrivateConversation(doc.id, person.displayName || person.phoneNumber || person.email || "Conversación");
-   list.appendChild(button);
+ if(peopleUnsubscribe)peopleUnsubscribe();
+ const uid=auth.currentUser.uid,unsubs=[],state={users:[],accepted:new Set(),incoming:[],outgoing:new Set()};
+ const render=()=>{
+  const incoming=$("incomingRequests");incoming.innerHTML="";
+  if(!state.incoming.length)incoming.textContent="No tienes solicitudes pendientes.";
+  for(const requestDoc of state.incoming){const req=requestDoc.data(),row=document.createElement("div");row.className="memberBtn";const label=document.createElement("strong");label.textContent=req.senderName||"Usuario";const accept=document.createElement("button");accept.textContent="Aceptar";accept.style.width="48%";const reject=document.createElement("button");reject.textContent="Rechazar";reject.className="secondary";reject.style.width="48%";accept.onclick=()=>requestDoc.ref.update({status:"accepted",respondedAt:firebase.firestore.FieldValue.serverTimestamp()}).catch(e=>showError("chatStatus",e));reject.onclick=()=>requestDoc.ref.update({status:"rejected",respondedAt:firebase.firestore.FieldValue.serverTimestamp()}).catch(e=>showError("chatStatus",e));row.append(label,accept,reject);incoming.append(row);}
+  const list=$("peopleList");list.innerHTML="";const others=state.users.filter(d=>d.id!==uid);
+  if(!others.length){list.textContent="Todavía no hay otros miembros registrados.";return;}
+  for(const doc of others){const person=doc.data(),name=person.displayName||person.email||"Miembro",button=document.createElement("button");button.type="button";button.className="memberBtn";const line=document.createElement("span");line.className="memberLine";const avatar=document.createElement("img");avatar.className="avatar";avatar.alt="Foto de perfil";avatar.src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'%3E%3Ccircle cx='40' cy='40' r='40' fill='%23dce8e4'/%3E%3Ccircle cx='40' cy='29' r='14' fill='%2389a99e'/%3E%3Cpath d='M13 75c2-17 13-25 27-25s25 8 27 25' fill='%2389a99e'/%3E%3C/svg%3E";if(person.photoPath)getMediaUrl(person.photoPath).then(url=>{if(url)avatar.src=url;}).catch(e=>console.warn(e));const info=document.createElement("span");info.className="memberInfo";const title=document.createElement("strong");title.textContent=name;const detail=document.createElement("small");detail.textContent=state.accepted.has(doc.id)?"Contacto aceptado":state.outgoing.has(doc.id)?"Solicitud enviada":"";info.append(title,detail);line.append(avatar,info);button.append(line);
+   if(state.accepted.has(doc.id))button.onclick=()=>openPrivateConversation(doc.id,name);
+   else if(state.outgoing.has(doc.id)){button.disabled=true;button.textContent=name+" · Solicitud pendiente";}
+   else button.onclick=async()=>{button.disabled=true;try{await db.collection("connectionRequests").doc(uid+"__"+doc.id).set({senderId:uid,recipientId:doc.id,participants:[uid,doc.id],senderName:auth.currentUser.email||"Usuario",status:"pending",createdAt:firebase.firestore.FieldValue.serverTimestamp()});button.textContent="Solicitud enviada";}catch(e){button.disabled=false;showError("chatStatus",e);}};
+   if(!state.accepted.has(doc.id)&&!state.outgoing.has(doc.id))button.append("Enviar solicitud");list.append(button);
   }
- }, error => showError("chatStatus",error));
+ };
+ unsubs.push(db.collection("users").orderBy("displayName").onSnapshot(s=>{state.users=s.docs;render();},e=>showError("chatStatus",e)));
+ unsubs.push(db.collection("connectionRequests").where("recipientId","==",uid).where("status","==","pending").onSnapshot(s=>{state.incoming=s.docs;render();},e=>showError("chatStatus",e)));
+ unsubs.push(db.collection("connectionRequests").where("participants","array-contains",uid).where("status","==","accepted").onSnapshot(s=>{state.accepted=new Set();s.docs.forEach(d=>{const x=d.data();state.accepted.add(x.senderId===uid?x.recipientId:x.senderId);});render();},e=>showError("chatStatus",e)));
+ unsubs.push(db.collection("connectionRequests").where("senderId","==",uid).where("status","==","pending").onSnapshot(s=>{state.outgoing=new Set(s.docs.map(d=>d.data().recipientId));render();},e=>showError("chatStatus",e)));
+ peopleUnsubscribe=()=>unsubs.forEach(fn=>fn());
 }
-async function openPrivateConversation(otherUid, otherName) {
- const user = auth.currentUser;
- if (!user || !otherUid || otherUid === user.uid) return;
- const members = [user.uid,otherUid].sort();
- const conversationId = members.join("__");
- $("chatStatus").textContent = "Abriendo conversación privada...";
- try {
-  const ref = db.collection("conversations").doc(conversationId);
-  const existing = await ref.get();
-  if (!existing.exists) await ref.set({members,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
-  activeConversationId = conversationId; activeConversationName = otherName;
-  $("chatTitle").textContent = "💬 " + otherName; $("backToContacts").hidden = false; $("audioCallBtn").disabled = false; $("videoCallBtn").disabled = false;
-  $("dmPanel").style.display = "none"; $("messages").style.display = "block";
-  document.querySelector(".composer").style.display = "flex"; $("mediaActions").style.display = "flex"; $("recordStatus").style.display = "block";
-  $("chatStatus").textContent = "Conversación privada con " + otherName;
-  loadMessages();
- } catch(error) { showError("chatStatus",error); }
+async function openPrivateConversation(otherUid,otherName){
+ const user=auth.currentUser;if(!user||!otherUid||otherUid===user.uid)return;const members=[user.uid,otherUid].sort(),conversationId=members.join("__");$("chatStatus").textContent="Abriendo conversación privada...";
+ try{const ids=[user.uid+"__"+otherUid,otherUid+"__"+user.uid],checks=await Promise.all(ids.map(id=>db.collection("connectionRequests").doc(id).get()));if(!checks.some(s=>s.exists&&s.data().status==="accepted"))throw new Error("Primero deben aceptar la solicitud de contacto.");const ref=db.collection("conversations").doc(conversationId),existing=await ref.get();if(!existing.exists)await ref.set({members,createdAt:firebase.firestore.FieldValue.serverTimestamp()});activeConversationId=conversationId;activeConversationName=otherName;$("chatTitle").textContent="💬 "+otherName;$("backToContacts").hidden=false;$("audioCallBtn").disabled=false;$("videoCallBtn").disabled=false;$("dmPanel").style.display="none";$("messages").style.display="block";document.querySelector(".composer").style.display="flex";$("mediaActions").style.display="flex";$("recordStatus").style.display="block";$("chatStatus").textContent="Contacto aceptado. Conversación privada con "+otherName;loadMessages();}catch(error){showError("chatStatus",error);}
 }
 
 
