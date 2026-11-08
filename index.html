@@ -74,6 +74,11 @@ header small{display:none}
 #peopleList{padding:0 0 10px}
 #peopleList .memberBtn{display:flex;align-items:center;gap:14px;width:100%;padding:12px 20px;margin:0;border:0;border-radius:0;background:#fff;color:#111b21;font-size:16px}
 #peopleList .memberBtn:before{content:"👤";width:56px;height:56px;flex:0 0 56px;border-radius:50%;display:grid;place-items:center;background:#edf2ef;font-size:24px}
+#peopleList .memberBtn:before{content:none}
+.personAvatar{width:56px;height:56px;flex:0 0 56px;border-radius:50%;display:grid;place-items:center;object-fit:cover;background:#edf2ef;font-size:24px}
+.profileButton{display:flex!important;align-items:center;gap:6px;width:auto!important;height:42px!important;padding:0 4px!important;font-size:12px!important}
+.profileButton img{width:36px;height:36px;border-radius:50%;object-fit:cover;background:#edf2ef}
+.profileButton span{font-size:12px;color:#59636a}
 #peopleList .memberBtn strong{font-size:17px;font-weight:650}
 #peopleList .memberBtn small{font-size:13px;color:#68736f}
 #peopleList .memberBtn:active,.homeGroup:active{background:#f4f6f6}
@@ -114,7 +119,7 @@ header small{display:none}
 <section id="chat" class="card">
 
 <div id="homeView" class="homeView">
- <div class="homeTitle"><h1>klk</h1><div class="homeActions"><button type="button" id="homeCamera" aria-label="Cámara">▣</button><button type="button" id="homeMenu" aria-label="Ajustes">⋮</button></div></div>
+ <div class="homeTitle"><h1>klk</h1><div class="homeActions"><button type="button" id="profileButton" class="profileButton" aria-label="Cambiar foto de perfil"><img id="myProfilePhoto" alt="Foto de perfil"><span>Mi perfil</span></button><input id="profilePhotoInput" type="file" accept="image/*" hidden><button type="button" id="homeCamera" aria-label="Cámara">▣</button><button type="button" id="homeMenu" aria-label="Ajustes">⋮</button></div></div>
  <div class="homeSearch"><input id="chatSearch" type="search" placeholder="Buscar..." aria-label="Buscar conversaciones"></div>
  <div class="homeFilters" role="group" aria-label="Filtros de conversaciones">
   <button type="button" class="active" data-filter="all">Todos</button><button type="button" data-filter="requests">Solicitudes</button><button type="button" data-filter="people">Personas</button>
@@ -269,6 +274,7 @@ auth && auth.onAuthStateChanged(async user => {
   loadContactRequests();
   try {
    await db.collection("users").doc(user.uid).set({uid:user.uid,email:user.email || "",displayName:user.displayName || (user.email || "Miembro").split("@")[0],updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
+   loadMyProfile();
   } catch(error) {
    showError("chatStatus",error);
   }
@@ -276,6 +282,7 @@ auth && auth.onAuthStateChanged(async user => {
   window.klkSetCurrentUid && window.klkSetCurrentUid(null);
   if (unsubscribe) unsubscribe(); unsubscribe = null;
   if (peopleUnsubscribe) peopleUnsubscribe(); peopleUnsubscribe = null;
+  if (myProfileUnsubscribe) myProfileUnsubscribe(); myProfileUnsubscribe = null;
   if (incomingRequestsUnsubscribe) incomingRequestsUnsubscribe(); incomingRequestsUnsubscribe = null;
   if (outgoingRequestsUnsubscribe) outgoingRequestsUnsubscribe(); outgoingRequestsUnsubscribe = null;
   incomingRequests.clear(); outgoingRequests.clear(); peopleCache.clear();
@@ -289,6 +296,57 @@ function messagesCollection() {
 function isAcceptedContact(uid) {
  return (incomingRequests.get(uid) || {}).status === "accepted" || (outgoingRequests.get(uid) || {}).status === "accepted";
 }
+let myProfileUnsubscribe = null;
+function loadMyProfile() {
+ if (myProfileUnsubscribe) myProfileUnsubscribe();
+ const user = auth && auth.currentUser;
+ if (!user) return;
+ myProfileUnsubscribe = db.collection("users").doc(user.uid).onSnapshot(async snapshot => {
+  const path = snapshot.exists ? snapshot.data().photoPath : "";
+  const image = $("myProfilePhoto");
+  if (!image) return;
+  if (!path) { image.removeAttribute("src"); image.alt = "Sin foto de perfil"; return; }
+  try { image.src = await getMediaUrl(path); image.alt = "Mi foto de perfil"; }
+  catch(error) { console.warn("No se pudo cargar la foto de perfil:", error); }
+ }, error => showError("chatStatus", error));
+}
+async function uploadProfilePhoto(file) {
+ const user = auth && auth.currentUser;
+ if (!user || !file) return;
+ if (!file.type || !file.type.startsWith("image/")) { $("chatStatus").textContent = "Selecciona una imagen válida."; return; }
+ if (file.size > 10 * 1024 * 1024) { $("chatStatus").textContent = "La foto debe pesar menos de 10 MB."; return; }
+ const button = $("profileButton");
+ button.disabled = true;
+ $("chatStatus").textContent = "Preparando tu foto de perfil...";
+ try {
+  const uploadFile = await compressImage(file);
+  const mimeType = uploadFile.type || file.type || "image/jpeg";
+  const idToken = await user.getIdToken();
+  const response = await fetch(SUPABASE_URL + "/functions/v1/media", {
+   method: "POST",
+   headers: { "Content-Type": "application/json", "apikey": SUPABASE_PUBLISHABLE_KEY, "Authorization": "Bearer " + idToken },
+   body: JSON.stringify({ action: "create-upload", type: "image", size: uploadFile.size, mimeType })
+  });
+  const signed = await response.json().catch(() => ({}));
+  if (!response.ok || !signed.path || !signed.token) throw new Error(signed.error || "No se pudo preparar la foto.");
+  const { error } = await getSupabaseClient().storage.from("Chat-media").uploadToSignedUrl(signed.path, signed.token, uploadFile, { contentType: mimeType });
+  if (error) throw error;
+  await db.collection("users").doc(user.uid).set({
+   uid: user.uid, email: user.email || "", displayName: user.displayName || (user.email || "Miembro").split("@")[0],
+   photoPath: signed.path, updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+  }, { merge: true });
+  $("chatStatus").textContent = "Foto de perfil actualizada.";
+ } catch(error) {
+  console.error("Error al actualizar foto de perfil:", error);
+  $("chatStatus").textContent = "No se pudo guardar la foto: " + (error.message || "Error desconocido");
+ } finally { button.disabled = false; }
+}
+$("profileButton").addEventListener("click", () => $("profilePhotoInput").click());
+$("profilePhotoInput").addEventListener("change", async event => {
+ const file = event.target.files && event.target.files[0];
+ if (file) await uploadProfilePhoto(file);
+ event.target.value = "";
+});
 function renderPeople() {
  const list = $("peopleList"); if (!list) return;
  list.innerHTML = "";
@@ -296,6 +354,9 @@ function renderPeople() {
  if (!people.length) { list.textContent = "Todavía no hay otras personas registradas. Cuando alguien cree su cuenta aparecerá aquí."; return; }
  for (const [uid, person] of people) {
   const row = document.createElement("div"); row.className = "memberBtn";
+  const avatar = document.createElement("img"); avatar.className = "personAvatar"; avatar.alt = "Foto de " + (person.displayName || "miembro"); avatar.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='32' fill='%23edf2ef'/%3E%3Ctext x='32' y='43' text-anchor='middle' font-size='32'%3E%F0%9F%91%A4%3C/text%3E%3C/svg%3E";
+  row.append(avatar);
+  if (person.photoPath) getMediaUrl(person.photoPath).then(url => { if (url && avatar.isConnected) avatar.src = url; }).catch(error => console.warn("Foto de contacto no disponible:", error));
   const info = document.createElement("span"); info.style.flex = "1";
   const name = document.createElement("strong"); name.textContent = person.displayName || person.email || "Miembro";
   const email = document.createElement("small"); email.textContent = person.email || "";
@@ -343,7 +404,7 @@ function loadPeople() {
   renderPeople();
  },error => { showError("peopleList",error); showError("chatStatus",error); });
 }
-async async function sendContactRequest(otherUid, person) {
+async function sendContactRequest(otherUid, person) {
  const user = auth.currentUser; if (!user || !otherUid || otherUid === user.uid) return;
  const id = user.uid + "__" + otherUid;
  try {
@@ -351,7 +412,7 @@ async async function sendContactRequest(otherUid, person) {
   $("chatStatus").textContent = "Solicitud enviada.";
  } catch(error) { showError("chatStatus",error); }
 }
-async async function respondToContactRequest(senderUid,status) {
+async function respondToContactRequest(senderUid,status) {
  const id = senderUid + "__" + auth.currentUser.uid;
  try { await db.collection("contactRequests").doc(id).update({status}); $("chatStatus").textContent = status === "accepted" ? "Contacto aceptado. Ya pueden enviarse mensajes." : "Solicitud rechazada."; }
  catch(error) { showError("chatStatus",error); }
