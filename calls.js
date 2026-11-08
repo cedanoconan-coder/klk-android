@@ -1,10 +1,11 @@
 /* klk: llamadas privadas WebRTC con señalización Firestore */
 (function(){
  const $=id=>document.getElementById(id);
- const ICE_CONFIG={iceServers:[{urls:["stun:stun.l.google.com:19302","stun:stun1.l.google.com:19302"]}]};
+ const configuredTurn=Array.isArray(window.KLK_TURN_SERVERS)?window.KLK_TURN_SERVERS:[];
+ const ICE_CONFIG={iceServers:[{urls:["stun:stun.l.google.com:19302","stun:stun1.l.google.com:19302"]},...configuredTurn]};
  let currentUid=null, incomingUnsub=null, activeCallUnsub=null, localStream=null, peer=null, callRef=null;
  let callRole=null, callMode="audio", callState=null, remoteCandidatesUnsub=null, localCandidatesUnsub=null, queuedCandidates=[];
- let incomingCall=null, muted=false, cameraOff=false, ending=false;
+ let incomingCall=null, muted=false, cameraOff=false, ending=false, pendingLocalCandidates=[];
  const overlay=$("callOverlay");
  const setStatus=(message)=>{if($("callsStatus"))$("callsStatus").textContent=message||"";};
  function acceptedPeople(){return [...peopleCache.entries()].filter(([uid])=>uid!==currentUid&&isAcceptedContact(uid));}
@@ -49,7 +50,7 @@
   if(peer){try{peer.ontrack=null;peer.onicecandidate=null;peer.close();}catch(e){}peer=null;}
   if(localStream){localStream.getTracks().forEach(t=>t.stop());localStream=null;}
   $("remoteVideo").srcObject=null;$("localVideo").srcObject=null;$("remoteAudio").srcObject=null;
-  callRef=null;callRole=null;callState=null;incomingCall=null;queuedCandidates=[];muted=false;cameraOff=false;ending=false;
+  callRef=null;callRole=null;callState=null;incomingCall=null;queuedCandidates=[];pendingLocalCandidates=[];muted=false;cameraOff=false;ending=false;
   overlay.classList.remove("visible");
  }
  async function getLocalMedia(mode){
@@ -72,7 +73,8 @@
    if(peer.connectionState==="disconnected")$("callStatus").textContent="Conexión interrumpida. Intentando recuperar...";
   };
   peer.onicecandidate=async event=>{
-   if(!event.candidate||!callRef||!callRole)return;
+   if(!event.candidate||!callRole)return;
+   if(!callRef){pendingLocalCandidates.push(event.candidate.toJSON());return;}
    try{await callRef.collection(callRole==="caller"?"callerCandidates":"calleeCandidates").add(event.candidate.toJSON());}
    catch(error){console.error("No se pudo enviar candidato ICE:",error);$("callStatus").textContent="Error de conexión. No se pudo intercambiar la señal de red.";}
   };
@@ -88,6 +90,11 @@
   if(!peer||!peer.remoteDescription)return;
   const pending=queuedCandidates.splice(0);
   for(const c of pending)try{await peer.addIceCandidate(c);}catch(error){console.warn(error);}
+ }
+ async function flushLocalCandidates(){
+  if(!callRef||!callRole)return;
+  const pending=pendingLocalCandidates.splice(0);
+  for(const candidate of pending)try{await callRef.collection(callRole==="caller"?"callerCandidates":"calleeCandidates").add(candidate);}catch(error){console.warn("No se pudo enviar candidato ICE pendiente:",error);}
  }
  function watchRemoteCandidates(){
   const collection=callRef.collection(callRole==="caller"?"calleeCandidates":"callerCandidates");
@@ -117,6 +124,7 @@
    const conversationId=[currentUid,uid].sort().join("__");
    callRef=db.collection("calls").doc();
    await callRef.set({callerUid:currentUid,calleeUid:uid,conversationId,mode,status:"ringing",offer:{type:offer.type,sdp:offer.sdp},createdAt:firebase.firestore.FieldValue.serverTimestamp(),updatedAt:firebase.firestore.FieldValue.serverTimestamp()});
+   await flushLocalCandidates();
    $("callStatus").textContent="Llamando a "+name+"...";
    $("endCall").hidden=false;watchCallDocument();watchRemoteCandidates();
   }catch(error){console.error("No se pudo iniciar la llamada:",error);$("callStatus").textContent=permissionMessage(error);setTimeoutSafeCleanup();}
@@ -179,7 +187,7 @@
   $("cameraCall").textContent=cameraOff?"Activar cámara":"Apagar cámara";
  });
  document.querySelectorAll('.homeBottom button').forEach(button=>{
-  if(button.dataset.tab!=="calls")return;
+  if(button.dataset.tab!=="calls"){button.addEventListener("click",()=>{if($("callsPanel"))$("callsPanel").style.display="none";});return;}
   button.addEventListener("click",()=>{
    $("chatsPanel").style.display="none";$("requestsPanel").style.display="none";$("peopleList").style.display="none";
    $("callsPanel").style.display="block";$("homeGroup").style.display="none";renderCallContacts();setStatus("");
