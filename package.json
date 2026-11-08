@@ -4,13 +4,17 @@
   "private": true,
   "description": "Aplicación familiar klk para Android",
   "scripts": {
-    "android:sync": "cap sync android"
+    "android:sync": "cap sync android",
+    "test:rules": "firebase emulators:exec --only firestore --project demo-klk \"node --test tests/firestore.rules.test.mjs\""
   },
   "dependencies": {
     "@capacitor/android": "^7.4.3",
     "@capacitor/core": "^7.4.3"
   },
   "devDependencies": {
-    "@capacitor/cli": "^7.4.3"
+    "@capacitor/cli": "^7.4.3",
+    "@firebase/rules-unit-testing": "^4.0.1",
+    "firebase": "^11.10.0",
+    "firebase-tools": "^14.10.1"
   }
 }
