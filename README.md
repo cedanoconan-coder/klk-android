@@ -32,7 +32,7 @@ Aplicación web instalable (PWA) para iniciar sesión y mantener conversaciones 
 ## Acceso por teléfono
 Los usuarios escriben su número en formato internacional E.164 (por ejemplo, `+1809...`) y verifican el acceso con un código SMS. Firebase Authentication crea la cuenta si el número todavía no existe o inicia sesión si ya está registrado. La verificación web utiliza reCAPTCHA.
 
-Las cuentas antiguas creadas con correo no se convierten automáticamente en cuentas telefónicas. Si se registra de nuevo con su número, Firebase creará otra cuenta y no trasladará automáticamente el historial anterior. No cierres la sesión antigua hasta decidir cómo migrarla.
+Las cuentas antiguas creadas con correo no se convierten automáticamente en cuentas telefónicas. La aplicación muestra un panel para vincular el número a la cuenta antigua mientras la sesión siga abierta. Hazlo antes de cerrar sesión para conservar el mismo UID y el historial de conversaciones.
 
 ## Seguridad
 Las reglas incluidas requieren autenticación y limitan la lectura y escritura de cada conversación a sus dos miembros. Los perfiles son visibles para usuarios autenticados para poder descubrir contactos. Las consultas de llamadas entrantes se limitan al destinatario; el emisor accede a su llamada mediante el documento individual.
