@@ -452,8 +452,28 @@ $("profilePhotoInput").addEventListener("change", async event => {
 function renderPeople() {
  const list = $("peopleList"); if (!list) return;
  list.innerHTML = "";
- const people = [...peopleCache.entries()].filter(([uid]) => uid !== auth.currentUser.uid);
- if (!people.length) { list.textContent = "Todavía no hay otras personas registradas. Cuando alguien cree su cuenta aparecerá aquí."; syncConversationListeners(); return; }
+ const currentUser = auth && auth.currentUser;
+ if (!currentUser) { list.textContent = "Inicia sesión para ver a los miembros de klk."; return; }
+ const people = [...peopleCache.entries()].filter(([uid]) => uid !== currentUser.uid);
+ if (!people.length) {
+  const empty = document.createElement("div"); empty.className = "hint";
+  empty.style.cssText = "padding:14px 20px;line-height:1.5";
+  empty.textContent = "No encontramos otros perfiles en la colección users de klk-familia. Las cuentas creadas solo en Authentication no aparecen: cada invitación debe haberse activado y tener su perfil guardado en Firestore. Comprueba que el otro teléfono use esta misma aplicación y proyecto.";
+  const refresh = document.createElement("button"); refresh.type = "button"; refresh.className = "secondary";
+  refresh.style.cssText = "width:calc(100% - 40px);margin:0 20px 14px";
+  refresh.textContent = "Actualizar personas";
+  refresh.onclick = async () => {
+   refresh.disabled = true; refresh.textContent = "Actualizando...";
+   try {
+    const snapshot = await db.collection("users").get();
+    peopleCache.clear(); snapshot.docs.forEach(doc => peopleCache.set(doc.id, doc.data()));
+    $("homeStatus").textContent = "Directorio actualizado desde Firestore: " + snapshot.size + " perfil(es).";
+    renderPeople();
+   } catch(error) { showError("homeStatus", error); }
+   finally { refresh.disabled = false; refresh.textContent = "Actualizar personas"; }
+  };
+  list.append(empty,refresh); syncConversationListeners(); return;
+ }
  for (const [uid, person] of people) {
   const row = document.createElement("div"); row.className = "memberBtn";
   const avatar = document.createElement("img"); avatar.className = "personAvatar"; avatar.alt = "Foto de " + (person.displayName || "miembro"); avatar.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='32' fill='%23edf2ef'/%3E%3Ctext x='32' y='43' text-anchor='middle' font-size='32'%3E%F0%9F%91%A4%3C/text%3E%3C/svg%3E";
@@ -543,12 +563,20 @@ function loadContactRequests() {
 }
 function loadPeople() {
  if (peopleUnsubscribe) peopleUnsubscribe();
- $("peopleList").textContent = "Cargando personas registradas...";
+ const user = auth && auth.currentUser;
+ if (!user || !db) { $("peopleList").textContent = "Inicia sesión para cargar las personas."; return; }
+ $("peopleList").textContent = "Conectando con el directorio de klk...";
  $("chatsList").textContent = "Cargando conversaciones...";
- peopleUnsubscribe = db.collection("users").onSnapshot(snapshot => {
+ peopleUnsubscribe = db.collection("users").onSnapshot({includeMetadataChanges:true}, snapshot => {
   peopleCache.clear(); snapshot.docs.forEach(d => peopleCache.set(d.id,d.data()));
+  const source = snapshot.metadata && snapshot.metadata.fromCache ? " (datos guardados en este teléfono)" : " (sincronizado con Firebase)";
+  $("homeStatus").textContent = "Directorio klk: " + snapshot.size + " perfil(es)" + source + ".";
   renderPeople();
- },error => { showError("peopleList",error); showError("chatStatus",error); });
+ },error => {
+  showError("peopleList",error);
+  showError("chatStatus",error);
+  $("homeStatus").textContent = "No se pudo leer el directorio de Firestore. Revisa el permiso de lectura de users y la conexión.";
+ });
 }
 async function sendContactRequest(otherUid, person) {
  const user = auth.currentUser; if (!user || !otherUid || otherUid === user.uid) return;
