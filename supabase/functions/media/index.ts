@@ -133,10 +133,10 @@ Deno.serve(async (request) => {
         return reply(403, { error: "No tienes permiso para acceder a este archivo privado." });
       }
     } else if (path.startsWith("avatars/")) {
-      const avatarPrefix = `avatars/${uid}/`;
-      const avatarName = path.slice(avatarPrefix.length);
-      if (!path.startsWith(avatarPrefix) || !/^[A-Za-z0-9-]{16,64}\.[a-z0-9]{1,8}$/i.test(avatarName)) {
-        return reply(403, { error: "No tienes permiso para acceder a esta foto de perfil." });
+      const avatarParts = path.split("/");
+      if (avatarParts.length !== 3 || !/^[A-Za-z0-9_-]{1,128}$/.test(avatarParts[1]) ||
+          !/^[A-Za-z0-9-]{16,64}\.[a-z0-9]{1,8}$/i.test(avatarParts[2])) {
+        return reply(403, { error: "Ruta de foto de perfil no válida." });
       }
     } else if (!/^[^/]{1,128}\/[A-Za-z0-9-]{16,64}\.[a-z0-9]{1,8}$/i.test(path)) {
       return reply(403, { error: "Ruta de archivo no válida o sin permiso." });
