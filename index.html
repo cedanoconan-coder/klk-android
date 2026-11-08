@@ -337,7 +337,7 @@ async function uploadProfilePhoto(file) {
    uid: user.uid, email: user.email || "", displayName: user.displayName || (user.email || "Miembro").split("@")[0],
    photoPath: signed.path, updatedAt: firebase.firestore.FieldValue.serverTimestamp()
   }, { merge: true });
-  $("chatStatus").textContent = "Foto de perfil actualizada.";
+  $("homeStatus").textContent = "Foto de perfil actualizada.";
  } catch(error) {
   console.error("Error al actualizar foto de perfil:", error);
   $("homeStatus").textContent = "No se pudo guardar la foto: " + (error.message || "Error desconocido");
