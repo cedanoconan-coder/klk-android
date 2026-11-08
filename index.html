@@ -263,10 +263,15 @@ auth && auth.onAuthStateChanged(async user => {
   activeConversationId = null; activeConversationName = null;
   $("chat").classList.remove("room-open");
   $("chatTitle").textContent = "👨‍👩‍👧‍👦 Familia klk"; $("dmPanel").style.display = "none"; $("messages").style.display = "block";
+  // Iniciar las lecturas independientemente de la sincronización del perfil.
+  // Así un error al guardar el perfil no deja las listas eternamente cargando.
+  loadPeople();
+  loadContactRequests();
   try {
    await db.collection("users").doc(user.uid).set({uid:user.uid,email:user.email || "",displayName:user.displayName || (user.email || "Miembro").split("@")[0],updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
-   loadPeople(); loadContactRequests();
-  } catch(error) { showError("chatStatus",error); }
+  } catch(error) {
+   showError("chatStatus",error);
+  }
  } else {
   window.klkSetCurrentUid && window.klkSetCurrentUid(null);
   if (unsubscribe) unsubscribe(); unsubscribe = null;
@@ -322,9 +327,10 @@ function loadContactRequests() {
  const uid = auth.currentUser.uid;
  if (incomingRequestsUnsubscribe) incomingRequestsUnsubscribe();
  if (outgoingRequestsUnsubscribe) outgoingRequestsUnsubscribe();
+ $("requestsList").textContent = "Cargando solicitudes...";
  incomingRequestsUnsubscribe = db.collection("contactRequests").where("recipientUid","==",uid).onSnapshot(snapshot => {
   incomingRequests.clear(); snapshot.docs.forEach(d => incomingRequests.set(d.data().senderUid,d.data())); renderRequests();
- },error => showError("chatStatus",error));
+ },error => { showError("requestsList",error); showError("chatStatus",error); });
  outgoingRequestsUnsubscribe = db.collection("contactRequests").where("senderUid","==",uid).onSnapshot(snapshot => {
   outgoingRequests.clear(); snapshot.docs.forEach(d => outgoingRequests.set(d.data().recipientUid,d.data())); renderRequests();
  },error => showError("chatStatus",error));
@@ -335,7 +341,7 @@ function loadPeople() {
  peopleUnsubscribe = db.collection("users").onSnapshot(snapshot => {
   peopleCache.clear(); snapshot.docs.forEach(d => peopleCache.set(d.id,d.data()));
   renderPeople();
- },error => showError("chatStatus",error));
+ },error => { showError("peopleList",error); showError("chatStatus",error); });
 }
 async function sendContactRequest(otherUid, person) {
  const user = auth.currentUser; if (!user || !otherUid || otherUid === user.uid) return;
