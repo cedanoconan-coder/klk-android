@@ -296,9 +296,9 @@ html[data-density="comfortable"] .chatRow,html[data-density="comfortable"] #peop
  <div class="settingRow"><span>Fondo de conversaciones</span><select id="settingWallpaper"><option value="pattern">Patrón suave</option><option value="plain">Liso</option><option value="gradient">Degradado</option></select></div>
  <div class="settingRow"><span>Vista previa de mensajes</span><input id="settingPreview" type="checkbox" checked></div>
  <div class="settingRow"><span>Vibración</span><input id="settingVibration" type="checkbox" checked></div>
- <div class="settingRow"><span>Sonido de mensajes</span><input id="settingSound" type="checkbox" checked></div>
- <div class="settingRow"><span>Tono de mensajes</span><select id="settingMessageTone"><option value="classic">Clásico</option><option value="bell">Campanita</option><option value="digital">Digital</option><option value="soft">Suave</option><option value="urgent">Alerta</option></select></div>
- <div class="settingRow"><span>Sonido de llamadas</span><select id="settingCallTone"><option value="classic">Clásico</option><option value="bell">Campanita</option><option value="digital">Digital</option><option value="soft">Suave</option><option value="urgent">Alerta</option></select></div>
+ <div class="settingRow"><span>Sonidos de mensajes y llamadas</span><input id="settingSound" type="checkbox" checked></div>
+ <div class="settingRow"><span>Tono de mensajes</span><select id="settingMessageTone"><option value="classic">Clásico</option><option value="bell">Campanita</option><option value="digital">Digital</option><option value="soft">Suave</option><option value="urgent">Alerta</option><option value="chime">Campanas</option><option value="pop">Pop</option><option value="marimba">Marimba</option><option value="pulse">Pulso</option></select></div>
+ <div class="settingRow"><span>Sonido de llamadas</span><select id="settingCallTone"><option value="classic">Clásico</option><option value="bell">Campanita</option><option value="digital">Digital</option><option value="soft">Suave</option><option value="urgent">Alerta</option><option value="chime">Campanas</option><option value="pop">Pop</option><option value="marimba">Marimba</option><option value="pulse">Pulso</option></select></div>
  <div class="settingRow"><span>Probar sonido de mensaje</span><button id="testNotificationSound" type="button" style="width:auto;margin:0;padding:9px 12px">▶ Probar</button></div>
  <div class="settingRow"><span>Probar sonido de llamada</span><button id="testCallSound" type="button" style="width:auto;margin:0;padding:9px 12px">▶ Probar</button></div>
  <div class="settingRow"><span>Notificaciones del teléfono</span><button id="enableNotifications" type="button" style="width:auto;margin:0;padding:9px 12px">Activar</button></div>
@@ -949,7 +949,7 @@ if (window.matchMedia("(display-mode: standalone)").matches || window.navigator.
   document.body.style.fontSize=prefs.textSize+"px";
  }
  function save(){try{localStorage.setItem("klk-settings",JSON.stringify(prefs));}catch(e){$("settingsStatus").textContent="No se pudieron guardar los cambios en este teléfono.";}apply();$("settingsStatus").textContent="Ajustes guardados automáticamente en este teléfono.";}
- ["settingSound","settingVibration","settingPreview"].forEach(id=>$(id).addEventListener("change",()=>{prefs[id.slice(7).toLowerCase()]=$(id).checked;save();}));
+ [["settingSound","sound"],["settingVibration","vibration"],["settingPreview","preview"]].forEach(([id,key])=>$(id).addEventListener("change",()=>{prefs[key]=$(id).checked;save();}));
  [["settingTextSize","textSize"],["settingTheme","theme"],["settingAccent","accent"],["settingDensity","density"],["settingWallpaper","wallpaper"],["settingMessageTone","messageTone"],["settingCallTone","callTone"]].forEach(([id,key])=>$(id).addEventListener("change",e=>{prefs[key]=e.target.value;save();}));
  $("settingsToggle").addEventListener("click",()=>{const panel=$("settingsPanel");panel.style.display=panel.style.display==="block"?"none":"block";if(panel.style.display==="block")panel.scrollTop=0;});
  $("closeSettings").addEventListener("click",()=>{$("settingsPanel").style.display="none";});
@@ -973,7 +973,11 @@ if (window.matchMedia("(display-mode: standalone)").matches || window.navigator.
   bell:{wave:"sine",notes:[{f:1318,t:0,d:.34},{f:1760,t:.08,d:.42}]},
   digital:{wave:"square",notes:[{f:660,t:0,d:.11},{f:990,t:.13,d:.11},{f:1320,t:.26,d:.15}]},
   soft:{wave:"sine",notes:[{f:523,t:0,d:.24},{f:659,t:.2,d:.3}]},
-  urgent:{wave:"triangle",notes:[{f:1046,t:0,d:.12},{f:784,t:.15,d:.12},{f:1046,t:.3,d:.12},{f:784,t:.45,d:.16}]}
+  urgent:{wave:"triangle",notes:[{f:1046,t:0,d:.12},{f:784,t:.15,d:.12},{f:1046,t:.3,d:.12},{f:784,t:.45,d:.16}]},
+  chime:{wave:"sine",notes:[{f:1046,t:0,d:.32},{f:1318,t:.18,d:.36},{f:1568,t:.38,d:.48}]},
+  pop:{wave:"triangle",notes:[{f:740,t:0,d:.09},{f:988,t:.1,d:.13}]},
+  marimba:{wave:"sine",notes:[{f:523,t:0,d:.18},{f:659,t:.16,d:.18},{f:784,t:.32,d:.24},{f:1046,t:.52,d:.3}]},
+  pulse:{wave:"square",notes:[{f:880,t:0,d:.08},{f:880,t:.2,d:.08},{f:1174,t:.4,d:.08},{f:1174,t:.6,d:.12}]}
  };
  function playPattern(kind){
   const context=getNotificationAudioContext();if(!context)return;
