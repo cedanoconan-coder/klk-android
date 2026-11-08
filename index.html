@@ -850,11 +850,27 @@ $("shareInvite").addEventListener("click",async()=>{
  if(!latestInviteCode)return;
  const link=window.location.origin+window.location.pathname+"?invite="+encodeURIComponent(latestInviteCode);
  const message="Te invito a unirte a klk. Abre este enlace y crea tu cuenta: "+link+"\nCódigo: "+latestInviteCode;
+ $("shareInvite").disabled=true;
  try{
-  if(navigator.share)await navigator.share({title:"Invitación a klk",text:message,url:link});
-  else if(navigator.clipboard&&navigator.clipboard.writeText){await navigator.clipboard.writeText(message);$("inviteStatus").textContent="Invitación copiada. Envíala por WhatsApp.";}
-  else {$("inviteStatus").textContent="Comparte este enlace: "+link+" | Código: "+latestInviteCode;}
- }catch(error){if(error.name!=="AbortError")$("inviteStatus").textContent="Código: "+latestInviteCode+" · Enlace: "+link;}
+  if(typeof navigator.share==="function"){
+   await navigator.share({title:"Invitación a klk",text:message,url:link});
+   $("inviteStatus").textContent="Invitación compartida.";
+   return;
+  }
+  // En navegadores o instalaciones que no ofrecen el menú nativo, abrir WhatsApp.
+  window.location.href="https://wa.me/?text="+encodeURIComponent(message);
+  $("inviteStatus").textContent="Abriendo WhatsApp para compartir tu invitación.";
+ }catch(error){
+  if(error && error.name==="AbortError"){
+   $("inviteStatus").textContent="Compartir cancelado.";
+  }else{
+   // Fallback directo a WhatsApp cuando el menú nativo falla.
+   window.location.href="https://wa.me/?text="+encodeURIComponent(message);
+   $("inviteStatus").textContent="Abriendo WhatsApp. Si no se abre, copia el código y compártelo manualmente: "+latestInviteCode;
+  }
+ }finally{
+  $("shareInvite").disabled=false;
+ }
 });
 $("homeGroup").addEventListener("click",()=>{ $("chatStatus").textContent="klk funciona con conversaciones privadas entre contactos aceptados."; });
 function toggleKlkSettings(){const panel=$("settingsPanel");panel.style.display=panel.style.display==="block"?"none":"block";if(panel.style.display==="block")panel.scrollTop=0;}
