@@ -1200,8 +1200,8 @@ $("assistantCheck").addEventListener("click",async()=>{
  try {
   const result=await klkAssistantRequest({action:"health"});
   $("assistantStatus").textContent=result.aiConfigured
-   ?"La conexión con el servidor de IA está configurada. Modelo: "+result.model
-   :"El asistente está instalado, pero falta la clave OPENAI_API_KEY en los secretos de Supabase.";
+   ?"IA conectada mediante "+(result.provider||"el proveedor configurado")+". Modelo: "+result.model
+   :(result.message||"Falta configurar la clave del proveedor de IA en los secretos de Supabase.");
  } catch(error) {
   $("assistantStatus").textContent=error.message;
  } finally {$("assistantCheck").disabled=false;}
