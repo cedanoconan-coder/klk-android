@@ -24,24 +24,41 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if signedIn();
 
+      // Acepta cuentas nuevas verificadas por teléfono y conserva las cuentas antiguas por correo.
       allow create: if signedIn()
         && request.auth.uid == userId
         && request.resource.data.keys().hasOnly([
-          'uid', 'email', 'displayName', 'updatedAt', 'photoPath', 'photoUpdatedAt'
+          'uid', 'phoneNumber', 'email', 'displayName', 'updatedAt', 'photoPath', 'photoUpdatedAt'
         ])
-        && request.resource.data.keys().hasAll(['uid', 'email', 'displayName', 'updatedAt'])
+        && request.resource.data.keys().hasAll(['uid', 'displayName', 'updatedAt'])
         && request.resource.data.uid == request.auth.uid
-        && request.resource.data.email == request.auth.token.email
+        && (
+          (request.resource.data.keys().hasAny(['phoneNumber'])
+            && request.resource.data.phoneNumber is string
+            && request.resource.data.phoneNumber == request.auth.token.phone_number)
+          ||
+          (request.resource.data.keys().hasAny(['email'])
+            && request.resource.data.email is string
+            && request.resource.data.email == request.auth.token.email)
+        )
         && (!('photoPath' in request.resource.data) || request.resource.data.photoPath is string)
         && (!('photoUpdatedAt' in request.resource.data) || request.resource.data.photoUpdatedAt is timestamp);
 
       allow update: if signedIn()
         && request.auth.uid == userId
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-          'uid', 'email', 'displayName', 'updatedAt', 'photoPath', 'photoUpdatedAt'
+          'uid', 'phoneNumber', 'email', 'displayName', 'updatedAt', 'photoPath', 'photoUpdatedAt'
         ])
         && request.resource.data.uid == request.auth.uid
-        && request.resource.data.email == request.auth.token.email
+        && (
+          (request.resource.data.keys().hasAny(['phoneNumber'])
+            && request.resource.data.phoneNumber is string
+            && request.resource.data.phoneNumber == request.auth.token.phone_number)
+          ||
+          (request.resource.data.keys().hasAny(['email'])
+            && request.resource.data.email is string
+            && request.resource.data.email == request.auth.token.email)
+        )
         && (!('photoPath' in request.resource.data) || request.resource.data.photoPath is string)
         && (!('photoUpdatedAt' in request.resource.data) || request.resource.data.photoUpdatedAt is timestamp);
 
@@ -69,11 +86,19 @@ service cloud.firestore {
         allow create: if isConversationMember(conversationId)
           && request.resource.data.keys().hasOnly([
             'type', 'text', 'storagePath', 'conversationId', 'mimeType', 'fileName',
-            'size', 'duration', 'email', 'uid', 'createdAt'
+            'size', 'duration', 'email', 'phoneNumber', 'uid', 'createdAt'
           ])
-          && request.resource.data.keys().hasAll(['type', 'email', 'uid', 'createdAt'])
+          && request.resource.data.keys().hasAll(['type', 'uid', 'createdAt'])
           && request.resource.data.uid == request.auth.uid
-          && request.resource.data.email == request.auth.token.email
+          && (
+            (request.resource.data.keys().hasAny(['phoneNumber'])
+              && request.resource.data.phoneNumber is string
+              && request.resource.data.phoneNumber == request.auth.token.phone_number)
+            ||
+            (request.resource.data.keys().hasAny(['email'])
+              && request.resource.data.email is string
+              && request.resource.data.email == request.auth.token.email)
+          )
           && request.resource.data.createdAt == request.time
           && (
             (request.resource.data.type == 'text'
