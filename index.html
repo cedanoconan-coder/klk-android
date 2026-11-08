@@ -117,7 +117,7 @@ header small{display:none}
  <div class="homeTitle"><h1>klk</h1><div class="homeActions"><button type="button" id="homeCamera" aria-label="Cámara">▣</button><button type="button" id="homeMenu" aria-label="Ajustes">⋮</button></div></div>
  <div class="homeSearch"><input id="chatSearch" type="search" placeholder="Buscar..." aria-label="Buscar conversaciones"></div>
  <div class="homeFilters" role="group" aria-label="Filtros de conversaciones">
-  <button type="button" class="active" data-filter="all">Todos</button><button type="button" data-filter="unread">No leídos</button><button type="button" data-filter="favorites">Favoritos</button><button type="button" data-filter="groups">Grupos</button><button type="button" data-filter="people">＋</button>
+  <button type="button" class="active" data-filter="all">Todos</button><button type="button" data-filter="requests">Solicitudes</button><button type="button" data-filter="people">Personas</button>
  </div>
  <button id="homeGroup" class="homeGroup" type="button" hidden><span class="homeAvatar">👥</span><span class="homeGroupText"><strong>Chats privados</strong><small>klk permite conversaciones entre contactos aceptados</small></span></button>
  <section id="requestsPanel" style="padding:8px 20px"><h3 style="font-size:16px;margin:8px 0">Solicitudes recibidas</h3><div id="requestsList" class="hint">Cargando solicitudes...</div></section>
@@ -131,7 +131,7 @@ header small{display:none}
 </div>
 
 <div class="chatTop"><div style="display:flex;align-items:center;gap:8px"><h2 id="chatTitle" style="flex:1">👨‍👩‍👧‍👦 Familia klk</h2><button id="settingsToggle" class="settingsToggle" type="button">⚙️ Ajustes</button></div><p id="who" class="muted"></p></div>
-<div id="chatNav"><button id="showGroup" type="button">👨‍👩‍👧‍👦 Chat familiar</button><button id="showPeople" type="button" class="secondary">💬 Conversaciones privadas</button></div>
+<div id="chatNav"><button id="showGroup" type="button" hidden>Chat grupal desactivado</button><button id="showPeople" type="button" class="secondary">💬 Conversaciones privadas</button></div>
 <div id="dmPanel"><p class="hint">Elige un miembro de la familia para abrir una conversación privada.</p></div>
 <div id="messages" aria-live="polite"><p class="muted">Cargando mensajes...</p></div>
 <div class="composer">
@@ -614,8 +614,8 @@ document.querySelectorAll(".homeFilters button").forEach(button=>button.addEvent
  document.querySelectorAll(".homeFilters button").forEach(b=>b.classList.toggle("active",b===button));
  const filter=button.dataset.filter;
  $("homeGroup").style.display="none";
- $("peopleList").style.display=(filter==="groups")?"none":"block";
- $("requestsPanel").style.display=(filter==="groups")?"none":"block";
+ $("peopleList").style.display=(filter==="requests")?"none":"block";
+ $("requestsPanel").style.display=(filter==="people")?"none":"block";
  $("chatStatus").textContent=(filter==="unread"||filter==="favorites")?"Este filtro estará disponible cuando klk tenga estados de lectura y favoritos.":"";
 }));
 document.querySelectorAll(".homeBottom button").forEach(button=>button.addEventListener("click",()=>{
