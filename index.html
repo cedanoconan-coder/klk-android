@@ -33,7 +33,20 @@ button{background:#075e54;color:white;border:0;font-weight:700;cursor:pointer}bu
 #mediaActions{display:flex;gap:7px;padding:0 12px 8px;background:#f0f2f5}#mediaActions button{width:auto;flex:1;margin:0;padding:9px 5px;border-radius:20px;font-size:13px}
 #recordStatus{padding:0 12px;margin:0;background:#f0f2f5;min-height:18px}.chatFoot{padding:4px 12px 10px;background:#f0f2f5}
 .muted{color:#68736f;font-size:12px}#status{color:#a12b2b;overflow-wrap:anywhere;min-height:18px}.hint{font-size:13px;color:#68736f;line-height:1.45}button[hidden]{display:none!important}#installApp{margin-top:0}
-@media(max-width:420px){main{padding:8px 0}.card{border-radius:0;margin-top:8px}#chat{margin-top:0}}\n\n/* Desplazamiento interno: el encabezado y los controles permanecen visibles. */\nhtml,body{height:100%;overscroll-behavior:none}\nheader{flex:0 0 auto}\nmain{scrollbar-gutter:stable}\n#chat{display:none}\n#chat[style*="display: flex"]{display:flex!important}\n.chatTop,#chatNav,.composer,#mediaActions,.chatFoot{flex:0 0 auto}\n#messages{flex:1 1 auto;height:auto;min-height:140px;max-height:none;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}\n#dmPanel{flex:1 1 auto;min-height:0;max-height:none;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}\n#settingsPanel{flex:0 1 auto;max-height:42dvh;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}\n@media(max-width:420px){#messages{min-height:120px}}
+@media(max-width:420px){main{padding:8px 0}.card{border-radius:0;margin-top:8px}#chat{margin-top:0}}
+
+/* Desplazamiento interno: el encabezado y los controles permanecen visibles. */
+#chat{margin-top:0}
+html,body{height:100%;overscroll-behavior:none}
+header{flex:0 0 auto}
+main{scrollbar-gutter:stable}
+#chat{display:none}
+#chat[style*="display: flex"]{display:flex!important}
+.chatTop,#chatNav,.composer,#mediaActions,.chatFoot{flex:0 0 auto}
+#messages{flex:1 1 auto;height:auto;min-height:140px;max-height:none;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+#dmPanel{flex:1 1 auto;min-height:0;max-height:none;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+#settingsPanel{flex:0 1 auto;max-height:42dvh;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+@media(max-width:420px){#messages{min-height:120px}}
 
 #chatNav{display:flex;gap:8px;padding:10px;background:#e3f2ed}
 #chatNav button{margin:0;padding:10px 8px;font-size:13px}
