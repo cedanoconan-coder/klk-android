@@ -368,7 +368,7 @@ function listenForCandidates(callRef, collectionName, pc) {
 }
 async function startCall(kind) {
  const user=auth&&auth.currentUser;
- if(!user||!activeConversationId){$("chatStatus").textContent="Abre primero una conversación individual.";return;}
+ if(!user||!activeConversationId){$("chatStatus").textContent="Abre primero un chat.";return;}
  if(activeCallRef){$("chatStatus").textContent="Ya hay una llamada activa.";return;}
  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){$("chatStatus").textContent="Este dispositivo no permite acceder a cámara y micrófono. Abre klk mediante HTTPS o la app instalada.";return;}
  $("audioCallBtn").disabled=true;$("videoCallBtn").disabled=true;
@@ -505,7 +505,7 @@ function loadMessages() {
 $("send").onclick = async () => {
  const text = $("message").value.trim(), user = auth && auth.currentUser;
  if (!text || !user || sending) return;
- if (!activeConversationId) { $("chatStatus").textContent = "Abre una conversación individual antes de enviar mensajes."; return; }
+ if (!activeConversationId) { $("chatStatus").textContent = "Abre un chat antes de enviar mensajes."; return; }
  sending = true; $("send").disabled = true; $("chatStatus").textContent = "";
  try {
   await messagesCollection().add({type:"text", text, ...(user.phoneNumber ? {phoneNumber:user.phoneNumber} : {email:user.email || ""}), uid:user.uid, createdAt:firebase.firestore.FieldValue.serverTimestamp()});
@@ -550,7 +550,7 @@ async function compressImage(file) {
 async function uploadMedia(file, type, durationSeconds = null) {
  const user = auth && auth.currentUser;
  if (!user || !file || sending) return;
- if (!activeConversationId) { $("chatStatus").textContent = "Abre una conversación individual antes de enviar archivos."; return; }
+ if (!activeConversationId) { $("chatStatus").textContent = "Abre un chat antes de enviar archivos."; return; }
  if (type === "image" && !file.type.startsWith("image/")) { $("chatStatus").textContent = "Selecciona un archivo de imagen."; return; }
  if (type === "audio" && !file.type.startsWith("audio/")) { $("chatStatus").textContent = "No se pudo reconocer el formato del audio."; return; }
  sending = true;
