@@ -143,6 +143,73 @@ service cloud.firestore {
         allow update, delete: if false;
       }
     }
+
+    match /calls/{callId} {
+      function callParticipant() {
+        return signedIn() && (resource.data.callerUid == request.auth.uid || resource.data.calleeUid == request.auth.uid);
+      }
+      allow get: if callParticipant();
+      allow list: if signedIn() && resource.data.calleeUid == request.auth.uid;
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['callerUid','calleeUid','conversationId','mode','status','offer','createdAt','updatedAt'])
+        && request.resource.data.keys().hasAll(['callerUid','calleeUid','conversationId','mode','status','offer','createdAt','updatedAt'])
+        && request.resource.data.callerUid == request.auth.uid
+        && request.resource.data.calleeUid is string
+        && request.resource.data.calleeUid != request.auth.uid
+        && (request.resource.data.conversationId == request.resource.data.callerUid + '__' + request.resource.data.calleeUid
+          || request.resource.data.conversationId == request.resource.data.calleeUid + '__' + request.resource.data.callerUid)
+        && request.resource.data.mode in ['audio','video']
+        && request.resource.data.status == 'ringing'
+        && request.resource.data.offer is map
+        && request.resource.data.offer.type == 'offer'
+        && request.resource.data.offer.sdp is string
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time
+        && isConversationMember(request.resource.data.conversationId)
+        && acceptedContacts(request.resource.data.callerUid,request.resource.data.calleeUid);
+      allow update: if callParticipant()
+        && request.resource.data.callerUid == resource.data.callerUid
+        && request.resource.data.calleeUid == resource.data.calleeUid
+        && request.resource.data.conversationId == resource.data.conversationId
+        && request.resource.data.mode == resource.data.mode
+        && request.resource.data.createdAt == resource.data.createdAt
+        && (
+          (request.auth.uid == resource.data.calleeUid
+            && resource.data.status == 'ringing'
+            && request.resource.data.status == 'active'
+            && request.resource.data.answer is map
+            && request.resource.data.answer.type == 'answer'
+            && request.resource.data.answer.sdp is string
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['answer','status','updatedAt']))
+          ||
+          (request.auth.uid == resource.data.calleeUid
+            && resource.data.status == 'ringing'
+            && request.resource.data.status == 'rejected'
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','updatedAt']))
+          ||
+          (request.resource.data.status == 'ended'
+            && resource.data.status in ['ringing','active']
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','updatedAt']))
+        )
+        && request.resource.data.updatedAt == request.time;
+      allow delete: if false;
+      match /{candidateCollection}/{candidateId} {
+        function parentCallParticipant() {
+          let parentCall = get(/databases/$(database)/documents/calls/$(callId)).data;
+          return signedIn() && (parentCall.callerUid == request.auth.uid || parentCall.calleeUid == request.auth.uid);
+        }
+        allow read: if parentCallParticipant();
+        allow create: if parentCallParticipant()
+          && candidateCollection in ['callerCandidates','calleeCandidates']
+          && ((candidateCollection == 'callerCandidates' && request.auth.uid == get(/databases/$(database)/documents/calls/$(callId)).data.callerUid)
+            || (candidateCollection == 'calleeCandidates' && request.auth.uid == get(/databases/$(database)/documents/calls/$(callId)).data.calleeUid))
+          && request.resource.data.keys().hasOnly(['candidate','sdpMid','sdpMLineIndex','usernameFragment'])
+          && request.resource.data.candidate is string
+          && request.resource.data.candidate.size() <= 2048;
+        allow update, delete: if false;
+      }
+    }
+
     // The legacy global /messages collection is intentionally inaccessible.
     match /messages/{messageId} {
       allow read, write: if false;
