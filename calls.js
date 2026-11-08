@@ -4,11 +4,20 @@
  const configuredTurn=Array.isArray(window.KLK_TURN_SERVERS)?window.KLK_TURN_SERVERS:[];
  const ICE_CONFIG={iceServers:[{urls:["stun:stun.l.google.com:19302","stun:stun1.l.google.com:19302"]},...configuredTurn]};
  let currentUid=null, incomingUnsub=null, activeCallUnsub=null, localStream=null, peer=null, callRef=null;
+ let callPeople=new Map(), callIncomingRequests=new Map(), callOutgoingRequests=new Map();
+ let callPeopleUnsub=null, callIncomingRequestsUnsub=null, callOutgoingRequestsUnsub=null;
  let callRole=null, callMode="audio", callState=null, remoteCandidatesUnsub=null, localCandidatesUnsub=null, queuedCandidates=[];
  let incomingCall=null, incomingDocUnsub=null, ringTimeout=null, muted=false, cameraOff=false, ending=false, pendingLocalCandidates=[];
  const overlay=$("callOverlay");
  const setStatus=(message)=>{if($("callsStatus"))$("callsStatus").textContent=message||"";};
- function acceptedPeople(){return [...peopleCache.entries()].filter(([uid])=>uid!==currentUid&&isAcceptedContact(uid));}
+ function isCallContactAccepted(uid){return (callIncomingRequests.get(uid)||{}).status==="accepted"||(callOutgoingRequests.get(uid)||{}).status==="accepted";}
+ function acceptedPeople(){return [...callPeople.entries()].filter(([uid])=>uid!==currentUid&&isCallContactAccepted(uid));}
+ function watchCallContacts(uid){
+  [callPeopleUnsub,callIncomingRequestsUnsub,callOutgoingRequestsUnsub].forEach(stop=>{if(stop)stop();});
+  callPeopleUnsub=db.collection("users").onSnapshot(snapshot=>{callPeople.clear();snapshot.docs.forEach(doc=>callPeople.set(doc.id,doc.data()));renderCallContacts();},error=>{console.error("Directorio de llamadas:",error);$("callContacts").textContent="No se pudo cargar el directorio: "+error.message;});
+  callIncomingRequestsUnsub=db.collection("contactRequests").where("recipientUid","==",uid).onSnapshot(snapshot=>{callIncomingRequests.clear();snapshot.docs.forEach(doc=>callIncomingRequests.set(doc.data().senderUid,doc.data()));renderCallContacts();},error=>{console.error("Solicitudes recibidas para llamadas:",error);setStatus("No se pudieron consultar tus contactos: "+error.message);});
+  callOutgoingRequestsUnsub=db.collection("contactRequests").where("senderUid","==",uid).onSnapshot(snapshot=>{callOutgoingRequests.clear();snapshot.docs.forEach(doc=>callOutgoingRequests.set(doc.data().recipientUid,doc.data()));renderCallContacts();},error=>{console.error("Solicitudes enviadas para llamadas:",error);setStatus("No se pudieron consultar tus contactos: "+error.message);});
+ }
  function renderCallContacts(){
   const list=$("callContacts"); if(!list)return;
   list.innerHTML="";
@@ -16,12 +25,12 @@
   const people=acceptedPeople();
   if(!people.length){
    const message=document.createElement("p");
-   message.textContent=peopleCache.size<=1
+   message.textContent=callPeople.size<=1
     ?"Todavía no aparecen contactos aceptados. Entra en Personas y comprueba que el otro usuario haya creado su cuenta; después acepta su solicitud."
     :"No tienes contactos aceptados todavía. Acepta una solicitud para habilitar las llamadas.";
    list.append(message);
    const refresh=document.createElement("button");refresh.type="button";refresh.className="secondary";refresh.textContent="Actualizar contactos";
-   refresh.onclick=()=>{refresh.disabled=true;refresh.textContent="Actualizando...";renderCallContacts();window.setTimeout(()=>{refresh.disabled=false;refresh.textContent="Actualizar contactos";},500);};
+   refresh.onclick=async()=>{refresh.disabled=true;refresh.textContent="Actualizando...";try{const [users,incoming,outgoing]=await Promise.all([db.collection("users").get(),db.collection("contactRequests").where("recipientUid","==",currentUid).get(),db.collection("contactRequests").where("senderUid","==",currentUid).get()]);callPeople.clear();users.docs.forEach(doc=>callPeople.set(doc.id,doc.data()));callIncomingRequests.clear();incoming.docs.forEach(doc=>callIncomingRequests.set(doc.data().senderUid,doc.data()));callOutgoingRequests.clear();outgoing.docs.forEach(doc=>callOutgoingRequests.set(doc.data().recipientUid,doc.data()));setStatus("Contactos actualizados.");renderCallContacts();}catch(error){console.error("Actualizar contactos de llamadas:",error);setStatus("No se pudieron actualizar los contactos: "+error.message);}finally{refresh.disabled=false;refresh.textContent="Actualizar contactos";}};
    const peopleButton=document.createElement("button");peopleButton.type="button";peopleButton.className="secondary";peopleButton.textContent="Ir a Personas";
    peopleButton.onclick=()=>{if(typeof window.setHomeTab==="function")window.setHomeTab("chats");const filter=document.querySelector('.homeFilters button[data-filter="people"]');if(filter)filter.click();};
    list.append(refresh,peopleButton);return;
@@ -131,7 +140,7 @@
  function setTimeoutSafeCleanup(){window.setTimeout(cleanup,1600);}
  async function startCall(uid,name,mode){
   if(callRef){setStatus("Ya tienes una llamada en curso.");return;}
-  if(!auth||!auth.currentUser||!isAcceptedContact(uid)){setStatus("Solo puedes llamar a contactos que hayan aceptado tu solicitud.");return;}
+  if(!auth||!auth.currentUser||!isCallContactAccepted(uid)){setStatus("Solo puedes llamar a contactos que hayan aceptado tu solicitud.");return;}
   try{
    callMode=mode;callRole="caller";showOverlay(name,mode==="video"?"Solicitando cámara y micrófono...":"Solicitando micrófono...");
    localStream=await getLocalMedia(mode);createPeer();
@@ -195,7 +204,7 @@
    incomingDocUnsub=doc.ref.onSnapshot(s=>{if(!s.exists||s.data().status!=="ringing"){if(incomingCall&&incomingCall.ref.id===doc.id){incomingCall=null;cleanup();}}},error=>{console.warn("No se pudo seguir la llamada entrante:",error);});
    ringTimeout=window.setTimeout(async()=>{if(incomingCall&&incomingCall.ref.id===doc.id&&!callRef){try{await doc.ref.update({status:"ended",updatedAt:firebase.firestore.FieldValue.serverTimestamp()});}catch(error){console.warn("No se pudo cerrar la llamada sin respuesta:",error);}incomingCall=null;cleanup();}},45000);
    callMode=data.mode==="video"?"video":"audio";
-   const person=peopleCache.get(data.callerUid)||{};
+   const person=callPeople.get(data.callerUid)||{};
    showOverlay(person.displayName||person.email||"Llamada entrante",callMode==="video"?"Videollamada entrante":"Llamada de voz entrante");
    if(window.klkStartIncomingCallSound)window.klkStartIncomingCallSound();
    $("answerCall").hidden=false;$("rejectCall").hidden=false;
@@ -227,10 +236,9 @@
  if(auth)auth.onAuthStateChanged(user=>{
   currentUid=user?user.uid:null;
   if(incomingUnsub){incomingUnsub();incomingUnsub=null;}
-  if(!user){if(callRef)endCall();cleanup();return;}
-  listenIncoming(user.uid);renderCallContacts();
+  if(!user){if(callRef)endCall();cleanup();callPeople.clear();callIncomingRequests.clear();callOutgoingRequests.clear();[callPeopleUnsub,callIncomingRequestsUnsub,callOutgoingRequestsUnsub].forEach(stop=>{if(stop)stop();});callPeopleUnsub=callIncomingRequestsUnsub=callOutgoingRequestsUnsub=null;renderCallContacts();return;}
+  listenIncoming(user.uid);watchCallContacts(user.uid);renderCallContacts();
  });
- const originalRenderPeople=window.renderPeople;
- // The app's directory refresh invokes this hook after contact status changes.
+ // La pantalla de llamadas mantiene sus propias suscripciones a Firestore.
  window.klkRefreshCallContacts=renderCallContacts;
 })();
