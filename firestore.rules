@@ -1,50 +1,135 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Bloquea la colección antigua compartida: ningún usuario puede leerla.
-    // Se habilitará la lectura cuando cada conversación valide sus miembros.
-    match /messages/{messageId} {
-      allow read: if false;
-      allow create: if request.auth != null
-        && request.resource.data.keys().hasOnly([
-          'type', 'text', 'mediaUrl', 'storagePath', 'mimeType', 'fileName',
-          'size', 'duration', 'email', 'uid', 'createdAt'
-        ])
-        && request.resource.data.keys().hasAll(['type', 'email', 'uid', 'createdAt'])
-        && request.resource.data.uid == request.auth.uid
-        && request.resource.data.email == request.auth.token.email
-        && request.resource.data.createdAt == request.time
-        && (
-          (request.resource.data.type == 'text'
-            && request.resource.data.keys().hasAll(['text'])
-            && request.resource.data.text is string
-            && request.resource.data.text.size() > 0
-            && request.resource.data.text.size() <= 2000)
-          ||
-          (request.resource.data.type == 'image'
-            && request.resource.data.keys().hasAll(['storagePath', 'mimeType', 'size'])
-            && request.resource.data.storagePath is string
-            && request.resource.data.storagePath.matches(request.auth.uid + '/.*')
-            && request.resource.data.mimeType.matches('image/.*')
-            && request.resource.data.size is int
-            && request.resource.data.size > 0
-            && request.resource.data.size <= 10485760
-            && (!request.resource.data.keys().hasAny(['mediaUrl']) || request.resource.data.mediaUrl is string))
-          ||
-          (request.resource.data.type == 'audio'
-            && request.resource.data.keys().hasAll(['storagePath', 'mimeType', 'size'])
-            && request.resource.data.storagePath is string
-            && request.resource.data.storagePath.matches(request.auth.uid + '/.*')
-            && request.resource.data.mimeType.matches('audio/.*')
-            && request.resource.data.size is int
-            && request.resource.data.size > 0
-            && request.resource.data.size <= 20971520
-            && (!request.resource.data.keys().hasAny(['mediaUrl']) || request.resource.data.mediaUrl is string))
-        );
-      allow update, delete: if false;
+    function signedIn() {
+      return request.auth != null;
     }
 
-    // Las conversaciones no tienen permisos de lectura/escritura globales.
-    // Sin una regla explícita de membresía, Firestore deniega el acceso.
+    function isConversationMember(conversationId) {
+      return signedIn()
+        && exists(/databases/$(database)/documents/conversations/$(conversationId))
+        && get(/databases/$(database)/documents/conversations/$(conversationId)).data.members.hasAny([request.auth.uid]);
+    }
+
+    function acceptedRequest(requestId, uid, otherUid) {
+      let req = getAfter(/databases/$(database)/documents/contactRequests/$(requestId)).data;
+      return req.status == 'accepted'
+        && ((req.fromUid == uid && req.toUid == otherUid)
+          || (req.fromUid == otherUid && req.toUid == uid));
+    }
+
+    match /users/{uid} {
+      // El directorio solo está disponible para usuarios autenticados.
+      // No se deben guardar aquí contraseñas, tokens ni datos sensibles.
+      allow get, list: if signedIn();
+      allow create: if signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['uid', 'email', 'displayName', 'photoURL', 'createdAt'])
+        && request.resource.data.uid == uid
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.displayName is string
+        && request.resource.data.displayName.size() <= 40;
+      allow update: if signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName', 'photoURL', 'updatedAt'])
+        && (!request.resource.data.keys().hasAny(['displayName']) || request.resource.data.displayName is string)
+        && (!request.resource.data.keys().hasAny(['photoURL']) || request.resource.data.photoURL is string);
+      allow delete: if false;
+
+      match /contacts/{otherUid} {
+        allow get, list: if signedIn() && request.auth.uid == uid;
+        allow create: if signedIn()
+          && request.auth.uid == uid
+          && request.resource.data.otherUid == otherUid
+          && request.resource.data.requestId is string
+          && acceptedRequest(request.resource.data.requestId, uid, otherUid);
+        allow update, delete: if false;
+      }
+    }
+
+    match /contactRequests/{requestId} {
+      allow get, list: if signedIn()
+        && (resource.data.fromUid == request.auth.uid || resource.data.toUid == request.auth.uid);
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['fromUid', 'toUid', 'status', 'createdAt'])
+        && request.resource.data.fromUid == request.auth.uid
+        && request.resource.data.toUid is string
+        && request.resource.data.toUid != request.auth.uid
+        && requestId == request.auth.uid + '_' + request.resource.data.toUid
+        && request.resource.data.status == 'pending'
+        && !exists(/databases/$(database)/documents/users/$(request.auth.uid)/contacts/$(request.resource.data.toUid));
+      allow update: if signedIn()
+        && resource.data.toUid == request.auth.uid
+        && resource.data.status == 'pending'
+        && request.resource.data.status == 'accepted'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'acceptedAt']);
+      allow delete: if false;
+    }
+
+    match /conversations/{conversationId} {
+      allow get, list: if signedIn()
+        && resource.data.members is list
+        && resource.data.members.hasAny([request.auth.uid]);
+
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['members', 'createdAt', 'createdBy'])
+        && request.resource.data.members is list
+        && request.resource.data.members.size() == 2
+        && request.resource.data.members.hasAny([request.auth.uid])
+        && request.resource.data.createdBy == request.auth.uid
+        && existsAfter(/databases/$(database)/documents/users/$(request.auth.uid)/contacts/$(request.resource.data.members[0] == request.auth.uid ? request.resource.data.members[1] : request.resource.data.members[0]))
+        && existsAfter(/databases/$(database)/documents/users/$(request.resource.data.members[0] == request.auth.uid ? request.resource.data.members[1] : request.resource.data.members[0])/contacts/$(request.auth.uid));
+
+      allow update, delete: if false;
+
+      match /messages/{messageId} {
+        allow get, list: if isConversationMember(conversationId);
+        allow create: if isConversationMember(conversationId)
+          && request.resource.data.keys().hasOnly(['uid', 'text', 'createdAt'])
+          && request.resource.data.uid == request.auth.uid
+          && request.resource.data.text is string
+          && request.resource.data.text.size() > 0
+          && request.resource.data.text.size() <= 2000
+          && request.resource.data.createdAt == request.time;
+        allow update, delete: if false;
+      }
+
+      match /calls/{callId} {
+        allow get, list: if isConversationMember(conversationId);
+        allow create: if isConversationMember(conversationId)
+          && request.resource.data.keys().hasOnly(['callerId', 'callerName', 'calleeId', 'conversationId', 'type', 'status', 'offer', 'createdAt'])
+          && request.resource.data.callerId == request.auth.uid
+          && request.resource.data.calleeId is string
+          && request.resource.data.calleeId != request.auth.uid
+          && request.resource.data.conversationId == conversationId
+          && request.resource.data.type in ['audio', 'video']
+          && request.resource.data.status == 'ringing';
+        allow update: if isConversationMember(conversationId)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['answer', 'status'])
+          && (request.auth.uid == resource.data.calleeId || request.auth.uid == resource.data.callerId)
+          && request.resource.data.status in ['ringing', 'active', 'ended'];
+        allow delete: if false;
+
+        match /callerCandidates/{candidateId} {
+          allow get, list: if isConversationMember(conversationId);
+          allow create: if isConversationMember(conversationId)
+            && get(/databases/$(database)/documents/conversations/$(conversationId)/calls/$(callId)).data.callerId == request.auth.uid;
+          allow update, delete: if false;
+        }
+        match /calleeCandidates/{candidateId} {
+          allow get, list: if isConversationMember(conversationId);
+          allow create: if isConversationMember(conversationId)
+            && get(/databases/$(database)/documents/conversations/$(conversationId)/calls/$(callId)).data.calleeId == request.auth.uid;
+          allow update, delete: if false;
+        }
+      }
+    }
+
+    // Consulta collectionGroup usada para detectar llamadas entrantes.
+    match /{path=**}/calls/{callId} {
+      allow list: if signedIn()
+        && resource.data.calleeId == request.auth.uid
+        && isConversationMember(resource.data.conversationId);
+    }
   }
 }
