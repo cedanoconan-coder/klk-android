@@ -124,7 +124,11 @@
    localStream=await getLocalMedia(mode);createPeer();
    if(mode==="video"){$("localVideo").srcObject=localStream;}
    const offer=await peer.createOffer();await peer.setLocalDescription(offer);
-   const conversationId=[currentUid,uid].sort().join("__");
+   const members=[currentUid,uid].sort();
+   const conversationId=members.join("__");
+   const conversationRef=db.collection("conversations").doc(conversationId);
+   const conversationSnap=await conversationRef.get();
+   if(!conversationSnap.exists)await conversationRef.set({members,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
    callRef=db.collection("calls").doc();
    await callRef.set({callerUid:currentUid,calleeUid:uid,conversationId,mode,status:"ringing",offer:{type:offer.type,sdp:offer.sdp},createdAt:firebase.firestore.FieldValue.serverTimestamp(),updatedAt:firebase.firestore.FieldValue.serverTimestamp()});
    await flushLocalCandidates();
