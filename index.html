@@ -61,6 +61,8 @@ main{scrollbar-gutter:stable}
 .settingRow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid #edf0ef;font-size:14px}
 .settingRow input[type=checkbox]{width:22px;height:22px;margin:0;accent-color:#075e54}
 .settingRow select{width:auto;max-width:145px;margin:0;padding:8px;border-radius:10px;border:1px solid #d6dce0;background:#fff}
+
+.callBtn{width:auto;min-width:42px;padding:9px 11px;margin:0;border-radius:22px;font-size:18px;background:#0b806f}.callOverlay{position:fixed;inset:0;z-index:30;background:#071b19ed;display:flex;align-items:center;justify-content:center;padding:18px}.callOverlay[hidden]{display:none}.callCard{width:100%;max-width:480px;background:#fff;color:#17211e;border-radius:20px;padding:18px;text-align:center;max-height:92dvh;overflow:auto}.callCard h2{margin:4px 0}.callCard p{margin:8px}.callCard video{display:none;width:100%;max-height:45dvh;object-fit:cover;background:#101b20;border-radius:12px;margin:8px 0}.callCard video#remoteVideo{display:block}.callCard video#localVideo{position:absolute;right:28px;bottom:130px;width:110px;max-height:150px;border:2px solid white}.callControls{display:flex;gap:7px;flex-wrap:wrap;justify-content:center;margin-top:14px}.callControls button{width:auto;min-width:105px;margin:3px;padding:12px}.callControls #endCallBtn,.callControls #rejectCallBtn{background:#b3261e}.callControls #acceptCallBtn{background:#087e50}@media(max-width:420px){.callCard{padding:12px}.callCard video#localVideo{width:85px;bottom:150px}}
 </style>
 </head>
 <body>
@@ -80,7 +82,7 @@ main{scrollbar-gutter:stable}
 <p class="hint">Necesitas conexión a internet para iniciar sesión y enviar mensajes.</p>
 </section>
 <section id="chat" class="card">
-<div class="chatTop"><div style="display:flex;align-items:center;gap:8px"><h2 id="chatTitle" style="flex:1">💬 Mensajes privados</h2><button id="settingsToggle" class="settingsToggle" type="button">⚙️ Ajustes</button></div><p id="who" class="muted"></p></div>
+<div class="chatTop"><div style="display:flex;align-items:center;gap:8px"><h2 id="chatTitle" style="flex:1">💬 Mensajes privados</h2><button id="audioCallBtn" class="callBtn" type="button" title="Llamada de voz" aria-label="Llamada de voz">📞</button><button id="videoCallBtn" class="callBtn" type="button" title="Videollamada" aria-label="Videollamada">📹</button><button id="settingsToggle" class="settingsToggle" type="button">⚙️ Ajustes</button></div><p id="who" class="muted"></p></div>
 <div id="dmPanel"><h3>💬 Mensajes individuales</h3><p class="hint">Selecciona una persona para iniciar una conversación privada.</p><div id="peopleList">Cargando contactos...</div></div>
 <div id="messages" aria-live="polite"><p class="muted">Cargando mensajes...</p></div>
 <div class="composer">
@@ -96,6 +98,22 @@ main{scrollbar-gutter:stable}
 <input id="galleryInput" type="file" accept="image/*" hidden>
 <input id="cameraInput" type="file" accept="image/*" capture="environment" hidden>
 <p id="recordStatus" class="hint" role="status" aria-live="polite"></p>
+<section id="callOverlay" class="callOverlay" hidden aria-live="polite">
+ <div class="callCard">
+  <h2 id="callTitle">Llamada de klk</h2><p id="callPeer">Contacto</p>
+  <p id="callStatus">Conectando...</p>
+  <video id="remoteVideo" autoplay playsinline></video>
+  <video id="localVideo" autoplay muted playsinline></video>
+  <audio id="remoteAudio" autoplay></audio>
+  <div class="callControls">
+   <button id="acceptCallBtn" type="button" hidden>Contestar</button>
+   <button id="rejectCallBtn" type="button" hidden>Rechazar</button>
+   <button id="muteCallBtn" type="button" hidden>🎙️ Silenciar</button>
+   <button id="cameraCallBtn" type="button" hidden>📷 Cámara</button>
+   <button id="endCallBtn" type="button" hidden>🔴 Colgar</button>
+  </div>
+ </div>
+</section>
 <section id="settingsPanel" aria-label="Configuración de klk">
  <h3>⚙️ Configuración de klk</h3>
  <div class="settingRow"><span>Sonido de mensajes</span><input id="settingSound" type="checkbox" checked></div>
@@ -213,6 +231,7 @@ auth && auth.onAuthStateChanged(async user => {
  $("chat").style.display = user ? "flex" : "none";
  if (user) {
   window.klkSetCurrentUid && window.klkSetCurrentUid(user.uid);
+  watchIncomingCalls(user);
   $("who").textContent = "Conectado: " + (user.email || "usuario");
   activeConversationId = null; activeConversationName = null;
   $("chatTitle").textContent = "💬 Mensajes privados"; $("dmPanel").style.display = "block"; $("messages").style.display = "none";
@@ -226,6 +245,7 @@ auth && auth.onAuthStateChanged(async user => {
   } catch(error) { showError("chatStatus",error); }
  } else {
   window.klkSetCurrentUid && window.klkSetCurrentUid(null);
+  if(incomingCallUnsubscribe){incomingCallUnsubscribe();incomingCallUnsubscribe=null;} clearCallMedia();
   if (unsubscribe) unsubscribe(); unsubscribe = null;
   if (peopleUnsubscribe) peopleUnsubscribe(); peopleUnsubscribe = null;
   activeConversationId = null; $("messages").innerHTML = "";
@@ -275,6 +295,149 @@ async function openPrivateConversation(otherUid, otherName) {
   loadMessages();
  } catch(error) { showError("chatStatus",error); }
 }
+
+
+let incomingCallUnsubscribe = null, activeCallUnsubscribes = [], activeCallRef = null;
+let activePeerConnection = null, activeLocalStream = null, activeRemoteStream = null, activeCallRole = null, activeCallKind = null;
+const callIceConfig = {iceServers:[{urls:["stun:stun.l.google.com:19302","stun:stun1.l.google.com:19302"]}]};
+function showCallOverlay(title, peer, status) {
+ $("callOverlay").hidden = false; $("callTitle").textContent = title; $("callPeer").textContent = peer || "";
+ $("callStatus").textContent = status || "";
+}
+function stopCallListeners() { activeCallUnsubscribes.forEach(fn=>{try{fn();}catch(e){}}); activeCallUnsubscribes=[]; }
+function clearCallMedia() {
+ stopCallListeners();
+ if(activePeerConnection){try{activePeerConnection.close();}catch(e){} activePeerConnection=null;}
+ if(activeLocalStream) activeLocalStream.getTracks().forEach(track=>track.stop());
+ activeLocalStream=null; activeRemoteStream=null; activeCallRef=null; activeCallRole=null; activeCallKind=null;
+ ["remoteVideo","localVideo","remoteAudio"].forEach(id=>{const el=$(id);try{el.pause();}catch(e){}el.srcObject=null;});
+ $("callOverlay").hidden=true;
+ ["acceptCallBtn","rejectCallBtn","muteCallBtn","cameraCallBtn","endCallBtn"].forEach(id=>$(id).hidden=true);
+ $("audioCallBtn").disabled=false; $("videoCallBtn").disabled=false;
+}
+function setCallMedia(stream, kind) {
+ activeRemoteStream=stream;
+ $("remoteVideo").srcObject=stream; $("remoteAudio").srcObject=stream;
+ $("remoteVideo").style.display=kind==="video"?"block":"none";
+ $("remoteAudio").style.display=kind==="audio"?"block":"none";
+ if(kind==="video" && activeLocalStream){$("localVideo").srcObject=activeLocalStream;$("localVideo").style.display="block";}
+ else $("localVideo").style.display="none";
+}
+function setupPeerConnection(callRef, role, kind) {
+ const pc=new RTCPeerConnection(callIceConfig);
+ activePeerConnection=pc;
+ activeLocalStream.getTracks().forEach(track=>pc.addTrack(track,activeLocalStream));
+ pc.ontrack=event=>{
+  const stream=event.streams&&event.streams[0];
+  if(stream){setCallMedia(stream,kind);$("callStatus").textContent="Conectado";}
+ };
+ pc.onicecandidate=event=>{
+  if(!event.candidate)return;
+  const collection=role==="caller"?"callerCandidates":"calleeCandidates";
+  callRef.collection(collection).add({...event.candidate.toJSON(),createdAt:firebase.firestore.FieldValue.serverTimestamp()}).catch(error=>console.warn("ICE candidate:",error));
+ };
+ pc.onconnectionstatechange=()=>{
+  if(pc.connectionState==="connected")$("callStatus").textContent="Conectado";
+  if(["failed","disconnected"].includes(pc.connectionState))$("callStatus").textContent="Conexión inestable. Comprueba tu Internet.";
+  if(pc.connectionState==="closed")$("callStatus").textContent="Llamada finalizada";
+ };
+ return pc;
+}
+function listenForCandidates(callRef, collectionName, pc) {
+ const unsub=callRef.collection(collectionName).onSnapshot(snapshot=>{
+  snapshot.docChanges().forEach(change=>{
+   if(change.type!=="added")return;
+   const data=change.doc.data();
+   pc.addIceCandidate(new RTCIceCandidate({candidate:data.candidate,sdpMid:data.sdpMid,sdpMLineIndex:data.sdpMLineIndex})).catch(error=>console.warn("ICE:",error));
+  });
+ },error=>{$("callStatus").textContent="No se pudo establecer la conexión.";console.error(error);});
+ activeCallUnsubscribes.push(unsub);
+}
+async function startCall(kind) {
+ const user=auth&&auth.currentUser;
+ if(!user||!activeConversationId){$("chatStatus").textContent="Abre primero una conversación individual.";return;}
+ if(activeCallRef){$("chatStatus").textContent="Ya hay una llamada activa.";return;}
+ if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){$("chatStatus").textContent="Este dispositivo no permite acceder a cámara y micrófono. Abre klk mediante HTTPS o la app instalada.";return;}
+ $("audioCallBtn").disabled=true;$("videoCallBtn").disabled=true;
+ try{
+  activeCallKind=kind;activeCallRole="caller";
+  activeLocalStream=await navigator.mediaDevices.getUserMedia({audio:true,video:kind==="video"});
+  const members=[user.uid,...activeConversationId.split("__").filter(id=>id!==user.uid)];
+  const calleeId=members.find(id=>id!==user.uid);
+  if(!calleeId)throw new Error("No se encontró al destinatario.");
+  const callRef=db.collection("calls").doc();activeCallRef=callRef;
+  await callRef.set({callerId:user.uid,calleeId,conversationId:activeConversationId,kind,status:"ringing",createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+  showCallOverlay(kind==="video"?"Videollamada":"Llamada de voz",activeConversationName,"Llamando...");
+  $("localVideo").srcObject=activeLocalStream;$("localVideo").style.display=kind==="video"?"block":"none";
+  $("endCallBtn").hidden=false;$("muteCallBtn").hidden=false;$("cameraCallBtn").hidden=kind!=="video";
+  const pc=setupPeerConnection(callRef,"caller",kind);
+  listenForCandidates(callRef,"calleeCandidates",pc);
+  const offer=await pc.createOffer();await pc.setLocalDescription(offer);
+  await callRef.update({offer:{type:offer.type,sdp:offer.sdp}});
+  const unsub=callRef.onSnapshot(async snap=>{
+   if(!snap.exists)return;const data=snap.data();
+   if(data.status==="rejected"){ $("callStatus").textContent="La llamada fue rechazada.";setTimeout(clearCallMedia,900);return;}
+   if(data.status==="ended"){ $("callStatus").textContent="La llamada terminó.";setTimeout(clearCallMedia,500);return;}
+   if(data.answer&&pc.signalingState==="have-local-offer"){
+    try{await pc.setRemoteDescription(new RTCSessionDescription(data.answer));$("callStatus").textContent="Conectando...";}
+    catch(error){console.error(error);}
+   }
+  },error=>{$("callStatus").textContent="Error de señalización: "+error.message;});
+  activeCallUnsubscribes.push(unsub);
+ }catch(error){
+  console.error("No se pudo iniciar llamada:",error);$("chatStatus").textContent="No se pudo iniciar la llamada: "+(error.message||"Comprueba los permisos.");
+  if(activeCallRef)activeCallRef.update({status:"ended"}).catch(()=>{});
+  clearCallMedia();
+ }
+}
+async function acceptIncomingCall() {
+ if(!activeCallRef||activeCallRole!=="callee")return;
+ try{
+  const snap=await activeCallRef.get();if(!snap.exists)throw new Error("La llamada ya no está disponible.");
+  const data=snap.data();activeCallKind=data.kind;
+  activeLocalStream=await navigator.mediaDevices.getUserMedia({audio:true,video:activeCallKind==="video"});
+  const pc=setupPeerConnection(activeCallRef,"callee",activeCallKind);
+  await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
+  listenForCandidates(activeCallRef,"callerCandidates",pc);
+  const answer=await pc.createAnswer();await pc.setLocalDescription(answer);
+  await activeCallRef.update({answer:{type:answer.type,sdp:answer.sdp},status:"accepted"});
+  $("acceptCallBtn").hidden=true;$("rejectCallBtn").hidden=true;$("endCallBtn").hidden=false;$("muteCallBtn").hidden=false;$("cameraCallBtn").hidden=activeCallKind!=="video";
+  $("localVideo").srcObject=activeLocalStream;$("localVideo").style.display=activeCallKind==="video"?"block":"none";
+  $("callStatus").textContent="Conectando...";
+ }catch(error){console.error(error);$("callStatus").textContent="No se pudo contestar: "+(error.message||"Comprueba los permisos.");}
+}
+async function finishCall(status="ended") {
+ const ref=activeCallRef;
+ if(ref)try{await ref.update({status,endedAt:firebase.firestore.FieldValue.serverTimestamp()});}catch(error){console.warn("Finalizar llamada:",error);}
+ clearCallMedia();
+}
+async function rejectIncomingCall(){await finishCall("rejected");}
+function watchIncomingCalls(user) {
+ if(incomingCallUnsubscribe)incomingCallUnsubscribe();
+ incomingCallUnsubscribe=db.collection("calls").where("calleeId","==",user.uid).onSnapshot(snapshot=>{
+  snapshot.docChanges().forEach(change=>{
+   if(change.type!=="added"&&change.type!=="modified")return;
+   const data=change.doc.data();
+   if(data.status!=="ringing"||activeCallRef)return;
+   activeCallRef=change.doc.ref;activeCallRole="callee";activeCallKind=data.kind;
+   const callerName=activeConversationId===data.conversationId?activeConversationName:"Un contacto";
+   showCallOverlay(data.kind==="video"?"Videollamada entrante":"Llamada de voz entrante",callerName,"Te están llamando");
+   $("acceptCallBtn").hidden=false;$("rejectCallBtn").hidden=false;
+   $("endCallBtn").hidden=true;$("muteCallBtn").hidden=true;$("cameraCallBtn").hidden=true;
+  });
+ },error=>console.error("Escucha de llamadas entrantes:",error));
+}
+$("audioCallBtn").addEventListener("click",()=>startCall("audio"));
+$("videoCallBtn").addEventListener("click",()=>startCall("video"));
+$("acceptCallBtn").addEventListener("click",acceptIncomingCall);
+$("rejectCallBtn").addEventListener("click",rejectIncomingCall);
+$("endCallBtn").addEventListener("click",()=>finishCall("ended"));
+$("muteCallBtn").addEventListener("click",()=>{
+ if(!activeLocalStream)return;const track=activeLocalStream.getAudioTracks()[0];if(!track)return;track.enabled=!track.enabled;$("muteCallBtn").textContent=track.enabled?"🎙️ Silenciar":"🔇 Activar micrófono";
+});
+$("cameraCallBtn").addEventListener("click",()=>{
+ if(!activeLocalStream)return;const track=activeLocalStream.getVideoTracks()[0];if(!track)return;track.enabled=!track.enabled;$("cameraCallBtn").textContent=track.enabled?"📷 Cámara":"🚫 Activar cámara";
+});
 $("showPeople").onclick = () => {
  if (unsubscribe) { unsubscribe(); unsubscribe = null; }
  activeConversationId = null; activeConversationName = null;
