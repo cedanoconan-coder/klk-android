@@ -146,6 +146,7 @@
  async function acceptCall(){
   if(!incomingCall||callRef)return;
   if(incomingDocUnsub){incomingDocUnsub();incomingDocUnsub=null;}
+  if(ringTimeout){window.clearTimeout(ringTimeout);ringTimeout=null;}
   const data=incomingCall.data;callRef=incomingCall.ref;callRole="callee";callMode=data.mode==="video"?"video":"audio";
   try{
    $("callStatus").textContent=callMode==="video"?"Activando cámara y micrófono...":"Activando micrófono...";
