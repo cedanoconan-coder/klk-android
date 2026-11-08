@@ -129,7 +129,7 @@ service cloud.firestore {
               && request.resource.data.text.size() > 0
               && request.resource.data.text.size() <= 2000)
             ||
-            ((request.resource.data.type == 'image' || request.resource.data.type == 'audio')
+            ((request.resource.data.type == 'image' || request.resource.data.type == 'audio' || request.resource.data.type == 'file')
               && request.resource.data.keys().hasAll(['storagePath','conversationId','mimeType','size'])
               && request.resource.data.conversationId == conversationId
               && request.resource.data.storagePath is string
@@ -138,7 +138,8 @@ service cloud.firestore {
               && request.resource.data.size is int
               && request.resource.data.size > 0
               && ((request.resource.data.type == 'image' && request.resource.data.mimeType.matches('image/.*') && request.resource.data.size <= 10485760)
-                || (request.resource.data.type == 'audio' && request.resource.data.mimeType.matches('audio/.*') && request.resource.data.size <= 20971520)))
+                || (request.resource.data.type == 'audio' && request.resource.data.mimeType.matches('audio/.*') && request.resource.data.size <= 20971520)
+              || (request.resource.data.type == 'file' && request.resource.data.mimeType is string && request.resource.data.size <= 20971520)))
           );
         allow update, delete: if false;
       }
