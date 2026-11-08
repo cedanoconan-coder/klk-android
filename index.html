@@ -343,7 +343,7 @@ function loadPeople() {
   renderPeople();
  },error => { showError("peopleList",error); showError("chatStatus",error); });
 }
-async function sendContactRequest(otherUid, person) {
+async async function sendContactRequest(otherUid, person) {
  const user = auth.currentUser; if (!user || !otherUid || otherUid === user.uid) return;
  const id = user.uid + "__" + otherUid;
  try {
@@ -351,7 +351,7 @@ async function sendContactRequest(otherUid, person) {
   $("chatStatus").textContent = "Solicitud enviada.";
  } catch(error) { showError("chatStatus",error); }
 }
-async function respondToContactRequest(senderUid,status) {
+async async function respondToContactRequest(senderUid,status) {
  const id = senderUid + "__" + auth.currentUser.uid;
  try { await db.collection("contactRequests").doc(id).update({status}); $("chatStatus").textContent = status === "accepted" ? "Contacto aceptado. Ya pueden enviarse mensajes." : "Solicitud rechazada."; }
  catch(error) { showError("chatStatus",error); }
