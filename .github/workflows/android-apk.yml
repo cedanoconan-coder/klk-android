@@ -34,7 +34,7 @@ jobs:
           import re
           from pathlib import Path
           html = Path("index.html").read_text()
-          scripts = re.findall(r"<script>([\\s\\S]*?)</script>", html)
+          scripts = re.findall(r"<script>([\s\S]*?)</script>", html)
           if not scripts:
               raise SystemExit("No se encontró el código JavaScript principal")
           Path("/tmp/klk-app.js").write_text(scripts[-1])
