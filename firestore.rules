@@ -2,6 +2,13 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     function signedIn() { return request.auth != null; }
+    function acceptedRequest(a, b) {
+      return exists(/databases/$(database)/documents/contactRequests/$(a + '__' + b))
+        && get(/databases/$(database)/documents/contactRequests/$(a + '__' + b)).data.status == 'accepted';
+    }
+    function acceptedContacts(a, b) {
+      return acceptedRequest(a, b) || acceptedRequest(b, a);
+    }
     function isConversationMember(conversationId) {
       return signedIn()
         && exists(/databases/$(database)/documents/conversations/$(conversationId))
@@ -17,6 +24,25 @@ service cloud.firestore {
         && request.resource.data.email == request.auth.token.email;
       allow delete: if false;
     }
+    match /contactRequests/{requestId} {
+      allow read: if signedIn()
+        && (resource.data.senderUid == request.auth.uid || resource.data.recipientUid == request.auth.uid);
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['senderUid','recipientUid','senderEmail','senderName','recipientEmail','recipientName','status','createdAt'])
+        && request.resource.data.keys().hasAll(['senderUid','recipientUid','status','createdAt'])
+        && request.resource.data.senderUid == request.auth.uid
+        && request.resource.data.recipientUid is string
+        && request.resource.data.recipientUid != request.auth.uid
+        && request.resource.data.status == 'pending'
+        && request.resource.data.createdAt == request.time
+        && requestId == request.auth.uid + '__' + request.resource.data.recipientUid;
+      allow update: if signedIn()
+        && resource.data.recipientUid == request.auth.uid
+        && resource.data.status == 'pending'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+        && request.resource.data.status in ['accepted','rejected'];
+      allow delete: if false;
+    }
     match /conversations/{conversationId} {
       allow read: if isConversationMember(conversationId);
       allow create: if signedIn()
@@ -26,7 +52,9 @@ service cloud.firestore {
         && request.resource.data.members.size() == 2
         && request.auth.uid in request.resource.data.members
         && request.resource.data.members[0] != request.resource.data.members[1]
-        && request.resource.data.createdAt == request.time;
+        && request.resource.data.createdAt == request.time
+        && conversationId == request.resource.data.members[0] + '__' + request.resource.data.members[1]
+        && acceptedContacts(request.resource.data.members[0], request.resource.data.members[1]);
       allow update, delete: if false;
       match /messages/{messageId} {
         allow read: if isConversationMember(conversationId);
@@ -54,51 +82,15 @@ service cloud.firestore {
               && request.resource.data.mimeType is string
               && request.resource.data.size is int
               && request.resource.data.size > 0
-              && ((request.resource.data.type == 'image' && request.resource.data.mimeType.matches('image/.*') && request.resource.data.size <= 10485760
-            && (!request.resource.data.keys().hasAny(['mediaUrl']) || request.resource.data.mediaUrl is string))
-                || (request.resource.data.type == 'audio' && request.resource.data.mimeType.matches('audio/.*') && request.resource.data.size <= 20971520
-            && (!request.resource.data.keys().hasAny(['mediaUrl']) || request.resource.data.mediaUrl is string))))
+              && ((request.resource.data.type == 'image' && request.resource.data.mimeType.matches('image/.*') && request.resource.data.size <= 10485760)
+                || (request.resource.data.type == 'audio' && request.resource.data.mimeType.matches('audio/.*') && request.resource.data.size <= 20971520)))
           );
         allow update, delete: if false;
       }
     }
+    // The legacy global /messages collection is intentionally inaccessible.
     match /messages/{messageId} {
-      allow read: if signedIn();
-      allow create: if signedIn()
-        && request.resource.data.keys().hasOnly([
-          'type', 'text', 'mediaUrl', 'storagePath', 'mimeType', 'fileName',
-          'size', 'duration', 'email', 'uid', 'createdAt'
-        ])
-        && request.resource.data.keys().hasAll(['type', 'email', 'uid', 'createdAt'])
-        && request.resource.data.uid == request.auth.uid
-        && request.resource.data.email == request.auth.token.email
-        && request.resource.data.createdAt == request.time
-        && (
-          (request.resource.data.type == 'text'
-            && request.resource.data.keys().hasAll(['text'])
-            && request.resource.data.text is string
-            && request.resource.data.text.size() > 0
-            && request.resource.data.text.size() <= 2000)
-          ||
-          (request.resource.data.type == 'image'
-            && request.resource.data.keys().hasAll(['storagePath', 'mimeType', 'size'])
-            && request.resource.data.storagePath is string
-            && request.resource.data.storagePath.matches(request.auth.uid + '/.*')
-            && request.resource.data.mimeType.matches('image/.*')
-            && request.resource.data.size is int
-            && request.resource.data.size > 0
-            && request.resource.data.size <= 10485760)
-          ||
-          (request.resource.data.type == 'audio'
-            && request.resource.data.keys().hasAll(['storagePath', 'mimeType', 'size'])
-            && request.resource.data.storagePath is string
-            && request.resource.data.storagePath.matches(request.auth.uid + '/.*')
-            && request.resource.data.mimeType.matches('audio/.*')
-            && request.resource.data.size is int
-            && request.resource.data.size > 0
-            && request.resource.data.size <= 20971520)
-        );
-      allow update, delete: if false;
+      allow read, write: if false;
     }
   }
 }
