@@ -108,6 +108,43 @@ header small{display:none}
 #chat.room-open .composer,#chat.room-open #mediaActions,#chat.room-open .chatFoot{background:#f3f4f4}
 @media(max-width:420px){main{padding:0}.card{border-radius:0;margin-top:0}#chat{margin-top:0}.homeTitle h1{font-size:29px}}
 
+
+/* Controles globales de apariencia klk */
+:root{--klk-bg:#fff;--klk-surface:#fff;--klk-text:#111b21;--klk-muted:#68736f;--klk-accent:#075e54;--klk-soft:#e3f2ed;--klk-line:#e7ebea;--klk-message-bg:#f6f7f7;--klk-wallpaper:none}
+html,body{background:var(--klk-bg)}
+body{color:var(--klk-text)}
+header,.homeView,.homeBottom,.chatTop,.chatFoot,.card,#settingsPanel,#dmPanel{background:var(--klk-surface)!important;color:var(--klk-text)!important}
+header{border-bottom:1px solid var(--klk-line)}
+.homeTitle h1,.homeGroup,.chatRow,#peopleList .memberBtn{color:var(--klk-text)!important}
+.homeSearch input,.composer,.chatFoot,#mediaActions,#recordStatus{background:var(--klk-message-bg)!important}
+.homeFilters button.active,.homeBottom button.active{background:var(--klk-soft)!important;color:var(--klk-accent)!important}
+button:not(.iconBtn):not(.chatBack):not(.homeActions button):not(.homeBottom button):not(.homeFilters button):not(.chatRow):not(.homeGroup):not(.memberBtn){background-color:var(--klk-accent)}
+button.secondary{background:var(--klk-soft)!important;color:var(--klk-accent)!important}
+.settingsToggle{color:var(--klk-accent)!important}
+.homeBottom{border-color:var(--klk-line)}
+.homeFilters button{border-color:var(--klk-line)}
+.chatRow,.homeGroup,#peopleList .memberBtn{background:var(--klk-surface)!important}
+#messages{background-color:var(--klk-message-bg)!important;background-image:var(--klk-wallpaper)!important}
+.msg{background:var(--klk-surface);color:var(--klk-text)}
+.msg.mine{background:var(--klk-soft);color:var(--klk-text)}
+.msg b{color:var(--klk-accent)}
+input,select{color:var(--klk-text)}
+.settingRow{border-color:var(--klk-line)}
+.muted,.hint,.chatRowInfo small,.chatRow time,.homeGroupText small{color:var(--klk-muted)!important}
+html[data-theme="dark"]{color-scheme:dark}
+html[data-theme="dark"]{--klk-bg:#10191e;--klk-surface:#1b282f;--klk-text:#e9edef;--klk-muted:#aab7bd;--klk-soft:#263f3c;--klk-line:#34434a;--klk-message-bg:#142127}
+html[data-theme="dark"] input,html[data-theme="dark"] select{background:#26343b!important;border-color:#43525a!important;color:#e9edef!important}
+html[data-theme="dark"] .homeSearch input{background:#26343b!important}
+html[data-theme="dark"] .iconBtn,html[data-theme="dark"] .chatBack{background:#26343b;color:#e9edef}
+html[data-theme="dark"] .homeFilters button{background:#1b282f;color:#c5d0d5}
+html[data-theme="dark"] .homeFilters button.active{background:#263f3c;color:#b8eee0}
+html[data-theme="dark"] .personAvatar,html[data-theme="dark"] .homeAvatar{background:#263f3c;color:#d9f5ec}
+html[data-density="compact"] .chatRow,html[data-density="compact"] #peopleList .memberBtn{padding-top:7px;padding-bottom:7px}
+html[data-density="compact"] .chatRow .personAvatar,html[data-density="compact"] .personAvatar,html[data-density="compact"] .homeAvatar{width:44px;height:44px;flex-basis:44px}
+html[data-density="compact"] .homeFilters{padding-bottom:10px}
+html[data-density="compact"] .homeSearch{margin-bottom:10px}
+html[data-density="comfortable"] .chatRow,html[data-density="comfortable"] #peopleList .memberBtn{padding-top:14px;padding-bottom:14px}
+
 </style>
 </head>
 <body>
@@ -166,13 +203,17 @@ header small{display:none}
 <p id="recordStatus" class="hint" role="status" aria-live="polite"></p>
 <section id="settingsPanel" aria-label="Configuración de klk">
  <h3>⚙️ Configuración de klk</h3>
- <div class="settingRow"><span>Sonido de mensajes</span><input id="settingSound" type="checkbox" checked></div>
- <div class="settingRow"><span>Vibración</span><input id="settingVibration" type="checkbox" checked></div>
- <div class="settingRow"><span>Notificaciones del teléfono</span><button id="enableNotifications" type="button" style="width:auto;margin:0;padding:9px 12px">Activar</button></div>
+ <div class="settingRow"><span>Tamaño del texto</span><select id="settingTextSize"><option value="14">Pequeño</option><option value="15">Normal</option><option value="17">Grande</option><option value="19">Muy grande</option><option value="21">Extra grande</option></select></div>
+ <div class="settingRow"><span>Tema de la aplicación</span><select id="settingTheme"><option value="light">Claro</option><option value="dark">Oscuro</option><option value="system">Automático del teléfono</option></select></div>
+ <div class="settingRow"><span>Color principal</span><select id="settingAccent"><option value="teal">Verde</option><option value="blue">Azul</option><option value="purple">Morado</option><option value="rose">Rosa</option><option value="orange">Naranja</option></select></div>
+ <div class="settingRow"><span>Espaciado</span><select id="settingDensity"><option value="comfortable">Cómodo</option><option value="compact">Compacto</option></select></div>
+ <div class="settingRow"><span>Fondo de conversaciones</span><select id="settingWallpaper"><option value="pattern">Patrón suave</option><option value="plain">Liso</option><option value="gradient">Degradado</option></select></div>
  <div class="settingRow"><span>Vista previa de mensajes</span><input id="settingPreview" type="checkbox" checked></div>
- <div class="settingRow"><span>Tamaño del texto</span><select id="settingTextSize"><option value="15">Normal</option><option value="17">Grande</option><option value="19">Muy grande</option></select></div>
- <div class="settingRow"><span>Tema</span><select id="settingTheme"><option value="light">Claro</option><option value="dark">Oscuro</option></select></div>
- <p id="settingsStatus" class="hint" role="status" aria-live="polite">Los cambios se guardan en este teléfono.</p>
+ <div class="settingRow"><span>Vibración</span><input id="settingVibration" type="checkbox" checked></div>
+ <div class="settingRow"><span>Sonido de mensajes</span><input id="settingSound" type="checkbox" checked></div>
+ <div class="settingRow"><span>Notificaciones del teléfono</span><button id="enableNotifications" type="button" style="width:auto;margin:0;padding:9px 12px">Activar</button></div>
+ <p id="settingsStatus" class="hint" role="status" aria-live="polite">Los cambios se guardan automáticamente en este teléfono.</p>
+ <button id="resetSettings" class="secondary" type="button">Restablecer ajustes</button>
  <button id="closeSettings" class="secondary" type="button">Cerrar ajustes</button>
 </section>
 <div class="chatFoot"><p id="chatStatus" class="hint" role="status" aria-live="polite"></p><button id="logout" class="secondary" type="button">Cerrar sesión</button></div>
@@ -709,22 +750,33 @@ if (window.matchMedia("(display-mode: standalone)").matches || window.navigator.
 </script>
 <script>
 (function(){
- const $=id=>document.getElementById(id), defaults={sound:true,vibration:true,preview:true,textSize:"15",theme:"light"};
- let prefs={...defaults};try{prefs={...defaults,...JSON.parse(localStorage.getItem("klk-settings")||"{}")};}catch(e){}
+ const $=id=>document.getElementById(id);
+ const defaults={sound:true,vibration:true,preview:true,textSize:"15",theme:"light",accent:"teal",density:"comfortable",wallpaper:"pattern"};
+ let prefs={...defaults};
+ try{prefs={...defaults,...JSON.parse(localStorage.getItem("klk-settings")||"{}")};}catch(e){}
+ const accents={teal:["#075e54","#e3f2ed"],blue:["#1769aa","#e4f1fc"],purple:["#7046a8","#efe7fa"],rose:["#b33b65","#fae8ef"],orange:["#b45b16","#fff0df"]};
+ function effectiveTheme(){return prefs.theme==="system"?(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"):prefs.theme;}
  function apply(){
-  $("settingSound").checked=!!prefs.sound;$("settingVibration").checked=!!prefs.vibration;$("settingPreview").checked=!!prefs.preview;
-  $("settingTextSize").value=prefs.textSize;$("settingTheme").value=prefs.theme;
+  const root=document.documentElement, dark=effectiveTheme()==="dark", accent=accents[prefs.accent]||accents.teal;
+  root.dataset.theme=dark?"dark":"light";root.dataset.density=prefs.density==="compact"?"compact":"comfortable";
+  root.style.setProperty("--klk-accent",dark?accent[0]:accent[0]);root.style.setProperty("--klk-soft",dark?accent[0]+"33":accent[1]);
+  const wallpapers={pattern:"radial-gradient(#c9d2d0 0.7px,transparent 0.7px)",plain:"none",gradient:"linear-gradient(135deg,rgba(7,94,84,.07),rgba(120,150,180,.08))"};
+  root.style.setProperty("--klk-wallpaper",prefs.wallpaper==="pattern"?"radial-gradient(#c9d2d0 0.7px,transparent 0.7px)":prefs.wallpaper==="gradient"?"linear-gradient(135deg,rgba(7,94,84,.07),rgba(120,150,180,.08))":"none");
+  root.style.setProperty("--klk-message-bg",dark?"#142127":(prefs.wallpaper==="gradient"?"#f1f5f4":prefs.wallpaper==="plain"?"#f6f7f7":"#f6f7f7"));
   document.querySelectorAll(".msg p").forEach(el=>el.style.fontSize=prefs.textSize+"px");
-  document.body.style.background=prefs.theme==="dark"?"#101b20":"#efeae2";document.body.style.color=prefs.theme==="dark"?"#e9edef":"#111b21";
-  document.querySelectorAll(".card,#settingsPanel").forEach(el=>{el.style.background=prefs.theme==="dark"?"#1f2c33":"";el.style.color=prefs.theme==="dark"?"#e9edef":"";});
+  $("settingSound").checked=!!prefs.sound;$("settingVibration").checked=!!prefs.vibration;$("settingPreview").checked=!!prefs.preview;
+  $("settingTextSize").value=prefs.textSize;$("settingTheme").value=prefs.theme;$("settingAccent").value=prefs.accent;$("settingDensity").value=prefs.density;$("settingWallpaper").value=prefs.wallpaper;
+  document.body.style.fontSize=prefs.textSize+"px";
  }
- function save(){localStorage.setItem("klk-settings",JSON.stringify(prefs));apply();}
+ function save(){try{localStorage.setItem("klk-settings",JSON.stringify(prefs));}catch(e){$("settingsStatus").textContent="No se pudieron guardar los cambios en este teléfono.";}apply();$("settingsStatus").textContent="Ajustes guardados automáticamente en este teléfono.";}
  ["settingSound","settingVibration","settingPreview"].forEach(id=>$(id).addEventListener("change",()=>{prefs[id.slice(7).toLowerCase()]=$(id).checked;save();}));
- $("settingTextSize").addEventListener("change",e=>{prefs.textSize=e.target.value;save();});$("settingTheme").addEventListener("change",e=>{prefs.theme=e.target.value;save();});
- $("settingsToggle").addEventListener("click",()=>{const panel=$("settingsPanel");panel.style.display=panel.style.display==="block"?"none":"block";});
+ [["settingTextSize","textSize"],["settingTheme","theme"],["settingAccent","accent"],["settingDensity","density"],["settingWallpaper","wallpaper"]].forEach(([id,key])=>$(id).addEventListener("change",e=>{prefs[key]=e.target.value;save();}));
+ $("settingsToggle").addEventListener("click",()=>{const panel=$("settingsPanel");panel.style.display=panel.style.display==="block"?"none":"block";if(panel.style.display==="block")panel.scrollTop=0;});
  $("closeSettings").addEventListener("click",()=>{$("settingsPanel").style.display="none";});
+ $("resetSettings").addEventListener("click",()=>{prefs={...defaults};save();$("settingsStatus").textContent="Se restauró la apariencia original de klk.";});
  function permissionButton(){ $("enableNotifications").textContent=("Notification" in window && Notification.permission==="granted")?"Activadas":"Activar";}
  $("enableNotifications").addEventListener("click",async()=>{if(!("Notification" in window)){$("settingsStatus").textContent="Este dispositivo no admite notificaciones web.";return;}try{const p=await Notification.requestPermission();$("settingsStatus").textContent=p==="granted"?"Permiso concedido. Para avisos con la app cerrada falta activar el envío push de Firebase.":"Permiso no concedido; puedes cambiarlo en los ajustes del teléfono.";permissionButton();}catch(e){$("settingsStatus").textContent="No se pudo solicitar el permiso."; }});
+ if(window.matchMedia){const media=window.matchMedia("(prefers-color-scheme: dark)");if(media.addEventListener)media.addEventListener("change",()=>{if(prefs.theme==="system")apply();});}
  function tone(){if(!prefs.sound)return;try{const C=window.AudioContext||window.webkitAudioContext;if(!C)return;const x=new C(),o=x.createOscillator(),g=x.createGain();o.frequency.value=880;g.gain.setValueAtTime(.0001,x.currentTime);g.gain.exponentialRampToValueAtTime(.1,x.currentTime+.02);g.gain.exponentialRampToValueAtTime(.0001,x.currentTime+.2);o.connect(g);g.connect(x.destination);o.start();o.stop(x.currentTime+.22);o.onended=()=>x.close();}catch(e){}}
  window.klkNotifyIncoming=(data,id)=>{if(!data||data.uid===window.klkCurrentUid)return;tone();if(prefs.vibration&&navigator.vibrate)navigator.vibrate([100,60,100]);if("Notification"in window&&Notification.permission==="granted"&&document.visibilityState!=="visible"){const body=prefs.preview?(data.text||(data.type==="image"?"📷 Foto":data.type==="audio"?"🎙️ Nota de voz":"Nuevo mensaje")):"Tienes un mensaje nuevo";try{new Notification("klk · "+(data.email||"Mensaje nuevo"),{body,tag:"klk-"+id});}catch(e){}}};
  window.klkSetCurrentUid=uid=>{window.klkCurrentUid=uid||null;};apply();permissionButton();
