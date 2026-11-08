@@ -20,7 +20,7 @@ try {
 }
 const BUCKET = "Chat-media";
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
-const MAX_AUDIO_BYTES = 20 * 1024 * 1024;
+const MAX_AUDIO_BYTES = 20 * 1024 * 1024;\nconst MAX_AVATAR_BYTES = 5 * 1024 * 1024;
 const firebaseKeys = createRemoteJWKSet(
   new URL("https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com"),
 );
@@ -95,7 +95,7 @@ Deno.serve(async (request) => {
     if ((!isImage && !isAudio) || !Number.isSafeInteger(size) || size <= 0) {
       return reply(400, { error: "Tipo o tamaño de archivo no válido." });
     }
-    if ((isImage && size > MAX_IMAGE_BYTES) || (isAudio && size > MAX_AUDIO_BYTES)) {
+    if ((isImage && size > MAX_IMAGE_BYTES) || (isAudio && size > MAX_AUDIO_BYTES) || (isAvatar && size > MAX_AVATAR_BYTES)) {
       return reply(413, { error: "El archivo supera el límite permitido." });
     }
 
