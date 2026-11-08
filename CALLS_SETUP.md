@@ -9,6 +9,9 @@
 - Controles para silenciar el micrófono, apagar la cámara y finalizar.
 - Cámara frontal para videollamadas.
 - Limpieza de cámara, micrófono y listeners al terminar.
+- La llamada entrante se cierra si quien llama cancela, y las llamadas sin respuesta caducan automáticamente después de 45 segundos.
+- Se crea la conversación privada si los contactos ya aceptados todavía no la habían abierto, evitando que Firestore rechace el inicio de la llamada.
+- El audio remoto se reproduce por un único elemento para evitar duplicación de sonido.
 
 ## Requisitos de despliegue
 
@@ -40,7 +43,8 @@ No guardes credenciales permanentes de TURN en un repositorio público. Usa cred
 
 - Llamada de voz iniciada desde el teléfono A y recibida en el B.
 - Llamada de video en ambos sentidos y visualización de las dos cámaras.
-- Rechazo, finalizar desde cualquiera de los teléfonos y permisos denegados.
+- Rechazo, cancelación antes de responder, caducidad por falta de respuesta y finalizar desde cualquiera de los teléfonos.
+- Verificar que el permiso de micrófono/cámara se solicita y que la reproducción remota funciona sin eco ni audio duplicado.
 - Repetir con datos móviles y Wi-Fi; si una red no conecta, configurar TURN y volver a probar.
 
 La existencia del código no equivale a una llamada ya probada. Esta rama debe desplegarse y validarse en dos teléfonos antes de marcar las llamadas como listas.
