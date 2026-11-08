@@ -29,6 +29,10 @@ Desde Firebase Console, abre Firestore → Rules y copia el contenido de `firest
 
 El proyecto Firebase configurado en la app es `klk-familia`. No publiques reglas hasta revisar que el proyecto seleccionado en Firebase Console sea ese.
 
+## Privacidad y cifrado
+
+El directorio de usuarios de esta primera versión permite a cualquier usuario autenticado consultar los perfiles básicos para buscar contactos por correo; por eso, los correos registrados no deben tratarse como privados frente a otras cuentas del mismo proyecto. Los mensajes están protegidos por reglas de acceso para miembros, pero todavía no tienen cifrado de extremo a extremo como WhatsApp: el proyecto Firebase y sus administradores de confianza pueden acceder a los datos almacenados.
+
 ## Llamadas
 
 La rama incluye señalización WebRTC de voz y video usando Firestore y el servidor STUN público de Google. Esto permite iniciar pruebas, pero **no garantiza conexión en todas las redes**. Para llamadas confiables en redes móviles, NAT estrictos o firewalls, configura un servidor TURN (por ejemplo, coturn o un proveedor TURN) y agrega sus credenciales a la configuración ICE. Las llamadas todavía necesitan pruebas entre dos dispositivos reales. Las notificaciones push de llamadas no están implementadas; el usuario debe tener la app abierta para recibir la señalización en tiempo real.
