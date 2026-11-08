@@ -12,14 +12,14 @@
 <link rel="icon" href="./icon.svg" type="image/svg+xml">
 <title>klk - Chat familiar</title>
 <style>
-*{box-sizing:border-box}html{min-height:100%;background:#efeae2}body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#efeae2;color:#111b21;min-height:100vh;min-height:100dvh;padding-bottom:env(safe-area-inset-bottom)}
+*{box-sizing:border-box}html{min-height:100%;background:#efeae2}body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#efeae2;color:#111b21;min-height:100vh;min-height:100dvh;height:100dvh;overflow:hidden;padding-bottom:env(safe-area-inset-bottom);display:flex;flex-direction:column}
 header{position:sticky;top:0;z-index:5;background:#075e54;color:white;padding:calc(14px + env(safe-area-inset-top)) 18px 14px;font-size:25px;font-weight:700;box-shadow:0 2px 5px #0002}
 header small{display:block;font-size:13px;font-weight:400;opacity:.9;margin-top:3px}
-main{max-width:760px;margin:auto;padding:12px 10px calc(12px + env(safe-area-inset-bottom))}.card{background:#fff;padding:20px;border-radius:12px;margin-top:16px;box-shadow:0 2px 8px #00000012}
+main{width:100%;max-width:760px;flex:1 1 auto;min-height:0;margin:0 auto;padding:12px 10px calc(12px + env(safe-area-inset-bottom));overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}.card{background:#fff;padding:20px;border-radius:12px;margin-top:16px;box-shadow:0 2px 8px #00000012}
 h2{margin-top:0}input,button{width:100%;padding:14px;margin:7px 0;border-radius:24px;font-size:16px}
 input{border:1px solid #d6dce0;background:#fff;color:#17211e}input:focus{outline:2px solid #128c7e;border-color:transparent}
 button{background:#075e54;color:white;border:0;font-weight:700;cursor:pointer}button.secondary{background:#e3f2ed;color:#075e54}button:disabled{opacity:.55}
-#chat{display:none;padding:0;overflow:hidden;background:#efeae2}
+#chat{display:none;flex-direction:column;min-height:0;height:100%;padding:0;overflow:hidden;background:#efeae2}
 .chatTop{background:#075e54;color:#fff;padding:14px 16px}.chatTop h2{font-size:18px;margin:0 0 3px}.chatTop .muted{color:#d6eee8}
 #messages{height:58vh;height:58dvh;max-height:650px;min-height:260px;overflow:auto;padding:14px 12px;background-color:#efeae2;background-image:radial-gradient(#d8d0c5 0.7px,transparent 0.7px);background-size:18px 18px}
 .msg{background:#fff;padding:9px 12px;border-radius:3px 12px 12px 12px;margin:8px 0;overflow-wrap:anywhere;max-width:88%;width:fit-content;box-shadow:0 1px 1px #00000012}
@@ -33,7 +33,7 @@ button{background:#075e54;color:white;border:0;font-weight:700;cursor:pointer}bu
 #mediaActions{display:flex;gap:7px;padding:0 12px 8px;background:#f0f2f5}#mediaActions button{width:auto;flex:1;margin:0;padding:9px 5px;border-radius:20px;font-size:13px}
 #recordStatus{padding:0 12px;margin:0;background:#f0f2f5;min-height:18px}.chatFoot{padding:4px 12px 10px;background:#f0f2f5}
 .muted{color:#68736f;font-size:12px}#status{color:#a12b2b;overflow-wrap:anywhere;min-height:18px}.hint{font-size:13px;color:#68736f;line-height:1.45}button[hidden]{display:none!important}#installApp{margin-top:0}
-@media(max-width:420px){main{padding:8px 0}.card{border-radius:0;margin-top:8px}#chat{margin-top:0}#messages{height:calc(100dvh - 220px);max-height:none}}
+@media(max-width:420px){main{padding:8px 0}.card{border-radius:0;margin-top:8px}#chat{margin-top:0}}\n\n/* Desplazamiento interno: el encabezado y los controles permanecen visibles. */\nhtml,body{height:100%;overscroll-behavior:none}\nheader{flex:0 0 auto}\nmain{scrollbar-gutter:stable}\n#chat{display:none}\n#chat[style*="display: flex"]{display:flex!important}\n.chatTop,#chatNav,.composer,#mediaActions,.chatFoot{flex:0 0 auto}\n#messages{flex:1 1 auto;height:auto;min-height:140px;max-height:none;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}\n#dmPanel{flex:1 1 auto;min-height:0;max-height:none;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}\n#settingsPanel{flex:0 1 auto;max-height:42dvh;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}\n@media(max-width:420px){#messages{min-height:120px}}
 
 #chatNav{display:flex;gap:8px;padding:10px;background:#e3f2ed}
 #chatNav button{margin:0;padding:10px 8px;font-size:13px}
@@ -192,7 +192,7 @@ $("forgot").addEventListener("click", async () => {
 $("logout").onclick = async () => { if (unsubscribe) { unsubscribe(); unsubscribe = null; } await auth.signOut(); };
 auth && auth.onAuthStateChanged(async user => {
  $("login").style.display = user ? "none" : "block";
- $("chat").style.display = user ? "block" : "none";
+ $("chat").style.display = user ? "flex" : "none";
  if (user) {
   window.klkSetCurrentUid && window.klkSetCurrentUid(user.uid);
   $("who").textContent = "Conectado: " + (user.email || "usuario");
