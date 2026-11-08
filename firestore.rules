@@ -54,8 +54,10 @@ service cloud.firestore {
               && request.resource.data.mimeType is string
               && request.resource.data.size is int
               && request.resource.data.size > 0
-              && ((request.resource.data.type == 'image' && request.resource.data.mimeType.matches('image/.*') && request.resource.data.size <= 10485760)
-                || (request.resource.data.type == 'audio' && request.resource.data.mimeType.matches('audio/.*') && request.resource.data.size <= 20971520)))
+              && ((request.resource.data.type == 'image' && request.resource.data.mimeType.matches('image/.*') && request.resource.data.size <= 10485760
+            && (!request.resource.data.keys().hasAny(['mediaUrl']) || request.resource.data.mediaUrl is string))
+                || (request.resource.data.type == 'audio' && request.resource.data.mimeType.matches('audio/.*') && request.resource.data.size <= 20971520
+            && (!request.resource.data.keys().hasAny(['mediaUrl']) || request.resource.data.mediaUrl is string))))
           );
         allow update, delete: if false;
       }
@@ -64,7 +66,7 @@ service cloud.firestore {
       allow read: if signedIn();
       allow create: if signedIn()
         && request.resource.data.keys().hasOnly([
-          'type', 'text', 'storagePath', 'mimeType', 'fileName',
+          'type', 'text', 'mediaUrl', 'storagePath', 'mimeType', 'fileName',
           'size', 'duration', 'email', 'uid', 'createdAt'
         ])
         && request.resource.data.keys().hasAll(['type', 'email', 'uid', 'createdAt'])
