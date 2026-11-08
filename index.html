@@ -234,7 +234,7 @@ $("authForm").addEventListener("submit", async event => {
  } catch(error) {
   showError("status", error);
   if (error.code && ["auth/invalid-verification-code","auth/code-expired"].includes(error.code)) $("verificationCode").value = "";
-  if (error.code && ["auth/captcha-check-failed","auth/invalid-app-credential","auth/too-many-requests"].includes(error.code) && recaptchaVerifier) {
+  if (!confirmationResult && recaptchaVerifier) {
    try { recaptchaVerifier.clear(); } catch(e) {}
    recaptchaVerifier = null;
    $("recaptcha-container").innerHTML = "";
@@ -257,7 +257,7 @@ $("sendLinkCode").addEventListener("click", async () => {
   $("linkStatus").textContent = "Enviamos un código a " + phone + ".";
  } catch(error) {
   $("linkStatus").textContent = (error.message || "No se pudo enviar el SMS.") + (error.code ? " [" + error.code + "]" : "");
-  if (linkRecaptchaVerifier && error.code === "auth/captcha-check-failed") { try { linkRecaptchaVerifier.clear(); } catch(e) {} linkRecaptchaVerifier = null; $("linkRecaptcha").innerHTML = ""; }
+  if (linkRecaptchaVerifier) { try { linkRecaptchaVerifier.clear(); } catch(e) {} linkRecaptchaVerifier = null; $("linkRecaptcha").innerHTML = ""; }
  } finally { $("sendLinkCode").disabled = false; }
 });
 $("confirmLinkCode").addEventListener("click", async () => {
