@@ -1,4 +1,4 @@
-const CACHE_NAME = "klk-shell-v4";
+const CACHE_NAME = "klk-shell-v5";
 const APP_SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon.svg"];
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_SHELL)));
