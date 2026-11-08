@@ -84,7 +84,7 @@ header small{display:none}
 #peopleList .memberBtn strong{font-size:17px;font-weight:650}
 #peopleList .memberBtn small{font-size:13px;color:#68736f}
 #peopleList .memberBtn:active,.homeGroup:active{background:#f4f6f6}
-.homeBottom{position:fixed;z-index:50;left:10px;right:10px;bottom:calc(8px + env(safe-area-inset-bottom));display:grid;grid-template-columns:repeat(5,minmax(0,1fr));align-items:center;gap:3px;padding:8px 6px;background:var(--klk-surface,#fff);border:1px solid var(--klk-line,#e7ebea);border-radius:22px;box-shadow:0 8px 28px #10201c20;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+.homeBottom{position:fixed;z-index:50;left:10px;right:10px;bottom:calc(8px + env(safe-area-inset-bottom));display:grid;grid-template-columns:repeat(4,minmax(0,1fr));align-items:center;gap:3px;padding:8px 6px;background:var(--klk-surface,#fff);border:1px solid var(--klk-line,#e7ebea);border-radius:22px;box-shadow:0 8px 28px #10201c20;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
 .homeBottom button{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-width:0;min-height:62px;width:100%;margin:0;padding:5px 1px;background:transparent;color:var(--klk-muted,#66736f);border:0;border-radius:16px;font-size:10px;line-height:1.15;font-weight:650;white-space:nowrap;touch-action:manipulation;transition:background .18s ease,color .18s ease,transform .18s ease}
 .homeBottom button .navIcon{display:grid;place-items:center;width:34px;height:28px;border-radius:12px;font-size:21px;line-height:1;transition:background .18s ease,transform .18s ease}
 .homeBottom button .navLabel{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis}
@@ -248,7 +248,7 @@ html[data-density="comfortable"] .chatRow,html[data-density="comfortable"] #peop
  <section id="toolsPanel" class="homeUtilityPanel" aria-label="Herramientas" hidden>
   <h2>Herramientas</h2><p class="hint">Accesos rápidos para moverte por klk.</p>
   <div class="toolGrid">
-   <button type="button" data-go-tab="chats"><span>💬</span>Mis chats</button><button type="button" data-go-tab="calls"><span>☎️</span>Llamadas</button><button type="button" data-go-tab="assistant"><span>🤖</span>Asistente IA</button>
+   <button type="button" data-go-tab="chats"><span>💬</span>Mis chats</button><button type="button" data-go-tab="calls"><span>☎️</span>Llamadas</button><button type="button" data-tool-action="assistant"><span>🤖</span>Asistente IA</button>
    <button type="button" data-go-filter="people"><span>👥</span>Personas</button><button type="button" data-go-filter="requests"><span>✉️</span>Solicitudes</button>
    <button type="button" data-tool-action="settings"><span>⚙️</span>Ajustes</button><button type="button" data-tool-action="invite"><span>＋</span>Invitar</button>
    <button type="button" data-tool-action="profile"><span>🖼️</span>Mi perfil</button><button type="button" data-tool-action="top"><span>⬆️</span>Ir arriba</button>
@@ -256,6 +256,7 @@ html[data-density="comfortable"] .chatRow,html[data-density="comfortable"] #peop
  </section>
 
  <section id="assistantPanel" class="homeUtilityPanel" aria-label="Asistente inteligente" hidden>
+  <button type="button" class="secondary" data-tool-action="back-tools" aria-label="Volver a herramientas">‹ Volver a herramientas</button>
   <h2>🤖 Asistente inteligente</h2>
   <p class="hint">Te ayuda a usar klk, revisar fallos y encontrar soluciones. La revisión automática solo aplica arreglos seguros; los cambios de servidor o código requieren pruebas.</p>
   <div class="assistantCard">
@@ -278,7 +279,6 @@ html[data-density="comfortable"] .chatRow,html[data-density="comfortable"] #peop
   <button type="button" data-tab="calls"><span class="navIcon" aria-hidden="true">☎</span><span class="navLabel">Llamadas</span></button>
   <button type="button" data-tab="updates"><span class="navIcon" aria-hidden="true">◉</span><span class="navLabel">Novedades</span></button>
   <button type="button" data-tab="tools"><span class="navIcon" aria-hidden="true">▦</span><span class="navLabel">Herramientas</span></button>
-  <button type="button" data-tab="assistant"><span class="navIcon" aria-hidden="true">✦</span><span class="navLabel">Asistente IA</span></button>
  </nav>
 </div>
 
@@ -1127,7 +1127,7 @@ document.querySelectorAll(".homeFilters button").forEach(button=>button.addEvent
 }));
 $("chatsPanel").style.display="block";$("requestsPanel").style.display="none";$("peopleList").style.display="none";
 function setHomeTab(tab){
- const validTabs=["chats","calls","updates","tools","assistant"];
+ const validTabs=["chats","calls","updates","tools"];
  if(!validTabs.includes(tab)) return;
  const panelIds=["chatsPanel","requestsPanel","peopleList","callsPanel","updatesPanel","toolsPanel","assistantPanel"];
  panelIds.forEach(id=>{const el=$(id);if(el){el.hidden=false;el.style.display="none";}});
@@ -1140,7 +1140,7 @@ function setHomeTab(tab){
   const filter=document.querySelector('.homeFilters button[data-filter="'+(activeHomeFilter||"chats")+'"]');
   if(filter)filter.click();
  }else{
-  const panel=$(tab==="calls"?"callsPanel":tab==="updates"?"updatesPanel":tab==="tools"?"toolsPanel":"assistantPanel");
+  const panel=$(tab==="calls"?"callsPanel":tab==="updates"?"updatesPanel":"toolsPanel");
   if(panel){panel.hidden=false;panel.style.display="block";}
  }
  document.querySelectorAll(".homeBottom button").forEach(b=>{
@@ -1160,6 +1160,8 @@ document.querySelectorAll("[data-go-filter]").forEach(button=>button.addEventLis
 document.querySelectorAll("[data-tool-action]").forEach(button=>button.addEventListener("click",()=>{
  const action=button.dataset.toolAction;
  if(action==="settings")$("homeMenu").click();
+ if(action==="assistant"){setHomeTab("tools");$("toolsPanel").style.display="none";$("assistantPanel").hidden=false;$("assistantPanel").style.display="block";$("assistantPanel").scrollIntoView({behavior:"smooth",block:"start"});}
+ if(action==="back-tools"){setHomeTab("tools");$("toolsPanel").scrollIntoView({behavior:"smooth",block:"start"});}
  if(action==="invite"){$("inviteMember").click();window.scrollTo({top:0,behavior:"smooth"});}
  if(action==="profile")$("profileButton").click();
  if(action==="top")window.scrollTo({top:0,behavior:"smooth"});
