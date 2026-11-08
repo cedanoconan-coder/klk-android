@@ -218,7 +218,10 @@ auth && auth.onAuthStateChanged(async user => {
   activeConversationId = null; activeConversationName = null;
   $("chatTitle").textContent = "👨‍👩‍👧‍👦 Familia klk"; $("dmPanel").style.display = "none"; $("messages").style.display = "block";
   try {
-   await db.collection("users").doc(user.uid).set({uid:user.uid,email:user.email || "",displayName:user.displayName || (user.email || "Miembro").split("@")[0],updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
+   const userRef = db.collection("users").doc(user.uid);
+   const userSnap = await userRef.get(), profile = userSnap.exists ? userSnap.data() : {};
+   await userRef.set({uid:user.uid,email:user.email || "",displayName:user.displayName || profile.displayName || (user.email || "Miembro").split("@")[0],updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
+   if (profile.photoPath) getMediaUrl(profile.photoPath).then(url => { if (url) $("profilePreview").src = url; }).catch(error => console.warn("Foto propia:", error));
    loadPeople(); loadMessages();
   } catch(error) { showError("chatStatus",error); }
  } else {
