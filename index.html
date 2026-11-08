@@ -369,14 +369,14 @@ async function startCall(kind) {
   const calleeId=members.find(id=>id!==user.uid);
   if(!calleeId)throw new Error("No se encontró al destinatario.");
   const callRef=db.collection("calls").doc();activeCallRef=callRef;
-  await callRef.set({callerId:user.uid,calleeId,conversationId:activeConversationId,kind,status:"ringing",createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+  await callRef.set({callerId:user.uid,calleeId,conversationId:activeConversationId,kind,status:"preparing",createdAt:firebase.firestore.FieldValue.serverTimestamp()});
   showCallOverlay(kind==="video"?"Videollamada":"Llamada de voz",activeConversationName,"Llamando...");
   $("localVideo").srcObject=activeLocalStream;$("localVideo").style.display=kind==="video"?"block":"none";
   $("endCallBtn").hidden=false;$("muteCallBtn").hidden=false;$("cameraCallBtn").hidden=kind!=="video";
   const pc=setupPeerConnection(callRef,"caller",kind);
   listenForCandidates(callRef,"calleeCandidates",pc);
   const offer=await pc.createOffer();await pc.setLocalDescription(offer);
-  await callRef.update({offer:{type:offer.type,sdp:offer.sdp}});
+  await callRef.update({offer:{type:offer.type,sdp:offer.sdp},status:"ringing"});
   const unsub=callRef.onSnapshot(async snap=>{
    if(!snap.exists)return;const data=snap.data();
    if(data.status==="rejected"){ $("callStatus").textContent="La llamada fue rechazada.";setTimeout(clearCallMedia,900);return;}
