@@ -245,6 +245,7 @@
   listenIncoming(user.uid);watchCallContacts(user.uid);renderCallContacts();
  });
 
+ window.klkStartCall=startCall;
  async function runCallDiagnostics(){
   const output=$("callDiagnosticsStatus");if(!output)return;
   const checks=[];
