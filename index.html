@@ -25,7 +25,7 @@ button{background:#075e54;color:white;border:0;font-weight:700;cursor:pointer}bu
 .msg{background:#fff;padding:9px 12px;border-radius:3px 12px 12px 12px;margin:8px 0;overflow-wrap:anywhere;max-width:88%;width:fit-content;box-shadow:0 1px 1px #00000012}
 .msg.mine{background:#d9fdd3;margin-left:auto;border-radius:12px 3px 12px 12px}
 .msg b{font-size:12px;color:#087568}.msg p{margin:5px 0 0;white-space:pre-wrap;font-size:15px;line-height:1.35}
-#messages img{display:block;max-width:100%;max-height:340px;border-radius:8px;margin-top:7px}#messages audio{display:block;width:min(260px,70vw);max-width:100%;margin-top:7px}
+.avatar{width:42px;height:42px;flex:0 0 42px;border-radius:50%;object-fit:cover;background:#dce8e4;border:1px solid #d4dfda}.memberLine{display:flex;align-items:center;gap:10px;text-align:left}.memberInfo{min-width:0;display:flex;flex-direction:column;gap:3px}.memberInfo small{overflow-wrap:anywhere}#profilePreview{width:76px;height:76px;border-radius:50%;object-fit:cover;background:#e3f2ed;border:2px solid #c9ddd6}#messages img{display:block;max-width:100%;max-height:340px;border-radius:8px;margin-top:7px}#messages audio{display:block;width:min(260px,70vw);max-width:100%;margin-top:7px}
 .composer{display:flex;align-items:center;gap:7px;padding:9px;background:#f0f2f5}
 .composer input{flex:1;min-width:0;margin:0;border:0;border-radius:24px;padding:13px 16px;background:#fff}
 .iconBtn{width:44px;height:44px;flex:0 0 44px;margin:0;padding:0;border-radius:50%;font-size:20px;background:#fff;color:#54656f}
@@ -105,6 +105,12 @@ main{scrollbar-gutter:stable}
  <div class="settingRow"><span>Vista previa de mensajes</span><input id="settingPreview" type="checkbox" checked></div>
  <div class="settingRow"><span>Tamaño del texto</span><select id="settingTextSize"><option value="15">Normal</option><option value="17">Grande</option><option value="19">Muy grande</option></select></div>
  <div class="settingRow"><span>Tema</span><select id="settingTheme"><option value="light">Claro</option><option value="dark">Oscuro</option></select></div>
+ <h3>👤 Foto de perfil</h3>
+ <div style="display:flex;align-items:center;gap:12px;margin:8px 0 14px">
+  <img id="profilePreview" alt="Mi foto de perfil" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'%3E%3Ccircle cx='40' cy='40' r='40' fill='%23dce8e4'/%3E%3Ccircle cx='40' cy='29' r='14' fill='%2389a99e'/%3E%3Cpath d='M13 75c2-17 13-25 27-25s25 8 27 25' fill='%2389a99e'/%3E%3C/svg%3E">
+  <div style="flex:1"><button id="changeProfilePhoto" type="button" style="margin:0 0 6px">📷 Cambiar foto</button><p class="hint" style="margin:0">JPG, PNG o WebP. Máximo 5 MB.</p></div>
+ </div>
+ <input id="profilePhotoInput" type="file" accept="image/*" hidden>
  <p id="settingsStatus" class="hint" role="status" aria-live="polite">Los cambios se guardan en este teléfono.</p>
  <button id="closeSettings" class="secondary" type="button">Cerrar ajustes</button>
 </section>
@@ -136,7 +142,7 @@ function getSupabaseClient() {
  if (!supabaseClient) supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
  return supabaseClient;
 }
-const mediaUrlCache = new Map();
+const mediaUrlCache = new Map();\nlet profileUrlCache = new Map();
 let auth, db, firebaseInitError = null, unsubscribe = null, sending = false, mediaRecorder = null, audioStream = null, audioBlob = null, audioStartedAt = 0;
 let activeConversationId = null, activeConversationName = null, peopleUnsubscribe = null;
 function showError(target, error) {
@@ -455,7 +461,31 @@ $("sendAudio").onclick = async () => {
  $("recordAudio").textContent = "🎙️ Grabar audio";
 };
 
-$("message").addEventListener("keydown", event => { if (event.key === "Enter") $("send").click(); });
+
+$("changeProfilePhoto").addEventListener("click",()=>$("profilePhotoInput").click());
+$("profilePhotoInput").addEventListener("change",async event=>{
+ const file=event.target.files&&event.target.files[0]; event.target.value="";
+ const user=auth&&auth.currentUser;
+ if(!file||!user)return;
+ if(!file.type.startsWith("image/")){$("settingsStatus").textContent="Selecciona una imagen válida.";return;}
+ if(file.size>5*1024*1024){$("settingsStatus").textContent="La foto debe pesar 5 MB o menos.";return;}
+ $("changeProfilePhoto").disabled=true;$("settingsStatus").textContent="Subiendo foto de perfil...";
+ try{
+  const optimized=await compressImage(file);
+  const mimeType=optimized.type||"image/jpeg", idToken=await user.getIdToken();
+  const response=await fetch(SUPABASE_URL+"/functions/v1/media",{method:"POST",headers:{"Content-Type":"application/json","apikey":SUPABASE_PUBLISHABLE_KEY,"Authorization":"Bearer "+idToken},body:JSON.stringify({action:"create-upload",type:"avatar",size:optimized.size,mimeType})});
+  const signed=await response.json().catch(()=>({}));
+  if(!response.ok||!signed.path||!signed.token)throw new Error(signed.error||"No se pudo preparar la foto.");
+  const {error}=await getSupabaseClient().storage.from("Chat-media").uploadToSignedUrl(signed.path,signed.token,optimized,{contentType:mimeType});
+  if(error)throw error;
+  await db.collection("users").doc(user.uid).set({photoPath:signed.path,photoUpdatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
+  mediaUrlCache.delete(signed.path);
+  const url=await getMediaUrl(signed.path);if(url)$("profilePreview").src=url;
+  $("settingsStatus").textContent="Foto de perfil actualizada. Ya pueden verla los demás miembros.";
+ }catch(error){console.error(error);$("settingsStatus").textContent="No se pudo actualizar la foto: "+(error.message||"Error desconocido");}
+ finally{$("changeProfilePhoto").disabled=false;}
+});
+\n$("message").addEventListener("keydown", event => { if (event.key === "Enter") $("send").click(); });
 </script>
 <script>
 if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(error => console.error("Service worker:", error)));
