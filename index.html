@@ -191,6 +191,7 @@ html[data-density="comfortable"] .chatRow,html[data-density="comfortable"] #peop
 
 /* Panel de perfil klk, inspirado en una experiencia de mensajería */
 #homeProfilePanel{display:none;margin:0 12px 18px;padding:18px;background:var(--klk-surface);border-radius:18px;border:1px solid var(--klk-border,#e2e8e5)}.profileHero{display:flex;align-items:center;gap:14px;padding:10px 4px 18px;border-bottom:1px solid #e2e8e5}.profileHero img{width:76px;height:76px;border-radius:50%;object-fit:cover;background:#edf2ef}.profileHero strong{display:block;font-size:19px}.profileHero small{display:block;color:#66736f;margin-top:5px}.profileSection{padding:14px 0;border-bottom:1px solid #e2e8e5}.profileSection h3{font-size:14px;color:var(--klk-accent);margin:0 0 10px;text-transform:uppercase;letter-spacing:.5px}.profileField{display:block;margin:10px 0}.profileField span{display:block;font-size:12px;color:#66736f;margin-bottom:5px}.profileField input,.profileField textarea{width:100%;box-sizing:border-box;padding:12px;border:1px solid #ccd7d2;border-radius:10px;background:var(--klk-surface);color:var(--klk-text)}.profileField textarea{min-height:76px;resize:vertical}.profileAction{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:13px 4px;border:0;border-bottom:1px solid #e2e8e5;background:transparent;color:var(--klk-text);text-align:left}.profileAction small{display:block;color:#66736f;margin-top:3px}.profileButtons{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.profileButtons button{flex:1;min-width:120px}
+.contactProfilePanel{background:#fff;padding:0 0 18px;margin:10px;border-radius:16px;overflow:hidden;box-shadow:0 2px 10px #0001}.contactProfileTop{display:flex;align-items:center;gap:12px;padding:12px;background:#075e54;color:white}.contactProfileTop button{width:auto;margin:0;padding:8px 14px}.contactProfileHero{text-align:center;padding:22px 16px 16px}.contactProfileHero img{width:112px;height:112px;object-fit:cover;border-radius:50%;background:#edf2ef}.contactProfileHero h2{margin:10px 0 4px}.contactProfileHero p{margin:0;color:#68736f}.contactProfileActions{display:flex;gap:8px;padding:0 12px 16px}.contactProfileActions button{margin:0;padding:11px 5px;flex:1;font-size:13px}.contactProfileSection{border-top:8px solid #f2f4f3;padding:14px}.contactProfileSection h3{font-size:16px;margin:0 0 12px}.contactMediaTabs{display:flex;gap:7px}.contactMediaTabs button{margin:0;padding:9px 5px;flex:1;font-size:12px;background:#edf5f2;color:#075e54}.contactMediaTabs button.active{background:#075e54;color:white}.contactSharedMedia{padding:12px 2px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.contactSharedMedia img{width:100%;height:100px;object-fit:cover;border-radius:8px}.contactSharedMedia a{grid-column:1/-1;color:#075e54;overflow-wrap:anywhere;padding:10px;background:#f4f7f6;border-radius:8px}
 </style>
 </head>
 <body>
@@ -234,6 +235,7 @@ html[data-density="comfortable"] .chatRow,html[data-density="comfortable"] #peop
  <section id="chatsPanel" style="padding:4px 0 12px"><div id="chatsList" aria-label="Conversaciones recientes" class="hint" style="padding:12px 20px">Cargando conversaciones...</div></section>
  <section id="requestsPanel" style="padding:8px 20px"><h3 style="font-size:16px;margin:8px 0">Solicitudes recibidas</h3><div id="requestsList" class="hint">Cargando solicitudes...</div></section>
  <div id="peopleList" aria-label="Personas registradas">Cargando personas...</div>
+<section id="contactProfilePanel" class="contactProfilePanel" aria-label="Perfil del contacto" hidden><div class="contactProfileTop"><button id="contactProfileBack" class="secondary" type="button">‹ Volver</button><strong>Información del contacto</strong></div><div class="contactProfileHero"><img id="contactProfilePhoto" alt="Foto del contacto"><h2 id="contactProfileName">Contacto</h2><p id="contactProfileAbout">Miembro de klk</p></div><div class="contactProfileActions"><button id="contactProfileMessage" type="button">💬 Mensaje</button><button id="contactProfileVoice" type="button">☎️ Voz</button><button id="contactProfileVideo" type="button">📹 Video</button></div><div class="contactProfileSection"><h3>Archivos, enlaces y contenido multimedia</h3><div class="contactMediaTabs"><button type="button" data-media-tab="image" class="active">📷 Fotos</button><button type="button" data-media-tab="file">📄 Documentos</button><button type="button" data-media-tab="all">Todo</button></div><div id="contactSharedMedia" class="contactSharedMedia">Selecciona una conversación.</div></div><p id="contactProfileStatus" class="hint" role="status"></p></section>
  <section id="callsPanel" aria-label="Llamadas"><h3>Llamadas</h3><p class="hint">Llama por voz o video a tus contactos aceptados.</p><button id="callDiagnostics" type="button" class="secondary">Comprobar mi teléfono</button><p id="callDiagnosticsStatus" class="hint" role="status" aria-live="polite">Comprueba HTTPS, sesión, micrófono, cámara y compatibilidad WebRTC antes de llamar.</p><div id="callContacts" class="hint">Cargando contactos...</div><p id="callsStatus" class="hint" role="status" aria-live="polite"></p></section>
  <section id="updatesPanel" class="homeUtilityPanel" aria-label="Novedades" hidden><h2>Novedades</h2><p class="hint">Próximamente podrás consultar aquí las novedades de tu familia.</p><button type="button" data-go-tab="chats">Ir a mis chats</button></section>
  <section id="toolsPanel" class="homeUtilityPanel" aria-label="Herramientas" hidden>
@@ -285,12 +287,12 @@ html[data-density="comfortable"] .chatRow,html[data-density="comfortable"] #peop
  <button id="send" type="button" aria-label="Enviar mensaje" title="Enviar">➤</button>
 </div>
 <div id="mediaActions">
- <button id="takePhoto" type="button">📷 Cámara</button>
+ <button id="takePhoto" type="button">📷 Cámara</button><button id="shareDocument" type="button">📄 Documento</button>
  <button id="recordAudio" type="button">🎙️ Grabar audio</button>
  <button id="sendAudio" type="button" disabled>Enviar audio</button>
 </div>
 <input id="galleryInput" type="file" accept="image/*" hidden>
-<input id="cameraInput" type="file" accept="image/*" capture="environment" hidden>
+<input id="cameraInput" type="file" accept="image/*" capture="environment" hidden><input id="documentInput" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip" hidden>
 <p id="recordStatus" class="hint" role="status" aria-live="polite"></p>
 <section id="settingsPanel" aria-label="Configuración de klk">
  <h3>⚙️ Configuración de klk</h3>
@@ -568,6 +570,12 @@ $("profilePhotoInput").addEventListener("change", async event => {
  if (file) await uploadProfilePhoto(file);
  event.target.value = "";
 });
+let activeContactProfileUid=null;
+function closeContactProfile(){$("contactProfilePanel").hidden=true;$("peopleList").style.display="";document.querySelectorAll(".homeFilters").forEach(el=>el.style.display="");}
+async function openContactProfile(uid,person){activeContactProfileUid=uid;$("peopleList").style.display="none";document.querySelectorAll(".homeFilters").forEach(el=>el.style.display="none");$("contactProfilePanel").hidden=false;$("contactProfileName").textContent=person.displayName||person.email||"Contacto";$("contactProfileAbout").textContent=person.about||"Miembro de klk";$("contactProfilePhoto").src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ctext x='32' y='45' text-anchor='middle' font-size='44'%3E%F0%9F%91%A4%3C/text%3E%3C/svg%3E";if(person.photoPath)try{$("contactProfilePhoto").src=await getMediaUrl(person.photoPath);}catch(e){}const ok=isAcceptedContact(uid);["contactProfileMessage","contactProfileVoice","contactProfileVideo"].forEach(id=>$(id).disabled=!ok);$("contactProfileStatus").textContent=ok?"Contacto aceptado":"Acepta la solicitud para compartir contenido y llamar.";$("contactProfileMessage").onclick=()=>{closeContactProfile();openPrivateConversation(uid,person.displayName||person.email||"Conversación");};$("contactProfileVoice").onclick=()=>window.klkStartCall&&window.klkStartCall(uid,person.displayName||"Contacto","audio");$("contactProfileVideo").onclick=()=>window.klkStartCall&&window.klkStartCall(uid,person.displayName||"Contacto","video");await renderContactSharedMedia("image");}
+async function renderContactSharedMedia(type){document.querySelectorAll(".contactMediaTabs button").forEach(b=>b.classList.toggle("active",b.dataset.mediaTab===type));const box=$("contactSharedMedia");if(!activeContactProfileUid||!auth.currentUser||!isAcceptedContact(activeContactProfileUid)){box.textContent="El contenido compartido estará disponible cuando el contacto esté aceptado.";return;}box.textContent="Cargando contenido...";const cid=[auth.currentUser.uid,activeContactProfileUid].sort().join("__");try{const snap=await db.collection("conversations").doc(cid).collection("messages").orderBy("createdAt","desc").limit(100).get();box.innerHTML="";const data=snap.docs.map(d=>d.data()).filter(d=>d.type==="image"||d.type==="file").filter(d=>type==="all"||d.type===type);if(!data.length){box.textContent=type==="image"?"No hay fotos compartidas.":type==="file"?"No hay documentos compartidos.":"No hay contenido compartido.";return;}for(const item of data){try{const url=await getMediaUrl(item.storagePath,cid);if(item.type==="image"){const img=document.createElement("img");img.src=url;img.alt=item.fileName||"Foto compartida";img.loading="lazy";img.onclick=()=>window.open(url,"_blank","noopener");box.append(img);}else{const a=document.createElement("a");a.href=url;a.target="_blank";a.rel="noopener";a.textContent="📄 "+(item.fileName||"Documento");box.append(a);}}catch(e){const p=document.createElement("p");p.textContent="Archivo no disponible";box.append(p);}}}catch(e){box.textContent="No se pudo consultar el contenido: "+e.message;}}
+$("contactProfileBack").addEventListener("click",closeContactProfile);document.querySelectorAll(".contactMediaTabs button").forEach(b=>b.addEventListener("click",()=>renderContactSharedMedia(b.dataset.mediaTab)));
+
 function renderPeople() {
  const list = $("peopleList"); if (!list) return;
  list.innerHTML = "";
@@ -602,6 +610,7 @@ function renderPeople() {
   const name = document.createElement("strong"); name.textContent = person.displayName || person.email || "Miembro";
   const email = document.createElement("small"); email.textContent = person.email || "";
   info.append(name,email); row.append(info);
+  const view=document.createElement("button");view.type="button";view.className="secondary";view.style.cssText="width:auto;min-width:76px;margin:0 5px 0 0;padding:9px 8px;font-size:12px";view.textContent="Perfil";view.onclick=()=>openContactProfile(uid,person);row.append(view);
   const action = document.createElement("button"); action.style.cssText = "width:auto;min-width:112px;margin:0;padding:9px 12px;font-size:13px";
   if (isAcceptedContact(uid)) { action.textContent = "Enviar mensaje"; action.onclick = () => openPrivateConversation(uid, person.displayName || person.email || "Conversación"); }
   else if ((incomingRequests.get(uid) || {}).status === "pending") { action.textContent = "Aceptar solicitud"; action.onclick = () => respondToContactRequest(uid,"accepted"); }
@@ -766,11 +775,12 @@ function loadMessages() {
    const data = doc.data(), item = document.createElement("div");
    item.className = "msg" + (auth.currentUser && data.uid === auth.currentUser.uid ? " mine" : "");
    const sender = document.createElement("b"); sender.textContent = data.email || "Familia"; item.appendChild(sender);
-   if ((data.type === "image" || data.type === "audio") && (data.storagePath || data.mediaUrl)) {
+   if ((data.type === "image" || data.type === "audio" || data.type === "file") && (data.storagePath || data.mediaUrl)) {
     const placeholder = document.createElement("p"); placeholder.textContent = "Cargando archivo..."; item.appendChild(placeholder); $("messages").appendChild(item);
     try {
      const url = data.storagePath ? await getMediaUrl(data.storagePath, data.conversationId || null) : data.mediaUrl; placeholder.remove();
      if (data.type === "image") { const img = document.createElement("img"); img.src = url; img.alt = "Foto compartida"; img.loading = "lazy"; item.appendChild(img); }
+     else if(data.type==="file"){const link=document.createElement("a");link.href=url;link.target="_blank";link.rel="noopener";link.textContent="📄 "+(data.fileName||"Abrir documento");item.appendChild(link);}
      else { const audio = document.createElement("audio"); audio.controls = true; audio.preload = "metadata"; audio.src = url; item.appendChild(audio); }
     } catch(error) { placeholder.textContent = "No se pudo cargar: " + error.message; }
    } else { const body = document.createElement("p"); body.textContent = data.text || ""; item.appendChild(body); $("messages").appendChild(item); }
@@ -829,6 +839,7 @@ async function uploadMedia(file, type, durationSeconds = null) {
  if (!file || sending) return;
  if (type === "image" && !file.type.startsWith("image/")) { $("chatStatus").textContent = "Selecciona un archivo de imagen."; return; }
  if (type === "audio" && !file.type.startsWith("audio/")) { $("chatStatus").textContent = "No se pudo reconocer el formato del audio."; return; }
+ if(type==="file" && file.size>20*1024*1024){$("chatStatus").textContent="El documento no puede superar 20 MB.";return;}
  sending = true;
  $("chatStatus").textContent = type === "image" ? "Optimizando foto..." : "Preparando archivo...";
  $("send").disabled = true; $("pickPhoto").disabled = true; $("takePhoto").disabled = true; $("recordAudio").disabled = true; $("sendAudio").disabled = true;
@@ -853,7 +864,7 @@ async function uploadMedia(file, type, durationSeconds = null) {
    size: uploadFile.size, ...(durationSeconds === null ? {} : {duration:durationSeconds}),
    email:user.email || "", uid:user.uid, createdAt:firebase.firestore.FieldValue.serverTimestamp()
   });
-  $("chatStatus").textContent = type === "image" ? "Foto enviada." : "Nota de voz enviada.";
+  $("chatStatus").textContent = type === "image" ? "Foto enviada." : type==="file"?"Documento enviado.":"Nota de voz enviada.";
  } catch(error) {
   console.error("Error al enviar archivo:", error);
   $("chatStatus").textContent = "No se pudo enviar el archivo: " + (error.message || "Error desconocido");
@@ -865,6 +876,7 @@ $("pickPhoto").onclick = () => $("galleryInput").click();
 $("takePhoto").onclick = () => $("cameraInput").click();
 $("galleryInput").addEventListener("change", async event => { const file = event.target.files && event.target.files[0]; if (file) await uploadMedia(file,"image"); event.target.value = ""; });
 $("cameraInput").addEventListener("change", async event => { const file = event.target.files && event.target.files[0]; if (file) await uploadMedia(file,"image"); event.target.value = ""; });
+$("shareDocument").addEventListener("click",()=>$("documentInput").click());$("documentInput").addEventListener("change",async event=>{const file=event.target.files&&event.target.files[0];if(file)await uploadMedia(file,"file");event.target.value="";});
 $("recordAudio").addEventListener("click", async () => {
  if (mediaRecorder && mediaRecorder.state === "recording") {
   mediaRecorder.stop();
