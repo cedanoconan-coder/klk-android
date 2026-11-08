@@ -91,12 +91,19 @@ service cloud.firestore {
           && request.resource.data.callerId == request.auth.uid
           && request.resource.data.calleeId in get(/databases/$(database)/documents/conversations/$(conversationId)).data.members
           && request.resource.data.calleeId != request.auth.uid
-          && request.resource.data.status == 'ringing';
+          && request.resource.data.mode in ['audio','video']
+          && request.resource.data.offer is map
+          && request.resource.data.status == 'ringing'
+          && request.resource.data.keys().hasOnly(['conversationId','callerId','calleeId','callerEmail','mode','status','offer','createdAt']);
         allow update: if callMember()
           && request.resource.data.conversationId == resource.data.conversationId
           && request.resource.data.callerId == resource.data.callerId
           && request.resource.data.calleeId == resource.data.calleeId
-          && request.resource.data.status in ['ringing','accepted','rejected','ended','missed'];
+          && request.resource.data.keys().hasOnly(['conversationId','callerId','calleeId','callerEmail','mode','status','offer','answer','createdAt','acceptedAt','endedAt'])
+          && (
+            (request.auth.uid == resource.data.calleeId && request.resource.data.status in ['accepted','rejected','ended','missed'])
+            || (request.auth.uid == resource.data.callerId && request.resource.data.status == 'ended')
+          );
         allow delete: if false;
         match /candidates/{candidateId} {
           allow read: if callMember();
