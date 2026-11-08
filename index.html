@@ -230,6 +230,17 @@ html[data-density="comfortable"] .chatRow,html[data-density="comfortable"] #peop
 #chat.room-open .chatTop #chatTitle{cursor:pointer}
 #chat.room-open .chatTop #chatTitle:active{opacity:.7}
 @media(max-width:360px){.contactProfileActions{gap:5px;padding-left:8px;padding-right:8px}.contactProfileActions button{font-size:11px}.contactProfileHero img{width:104px;height:104px}}
+
+/* Conversación klk: burbujas y metadatos compactos */
+#chat.room-open #messages{padding:16px 12px 22px;background-color:#efeae2!important;background-image:radial-gradient(#d8d0c5 .65px,transparent .65px)!important;background-size:18px 18px!important}
+#chat.room-open .msg{position:relative;max-width:min(84%,520px);width:fit-content;margin:7px 0 9px;padding:8px 10px 5px;border-radius:4px 12px 12px 12px;background:#fff;color:#111b21;box-shadow:0 1px 1px #00000014;overflow-wrap:anywhere}
+#chat.room-open .msg.mine{margin-left:auto;margin-right:0;border-radius:12px 4px 12px 12px;background:#d9fdd3}
+#chat.room-open .msg>b{display:block;margin:0 0 3px;color:#087568;font-size:11px;font-weight:700}
+#chat.room-open .msg p{margin:2px 0 4px;white-space:pre-wrap;line-height:1.38;font-size:15px}
+#chat.room-open .msg img{max-width:min(100%,320px);max-height:360px;object-fit:contain}
+#chat.room-open .messageMeta{display:flex;justify-content:flex-end;align-items:center;gap:4px;min-height:14px;margin-top:2px;color:#66736f;font-size:10px;line-height:1}
+#chat.room-open .messageTick{color:#1684c7;font-size:13px;font-weight:800}
+#chat.room-open .msg a{display:inline-block;margin:5px 0;color:#075e54;overflow-wrap:anywhere}
 </style>
 </head>
 <body>
@@ -841,6 +852,12 @@ async function getMediaUrl(path, conversationId = null) {
  mediaUrlCache.set(path, { url: result.signedUrl, expiresAt: Date.now() + Number(result.expiresIn || 3600) * 1000 });
  return result.signedUrl;
 }
+function formatMessageTime(value) {
+ if (!value) return "";
+ const date = typeof value.toDate === "function" ? value.toDate() : new Date(value);
+ if (Number.isNaN(date.getTime())) return "";
+ return new Intl.DateTimeFormat("es-DO",{hour:"2-digit",minute:"2-digit"}).format(date);
+}
 function loadMessages() {
  window.klkNotificationsReady = false;
  if (unsubscribe) unsubscribe();
@@ -859,12 +876,20 @@ function loadMessages() {
    if ((data.type === "image" || data.type === "audio" || data.type === "file") && (data.storagePath || data.mediaUrl)) {
     const placeholder = document.createElement("p"); placeholder.textContent = "Cargando archivo..."; item.appendChild(placeholder); $("messages").appendChild(item);
     try {
-     const url = data.storagePath ? await getMediaUrl(data.storagePath, data.conversationId || null) : data.mediaUrl; placeholder.remove();
+     const url = data.storagePath ? await getMediaUrl(data.storagePath, data.conversationId || null) : data.mediaUrl;
+     placeholder.remove();
      if (data.type === "image") { const img = document.createElement("img"); img.src = url; img.alt = "Foto compartida"; img.loading = "lazy"; item.appendChild(img); }
      else if(data.type==="file"){const link=document.createElement("a");link.href=url;link.target="_blank";link.rel="noopener";link.textContent="📄 "+(data.fileName||"Abrir documento");item.appendChild(link);}
      else { const audio = document.createElement("audio"); audio.controls = true; audio.preload = "metadata"; audio.src = url; item.appendChild(audio); }
     } catch(error) { placeholder.textContent = "No se pudo cargar: " + error.message; }
-   } else { const body = document.createElement("p"); body.textContent = data.text || ""; item.appendChild(body); $("messages").appendChild(item); }
+   } else {
+    const body = document.createElement("p"); body.textContent = data.text || (data.type === "image" ? "📷 Foto" : data.type === "audio" ? "🎙️ Nota de voz" : ""); item.appendChild(body);
+   }
+   const meta=document.createElement("div");meta.className="messageMeta";
+   const time=document.createElement("time");time.dateTime=data.createdAt&&typeof data.createdAt.toDate==="function"?data.createdAt.toDate().toISOString():"";time.textContent=formatMessageTime(data.createdAt);meta.appendChild(time);
+   if(item.classList.contains("mine")){const tick=document.createElement("span");tick.className="messageTick";tick.setAttribute("aria-label","Enviado");tick.textContent="✓";meta.appendChild(tick);}
+   item.appendChild(meta);
+   $("messages").appendChild(item);
   }
   $("messages").scrollTop = $("messages").scrollHeight;
  }, error => showError("chatStatus", error));
