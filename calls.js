@@ -130,7 +130,7 @@
    await flushLocalCandidates();
    $("callStatus").textContent="Llamando a "+name+"...";
    $("endCall").hidden=false;watchCallDocument();watchRemoteCandidates();
-   ringTimeout=window.setTimeout(()=>{if(callRef&&callRole==="caller"&&callState==="ringing"){ $("callStatus").textContent="No hubo respuesta.";endCall();}},45000);
+   ringTimeout=window.setTimeout(()=>{if(callRef&&callRole==="caller"&&(callState==="ringing"||!callState)){ $("callStatus").textContent="No hubo respuesta.";endCall();}},45000);
   }catch(error){console.error("No se pudo iniciar la llamada:",error);$("callStatus").textContent=permissionMessage(error);setTimeoutSafeCleanup();}
  }
  function permissionMessage(error){
@@ -168,11 +168,12 @@
  }
  function listenIncoming(uid){
   if(incomingUnsub)incomingUnsub();
-  incomingUnsub=db.collection("calls").where("calleeUid","==",uid).limit(20).onSnapshot(snapshot=>{
+  incomingUnsub=db.collection("calls").where("calleeUid","==",uid).onSnapshot(snapshot=>{
    const doc=snapshot.docs.find(d=>d.data().status==="ringing"&&!callRef&&!incomingCall);
    if(!doc)return;
    const data=doc.data();incomingCall={ref:doc.ref,data};
    incomingDocUnsub=doc.ref.onSnapshot(s=>{if(!s.exists||s.data().status!=="ringing"){if(incomingCall&&incomingCall.ref.id===doc.id){incomingCall=null;cleanup();}}},error=>{console.warn("No se pudo seguir la llamada entrante:",error);});
+   ringTimeout=window.setTimeout(async()=>{if(incomingCall&&incomingCall.ref.id===doc.id&&!callRef){try{await doc.ref.update({status:"ended",updatedAt:firebase.firestore.FieldValue.serverTimestamp()});}catch(error){console.warn("No se pudo cerrar la llamada sin respuesta:",error);}incomingCall=null;cleanup();}},45000);
    callMode=data.mode==="video"?"video":"audio";
    const person=peopleCache.get(data.callerUid)||{};
    showOverlay(person.displayName||person.email||"Llamada entrante",callMode==="video"?"Videollamada entrante":"Llamada de voz entrante");
