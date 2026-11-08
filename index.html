@@ -84,7 +84,7 @@ header small{display:none}
 #peopleList .memberBtn strong{font-size:17px;font-weight:650}
 #peopleList .memberBtn small{font-size:13px;color:#68736f}
 #peopleList .memberBtn:active,.homeGroup:active{background:#f4f6f6}
-.homeBottom{position:fixed;z-index:50;left:10px;right:10px;bottom:calc(8px + env(safe-area-inset-bottom));display:grid;grid-template-columns:repeat(4,minmax(0,1fr));align-items:center;gap:3px;padding:8px 6px;background:var(--klk-surface,#fff);border:1px solid var(--klk-line,#e7ebea);border-radius:22px;box-shadow:0 8px 28px #10201c20;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+.homeBottom{position:fixed;z-index:50;left:10px;right:10px;bottom:calc(8px + env(safe-area-inset-bottom));display:grid;grid-template-columns:repeat(5,minmax(0,1fr));align-items:center;gap:3px;padding:8px 6px;background:var(--klk-surface,#fff);border:1px solid var(--klk-line,#e7ebea);border-radius:22px;box-shadow:0 8px 28px #10201c20;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
 .homeBottom button{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-width:0;min-height:62px;width:100%;margin:0;padding:5px 1px;background:transparent;color:var(--klk-muted,#66736f);border:0;border-radius:16px;font-size:10px;line-height:1.15;font-weight:650;white-space:nowrap;touch-action:manipulation;transition:background .18s ease,color .18s ease,transform .18s ease}
 .homeBottom button .navIcon{display:grid;place-items:center;width:34px;height:28px;border-radius:12px;font-size:21px;line-height:1;transition:background .18s ease,transform .18s ease}
 .homeBottom button .navLabel{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis}
@@ -235,8 +235,8 @@ html[data-density="comfortable"] .chatRow,html[data-density="comfortable"] #peop
 <section id="homeProfilePanel" aria-label="Mi perfil y configuración"><div style="display:flex;align-items:center;gap:10px;margin-bottom:12px"><button id="profileClose" class="secondary" type="button" style="width:auto;margin:0">‹ Volver</button><h2 style="margin:0;font-size:20px">Mi perfil</h2></div><div class="profileHero"><img id="profilePanelPhoto" alt="Foto de perfil"><div><strong id="profilePanelName">Mi perfil</strong><small id="profilePanelEmail">Cuenta klk</small><button id="profileChangePhoto" class="secondary" type="button" style="width:auto;margin:8px 0 0;padding:8px 12px">Cambiar foto</button></div></div><div class="profileSection"><h3>Información personal</h3><label class="profileField"><span>Nombre</span><input id="profileNameInput" maxlength="60" autocomplete="name" placeholder="Tu nombre"></label><label class="profileField"><span>Info. / Acerca de ti</span><textarea id="profileAboutInput" maxlength="139" placeholder="¡Hola! Estoy usando klk."></textarea></label><div class="profileButtons"><button id="profileSave" type="button">Guardar cambios</button></div><p id="profileStatus" class="hint" role="status" aria-live="polite"></p></div><div class="profileSection"><h3>Cuenta y seguridad</h3><button id="profilePassword" class="profileAction" type="button"><span>🔐 Cambiar contraseña<small>Recibirás un enlace seguro en tu correo</small></span><b>›</b></button><button id="profileEmail" class="profileAction" type="button"><span>✉️ Correo de la cuenta<small id="profileEmailValue">—</small></span><b>›</b></button></div><div class="profileSection"><h3>Privacidad y notificaciones</h3><button id="profilePrivacyInfo" class="profileAction" type="button"><span>🛡️ Privacidad<small>Información sobre los controles disponibles</small></span><b>›</b></button><button id="profileOpenSettings" class="profileAction" type="button"><span>🔔 Notificaciones y apariencia<small>Sonidos, vibración, tema, tamaño y fondo</small></span><b>›</b></button><p id="profilePrivacyStatus" class="hint" hidden>Los controles avanzados de privacidad todavía no están activos en klk; no mostraremos opciones que no se apliquen realmente.</p></div><div class="profileSection"><h3>Sesión</h3><button id="profileLogout" class="profileAction" type="button"><span>↪️ Cerrar sesión<small>Salir de esta cuenta en este teléfono</small></span><b>›</b></button></div></section>
 <div class="homeSearch"><input id="chatSearch" type="search" placeholder="Buscar..." aria-label="Buscar conversaciones"></div>
  <p id="homeStatus" class="hint" role="status" aria-live="polite" style="padding:0 20px;min-height:18px"></p>
- <div class="homeFilters" role="group" aria-label="Secciones de klk">
-  <button type="button" class="active" data-filter="chats">Chats</button><button type="button" data-filter="requests">Solicitudes</button><button type="button" data-filter="people">Personas</button>
+ <div class="homeFilters" role="group" aria-label="Contactos y solicitudes">
+  <button type="button" data-filter="requests">Solicitudes</button><button type="button" class="active" data-filter="people">Personas</button>
  </div>
  <button id="homeGroup" class="homeGroup" type="button" hidden><span class="homeAvatar">👥</span><span class="homeGroupText"><strong>Chats privados</strong><small>klk permite conversaciones entre contactos aceptados</small></span></button>
  <section id="chatsPanel" style="padding:4px 0 12px"><div id="chatsList" aria-label="Conversaciones recientes" class="hint" style="padding:12px 20px">Cargando conversaciones...</div></section>
@@ -276,9 +276,10 @@ html[data-density="comfortable"] .chatRow,html[data-density="comfortable"] #peop
 
  <nav class="homeBottom" aria-label="Navegación principal" role="navigation">
   <button type="button" class="active" data-tab="chats" aria-current="page"><span class="navIcon" aria-hidden="true">▤</span><span class="navLabel">Chats</span></button>
+  <button type="button" data-tab="contacts"><span class="navIcon" aria-hidden="true">👥</span><span class="navLabel">Contactos</span></button>
   <button type="button" data-tab="calls"><span class="navIcon" aria-hidden="true">☎</span><span class="navLabel">Llamadas</span></button>
   <button type="button" data-tab="updates"><span class="navIcon" aria-hidden="true">◉</span><span class="navLabel">Novedades</span></button>
-  <button type="button" data-tab="tools"><span class="navIcon" aria-hidden="true">▦</span><span class="navLabel">Herramientas</span></button>
+  <button type="button" data-tab="tools"><span class="navIcon" aria-hidden="true">☷</span><span class="navLabel">Más</span></button>
  </nav>
 </div>
 
@@ -1126,18 +1127,20 @@ document.querySelectorAll(".homeFilters button").forEach(button=>button.addEvent
 }));
 $("chatsPanel").style.display="block";$("requestsPanel").style.display="none";$("peopleList").style.display="none";
 function setHomeTab(tab){
- const validTabs=["chats","calls","updates","tools"];
+ const validTabs=["chats","contacts","calls","updates","tools"];
  if(!validTabs.includes(tab)) return;
  const panelIds=["chatsPanel","requestsPanel","peopleList","callsPanel","updatesPanel","toolsPanel","assistantPanel"];
  panelIds.forEach(id=>{const el=$(id);if(el){el.hidden=false;el.style.display="none";}});
  const isChats=tab==="chats";
- $("homeSearch").style.display=isChats?"block":"none";
+ const isContacts=tab==="contacts";
+ $("homeSearch").style.display=(isChats||isContacts)?"block":"none";
  $("homeStatus").style.display=isChats?"block":"none";
- document.querySelector(".homeFilters").style.display=isChats?"flex":"none";
+ document.querySelector(".homeFilters").style.display=isContacts?"flex":"none";
  if(isChats){
-  $("chatsPanel").style.display="block";
-  const filter=document.querySelector('.homeFilters button[data-filter="'+(activeHomeFilter||"chats")+'"]');
-  if(filter)filter.click();
+  $("chatsPanel").style.display="block";$("requestsPanel").style.display="none";$("peopleList").style.display="none";
+ }else if(isContacts){
+  $("requestsPanel").style.display="none";$("peopleList").style.display="block";
+  const filter=document.querySelector('.homeFilters button[data-filter="people"]');if(filter)filter.click();
  }else{
   const panel=$(tab==="calls"?"callsPanel":tab==="updates"?"updatesPanel":"toolsPanel");
   if(panel){panel.hidden=false;panel.style.display="block";}
@@ -1147,12 +1150,12 @@ function setHomeTab(tab){
   b.classList.toggle("active",active);
   if(active)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current");
  });
- if(tab!=="chats") window.scrollTo({top:0,behavior:"smooth"});
+ if(tab!=="chats"&&tab!=="contacts") window.scrollTo({top:0,behavior:"smooth"});
 }
 document.querySelectorAll(".homeBottom button").forEach(button=>button.addEventListener("click",()=>setHomeTab(button.dataset.tab)));
 document.querySelectorAll("[data-go-tab]").forEach(button=>button.addEventListener("click",()=>setHomeTab(button.dataset.goTab)));
 document.querySelectorAll("[data-go-filter]").forEach(button=>button.addEventListener("click",()=>{
- setHomeTab("chats");
+ setHomeTab("contacts");
  const filter=document.querySelector('.homeFilters button[data-filter="'+button.dataset.goFilter+'"]');if(filter)filter.click();
  window.scrollTo({top:0,behavior:"smooth"});
 }));
