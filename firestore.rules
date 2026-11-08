@@ -1,8 +1,10 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Bloquea la colección antigua compartida: ningún usuario puede leerla.
+    // Se habilitará la lectura cuando cada conversación valide sus miembros.
     match /messages/{messageId} {
-      allow read: if request.auth != null;
+      allow read: if false;
       allow create: if request.auth != null
         && request.resource.data.keys().hasOnly([
           'type', 'text', 'mediaUrl', 'storagePath', 'mimeType', 'fileName',
@@ -41,5 +43,8 @@ service cloud.firestore {
         );
       allow update, delete: if false;
     }
+
+    // Las conversaciones no tienen permisos de lectura/escritura globales.
+    // Sin una regla explícita de membresía, Firestore deniega el acceso.
   }
 }
