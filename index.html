@@ -145,6 +145,30 @@ html[data-density="compact"] .homeFilters{padding-bottom:10px}
 html[data-density="compact"] .homeSearch{margin-bottom:10px}
 html[data-density="comfortable"] .chatRow,html[data-density="comfortable"] #peopleList .memberBtn{padding-top:14px;padding-bottom:14px}
 
+
+/* Llamadas de voz y videollamadas */
+#callsPanel{display:none;padding:12px 20px 96px;background:var(--klk-surface)}
+#callsPanel h3{font-size:18px;margin:8px 0}
+.callContact{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--klk-line)}
+.callContact .callContactInfo{flex:1;min-width:0}
+.callContact strong,.callContact small{display:block;overflow-wrap:anywhere}
+.callContact small{color:var(--klk-muted);margin-top:4px}
+.callContact button{width:auto;min-width:54px;margin:0 0 0 5px;padding:10px 12px}
+#callOverlay{display:none;position:fixed;z-index:100;inset:0;background:#10191e;color:#fff;padding:calc(18px + env(safe-area-inset-top)) 18px calc(18px + env(safe-area-inset-bottom));overflow:auto}
+#callOverlay.visible{display:flex;flex-direction:column;align-items:center;justify-content:space-between}
+#callStatus{font-size:14px;text-align:center;color:#d8e4e8;min-height:22px}
+#callPeerName{font-size:24px;text-align:center;margin:12px 0}
+#callVideoStage{width:100%;max-width:720px;flex:1;min-height:180px;max-height:62vh;position:relative;display:flex;align-items:center;justify-content:center;margin:12px auto}
+#remoteVideo{width:100%;height:100%;max-height:62vh;object-fit:contain;border-radius:18px;background:#26343b}
+#localVideo{position:absolute;right:12px;bottom:12px;width:28%;max-width:130px;aspect-ratio:3/4;object-fit:cover;border:2px solid #fff;border-radius:12px;background:#26343b}
+#remoteAudio{display:none}
+#callAvatar{width:120px;height:120px;border-radius:60px;background:#263f3c;display:grid;place-items:center;font-size:54px;margin:30px auto}
+#callControls{display:flex;justify-content:center;gap:18px;flex-wrap:wrap;padding:18px 0}
+#callControls button{width:auto;min-width:76px;margin:0;padding:14px 18px;border-radius:30px}
+#answerCall{background:#16834b!important}#rejectCall,#endCall{background:#c83232!important}
+#muteCall.muted{background:#59656b!important}
+@media(max-width:420px){#callVideoStage{max-height:55vh}#callPeerName{font-size:21px}}
+
 </style>
 </head>
 <body>
@@ -193,6 +217,8 @@ html[data-density="comfortable"] .chatRow,html[data-density="comfortable"] #peop
   <button type="button" data-tab="tools"><span>▣</span>Herramientas</button>
  </nav>
 </div>
+
+<section id="callOverlay" aria-label="Llamada"><div><p id="callStatus">Preparando llamada...</p><h2 id="callPeerName">Contacto</h2></div><div id="callVideoStage"><div id="callAvatar">☎️</div><video id="remoteVideo" autoplay playsinline></video><video id="localVideo" autoplay muted playsinline></video><audio id="remoteAudio" autoplay></audio></div><div id="callControls"><button id="answerCall" type="button" hidden>Responder</button><button id="rejectCall" type="button" hidden>Rechazar</button><button id="muteCall" type="button" hidden>Silenciar</button><button id="cameraCall" type="button" hidden>Apagar cámara</button><button id="endCall" type="button" hidden>Finalizar</button></div></section>
 
 <div class="chatTop"><div class="chatHeading"><button id="backToChats" class="chatBack" type="button" aria-label="Volver a chats" title="Volver">‹</button><h2 id="chatTitle" style="flex:1">👨‍👩‍👧‍👦 Familia klk</h2><button id="settingsToggle" class="settingsToggle" type="button">⚙️ Ajustes</button></div><p id="who" class="muted"></p></div>
 <div id="chatNav"><button id="showGroup" type="button" hidden>Chat grupal desactivado</button><button id="showPeople" type="button" class="secondary">💬 Conversaciones privadas</button></div>
@@ -811,6 +837,7 @@ $("sendAudio").onclick = async () => {
 
 $("message").addEventListener("keydown", event => { if (event.key === "Enter") $("send").click(); });
 </script>
+<script src="./calls.js"></script>
 <script>
 if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(error => console.error("Service worker:", error)));
 </script>
