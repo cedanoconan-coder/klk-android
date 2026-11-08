@@ -72,14 +72,13 @@ main{scrollbar-gutter:stable}
 <section id="login" class="card">
 <h2>Bienvenido a klk</h2><p>Entra o crea tu cuenta para enviar mensajes privados.</p>
 <form id="authForm">
-<input id="email" type="email" autocomplete="email" placeholder="Correo electrónico" required>
-<input id="password" type="password" autocomplete="current-password" placeholder="Contraseña (mínimo 6 caracteres)" minlength="6" required>
-<button id="enter" type="submit">Iniciar sesión</button>
+<input id="phoneNumber" type="tel" inputmode="tel" autocomplete="tel" placeholder="Número con código de país (+1809...)" pattern="^\+[1-9][0-9]{7,14}$" required>
+<input id="verificationCode" type="text" inputmode="numeric" autocomplete="one-time-code" placeholder="Código de 6 dígitos recibido por SMS" maxlength="6" hidden>
+<button id="enter" type="submit">Enviar código SMS</button>
 </form>
-<button id="register" class="secondary" type="button">Crear cuenta</button>
-<button id="forgot" class="secondary" type="button">Olvidé mi contraseña</button>
+<div id="recaptcha-container"></div>
 <p id="status" role="status" aria-live="polite"></p>
-<p class="hint">Necesitas conexión a internet para iniciar sesión y enviar mensajes.</p>
+<p class="hint">Regístrate o inicia sesión con tu número. Recibirás un código por SMS. Usa el código del país, por ejemplo +1 809, +1 829 o +1 849.</p>
 </section>
 <section id="chat" class="card">
 <div class="chatTop"><div style="display:flex;align-items:center;gap:8px"><h2 id="chatTitle" style="flex:1">💬 Mensajes privados</h2><button id="backToContacts" class="callBtn" type="button" hidden aria-label="Volver a contactos">←</button><button id="audioCallBtn" class="callBtn" type="button" title="Llamada de voz" aria-label="Llamada de voz">📞</button><button id="videoCallBtn" class="callBtn" type="button" title="Videollamada" aria-label="Videollamada">📹</button><button id="settingsToggle" class="settingsToggle" type="button">⚙️ Ajustes</button></div><p id="who" class="muted"></p></div>
@@ -174,7 +173,15 @@ function showError(target, error) {
   "auth/invalid-credential":"El correo o la contraseña son incorrectos.",
   "auth/network-request-failed":"Firebase no respondió a la solicitud. Comprueba la conexión, la fecha y hora automáticas del teléfono y que no haya un DNS privado o bloqueador filtrando Google.",
   "auth/unauthorized-domain":"Firebase no autorizó el dominio de esta aplicación. Hay que corregir los dominios autorizados del proyecto.",
-  "auth/operation-not-allowed":"El inicio de sesión por correo y contraseña no está activado en Firebase.",
+  "auth/operation-not-allowed":"El acceso por teléfono no está activado en Firebase. Activa Phone en Authentication > Sign-in method.",
+  "auth/invalid-phone-number":"El número no es válido. Incluye el código del país, por ejemplo +1809...",
+  "auth/missing-phone-number":"Escribe tu número de teléfono.",
+  "auth/invalid-verification-code":"El código SMS es incorrecto. Revísalo e inténtalo otra vez.",
+  "auth/code-expired":"El código venció. Vuelve a solicitar otro SMS.",
+  "auth/too-many-requests":"Hubo demasiados intentos. Espera un momento antes de solicitar otro código.",
+  "auth/quota-exceeded":"Firebase agotó la cuota de SMS disponible para este proyecto.",
+  "auth/captcha-check-failed":"No se pudo verificar el CAPTCHA. Recarga la página e inténtalo otra vez.",
+  "auth/billing-not-enabled":"Firebase requiere configurar la facturación para enviar SMS en este proyecto.",
   "auth/api-key-not-valid.-please-pass-a-valid-api-key.":"La clave de Firebase no es válida.",
   "permission-denied":"Firebase bloqueó la operación. Hay que revisar las reglas de seguridad."
  };
@@ -182,48 +189,44 @@ function showError(target, error) {
  const detail = error && error.message ? error.message : "Sin detalle técnico";
  $(target).textContent = (messages[code] || detail || "Ocurrió un error. Inténtalo de nuevo.") + " [ " + code + " ]";
 }
-function setBusy(busy) {
- $("enter").disabled = busy; $("register").disabled = busy; $("forgot").disabled = busy;
-}
+let confirmationResult = null, recaptchaVerifier = null;
+function setBusy(busy) { $("enter").disabled = busy; }
 try {
  firebase.initializeApp(firebaseConfig);
  auth = firebase.auth(); db = firebase.firestore();
+ auth.languageCode = "es";
 } catch (error) { firebaseInitError = error; $("status").textContent = "No se pudo iniciar Firebase. Comprueba la conexión a Internet y vuelve a abrir klk. Detalle: " + error.message; }
 $("authForm").addEventListener("submit", async event => {
  event.preventDefault(); $("status").textContent = "";
- if (!auth) { $("status").textContent = "Firebase no está disponible. " + (firebaseInitError && firebaseInitError.message ? firebaseInitError.message : "Comprueba tu conexión a Internet y vuelve a abrir klk."); return; }
- setBusy(true);
- try { await auth.signInWithEmailAndPassword($("email").value.trim(), $("password").value); }
- catch(error) { showError("status", error); }
- finally { setBusy(false); }
-});
-$("register").addEventListener("click", async () => {
- $("status").textContent = "";
- if (!auth) { $("status").textContent = "Firebase no está disponible. " + (firebaseInitError && firebaseInitError.message ? firebaseInitError.message : "Comprueba tu conexión a Internet y vuelve a abrir klk."); return; }
- const email = $("email").value.trim(), password = $("password").value;
- if (!email || password.length < 6) { $("status").textContent = "Escribe un correo válido y una contraseña de al menos 6 caracteres."; return; }
- setBusy(true);
- try { await auth.createUserWithEmailAndPassword(email, password); $("status").textContent = "Cuenta creada correctamente."; }
- catch(error) { showError("status", error); }
- finally { setBusy(false); }
-});
-$("forgot").addEventListener("click", async () => {
- $("status").textContent = "";
- if (!auth) { $("status").textContent = "Firebase no está disponible. " + (firebaseInitError && firebaseInitError.message ? firebaseInitError.message : "Comprueba tu conexión a Internet y vuelve a abrir klk."); return; }
- const email = $("email").value.trim();
- if (!email) { $("status").textContent = "Escribe primero tu correo electrónico y vuelve a pulsar aquí."; $("email").focus(); return; }
+ if (!auth) { $("status").textContent = "Firebase no está disponible. Comprueba tu conexión e inténtalo de nuevo."; return; }
  setBusy(true);
  try {
-  await auth.sendPasswordResetEmail(email);
-  $("status").textContent = "Si el correo está registrado, Firebase enviará un enlace para cambiar la contraseña. Revisa también Spam o Correo no deseado.";
+  if (!confirmationResult) {
+   const phone = $("phoneNumber").value.replace(/[\s()-]/g, "");
+   if (!/^\+[1-9][0-9]{7,14}$/.test(phone)) throw new Error("Escribe el número en formato internacional, por ejemplo +18095551234.");
+   if (!recaptchaVerifier) recaptchaVerifier = new firebase.auth.RecaptchaVerifier("recaptcha-container", {size:"normal"});
+   await recaptchaVerifier.render();
+   confirmationResult = await auth.signInWithPhoneNumber(phone, recaptchaVerifier);
+   $("verificationCode").hidden = false;
+   $("verificationCode").required = true;
+   $("enter").textContent = "Verificar código";
+   $("status").textContent = "Enviamos un SMS a " + phone + ". Escribe el código de 6 dígitos.";
+   $("verificationCode").focus();
+  } else {
+   const code = $("verificationCode").value.trim();
+   if (!/^\d{6}$/.test(code)) throw new Error("El código debe tener 6 dígitos.");
+   await confirmationResult.confirm(code);
+   confirmationResult = null;
+   $("status").textContent = "Número verificado. Tu cuenta está lista.";
+  }
  } catch(error) {
-  const messages = {
-   "auth/invalid-email":"El correo electrónico no es válido.",
-   "auth/user-not-found":"No encontramos una cuenta con ese correo.",
-   "auth/too-many-requests":"Se hicieron demasiados intentos. Espera un momento e inténtalo de nuevo.",
-   "auth/network-request-failed":"No hay conexión. Revisa tu internet e inténtalo de nuevo."
-  };
-  $("status").textContent = messages[error.code] || "No se pudo enviar el correo. Inténtalo de nuevo.";
+  showError("status", error);
+  if (error.code && ["auth/invalid-verification-code","auth/code-expired"].includes(error.code)) $("verificationCode").value = "";
+  if (error.code && ["auth/captcha-check-failed","auth/invalid-app-credential","auth/too-many-requests"].includes(error.code) && recaptchaVerifier) {
+   try { recaptchaVerifier.clear(); } catch(e) {}
+   recaptchaVerifier = null;
+   $("recaptcha-container").innerHTML = "";
+  }
  } finally { setBusy(false); }
 });
 $("logout").onclick = async () => { if (unsubscribe) { unsubscribe(); unsubscribe = null; } await auth.signOut(); };
@@ -233,14 +236,14 @@ auth && auth.onAuthStateChanged(async user => {
  if (user) {
   window.klkSetCurrentUid && window.klkSetCurrentUid(user.uid);
   watchIncomingCalls(user);
-  $("who").textContent = "Conectado: " + (user.email || "usuario");
+  $("who").textContent = "Conectado: " + (user.phoneNumber || user.email || "usuario");
   activeConversationId = null; activeConversationName = null;
   $("chatTitle").textContent = "💬 Mensajes privados"; $("dmPanel").style.display = "block"; $("messages").style.display = "none"; $("backToContacts").hidden = true; $("audioCallBtn").disabled = true; $("videoCallBtn").disabled = true;
   document.querySelector(".composer").style.display = "none"; $("mediaActions").style.display = "none"; $("recordStatus").style.display = "none";
   try {
    const userRef = db.collection("users").doc(user.uid);
    const userSnap = await userRef.get(), profile = userSnap.exists ? userSnap.data() : {};
-   await userRef.set({uid:user.uid,email:user.email || "",displayName:user.displayName || profile.displayName || (user.email || "Miembro").split("@")[0],updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
+   await userRef.set({uid:user.uid,...(user.phoneNumber ? {phoneNumber:user.phoneNumber} : {email:user.email || ""}),displayName:user.displayName || profile.displayName || user.phoneNumber || (user.email || "Miembro").split("@")[0],updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
    if (profile.photoPath) getMediaUrl(profile.photoPath).then(url => { if (url) $("profilePreview").src = url; }).catch(error => console.warn("Foto propia:", error));
    loadPeople();
   } catch(error) { showError("chatStatus",error); }
@@ -270,10 +273,10 @@ function loadPeople() {
    avatar.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'%3E%3Ccircle cx='40' cy='40' r='40' fill='%23dce8e4'/%3E%3Ccircle cx='40' cy='29' r='14' fill='%2389a99e'/%3E%3Cpath d='M13 75c2-17 13-25 27-25s25 8 27 25' fill='%2389a99e'/%3E%3C/svg%3E";
    if (person.photoPath) getMediaUrl(person.photoPath).then(url => { if (url) avatar.src = url; }).catch(error => console.warn("Foto de perfil:", error));
    const info = document.createElement("span"); info.className = "memberInfo";
-   const name = document.createElement("strong"); name.textContent = person.displayName || person.email || "Miembro";
-   const email = document.createElement("small"); email.textContent = person.email || "";
-   info.append(name,email); line.append(avatar,info); button.append(line);
-   button.onclick = () => openPrivateConversation(doc.id, person.displayName || person.email || "Conversación");
+   const name = document.createElement("strong"); name.textContent = person.displayName || person.phoneNumber || person.email || "Miembro";
+   const phone = document.createElement("small"); phone.textContent = person.phoneNumber || person.email || "";
+   info.append(name,phone); line.append(avatar,info); button.append(line);
+   button.onclick = () => openPrivateConversation(doc.id, person.displayName || person.phoneNumber || person.email || "Conversación");
    list.appendChild(button);
   }
  }, error => showError("chatStatus",error));
@@ -479,7 +482,7 @@ function loadMessages() {
   for (const doc of snapshot.docs) {
    const data = doc.data(), item = document.createElement("div");
    item.className = "msg" + (auth.currentUser && data.uid === auth.currentUser.uid ? " mine" : "");
-   const sender = document.createElement("b"); sender.textContent = data.email || "Usuario"; item.appendChild(sender);
+   const sender = document.createElement("b"); sender.textContent = data.phoneNumber || data.email || "Usuario"; item.appendChild(sender);
    if ((data.type === "image" || data.type === "audio") && (data.storagePath || data.mediaUrl)) {
     const placeholder = document.createElement("p"); placeholder.textContent = "Cargando archivo..."; item.appendChild(placeholder); $("messages").appendChild(item);
     try {
@@ -498,7 +501,7 @@ $("send").onclick = async () => {
  if (!activeConversationId) { $("chatStatus").textContent = "Abre una conversación individual antes de enviar mensajes."; return; }
  sending = true; $("send").disabled = true; $("chatStatus").textContent = "";
  try {
-  await messagesCollection().add({type:"text", text, email:user.email || "", uid:user.uid, createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+  await messagesCollection().add({type:"text", text, ...(user.phoneNumber ? {phoneNumber:user.phoneNumber} : {email:user.email || ""}), uid:user.uid, createdAt:firebase.firestore.FieldValue.serverTimestamp()});
   $("message").value = "";
  } catch(error) { showError("chatStatus", error); }
  finally { sending = false; $("send").disabled = false; }
@@ -565,7 +568,7 @@ async function uploadMedia(file, type, durationSeconds = null) {
   await messagesCollection().add({
    type, storagePath: signed.path, ...(activeConversationId ? {conversationId:activeConversationId} : {}), mimeType, fileName: uploadFile.name || (type === "image" ? "foto" : "nota-de-voz"),
    size: uploadFile.size, ...(durationSeconds === null ? {} : {duration:durationSeconds}),
-   email:user.email || "", uid:user.uid, createdAt:firebase.firestore.FieldValue.serverTimestamp()
+   ...(user.phoneNumber ? {phoneNumber:user.phoneNumber} : {email:user.email || ""}), uid:user.uid, createdAt:firebase.firestore.FieldValue.serverTimestamp()
   });
   $("chatStatus").textContent = type === "image" ? "Foto enviada." : "Nota de voz enviada.";
  } catch(error) {
@@ -704,7 +707,7 @@ if (window.matchMedia("(display-mode: standalone)").matches || window.navigator.
  function permissionButton(){ $("enableNotifications").textContent=("Notification" in window && Notification.permission==="granted")?"Activadas":"Activar";}
  $("enableNotifications").addEventListener("click",async()=>{if(!("Notification" in window)){$("settingsStatus").textContent="Este dispositivo no admite notificaciones web.";return;}try{const p=await Notification.requestPermission();$("settingsStatus").textContent=p==="granted"?"Permiso concedido. Para avisos con la app cerrada falta activar el envío push de Firebase.":"Permiso no concedido; puedes cambiarlo en los ajustes del teléfono.";permissionButton();}catch(e){$("settingsStatus").textContent="No se pudo solicitar el permiso."; }});
  function tone(){if(!prefs.sound)return;try{const C=window.AudioContext||window.webkitAudioContext;if(!C)return;const x=new C(),o=x.createOscillator(),g=x.createGain();o.frequency.value=880;g.gain.setValueAtTime(.0001,x.currentTime);g.gain.exponentialRampToValueAtTime(.1,x.currentTime+.02);g.gain.exponentialRampToValueAtTime(.0001,x.currentTime+.2);o.connect(g);g.connect(x.destination);o.start();o.stop(x.currentTime+.22);o.onended=()=>x.close();}catch(e){}}
- window.klkNotifyIncoming=(data,id)=>{if(!data||data.uid===window.klkCurrentUid)return;tone();if(prefs.vibration&&navigator.vibrate)navigator.vibrate([100,60,100]);if("Notification"in window&&Notification.permission==="granted"&&document.visibilityState!=="visible"){const body=prefs.preview?(data.text||(data.type==="image"?"📷 Foto":data.type==="audio"?"🎙️ Nota de voz":"Nuevo mensaje")):"Tienes un mensaje nuevo";try{new Notification("klk · "+(data.email||"Mensaje nuevo"),{body,tag:"klk-"+id});}catch(e){}}};
+ window.klkNotifyIncoming=(data,id)=>{if(!data||data.uid===window.klkCurrentUid)return;tone();if(prefs.vibration&&navigator.vibrate)navigator.vibrate([100,60,100]);if("Notification"in window&&Notification.permission==="granted"&&document.visibilityState!=="visible"){const body=prefs.preview?(data.text||(data.type==="image"?"📷 Foto":data.type==="audio"?"🎙️ Nota de voz":"Nuevo mensaje")):"Tienes un mensaje nuevo";try{new Notification("klk · "+(data.phoneNumber||data.email||"Mensaje nuevo"),{body,tag:"klk-"+id});}catch(e){}}};
  window.klkSetCurrentUid=uid=>{window.klkCurrentUid=uid||null;};apply();permissionButton();
 })();
 </script></body></html>
