@@ -19,13 +19,23 @@ Aplicación web instalable (PWA) para iniciar sesión y conversar en un chat fam
 - `.github/workflows/pages.yml`: publicación automática en GitHub Pages.
 - `.github/workflows/android-apk.yml`: compilación automática de un APK de prueba para Android.
 
-## Pasos pendientes para activar el servicio
-1. En Firebase Console, abrir el proyecto `klk-familia`.
-2. Confirmar que Authentication tenga habilitado el proveedor **Correo electrónico/Contraseña**.
-3. Crear la base de datos de Cloud Firestore.
-4. Publicar las reglas de `firestore.rules` desde Firebase Console o con Firebase CLI.
-5. En GitHub, abrir **Settings → Pages** y seleccionar **GitHub Actions** como fuente de publicación.
-6. Esperar a que el flujo **Publicar klk en GitHub Pages** termine correctamente.
+## Estado de publicación (8 de noviembre de 2026)
+
+- **GitHub Pages:** publicado correctamente desde `main`. URL: https://cedanoconan-coder.github.io/klk-android/
+- **APK Android:** compilación de prueba completada correctamente. El artefacto `klk-android-apk` está disponible en GitHub Actions durante 30 días.
+- **Código:** commit publicado `76482f05ab55812e64e72a74fcfed822844cde4d`.
+
+## Pasos externos pendientes para activar el backend
+
+La publicación web y la compilación Android ya están completadas. Para que los usuarios puedan registrarse y conversar, falta confirmar en Firebase Console:
+
+1. Abrir el proyecto `klk-familia`.
+2. Habilitar **Authentication → Correo electrónico/Contraseña**.
+3. Crear la base de datos de **Cloud Firestore**.
+4. Publicar las reglas del archivo `firestore.rules`.
+5. Confirmar que el servicio de carga firmado de Supabase está desplegado y que el bucket `Chat-media` existe.
+
+Estos pasos requieren acceso autorizado a las consolas Firebase y Supabase; no se pueden completar desde este repositorio ni se deben simular como realizados.
 
 ## Seguridad
 Las reglas incluidas requieren que el usuario haya iniciado sesión y validan que cada mensaje pertenezca al usuario autenticado. Esta primera versión permite que cualquier cuenta autenticada del proyecto lea el chat; para un chat estrictamente privado entre familiares se debe añadir una lista administrada de miembros autorizados antes de invitar a otras personas.
