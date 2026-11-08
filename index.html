@@ -505,7 +505,7 @@ function renderPeople() {
   if (isAcceptedContact(uid)) { action.textContent = "Enviar mensaje"; action.onclick = () => openPrivateConversation(uid, person.displayName || person.email || "Conversación"); }
   else if ((incomingRequests.get(uid) || {}).status === "pending") { action.textContent = "Aceptar solicitud"; action.onclick = () => respondToContactRequest(uid,"accepted"); }
   else if ((outgoingRequests.get(uid) || {}).status === "pending") { action.textContent = "Solicitud enviada"; action.disabled = true; }
-  else if ((outgoingRequests.get(uid) || {}).status === "rejected") { action.textContent = "Solicitud rechazada"; action.disabled = true; }
+  else if ((outgoingRequests.get(uid) || {}).status === "rejected") { action.textContent = "Volver a solicitar"; action.onclick = () => sendContactRequest(uid,person); }
   else { action.textContent = "Enviar solicitud"; action.onclick = () => sendContactRequest(uid,person); }
   row.append(action); list.append(row);
  }
@@ -599,9 +599,17 @@ function loadPeople() {
 async function sendContactRequest(otherUid, person) {
  const user = auth.currentUser; if (!user || !otherUid || otherUid === user.uid) return;
  const id = user.uid + "__" + otherUid;
+ const previous = outgoingRequests.get(otherUid);
+ if (previous && previous.status === "accepted") { $("chatStatus").textContent = "Esa persona ya es tu contacto."; return; }
+ if (previous && previous.status === "pending") { $("chatStatus").textContent = "Ya enviaste una solicitud. Espera que la acepten."; return; }
  try {
-  await db.collection("contactRequests").doc(id).set({senderUid:user.uid,recipientUid:otherUid,senderEmail:user.email || "",senderName:user.displayName || (user.email || "Miembro").split("@")[0],recipientEmail:person.email || "",recipientName:person.displayName || "",status:"pending",createdAt:firebase.firestore.FieldValue.serverTimestamp()});
-  $("chatStatus").textContent = "Solicitud enviada.";
+  const requestRef = db.collection("contactRequests").doc(id);
+  if (previous && previous.status === "rejected") {
+   await requestRef.update({status:"pending"});
+  } else {
+   await requestRef.set({senderUid:user.uid,recipientUid:otherUid,senderEmail:user.email || "",senderName:user.displayName || (user.email || "Miembro").split("@")[0],recipientEmail:person.email || "",recipientName:person.displayName || "",status:"pending",createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+  }
+  $("chatStatus").textContent = "Solicitud enviada. Espera que la acepten.";
  } catch(error) { showError("chatStatus",error); }
 }
 async function respondToContactRequest(senderUid,status) {
