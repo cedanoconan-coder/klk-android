@@ -21,6 +21,7 @@ try {
 const BUCKET = "Chat-media";
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 const MAX_AUDIO_BYTES = 20 * 1024 * 1024;
+const MAX_AVATAR_BYTES = 5 * 1024 * 1024;
 const firebaseKeys = createRemoteJWKSet(
   new URL("https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com"),
 );
@@ -92,10 +93,11 @@ Deno.serve(async (request) => {
     const mimeType = typeof body.mimeType === "string" ? body.mimeType.toLowerCase() : "";
     const isImage = type === "image" && mimeType.startsWith("image/");
     const isAudio = type === "audio" && mimeType.startsWith("audio/");
-    if ((!isImage && !isAudio) || !Number.isSafeInteger(size) || size <= 0) {
+    const isAvatar = type === "avatar" && mimeType.startsWith("image/");
+    if ((!isImage && !isAudio && !isAvatar) || !Number.isSafeInteger(size) || size <= 0) {
       return reply(400, { error: "Tipo o tamaño de archivo no válido." });
     }
-    if ((isImage && size > MAX_IMAGE_BYTES) || (isAudio && size > MAX_AUDIO_BYTES)) {
+    if ((isImage && size > MAX_IMAGE_BYTES) || (isAudio && size > MAX_AUDIO_BYTES) || (isAvatar && size > MAX_AVATAR_BYTES)) {
       return reply(413, { error: "El archivo supera el límite permitido." });
     }
 
@@ -104,7 +106,9 @@ Deno.serve(async (request) => {
       : mimeType === "audio/webm" || mimeType === "audio/webm;codecs=opus" ? "webm"
       : mimeType.split("/")[1]?.replace(/[^a-z0-9]/g, "").slice(0, 8) || "bin";
     let path: string;
-    if (body.conversationId) {
+    if (isAvatar) {
+      path = `avatars/${uid}/${crypto.randomUUID()}.${extension}`;
+    } else if (body.conversationId) {
       const members = await verifyConversationMember(body.conversationId, firebaseToken, uid);
       if (!members) return reply(403, { error: "No perteneces a esta conversación privada." });
       path = `dm/${body.conversationId}/${uid}/${crypto.randomUUID()}.${extension}`;
@@ -127,6 +131,12 @@ Deno.serve(async (request) => {
           !/^dm\/[A-Za-z0-9_-]{1,256}\/[A-Za-z0-9_-]{1,128}\/[A-Za-z0-9-]{16,64}\.[a-z0-9]{1,8}$/i.test(path) ||
           !members.some(member => path.startsWith(`dm/${body.conversationId}/${member}/`))) {
         return reply(403, { error: "No tienes permiso para acceder a este archivo privado." });
+      }
+    } else if (path.startsWith("avatars/")) {
+      const avatarParts = path.split("/");
+      if (avatarParts.length !== 3 || !/^[A-Za-z0-9_-]{1,128}$/.test(avatarParts[1]) ||
+          !/^[A-Za-z0-9-]{16,64}\.[a-z0-9]{1,8}$/i.test(avatarParts[2])) {
+        return reply(403, { error: "Ruta de foto de perfil no válida." });
       }
     } else if (!/^[^/]{1,128}\/[A-Za-z0-9-]{16,64}\.[a-z0-9]{1,8}$/i.test(path)) {
       return reply(403, { error: "Ruta de archivo no válida o sin permiso." });
