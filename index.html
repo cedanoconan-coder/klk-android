@@ -299,6 +299,7 @@ function renderPeople() {
   if (isAcceptedContact(uid)) { action.textContent = "Enviar mensaje"; action.onclick = () => openPrivateConversation(uid, person.displayName || person.email || "Conversación"); }
   else if ((incomingRequests.get(uid) || {}).status === "pending") { action.textContent = "Aceptar solicitud"; action.onclick = () => respondToContactRequest(uid,"accepted"); }
   else if ((outgoingRequests.get(uid) || {}).status === "pending") { action.textContent = "Solicitud enviada"; action.disabled = true; }
+  else if ((outgoingRequests.get(uid) || {}).status === "rejected") { action.textContent = "Solicitud rechazada"; action.disabled = true; }
   else { action.textContent = "Enviar solicitud"; action.onclick = () => sendContactRequest(uid,person); }
   row.append(action); list.append(row);
  }
