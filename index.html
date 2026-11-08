@@ -230,7 +230,7 @@ $("register").addEventListener("click", async () => {
  const email = $("email").value.trim(), password = $("password").value;
  if (!email || password.length < 6) { $("status").textContent = "Escribe un correo válido y una contraseña de al menos 6 caracteres."; return; }
  setBusy(true);
- try { await auth.createUserWithEmailAndPassword(email, password); $("status").textContent = "Cuenta creada correctamente."; }
+ try { const credential = await auth.createUserWithEmailAndPassword(email, password); const newUser = credential.user; await db.collection("users").doc(newUser.uid).set({uid:newUser.uid,email:newUser.email || email,displayName:newUser.displayName || email.split("@")[0],updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true}); $("status").textContent = "Cuenta creada correctamente. Tu perfil ya aparece en klk."; loadPeople(); }
  catch(error) { showError("status", error); }
  finally { setBusy(false); }
 });
@@ -332,8 +332,9 @@ function loadContactRequests() {
 function loadPeople() {
  if (peopleUnsubscribe) peopleUnsubscribe();
  $("peopleList").textContent = "Cargando personas registradas...";
- peopleUnsubscribe = db.collection("users").orderBy("displayName").onSnapshot(snapshot => {
-  peopleCache.clear(); snapshot.docs.forEach(d => peopleCache.set(d.id,d.data())); renderPeople();
+ peopleUnsubscribe = db.collection("users").onSnapshot(snapshot => {
+  peopleCache.clear(); snapshot.docs.forEach(d => peopleCache.set(d.id,d.data()));
+  renderPeople();
  },error => showError("chatStatus",error));
 }
 async function sendContactRequest(otherUid, person) {
