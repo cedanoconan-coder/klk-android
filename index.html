@@ -159,7 +159,8 @@ function getSupabaseClient() {
  if (!supabaseClient) supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
  return supabaseClient;
 }
-const mediaUrlCache = new Map();\nlet profileUrlCache = new Map();
+const mediaUrlCache = new Map();
+let profileUrlCache = new Map();
 let auth, db, firebaseInitError = null, unsubscribe = null, sending = false, mediaRecorder = null, audioStream = null, audioBlob = null, audioStartedAt = 0;
 let activeConversationId = null, activeConversationName = null, peopleUnsubscribe = null;
 function showError(target, error) {
@@ -348,7 +349,9 @@ function listenForCandidates(callRef, collectionName, pc) {
   snapshot.docChanges().forEach(change=>{
    if(change.type!=="added")return;
    const data=change.doc.data();
-   pc.addIceCandidate(new RTCIceCandidate({candidate:data.candidate,sdpMid:data.sdpMid,sdpMLineIndex:data.sdpMLineIndex})).catch(error=>console.warn("ICE:",error));
+   const candidate=new RTCIceCandidate({candidate:data.candidate,sdpMid:data.sdpMid,sdpMLineIndex:data.sdpMLineIndex});
+   if(!pc.remoteDescription){pc._pendingIceCandidates=pc._pendingIceCandidates||[];pc._pendingIceCandidates.push(candidate);}
+   else pc.addIceCandidate(candidate).catch(error=>console.warn("ICE:",error));
   });
  },error=>{$("callStatus").textContent="No se pudo establecer la conexión.";console.error(error);});
  activeCallUnsubscribes.push(unsub);
@@ -379,7 +382,7 @@ async function startCall(kind) {
    if(data.status==="rejected"){ $("callStatus").textContent="La llamada fue rechazada.";setTimeout(clearCallMedia,900);return;}
    if(data.status==="ended"){ $("callStatus").textContent="La llamada terminó.";setTimeout(clearCallMedia,500);return;}
    if(data.answer&&pc.signalingState==="have-local-offer"){
-    try{await pc.setRemoteDescription(new RTCSessionDescription(data.answer));$("callStatus").textContent="Conectando...";}
+    try{await pc.setRemoteDescription(new RTCSessionDescription(data.answer));for(const candidate of (pc._pendingIceCandidates||[]))await pc.addIceCandidate(candidate);pc._pendingIceCandidates=[];$("callStatus").textContent="Conectando...";}
     catch(error){console.error(error);}
    }
   },error=>{$("callStatus").textContent="Error de señalización: "+error.message;});
@@ -651,7 +654,8 @@ $("profilePhotoInput").addEventListener("change",async event=>{
  }catch(error){console.error(error);$("settingsStatus").textContent="No se pudo actualizar la foto: "+(error.message||"Error desconocido");}
  finally{$("changeProfilePhoto").disabled=false;}
 });
-\n$("message").addEventListener("keydown", event => { if (event.key === "Enter") $("send").click(); });
+
+$("message").addEventListener("keydown", event => { if (event.key === "Enter") $("send").click(); });
 </script>
 <script>
 if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(error => console.error("Service worker:", error)));
