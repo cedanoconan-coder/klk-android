@@ -237,7 +237,7 @@ auth && auth.onAuthStateChanged(async user => {
   watchIncomingCalls(user);
   $("who").textContent = "Conectado: " + (user.email || "usuario");
   activeConversationId = null; activeConversationName = null;
-  $("chatTitle").textContent = "💬 Mensajes privados"; $("dmPanel").style.display = "block"; $("messages").style.display = "none"; $("backToContacts").hidden = true; $("audioCallBtn").disabled = true; $("videoCallBtn").disabled = true;
+  $("chatTitle").textContent = "💬 Chats"; $("homePanel").style.display = "block"; $("dmPanel").style.display = "none"; $("chatNav").style.display = "flex"; $("showChats").classList.remove("secondary"); $("showContacts").classList.add("secondary"); $("messages").style.display = "none"; $("backToContacts").hidden = true; $("audioCallBtn").disabled = true; $("videoCallBtn").disabled = true;
   document.querySelector(".composer").style.display = "none"; $("mediaActions").style.display = "none"; $("recordStatus").style.display = "none";
   try {
    const userRef = db.collection("users").doc(user.uid);
