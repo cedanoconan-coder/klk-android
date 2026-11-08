@@ -1,298 +1,71 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#075e54">
-<meta name="description" content="Chat privado para mantener a la familia conectada.">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<link rel="manifest" href="./manifest.webmanifest">
-<link rel="icon" href="./icon.svg" type="image/svg+xml">
-<title>klk - Chat familiar</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#075e54"><meta name="description" content="Mensajería privada uno a uno.">
+<link rel="manifest" href="./manifest.webmanifest"><link rel="icon" href="./icon.svg" type="image/svg+xml">
+<title>klk · Mensajes privados</title>
 <style>
-*{box-sizing:border-box}html{min-height:100%;background:#efeae2}body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#efeae2;color:#111b21;min-height:100vh;min-height:100dvh;padding-bottom:env(safe-area-inset-bottom)}
-header{position:sticky;top:0;z-index:5;background:#075e54;color:white;padding:calc(14px + env(safe-area-inset-top)) 18px 14px;font-size:25px;font-weight:700;box-shadow:0 2px 5px #0002}
-header small{display:block;font-size:13px;font-weight:400;opacity:.9;margin-top:3px}
-main{max-width:760px;margin:auto;padding:12px 10px calc(12px + env(safe-area-inset-bottom))}.card{background:#fff;padding:20px;border-radius:12px;margin-top:16px;box-shadow:0 2px 8px #00000012}
-h2{margin-top:0}input,button{width:100%;padding:14px;margin:7px 0;border-radius:24px;font-size:16px}
-input{border:1px solid #d6dce0;background:#fff;color:#17211e}input:focus{outline:2px solid #128c7e;border-color:transparent}
-button{background:#075e54;color:white;border:0;font-weight:700;cursor:pointer}button.secondary{background:#e3f2ed;color:#075e54}button:disabled{opacity:.55}
-#chat{display:none;padding:0;overflow:hidden;background:#efeae2}
-.chatTop{background:#075e54;color:#fff;padding:14px 16px}.chatTop h2{font-size:18px;margin:0 0 3px}.chatTop .muted{color:#d6eee8}
-#messages{height:58vh;height:58dvh;max-height:650px;min-height:260px;overflow:auto;padding:14px 12px;background-color:#efeae2;background-image:radial-gradient(#d8d0c5 0.7px,transparent 0.7px);background-size:18px 18px}
-.msg{background:#fff;padding:9px 12px;border-radius:3px 12px 12px 12px;margin:8px 0;overflow-wrap:anywhere;max-width:88%;width:fit-content;box-shadow:0 1px 1px #00000012}
-.msg.mine{background:#d9fdd3;margin-left:auto;border-radius:12px 3px 12px 12px}
-.msg b{font-size:12px;color:#087568}.msg p{margin:5px 0 0;white-space:pre-wrap;font-size:15px;line-height:1.35}
-#messages img{display:block;max-width:100%;max-height:340px;border-radius:8px;margin-top:7px}#messages audio{display:block;width:min(260px,70vw);max-width:100%;margin-top:7px}
-.composer{display:flex;align-items:center;gap:7px;padding:9px;background:#f0f2f5}
-.composer input{flex:1;min-width:0;margin:0;border:0;border-radius:24px;padding:13px 16px;background:#fff}
-.iconBtn{width:44px;height:44px;flex:0 0 44px;margin:0;padding:0;border-radius:50%;font-size:20px;background:#fff;color:#54656f}
-#send{width:46px;height:46px;flex:0 0 46px;margin:0;padding:0;border-radius:50%;font-size:18px}
-#mediaActions{display:flex;gap:7px;padding:0 12px 8px;background:#f0f2f5}#mediaActions button{width:auto;flex:1;margin:0;padding:9px 5px;border-radius:20px;font-size:13px}
-#recordStatus{padding:0 12px;margin:0;background:#f0f2f5;min-height:18px}.chatFoot{padding:4px 12px 10px;background:#f0f2f5}
-.muted{color:#68736f;font-size:12px}#status{color:#a12b2b;overflow-wrap:anywhere;min-height:18px}.hint{font-size:13px;color:#68736f;line-height:1.45}button[hidden]{display:none!important}#installApp{margin-top:0}
-@media(max-width:420px){main{padding:8px 0}.card{border-radius:0;margin-top:8px}#chat{margin-top:0}#messages{height:calc(100dvh - 220px);max-height:none}}
+*{box-sizing:border-box}body{margin:0;background:#efeae2;color:#17211e;font:16px Arial,sans-serif;min-height:100dvh}header{position:sticky;top:0;z-index:4;background:#075e54;color:white;padding:calc(14px + env(safe-area-inset-top)) 16px 14px;font-size:23px;font-weight:bold}header small{display:block;font-size:12px;font-weight:normal;margin-top:4px}main{max-width:760px;margin:auto;padding:12px 10px 30px}.card{background:#fff;border-radius:14px;padding:16px;margin:10px 0;box-shadow:0 2px 8px #0001}h2{font-size:19px;margin:0 0 12px}input,button{font:inherit;border-radius:24px;padding:12px;border:1px solid #d8dfdc}input{width:100%;margin:5px 0}button{background:#075e54;color:#fff;border:0;font-weight:bold;cursor:pointer;margin:4px 0}button.secondary{background:#e2f2ed;color:#075e54}button:disabled{opacity:.5}.row{display:flex;gap:8px;align-items:center}.row>*{min-width:0}.row input{flex:1}.tabs{display:flex;gap:6px}.tabs button{flex:1}.tabs button.active{background:#128c7e}.person{display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid #eee}.person img,.avatar{width:44px;height:44px;border-radius:50%;object-fit:cover;background:#d9e8e2;display:grid;place-items:center;color:#075e54;font-weight:bold;flex:none}.person .meta{flex:1;min-width:0}.person small{display:block;color:#68736f;overflow-wrap:anywhere}.person button{padding:9px 13px}.hidden{display:none!important}.muted{color:#68736f;font-size:13px}.error{color:#a12b2b;white-space:pre-wrap;font-size:13px}.msg{max-width:86%;width:fit-content;background:white;border-radius:12px 12px 12px 3px;padding:9px 12px;margin:8px 0;overflow-wrap:anywhere}.msg.mine{margin-left:auto;background:#d9fdd3;border-radius:12px 12px 3px 12px}.msg small{display:block;color:#087568;font-size:11px;margin-bottom:4px}#messageList{height:48dvh;min-height:230px;overflow:auto;padding:8px;background:#efeae2;border-radius:10px}.composer{display:flex;gap:6px;margin-top:8px}.composer input{flex:1;min-width:0}.composer button{width:48px;flex:none}.profile{display:flex;align-items:center;gap:12px}.profile img{width:64px;height:64px;border-radius:50%;object-fit:cover;background:#eee}.callbox{position:fixed;inset:0;background:#000d;color:white;z-index:10;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center}.callbox video{width:min(92vw,500px);max-height:55vh;background:#222;border-radius:14px}.callbox button{min-width:120px}#localVideo{position:absolute;width:110px;right:14px;top:50px;opacity:.9}.hint{font-size:12px;color:#68736f}
 </style>
 </head>
 <body>
-<header>klk <small>Tu familia, siempre conectada ❤️</small></header>
+<header>klk <small>Mensajes privados · Siempre conectados</small></header>
 <main>
-<button id="installApp" class="secondary" type="button" hidden>Instalar klk en este teléfono</button>
-<section id="login" class="card">
-<h2>Bienvenido a klk</h2><p>Entra o crea tu cuenta familiar.</p>
-<form id="authForm">
-<input id="email" type="email" autocomplete="email" placeholder="Correo electrónico" required>
-<input id="password" type="password" autocomplete="current-password" placeholder="Contraseña (mínimo 6 caracteres)" minlength="6" required>
-<button id="enter" type="submit">Iniciar sesión</button>
-</form>
-<button id="register" class="secondary" type="button">Crear cuenta</button>
-<button id="forgot" class="secondary" type="button">Olvidé mi contraseña</button>
-<p id="status" role="status" aria-live="polite"></p>
-<p class="hint">Necesitas conexión a internet para iniciar sesión y enviar mensajes.</p>
-</section>
-<section id="chat" class="card">
-<div class="chatTop"><h2>👨‍👩‍👧‍👦 Familia klk</h2><p id="who" class="muted"></p></div>
-<div id="messages" aria-live="polite"><p class="muted">Cargando mensajes...</p></div>
-<div class="composer">
- <button id="pickPhoto" class="iconBtn" type="button" aria-label="Elegir foto" title="Elegir foto">＋</button>
- <input id="message" maxlength="2000" placeholder="Escribe un mensaje" autocomplete="off" aria-label="Escribe un mensaje">
- <button id="send" type="button" aria-label="Enviar mensaje" title="Enviar">➤</button>
+<section id="login" class="card"><h2>Bienvenido a klk</h2><form id="authForm"><input id="email" type="email" placeholder="Correo electrónico" autocomplete="email" required><input id="password" type="password" minlength="6" placeholder="Contraseña (mínimo 6 caracteres)" required><button id="enter">Iniciar sesión</button></form><button id="register" class="secondary">Crear cuenta</button><button id="forgot" class="secondary">Olvidé mi contraseña</button><p id="authError" class="error"></p></section>
+<section id="app" class="hidden">
+<div class="card profile"><img id="myPhoto" alt="Foto de perfil"><div style="flex:1"><b id="myName">Mi perfil</b><small id="myEmail" class="muted"></small><input id="nameInput" maxlength="40" placeholder="Tu nombre"><div class="row"><button id="saveProfile">Guardar</button><button id="chooseAvatar" class="secondary">Foto</button></div><input id="avatarInput" type="file" accept="image/*" class="hidden"></div></div>
+<div class="card"><div class="tabs"><button id="tabContacts" class="active">Contactos</button><button id="tabRequests" class="secondary">Solicitudes</button><button id="tabChats" class="secondary">Chats</button></div>
+<div id="contactsPane"><h2>Personas en klk</h2><p class="muted">Envía una solicitud. Solo podrán hablar cuando la otra persona la acepte.</p><div id="peopleList">Cargando personas…</div></div>
+<div id="requestsPane" class="hidden"><h2>Solicitudes recibidas</h2><div id="incomingList"></div><h2>Enviadas</h2><div id="outgoingList"></div></div>
+<div id="chatsPane" class="hidden"><h2>Tus conversaciones</h2><div id="chatList"></div></div>
 </div>
-<div id="mediaActions">
- <button id="takePhoto" type="button">📷 Cámara</button>
- <button id="recordAudio" type="button">🎙️ Grabar audio</button>
- <button id="sendAudio" type="button" disabled>Enviar audio</button>
-</div>
-<input id="galleryInput" type="file" accept="image/*" hidden>
-<input id="cameraInput" type="file" accept="image/*" capture="environment" hidden>
-<p id="recordStatus" class="hint" role="status" aria-live="polite"></p>
-<div class="chatFoot"><p id="chatStatus" class="hint" role="status" aria-live="polite"></p><button id="logout" class="secondary" type="button">Cerrar sesión</button></div>
+<section id="conversation" class="card hidden"><div class="row"><button id="back" class="secondary">←</button><div style="flex:1"><b id="chatTitle">Chat</b><small id="chatSubtitle" class="muted"></small></div><button id="voiceCall" title="Llamada de voz">📞</button><button id="videoCall" title="Videollamada">📹</button></div><div id="messageList"></div><div class="composer"><input id="message" maxlength="2000" placeholder="Escribe un mensaje"><button id="send">➤</button></div><p id="chatError" class="error"></p></section>
+<button id="logout" class="secondary">Cerrar sesión</button>
 </section>
 </main>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+<div id="callOverlay" class="callbox hidden"><h2 id="callTitle">Llamada</h2><p id="callStatus">Conectando…</p><video id="remoteVideo" autoplay playsinline></video><video id="localVideo" autoplay muted playsinline></video><div class="row"><button id="acceptCall" class="hidden">Aceptar</button><button id="declineCall" class="secondary hidden">Rechazar</button><button id="hangup" style="background:#b3261e">Colgar</button></div></div>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 <script>
-const firebaseConfig = {
- apiKey: "AIzaSyAgMkDOS77y-jHnzCEteQW1UgC90gShjuU",
- authDomain: "klk-familia.firebaseapp.com",
- projectId: "klk-familia",
- storageBucket: "klk-familia.firebasestorage.app",
- messagingSenderId: "184754934059",
- appId: "1:184754934059:web:1d385677b2c7c00699b56e",
- measurementId: "G-DXX2PHDNN0"
-};
-const $ = id => document.getElementById(id);
-let auth, db, storage, firebaseInitError = null, unsubscribe = null, sending = false, mediaRecorder = null, audioStream = null, audioBlob = null, audioStartedAt = 0;
-function showError(target, error) {
- console.error("Error de klk/Firebase:", error);
- const messages = {
-  "auth/email-already-in-use":"Este correo ya tiene una cuenta.",
-  "auth/invalid-email":"El correo electrónico no es válido.",
-  "auth/weak-password":"La contraseña debe tener al menos 6 caracteres.",
-  "auth/user-not-found":"No existe una cuenta con ese correo.",
-  "auth/wrong-password":"La contraseña es incorrecta.",
-  "auth/invalid-credential":"El correo o la contraseña son incorrectos.",
-  "auth/network-request-failed":"Firebase no respondió a la solicitud. Comprueba la conexión, la fecha y hora automáticas del teléfono y que no haya un DNS privado o bloqueador filtrando Google.",
-  "auth/unauthorized-domain":"Firebase no autorizó el dominio de esta aplicación. Hay que corregir los dominios autorizados del proyecto.",
-  "auth/operation-not-allowed":"El inicio de sesión por correo y contraseña no está activado en Firebase.",
-  "auth/api-key-not-valid.-please-pass-a-valid-api-key.":"La clave de Firebase no es válida.",
-  "permission-denied":"Firebase bloqueó la operación. Hay que revisar las reglas de seguridad."
- };
- const code = error && error.code ? error.code : "sin código";
- const detail = error && error.message ? error.message : "Sin detalle técnico";
- $(target).textContent = (messages[code] || detail || "Ocurrió un error. Inténtalo de nuevo.") + " [ " + code + " ]";
-}
-function setBusy(busy) {
- $("enter").disabled = busy; $("register").disabled = busy; $("forgot").disabled = busy;
-}
-try {
- firebase.initializeApp(firebaseConfig);
- auth = firebase.auth(); db = firebase.firestore(); storage = firebase.storage();
-} catch (error) { firebaseInitError = error; $("status").textContent = "No se pudo iniciar Firebase. Comprueba la conexión a Internet y vuelve a abrir klk. Detalle: " + error.message; }
-$("authForm").addEventListener("submit", async event => {
- event.preventDefault(); $("status").textContent = "";
- if (!auth) { $("status").textContent = "Firebase no está disponible. " + (firebaseInitError && firebaseInitError.message ? firebaseInitError.message : "Comprueba tu conexión a Internet y vuelve a abrir klk."); return; }
- setBusy(true);
- try { await auth.signInWithEmailAndPassword($("email").value.trim(), $("password").value); }
- catch(error) { showError("status", error); }
- finally { setBusy(false); }
-});
-$("register").addEventListener("click", async () => {
- $("status").textContent = "";
- if (!auth) { $("status").textContent = "Firebase no está disponible. " + (firebaseInitError && firebaseInitError.message ? firebaseInitError.message : "Comprueba tu conexión a Internet y vuelve a abrir klk."); return; }
- const email = $("email").value.trim(), password = $("password").value;
- if (!email || password.length < 6) { $("status").textContent = "Escribe un correo válido y una contraseña de al menos 6 caracteres."; return; }
- setBusy(true);
- try { await auth.createUserWithEmailAndPassword(email, password); $("status").textContent = "Cuenta creada correctamente."; }
- catch(error) { showError("status", error); }
- finally { setBusy(false); }
-});
-$("forgot").addEventListener("click", async () => {
- $("status").textContent = "";
- if (!auth) { $("status").textContent = "Firebase no está disponible. " + (firebaseInitError && firebaseInitError.message ? firebaseInitError.message : "Comprueba tu conexión a Internet y vuelve a abrir klk."); return; }
- const email = $("email").value.trim();
- if (!email) { $("status").textContent = "Escribe primero tu correo electrónico y vuelve a pulsar aquí."; $("email").focus(); return; }
- setBusy(true);
- try {
-  await auth.sendPasswordResetEmail(email);
-  $("status").textContent = "Si el correo está registrado, Firebase enviará un enlace para cambiar la contraseña. Revisa también Spam o Correo no deseado.";
- } catch(error) {
-  const messages = {
-   "auth/invalid-email":"El correo electrónico no es válido.",
-   "auth/user-not-found":"No encontramos una cuenta con ese correo.",
-   "auth/too-many-requests":"Se hicieron demasiados intentos. Espera un momento e inténtalo de nuevo.",
-   "auth/network-request-failed":"No hay conexión. Revisa tu internet e inténtalo de nuevo."
-  };
-  $("status").textContent = messages[error.code] || "No se pudo enviar el correo. Inténtalo de nuevo.";
- } finally { setBusy(false); }
-});
-$("logout").onclick = async () => { if (unsubscribe) { unsubscribe(); unsubscribe = null; } await auth.signOut(); };
-auth && auth.onAuthStateChanged(user => {
- $("login").style.display = user ? "none" : "block";
- $("chat").style.display = user ? "block" : "none";
- if (user) { $("who").textContent = "Conectado: " + (user.email || "usuario"); loadMessages(); }
- else { if (unsubscribe) unsubscribe(); unsubscribe = null; $("messages").innerHTML = ""; }
-});
-function loadMessages() {
- if (unsubscribe) unsubscribe();
- $("messages").textContent = "Cargando mensajes...";
- unsubscribe = db.collection("messages").orderBy("createdAt").limit(100).onSnapshot(snapshot => {
-  $("messages").innerHTML = "";
-  if (snapshot.empty) { $("messages").textContent = "Todavía no hay mensajes. ¡Envía el primero!"; return; }
-  snapshot.forEach(doc => {
-   const data = doc.data(), item = document.createElement("div");
-   item.className = "msg" + (auth.currentUser && data.uid === auth.currentUser.uid ? " mine" : "");
-   const sender = document.createElement("b"); sender.textContent = data.email || "Familia";
-   item.appendChild(sender);
-   if (data.type === "image" && data.mediaUrl) { const img = document.createElement("img"); img.src = data.mediaUrl; img.alt = "Foto compartida"; img.loading = "lazy"; item.appendChild(img); }
-   else if (data.type === "audio" && data.mediaUrl) { const audio = document.createElement("audio"); audio.controls = true; audio.preload = "metadata"; audio.src = data.mediaUrl; item.appendChild(audio); }
-   else { const body = document.createElement("p"); body.textContent = data.text || ""; item.appendChild(body); }
-   $("messages").appendChild(item);
-  });
-  $("messages").scrollTop = $("messages").scrollHeight;
- }, error => showError("chatStatus", error));
-}
-$("send").onclick = async () => {
- const text = $("message").value.trim(), user = auth && auth.currentUser;
- if (!text || !user || sending) return;
- sending = true; $("send").disabled = true; $("chatStatus").textContent = "";
- try {
-  await db.collection("messages").add({type:"text", text, email:user.email || "", uid:user.uid, createdAt:firebase.firestore.FieldValue.serverTimestamp()});
-  $("message").value = "";
- } catch(error) { showError("chatStatus", error); }
- finally { sending = false; $("send").disabled = false; }
-};
-
-async function uploadMedia(file, type, durationSeconds = null) {
- const user = auth && auth.currentUser;
- if (!user || !file) return;
- const maxBytes = type === "image" ? 10 * 1024 * 1024 : 20 * 1024 * 1024;
- if (file.size > maxBytes) { $("chatStatus").textContent = type === "image" ? "La foto debe pesar menos de 10 MB." : "La nota de voz debe pesar menos de 20 MB."; return; }
- if (type === "image" && !file.type.startsWith("image/")) { $("chatStatus").textContent = "Selecciona un archivo de imagen."; return; }
- if (type === "audio" && !file.type.startsWith("audio/")) { $("chatStatus").textContent = "No se pudo reconocer el formato del audio."; return; }
- $("chatStatus").textContent = type === "image" ? "Subiendo foto..." : "Subiendo nota de voz...";
- $("send").disabled = true; $("pickPhoto").disabled = true; $("takePhoto").disabled = true; $("recordAudio").disabled = true;
- try {
-  const ext = (file.name && file.name.includes(".") ? file.name.split(".").pop() : (type === "image" ? "jpg" : "webm")).replace(/[^a-z0-9]/gi,"").toLowerCase();
-  const path = "messages/" + user.uid + "/" + Date.now() + "-" + Math.random().toString(36).slice(2) + "." + ext;
-  const ref = storage.ref().child(path);
-  await ref.put(file, {contentType:file.type || (type === "image" ? "image/jpeg" : "audio/webm")});
-  const mediaUrl = await ref.getDownloadURL();
-  await db.collection("messages").add({
-   type, mediaUrl, storagePath:path, mimeType:file.type || "", fileName:file.name || (type === "image" ? "foto" : "nota-de-voz"),
-   size:file.size, ...(durationSeconds === null ? {} : {duration:durationSeconds}),
-   email:user.email || "", uid:user.uid, createdAt:firebase.firestore.FieldValue.serverTimestamp()
-  });
-  $("chatStatus").textContent = type === "image" ? "Foto enviada." : "Nota de voz enviada.";
- } catch(error) { showError("chatStatus", error); }
- finally { $("send").disabled = false; $("pickPhoto").disabled = false; $("takePhoto").disabled = false; $("recordAudio").disabled = false; }
-}
-$("pickPhoto").onclick = () => $("galleryInput").click();
-$("takePhoto").onclick = () => $("cameraInput").click();
-$("galleryInput").addEventListener("change", async event => { const file = event.target.files && event.target.files[0]; if (file) await uploadMedia(file,"image"); event.target.value = ""; });
-$("cameraInput").addEventListener("change", async event => { const file = event.target.files && event.target.files[0]; if (file) await uploadMedia(file,"image"); event.target.value = ""; });
-$("recordAudio").addEventListener("click", async () => {
- if (mediaRecorder && mediaRecorder.state === "recording") {
-  mediaRecorder.stop();
-  return;
- }
- if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.MediaRecorder) {
-  $("recordStatus").textContent = "Este teléfono o navegador no permite grabar audio aquí. Actualiza Chrome y vuelve a intentarlo.";
-  return;
- }
- try {
-  audioStream = await navigator.mediaDevices.getUserMedia({audio:true});
-  const mimeType = ["audio/webm;codecs=opus","audio/webm","audio/mp4"].find(type => MediaRecorder.isTypeSupported(type)) || "";
-  mediaRecorder = new MediaRecorder(audioStream, mimeType ? {mimeType} : undefined);
-  const chunks = [];
-  mediaRecorder.ondataavailable = event => { if (event.data && event.data.size) chunks.push(event.data); };
-  mediaRecorder.onstop = () => {
-   const type = mediaRecorder.mimeType || "audio/webm";
-   audioBlob = new Blob(chunks,{type});
-   $("sendAudio").disabled = !audioBlob.size;
-   $("recordAudio").textContent = "🎙️ Grabar otra vez";
-   const seconds = Math.max(1,Math.round((Date.now()-audioStartedAt)/1000));
-   $("recordStatus").textContent = "Audio grabado (" + seconds + " s). Pulsa «Enviar nota de voz».";
-   if (audioStream) audioStream.getTracks().forEach(track => track.stop());
-   audioStream = null;
-   mediaRecorder = null;
-   $("recordAudio").disabled = false;
-   $("sendAudio").dataset.duration = String(seconds);
-  };
-  mediaRecorder.start();
-  audioStartedAt = Date.now();
-  $("recordAudio").textContent = "⏹️ Detener grabación";
-  $("recordStatus").textContent = "Grabando... Pulsa detener cuando termines.";
- } catch(error) {
-  $("recordStatus").textContent = error.name === "NotAllowedError" ? "Permite el acceso al micrófono para grabar notas de voz." : "No se pudo iniciar la grabación: " + error.message;
-  if (audioStream) audioStream.getTracks().forEach(track => track.stop());
-  audioStream = null;
- }
-});
-$("sendAudio").onclick = async () => {
- if (!audioBlob) return;
- const ext = audioBlob.type.includes("mp4") ? "m4a" : "webm";
- const file = new File([audioBlob],"nota-de-voz." + ext,{type:audioBlob.type});
- const duration = Number($("sendAudio").dataset.duration || 0);
- $("sendAudio").disabled = true;
- await uploadMedia(file,"audio",duration);
- audioBlob = null;
- $("recordStatus").textContent = "";
- $("recordAudio").textContent = "🎙️ Grabar audio";
-};
-
-$("message").addEventListener("keydown", event => { if (event.key === "Enter") $("send").click(); });
+const firebaseConfig={apiKey:"AIzaSyAgMkDOS77y-jHnzCEteQW1UgC90gShjuU",authDomain:"klk-familia.firebaseapp.com",projectId:"klk-familia",storageBucket:"klk-familia.firebasestorage.app",messagingSenderId:"184754934059",appId:"1:184754934059:web:1d385677b2c7c00699b56e"};
+const $=id=>document.getElementById(id);firebase.initializeApp(firebaseConfig);const auth=firebase.auth(),db=firebase.firestore(),storage=firebase.storage();
+let me=null,myProfile={},activeContact=null,activeConversation=null,stopPeople=null,stopIncoming=null,stopOutgoing=null,stopChats=null,stopMessages=null,stopIncomingCalls=null,callRef=null,pc=null,localStream=null,callListeners=[],callMode="audio",callRole="",callBusy=false;
+const err=(id,e)=>{$(id).textContent=(e&&e.message?e.message:"Error inesperado")+" ["+(e&&e.code?e.code:"sin código")+"]";console.error(e)};
+const clean=()=>{[stopPeople,stopIncoming,stopOutgoing,stopChats,stopMessages,stopIncomingCalls].forEach(fn=>{if(fn)fn()});stopPeople=stopIncoming=stopOutgoing=stopChats=stopMessages=stopIncomingCalls=null};
+const pairId=(a,b)=>[a,b].sort().join("__");
+function profileName(p){return p.displayName||p.email||"Usuario"}
+function personNode(p,buttonText,action){const row=document.createElement("div");row.className="person";const img=document.createElement("img");img.src=p.photoURL||"";img.alt="";img.onerror=()=>{img.style.display="none"};row.appendChild(img);const meta=document.createElement("div");meta.className="meta";const b=document.createElement("b");b.textContent=profileName(p);const sm=document.createElement("small");sm.textContent=p.email||"";meta.append(b,sm);row.appendChild(meta);if(action){const btn=document.createElement("button");btn.textContent=buttonText;btn.onclick=action;row.appendChild(btn)}return row}
+function switchTab(which){["contacts","requests","chats"].forEach(k=>{$(k+"Pane").classList.toggle("hidden",k!==which);$("tab"+k[0].toUpperCase()+k.slice(1)).classList.toggle("active",k===which);$("tab"+k[0].toUpperCase()+k.slice(1)).classList.toggle("secondary",k!==which)})}
+$("tabContacts").onclick=()=>switchTab("contacts");$("tabRequests").onclick=()=>switchTab("requests");$("tabChats").onclick=()=>switchTab("chats");
+$("authForm").onsubmit=async e=>{e.preventDefault();$("authError").textContent="";try{await auth.signInWithEmailAndPassword($("email").value.trim(),$("password").value)}catch(x){err("authError",x)}};
+$("register").onclick=async()=>{const email=$("email").value.trim(),password=$("password").value;if(!email||password.length<6){$("authError").textContent="Escribe un correo válido y una contraseña de al menos 6 caracteres.";return}try{await auth.createUserWithEmailAndPassword(email,password)}catch(x){err("authError",x)}};
+$("forgot").onclick=async()=>{const email=$("email").value.trim();if(!email){$("authError").textContent="Escribe tu correo primero.";return}try{await auth.sendPasswordResetEmail(email);$("authError").textContent="Si la cuenta existe, recibirás un enlace para cambiar la contraseña."}catch(x){err("authError",x)}};
+auth.onAuthStateChanged(async user=>{clean();me=user;if(!user){$("login").classList.remove("hidden");$("app").classList.add("hidden");$("conversation").classList.add("hidden");return}$("login").classList.add("hidden");$("app").classList.remove("hidden");await ensureProfile(user);startDirectory();startRequests();startChats();startIncomingCalls()});
+async function ensureProfile(user){const ref=db.collection("users").doc(user.uid),snap=await ref.get();if(!snap.exists){myProfile={uid:user.uid,email:user.email||"",displayName:(user.email||"Usuario").split("@")[0],photoURL:"",createdAt:firebase.firestore.FieldValue.serverTimestamp()};await ref.set(myProfile)}else myProfile=snap.data();renderProfile()}
+function renderProfile(){$("myName").textContent=profileName(myProfile);$("myEmail").textContent=me.email||"";$("nameInput").value=myProfile.displayName||"";$("myPhoto").src=myProfile.photoURL||""}
+$("saveProfile").onclick=async()=>{const displayName=$("nameInput").value.trim();if(!displayName){$("authError").textContent="Escribe un nombre.";return}try{await db.collection("users").doc(me.uid).set({displayName,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});myProfile.displayName=displayName;renderProfile()}catch(e){err("authError",e)}};
+$("chooseAvatar").onclick=()=>$("avatarInput").click();
+$("avatarInput").onchange=async e=>{const file=e.target.files[0];if(!file)return;if(!file.type.startsWith("image/")||file.size>5*1024*1024){$("authError").textContent="Elige una imagen de máximo 5 MB.";return}try{const ref=storage.ref("users/"+me.uid+"/profile/avatar");await ref.put(file,{contentType:file.type});const photoURL=await ref.getDownloadURL();await db.collection("users").doc(me.uid).update({photoURL});myProfile.photoURL=photoURL;renderProfile()}catch(x){err("authError",x)}e.target.value=""};
+function startDirectory(){if(stopPeople)stopPeople();$("peopleList").textContent="Cargando…";stopPeople=db.collection("users").orderBy("displayName").onSnapshot(async snap=>{const rows=[];for(const d of snap.docs){if(d.id===me.uid)continue;const p=d.data(),c=await db.collection("users").doc(me.uid).collection("contacts").doc(d.id).get(),r=await db.collection("contactRequests").doc(me.uid+"_"+d.id).get();let action=null,label="Enviar solicitud";if(c.exists){label="Abrir chat";action=()=>openChat(d.id,p)}else if(r.exists){label="Pendiente";action=null}else action=()=>sendRequest(d.id);rows.push({p,label,action})}const root=$("peopleList");root.innerHTML="";if(!rows.length)root.textContent="Todavía no hay otros miembros registrados.";rows.forEach(x=>root.appendChild(personNode(x.p,x.label,x.action)))},e=>err("authError",e))}
+async function sendRequest(toUid){try{if(toUid===me.uid)return;const ref=db.collection("contactRequests").doc(me.uid+"_"+toUid);await ref.set({fromUid:me.uid,toUid,status:"pending",createdAt:firebase.firestore.FieldValue.serverTimestamp()});$("authError").textContent="Solicitud enviada."}catch(e){err("authError",e)}}
+function startRequests(){stopIncoming=db.collection("contactRequests").where("toUid","==",me.uid).onSnapshot(s=>{const root=$("incomingList");root.innerHTML="";const pending=s.docs.filter(d=>d.data().status==="pending");if(!pending.length)root.textContent="No tienes solicitudes pendientes.";pending.forEach(d=>{const x=d.data();db.collection("users").doc(x.fromUid).get().then(u=>{if(!u.exists)return;root.appendChild(personNode(u.data(),"Aceptar",()=>acceptRequest(d.id,x.fromUid)))})})},e=>err("authError",e));stopOutgoing=db.collection("contactRequests").where("fromUid","==",me.uid).onSnapshot(s=>{const root=$("outgoingList");root.innerHTML="";s.docs.forEach(d=>{const x=d.data();db.collection("users").doc(x.toUid).get().then(u=>{if(u.exists)root.appendChild(personNode(u.data(),x.status==="accepted"?"Aceptada":"Pendiente",null))})})},e=>err("authError",e))}
+async function acceptRequest(requestId,fromUid){try{const batch=db.batch(),req=db.collection("contactRequests").doc(requestId),convId=pairId(me.uid,fromUid);batch.update(req,{status:"accepted",acceptedAt:firebase.firestore.FieldValue.serverTimestamp()});batch.set(db.collection("users").doc(me.uid).collection("contacts").doc(fromUid),{otherUid:fromUid,requestId,createdAt:firebase.firestore.FieldValue.serverTimestamp()});batch.set(db.collection("users").doc(fromUid).collection("contacts").doc(me.uid),{otherUid:me.uid,requestId,createdAt:firebase.firestore.FieldValue.serverTimestamp()});batch.set(db.collection("conversations").doc(convId),{members:[me.uid,fromUid].sort(),createdAt:firebase.firestore.FieldValue.serverTimestamp(),createdBy:me.uid},{merge:true});await batch.commit()}catch(e){err("authError",e)}}
+function startChats(){stopChats=db.collection("conversations").where("members","array-contains",me.uid).onSnapshot(async s=>{const root=$("chatList");root.innerHTML="";if(s.empty){root.textContent="Acepta o envía una solicitud para comenzar a conversar.";return}for(const d of s.docs){const other=d.data().members.find(x=>x!==me.uid);const u=await db.collection("users").doc(other).get();if(u.exists)root.appendChild(personNode(u.data(),"Abrir",()=>openChat(other,u.data(),d.id))) }},e=>err("authError",e))}
+async function openChat(otherUid,p,knownId){activeContact={uid:otherUid,profile:p};activeConversation=knownId||pairId(me.uid,otherUid);try{const ref=db.collection("conversations").doc(activeConversation),snap=await ref.get();if(!snap.exists)await ref.set({members:[me.uid,otherUid].sort(),createdAt:firebase.firestore.FieldValue.serverTimestamp(),createdBy:me.uid});$("conversation").classList.remove("hidden");$("contactsPane").classList.add("hidden");$("requestsPane").classList.add("hidden");$("chatsPane").classList.add("hidden");$("chatTitle").textContent=profileName(p);$("chatSubtitle").textContent=p.email||"";loadMessages()}catch(e){err("chatError",e)}}
+function loadMessages(){if(stopMessages)stopMessages();$("messageList").innerHTML="";stopMessages=db.collection("conversations").doc(activeConversation).collection("messages").orderBy("createdAt").limit(150).onSnapshot(s=>{const root=$("messageList");root.innerHTML="";s.forEach(d=>{const x=d.data(),el=document.createElement("div");el.className="msg"+(x.uid===me.uid?" mine":"");const who=document.createElement("small");who.textContent=x.uid===me.uid?"Tú":profileName(activeContact.profile);const body=document.createElement("div");body.textContent=x.text;el.append(who,body);root.appendChild(el)});root.scrollTop=root.scrollHeight},e=>err("chatError",e))}
+async function sendMessage(){const text=$("message").value.trim();if(!text||!activeConversation)return;try{await db.collection("conversations").doc(activeConversation).collection("messages").add({uid:me.uid,text,createdAt:firebase.firestore.FieldValue.serverTimestamp()});$("message").value="";$("chatError").textContent=""}catch(e){err("chatError",e)}}
+$("send").onclick=sendMessage;$("message").onkeydown=e=>{if(e.key==="Enter")sendMessage()};$("back").onclick=()=>{$("conversation").classList.add("hidden");switchTab("chats");if(stopMessages)stopMessages();stopMessages=null;activeConversation=null};
+$("logout").onclick=async()=>{clean();await auth.signOut()};
+function startIncomingCalls(){stopIncomingCalls=db.collectionGroup("calls").where("calleeId","==",me.uid).where("status","==","ringing").onSnapshot(s=>{s.docChanges().forEach(change=>{if(change.type==="added")showIncomingCall(change.doc.ref,change.doc.data())})},e=>console.warn("Llamadas entrantes",e))}
+function showIncomingCall(ref,data){if(callBusy)return;callBusy=true;callRef=ref;callRole="callee";callMode=data.type;$("callOverlay").classList.remove("hidden");$("callTitle").textContent=data.type==="video"?"Videollamada entrante":"Llamada entrante";$("callStatus").textContent="Llamada de "+data.callerName;$("acceptCall").classList.remove("hidden");$("declineCall").classList.remove("hidden")}
+function newPeer(){pc=new RTCPeerConnection({iceServers:[{urls:"stun:stun.l.google.com:19302"}]});pc.ontrack=e=>{$("remoteVideo").srcObject=e.streams[0]};pc.onconnectionstatechange=()=>{$("callStatus").textContent="Estado: "+pc.connectionState};return pc}
+async function attachCandidates(ref,role){const other=role==="caller"?"calleeCandidates":"callerCandidates";const unsub=ref.collection(other).onSnapshot(s=>s.docChanges().forEach(async c=>{if(c.type==="added"&&pc){try{await pc.addIceCandidate(new RTCIceCandidate(c.doc.data()))}catch(e){console.warn(e)}}}));callListeners.push(unsub);pc.onicecandidate=e=>{if(e.candidate)ref.collection(role==="caller"?"callerCandidates":"calleeCandidates").add(e.candidate.toJSON()).catch(console.warn)}}
+async function beginCall(type){if(callBusy||!activeConversation)return;callBusy=true;callRole="caller";callMode=type;try{localStream=await navigator.mediaDevices.getUserMedia({audio:true,video:type==="video"});$("localVideo").srcObject=localStream;$("localVideo").classList.toggle("hidden",type!=="video");$("remoteVideo").classList.toggle("hidden",type!=="video");$("callOverlay").classList.remove("hidden");$("callTitle").textContent=type==="video"?"Videollamada":"Llamada de voz";$("callStatus").textContent="Llamando a "+profileName(activeContact.profile)+"…";$("acceptCall").classList.add("hidden");$("declineCall").classList.add("hidden");newPeer();localStream.getTracks().forEach(t=>pc.addTrack(t,localStream));const offer=await pc.createOffer();await pc.setLocalDescription(offer);callRef=db.collection("conversations").doc(activeConversation).collection("calls").doc();await callRef.set({callerId:me.uid,callerName:profileName(myProfile),calleeId:activeContact.uid,type,status:"ringing",offer:{type:offer.type,sdp:offer.sdp},createdAt:firebase.firestore.FieldValue.serverTimestamp()});await attachCandidates(callRef,"caller");callListeners.push(callRef.onSnapshot(async s=>{const d=s.data();if(!d)return;if(d.answer&&pc&&pc.signalingState==="have-local-offer")await pc.setRemoteDescription(new RTCSessionDescription(d.answer));if(d.status==="ended")finishCall(false)}))}catch(e){err("chatError",e);finishCall(false)}}
+async function acceptIncoming(){if(!callRef)return;try{localStream=await navigator.mediaDevices.getUserMedia({audio:true,video:callMode==="video"});$("localVideo").srcObject=localStream;$("localVideo").classList.toggle("hidden",callMode!=="video");$("remoteVideo").classList.toggle("hidden",callMode!=="video");newPeer();localStream.getTracks().forEach(t=>pc.addTrack(t,localStream));await pc.setRemoteDescription(new RTCSessionDescription(callRefData.offer));const answer=await pc.createAnswer();await pc.setLocalDescription(answer);await callRef.update({answer:{type:answer.type,sdp:answer.sdp},status:"active"});await attachCandidates(callRef,"callee");callListeners.push(callRef.onSnapshot(s=>{if(s.data()&&s.data().status==="ended")finishCall(false)}));$("callStatus").textContent="Conectando…";$("acceptCall").classList.add("hidden");$("declineCall").classList.add("hidden")}catch(e){err("chatError",e);finishCall(true)}}
+let callRefData=null;
+function finishCall(update){if(update&&callRef)callRef.update({status:"ended"}).catch(console.warn);callListeners.forEach(fn=>fn());callListeners=[];if(pc){pc.close();pc=null}if(localStream){localStream.getTracks().forEach(t=>t.stop());localStream=null}$("localVideo").srcObject=null;$("remoteVideo").srcObject=null;$("callOverlay").classList.add("hidden");$("acceptCall").classList.add("hidden");$("declineCall").classList.add("hidden");callBusy=false;callRef=null;callRefData=null}
+$("voiceCall").onclick=()=>beginCall("audio");$("videoCall").onclick=()=>beginCall("video");$("hangup").onclick=()=>finishCall(true);$("declineCall").onclick=()=>finishCall(true);$("acceptCall").onclick=acceptIncoming;
+const originalShowIncoming=showIncomingCall;showIncomingCall=function(ref,data){callRefData=data;originalShowIncoming(ref,data)};
 </script>
-<script>
-if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(error => console.error("Service worker:", error)));
-</script>
-<script>
-let pendingInstall = null;
-window.addEventListener("beforeinstallprompt", event => {
- event.preventDefault();
- pendingInstall = event;
- $("installApp").hidden = false;
-});
-$("installApp").addEventListener("click", async () => {
- if (!pendingInstall) {
-  $("status").textContent = "Para instalar: abre el menú ⋮ de Chrome y elige Instalar aplicación o Añadir a pantalla de inicio.";
-  return;
- }
- pendingInstall.prompt();
- const choice = await pendingInstall.userChoice;
- if (choice && choice.outcome === "accepted") $("installApp").hidden = true;
- pendingInstall = null;
-});
-window.addEventListener("appinstalled", () => {
- $("installApp").hidden = true;
- pendingInstall = null;
-});
-if (window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone) {
- $("installApp").hidden = true;
-}
-</script>
+<script>if("serviceWorker"in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(console.warn));</script>
 </body></html>
