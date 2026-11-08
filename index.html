@@ -680,15 +680,18 @@ $("chatSearch").addEventListener("input",event=>{
  const q=event.target.value.trim().toLocaleLowerCase();
  $("homeGroup").style.display="none";
  document.querySelectorAll("#peopleList .memberBtn").forEach(row=>{row.style.display=row.textContent.toLocaleLowerCase().includes(q)?"flex":"none";});
+ document.querySelectorAll("#chatsList .chatRow").forEach(row=>{row.style.display=row.textContent.toLocaleLowerCase().includes(q)?"flex":"none";});
 });
 document.querySelectorAll(".homeFilters button").forEach(button=>button.addEventListener("click",()=>{
  document.querySelectorAll(".homeFilters button").forEach(b=>b.classList.toggle("active",b===button));
- const filter=button.dataset.filter;
+ activeHomeFilter=button.dataset.filter;
  $("homeGroup").style.display="none";
- $("peopleList").style.display=(filter==="requests")?"none":"block";
- $("requestsPanel").style.display=(filter==="people")?"none":"block";
- $("chatStatus").textContent=(filter==="unread"||filter==="favorites")?"Este filtro estará disponible cuando klk tenga estados de lectura y favoritos.":"";
+ $("chatsPanel").style.display=activeHomeFilter==="chats"?"block":"none";
+ $("requestsPanel").style.display=activeHomeFilter==="requests"?"block":"none";
+ $("peopleList").style.display=activeHomeFilter==="people"?"block":"none";
+ $("chatStatus").textContent="";
 }));
+$("chatsPanel").style.display="block";$("requestsPanel").style.display="none";$("peopleList").style.display="none";
 document.querySelectorAll(".homeBottom button").forEach(button=>button.addEventListener("click",()=>{
  document.querySelectorAll(".homeBottom button").forEach(b=>b.classList.toggle("active",b===button));
  const tab=button.dataset.tab;
