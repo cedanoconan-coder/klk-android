@@ -295,7 +295,7 @@ $("authForm").addEventListener("submit", async event => {
 });
 let invitationActivationInProgress = false;
 const inviteParams = new URLSearchParams(window.location.search);
-const inviteFromUrl = inviteParams.get("invite") || new URLSearchParams((window.location.hash || "").replace(/^#\\??/,"")).get("invite");
+const inviteFromUrl = inviteParams.get("invite") || new URLSearchParams((window.location.hash || "").replace(/^#/,"")).get("invite");
 if (inviteFromUrl) {
  $("invitationCode").value = inviteFromUrl.trim().toUpperCase();
  $("status").textContent = "Invitación recibida. Escribe tu correo y crea una contraseña para unirte a klk.";
