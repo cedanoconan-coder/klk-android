@@ -119,9 +119,9 @@ header small{display:none}
  <div class="homeFilters" role="group" aria-label="Filtros de conversaciones">
   <button type="button" class="active" data-filter="all">Todos</button><button type="button" data-filter="unread">No leídos</button><button type="button" data-filter="favorites">Favoritos</button><button type="button" data-filter="groups">Grupos</button><button type="button" data-filter="people">＋</button>
  </div>
- <button id="homeGroup" class="homeGroup" type="button"><span class="homeAvatar">👨‍👩‍👧‍👦</span><span class="homeGroupText"><strong>Familia klk</strong><small>Chat familiar · Abrir conversación</small></span><time>Grupo</time></button>
- <div id="peopleList" aria-label="Conversaciones privadas">Cargando miembros...</div>
- <div id="peopleList" aria-label="Conversaciones privadas">Cargando miembros...</div>
+ <button id="homeGroup" class="homeGroup" type="button" hidden><span class="homeAvatar">👥</span><span class="homeGroupText"><strong>Chats privados</strong><small>klk permite conversaciones entre contactos aceptados</small></span></button>
+ <section id="requestsPanel" style="padding:8px 20px"><h3 style="font-size:16px;margin:8px 0">Solicitudes recibidas</h3><div id="requestsList" class="hint">Cargando solicitudes...</div></section>
+ <div id="peopleList" aria-label="Personas registradas">Cargando personas...</div>
  <nav class="homeBottom" aria-label="Navegación principal">
   <button type="button" class="active" data-tab="chats"><span>▤</span>Chats</button>
   <button type="button" data-tab="calls"><span>☎</span>Llamadas</button>
@@ -188,7 +188,8 @@ function getSupabaseClient() {
 }
 const mediaUrlCache = new Map();
 let auth, db, firebaseInitError = null, unsubscribe = null, sending = false, mediaRecorder = null, audioStream = null, audioBlob = null, audioStartedAt = 0;
-let activeConversationId = null, activeConversationName = null, peopleUnsubscribe = null;
+let activeConversationId = null, activeConversationName = null, peopleUnsubscribe = null, incomingRequestsUnsubscribe = null, outgoingRequestsUnsubscribe = null;
+const incomingRequests = new Map(), outgoingRequests = new Map(), peopleCache = new Map();
 function showError(target, error) {
  console.error("Error de klk/Firebase:", error);
  const messages = {
@@ -264,65 +265,106 @@ auth && auth.onAuthStateChanged(async user => {
   $("chatTitle").textContent = "👨‍👩‍👧‍👦 Familia klk"; $("dmPanel").style.display = "none"; $("messages").style.display = "block";
   try {
    await db.collection("users").doc(user.uid).set({uid:user.uid,email:user.email || "",displayName:user.displayName || (user.email || "Miembro").split("@")[0],updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
-   loadPeople(); loadMessages();
+   loadPeople(); loadContactRequests();
   } catch(error) { showError("chatStatus",error); }
  } else {
   window.klkSetCurrentUid && window.klkSetCurrentUid(null);
   if (unsubscribe) unsubscribe(); unsubscribe = null;
   if (peopleUnsubscribe) peopleUnsubscribe(); peopleUnsubscribe = null;
+  if (incomingRequestsUnsubscribe) incomingRequestsUnsubscribe(); incomingRequestsUnsubscribe = null;
+  if (outgoingRequestsUnsubscribe) outgoingRequestsUnsubscribe(); outgoingRequestsUnsubscribe = null;
+  incomingRequests.clear(); outgoingRequests.clear(); peopleCache.clear();
   activeConversationId = null; $("messages").innerHTML = "";
  }
 });
 function messagesCollection() {
- return activeConversationId
-  ? db.collection("conversations").doc(activeConversationId).collection("messages")
-  : db.collection("messages");
+ if (!activeConversationId) return null;
+ return db.collection("conversations").doc(activeConversationId).collection("messages");
+}
+function isAcceptedContact(uid) {
+ return (incomingRequests.get(uid) || {}).status === "accepted" || (outgoingRequests.get(uid) || {}).status === "accepted";
+}
+function renderPeople() {
+ const list = $("peopleList"); if (!list) return;
+ list.innerHTML = "";
+ const people = [...peopleCache.entries()].filter(([uid]) => uid !== auth.currentUser.uid);
+ if (!people.length) { list.textContent = "Todavía no hay otras personas registradas. Cuando alguien cree su cuenta aparecerá aquí."; return; }
+ for (const [uid, person] of people) {
+  const row = document.createElement("div"); row.className = "memberBtn";
+  const info = document.createElement("span"); info.style.flex = "1";
+  const name = document.createElement("strong"); name.textContent = person.displayName || person.email || "Miembro";
+  const email = document.createElement("small"); email.textContent = person.email || "";
+  info.append(name,email); row.append(info);
+  const action = document.createElement("button"); action.style.cssText = "width:auto;min-width:112px;margin:0;padding:9px 12px;font-size:13px";
+  if (isAcceptedContact(uid)) { action.textContent = "Enviar mensaje"; action.onclick = () => openPrivateConversation(uid, person.displayName || person.email || "Conversación"); }
+  else if ((incomingRequests.get(uid) || {}).status === "pending") { action.textContent = "Aceptar solicitud"; action.onclick = () => respondToContactRequest(uid,"accepted"); }
+  else if ((outgoingRequests.get(uid) || {}).status === "pending") { action.textContent = "Solicitud enviada"; action.disabled = true; }
+  else { action.textContent = "Enviar solicitud"; action.onclick = () => sendContactRequest(uid,person); }
+  row.append(action); list.append(row);
+ }
+}
+function renderRequests() {
+ const list = $("requestsList"); if (!list) return;
+ list.innerHTML = "";
+ const pending = [...incomingRequests.entries()].filter(([,r]) => r.status === "pending");
+ if (!pending.length) { list.textContent = "No tienes solicitudes pendientes."; renderPeople(); return; }
+ for (const [uid,r] of pending) {
+  const row = document.createElement("div"); row.className = "memberBtn";
+  const label = document.createElement("span"); label.style.flex = "1"; label.textContent = (r.senderName || r.senderEmail || "Usuario") + " quiere agregarte a sus contactos.";
+  const accept = document.createElement("button"); accept.textContent = "Aceptar"; accept.style.width = "auto"; accept.onclick = () => respondToContactRequest(uid,"accepted");
+  const reject = document.createElement("button"); reject.textContent = "Rechazar"; reject.className = "secondary"; reject.style.width = "auto"; reject.onclick = () => respondToContactRequest(uid,"rejected");
+  row.append(label,accept,reject); list.append(row);
+ }
+ renderPeople();
+}
+function loadContactRequests() {
+ const uid = auth.currentUser.uid;
+ if (incomingRequestsUnsubscribe) incomingRequestsUnsubscribe();
+ if (outgoingRequestsUnsubscribe) outgoingRequestsUnsubscribe();
+ incomingRequestsUnsubscribe = db.collection("contactRequests").where("recipientUid","==",uid).onSnapshot(snapshot => {
+  incomingRequests.clear(); snapshot.docs.forEach(d => incomingRequests.set(d.data().senderUid,d.data())); renderRequests();
+ },error => showError("chatStatus",error));
+ outgoingRequestsUnsubscribe = db.collection("contactRequests").where("senderUid","==",uid).onSnapshot(snapshot => {
+  outgoingRequests.clear(); snapshot.docs.forEach(d => outgoingRequests.set(d.data().recipientUid,d.data())); renderRequests();
+ },error => showError("chatStatus",error));
 }
 function loadPeople() {
  if (peopleUnsubscribe) peopleUnsubscribe();
- $("peopleList").textContent = "Cargando miembros...";
+ $("peopleList").textContent = "Cargando personas registradas...";
  peopleUnsubscribe = db.collection("users").orderBy("displayName").onSnapshot(snapshot => {
-  const list = $("peopleList"); list.innerHTML = "";
-  const others = snapshot.docs.filter(doc => doc.id !== auth.currentUser.uid);
-  if (!others.length) { list.textContent = "Todavía no hay otros miembros registrados. Cuando alguien cree su cuenta aparecerá aquí."; return; }
-  for (const doc of others) {
-   const person = doc.data(), button = document.createElement("button");
-   button.type = "button"; button.className = "memberBtn";
-   const name = document.createElement("strong"); name.textContent = person.displayName || person.email || "Miembro";
-   const email = document.createElement("small"); email.textContent = person.email || "";
-   button.append(name,email); button.onclick = () => openPrivateConversation(doc.id, person.displayName || person.email || "Conversación");
-   list.appendChild(button);
-  }
- }, error => showError("chatStatus",error));
+  peopleCache.clear(); snapshot.docs.forEach(d => peopleCache.set(d.id,d.data())); renderPeople();
+ },error => showError("chatStatus",error));
+}
+async function sendContactRequest(otherUid, person) {
+ const user = auth.currentUser; if (!user || !otherUid || otherUid === user.uid) return;
+ const id = user.uid + "__" + otherUid;
+ try {
+  await db.collection("contactRequests").doc(id).set({senderUid:user.uid,recipientUid:otherUid,senderEmail:user.email || "",senderName:user.displayName || (user.email || "Miembro").split("@")[0],recipientEmail:person.email || "",recipientName:person.displayName || "",status:"pending",createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+  $("chatStatus").textContent = "Solicitud enviada.";
+ } catch(error) { showError("chatStatus",error); }
+}
+async function respondToContactRequest(senderUid,status) {
+ const id = senderUid + "__" + auth.currentUser.uid;
+ try { await db.collection("contactRequests").doc(id).update({status}); $("chatStatus").textContent = status === "accepted" ? "Contacto aceptado. Ya pueden enviarse mensajes." : "Solicitud rechazada."; }
+ catch(error) { showError("chatStatus",error); }
 }
 async function openPrivateConversation(otherUid, otherName) {
  const user = auth.currentUser;
  if (!user || !otherUid || otherUid === user.uid) return;
- const members = [user.uid,otherUid].sort();
- const conversationId = members.join("__");
+ if (!isAcceptedContact(otherUid)) { $("chatStatus").textContent = "Primero deben aceptar la solicitud de contacto."; return; }
+ const members = [user.uid,otherUid].sort(), conversationId = members.join("__");
  $("chatStatus").textContent = "Abriendo conversación privada...";
  try {
-  const ref = db.collection("conversations").doc(conversationId);
-  const existing = await ref.get();
+  const ref = db.collection("conversations").doc(conversationId), existing = await ref.get();
   if (!existing.exists) await ref.set({members,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
   activeConversationId = conversationId; activeConversationName = otherName;
-  $("chat").classList.add("room-open");
-  $("chatTitle").textContent = "💬 " + otherName;
+  $("chat").classList.add("room-open"); $("chatTitle").textContent = "💬 " + otherName;
   $("dmPanel").style.display = "none"; $("messages").style.display = "block";
   document.querySelector(".composer").style.display = "flex"; $("mediaActions").style.display = "flex"; $("recordStatus").style.display = "block";
-  $("chatStatus").textContent = "Conversación privada con " + otherName;
-  loadMessages();
+  $("chatStatus").textContent = "Conversación privada con " + otherName; loadMessages();
  } catch(error) { showError("chatStatus",error); }
 }
-$("showGroup").onclick = () => {
- activeConversationId = null; activeConversationName = null;
- $("chat").classList.add("room-open");
- $("chatTitle").textContent = "👨‍👩‍👧‍👦 Familia klk";
- $("dmPanel").style.display = "none"; $("messages").style.display = "block";
- document.querySelector(".composer").style.display = "flex"; $("mediaActions").style.display = "flex"; $("recordStatus").style.display = "block";
- $("chatStatus").textContent = "Chat familiar grupal";
- loadMessages();
-};
+$("showGroup").onclick = () => { $("chatStatus").textContent = "klk solo permite conversaciones privadas entre contactos aceptados."; };
 $("showPeople").onclick = () => { $("chat").classList.remove("room-open"); $("chatSearch").focus(); $("chatStatus").textContent = "Selecciona un miembro para conversar en privado."; };
 async function getMediaUrl(path, conversationId = null) {
  if (!path) return "";
@@ -344,6 +386,7 @@ async function getMediaUrl(path, conversationId = null) {
 function loadMessages() {
  window.klkNotificationsReady = false;
  if (unsubscribe) unsubscribe();
+ if (!activeConversationId) { $("messages").textContent = "Abre un contacto aceptado para ver tus mensajes privados."; return; }
  $("messages").textContent = "Cargando mensajes...";
  unsubscribe = messagesCollection().orderBy("createdAt").limit(100).onSnapshot(async snapshot => {
   const changes = snapshot.docChanges();
@@ -369,7 +412,8 @@ function loadMessages() {
 }
 $("send").onclick = async () => {
  const text = $("message").value.trim(), user = auth && auth.currentUser;
- if (!text || !user || sending) return;
+ if (!user || !activeConversationId) { $("chatStatus").textContent = "Selecciona un contacto que haya aceptado tu solicitud antes de enviar mensajes."; return; }
+ if (!text || sending) return;
  sending = true; $("send").disabled = true; $("chatStatus").textContent = "";
  try {
   await messagesCollection().add({type:"text", text, email:user.email || "", uid:user.uid, createdAt:firebase.firestore.FieldValue.serverTimestamp()});
@@ -413,7 +457,8 @@ async function compressImage(file) {
 }
 async function uploadMedia(file, type, durationSeconds = null) {
  const user = auth && auth.currentUser;
- if (!user || !file || sending) return;
+ if (!user || !activeConversationId) { $("chatStatus").textContent = "Selecciona un contacto aceptado antes de compartir archivos."; return; }
+ if (!file || sending) return;
  if (type === "image" && !file.type.startsWith("image/")) { $("chatStatus").textContent = "Selecciona un archivo de imagen."; return; }
  if (type === "audio" && !file.type.startsWith("audio/")) { $("chatStatus").textContent = "No se pudo reconocer el formato del audio."; return; }
  sending = true;
@@ -556,19 +601,20 @@ if (window.matchMedia("(display-mode: standalone)").matches || window.navigator.
  window.klkSetCurrentUid=uid=>{window.klkCurrentUid=uid||null;};apply();permissionButton();
 })();
 
-$("homeGroup").addEventListener("click",()=>$("showGroup").click());
+$("homeGroup").addEventListener("click",()=>{ $("chatStatus").textContent="klk funciona con conversaciones privadas entre contactos aceptados."; });
 $("homeMenu").addEventListener("click",()=>$("settingsToggle").click());
 $("homeCamera").addEventListener("click",()=>$("cameraInput").click());
 $("chatSearch").addEventListener("input",event=>{
  const q=event.target.value.trim().toLocaleLowerCase();
- $("homeGroup").style.display=(!q||"familia klk chat familiar".includes(q))?"flex":"none";
+ $("homeGroup").style.display="none";
  document.querySelectorAll("#peopleList .memberBtn").forEach(row=>{row.style.display=row.textContent.toLocaleLowerCase().includes(q)?"flex":"none";});
 });
 document.querySelectorAll(".homeFilters button").forEach(button=>button.addEventListener("click",()=>{
  document.querySelectorAll(".homeFilters button").forEach(b=>b.classList.toggle("active",b===button));
  const filter=button.dataset.filter;
- $("homeGroup").style.display=(filter==="people")?"none":"flex";
+ $("homeGroup").style.display="none";
  $("peopleList").style.display=(filter==="groups")?"none":"block";
+ $("requestsPanel").style.display=(filter==="groups")?"none":"block";
  $("chatStatus").textContent=(filter==="unread"||filter==="favorites")?"Este filtro estará disponible cuando klk tenga estados de lectura y favoritos.":"";
 }));
 document.querySelectorAll(".homeBottom button").forEach(button=>button.addEventListener("click",()=>{
