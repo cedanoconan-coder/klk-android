@@ -243,9 +243,15 @@ function loadPeople() {
   for (const doc of others) {
    const person = doc.data(), button = document.createElement("button");
    button.type = "button"; button.className = "memberBtn";
+   const line = document.createElement("span"); line.className = "memberLine";
+   const avatar = document.createElement("img"); avatar.className = "avatar"; avatar.alt = "Foto de perfil";
+   avatar.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'%3E%3Ccircle cx='40' cy='40' r='40' fill='%23dce8e4'/%3E%3Ccircle cx='40' cy='29' r='14' fill='%2389a99e'/%3E%3Cpath d='M13 75c2-17 13-25 27-25s25 8 27 25' fill='%2389a99e'/%3E%3C/svg%3E";
+   if (person.photoPath) getMediaUrl(person.photoPath).then(url => { if (url) avatar.src = url; }).catch(error => console.warn("Foto de perfil:", error));
+   const info = document.createElement("span"); info.className = "memberInfo";
    const name = document.createElement("strong"); name.textContent = person.displayName || person.email || "Miembro";
    const email = document.createElement("small"); email.textContent = person.email || "";
-   button.append(name,email); button.onclick = () => openPrivateConversation(doc.id, person.displayName || person.email || "Conversación");
+   info.append(name,email); line.append(avatar,info); button.append(line);
+   button.onclick = () => openPrivateConversation(doc.id, person.displayName || person.email || "Conversación");
    list.appendChild(button);
   }
  }, error => showError("chatStatus",error));
