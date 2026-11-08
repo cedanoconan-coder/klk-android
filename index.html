@@ -345,7 +345,9 @@ $("register").addEventListener("click", async () => {
   window.location.reload();
  } catch(error) {
   invitationActivationInProgress = false;
-  if (auth.currentUser && !await db.collection("users").doc(auth.currentUser.uid).get().then(s=>s.exists).catch(()=>false)) await auth.signOut();
+  // Si la activación falla, cerrar la sesión temporal para volver al formulario
+  // y evitar que el estado de autenticación deje la interfaz bloqueada.
+  if (auth.currentUser) await auth.signOut().catch(() => {});
   $("status").textContent = error.message || "No se pudo completar el registro. Revisa el código e inténtalo de nuevo.";
  } finally { setBusy(false); }
 });
