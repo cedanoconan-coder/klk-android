@@ -519,7 +519,7 @@ function loadMyProfile() {
   const image = $("myProfilePhoto");
   if (!image) return;
   if (!path) { image.removeAttribute("src"); image.alt = "Sin foto de perfil"; return; }
-  try { image.src = await getMediaUrl(path); image.alt = "Mi foto de perfil"; }
+  try { image.src = await getMediaUrl(path); image.alt = "Mi foto de perfil"; const panelPhoto=$("profilePanelPhoto"); if(panelPhoto) panelPhoto.src=image.src; }
   catch(error) { console.warn("No se pudo cargar la foto de perfil:", error); }
  }, error => showError("chatStatus", error));
 }
