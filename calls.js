@@ -12,17 +12,29 @@
  function renderCallContacts(){
   const list=$("callContacts"); if(!list)return;
   list.innerHTML="";
+  if(!auth||!auth.currentUser){list.textContent="Inicia sesión para ver los contactos disponibles para llamar.";return;}
   const people=acceptedPeople();
-  if(!people.length){list.textContent="No tienes contactos aceptados todavía. Acepta una solicitud o invita a un familiar para poder llamarlo.";return;}
+  if(!people.length){
+   const message=document.createElement("p");
+   message.textContent=peopleCache.size<=1
+    ?"Todavía no aparecen contactos aceptados. Entra en Personas y comprueba que el otro usuario haya creado su cuenta; después acepta su solicitud."
+    :"No tienes contactos aceptados todavía. Acepta una solicitud para habilitar las llamadas.";
+   list.append(message);
+   const refresh=document.createElement("button");refresh.type="button";refresh.className="secondary";refresh.textContent="Actualizar contactos";
+   refresh.onclick=()=>{refresh.disabled=true;refresh.textContent="Actualizando...";renderCallContacts();window.setTimeout(()=>{refresh.disabled=false;refresh.textContent="Actualizar contactos";},500);};
+   const peopleButton=document.createElement("button");peopleButton.type="button";peopleButton.className="secondary";peopleButton.textContent="Ir a Personas";
+   peopleButton.onclick=()=>{if(typeof window.setHomeTab==="function")window.setHomeTab("chats");const filter=document.querySelector('.homeFilters button[data-filter="people"]');if(filter)filter.click();};
+   list.append(refresh,peopleButton);return;
+  }
   for(const [uid,p] of people){
    const row=document.createElement("div");row.className="callContact";
    const info=document.createElement("div");info.className="callContactInfo";
    const name=document.createElement("strong");name.textContent=p.displayName||p.email||"Contacto";
    const sub=document.createElement("small");sub.textContent=p.email||"Disponible para llamar";
    info.append(name,sub);row.append(info);
-   const voice=document.createElement("button");voice.type="button";voice.textContent="☎";voice.title="Llamada de voz";voice.setAttribute("aria-label","Llamar por voz a "+name.textContent);
+   const voice=document.createElement("button");voice.type="button";voice.textContent="☎ Voz";voice.title="Llamada de voz";voice.setAttribute("aria-label","Llamar por voz a "+name.textContent);
    voice.onclick=()=>startCall(uid,name.textContent,"audio");
-   const video=document.createElement("button");video.type="button";video.textContent="▣";video.title="Videollamada";video.setAttribute("aria-label","Videollamar a "+name.textContent);
+   const video=document.createElement("button");video.type="button";video.textContent="▣ Video";video.title="Videollamada";video.setAttribute("aria-label","Videollamar a "+name.textContent);
    video.onclick=()=>startCall(uid,name.textContent,"video");
    row.append(voice,video);list.append(row);
   }
