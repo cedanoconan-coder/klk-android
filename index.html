@@ -1102,6 +1102,23 @@ function setHomeTab(tab){
  document.querySelectorAll(".homeBottom button").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));
 }
 document.querySelectorAll(".homeBottom button").forEach(button=>button.addEventListener("click",()=>setHomeTab(button.dataset.tab)));
+// Acceso reforzado al asistente: garantiza que el panel se muestre incluso
+// si el navegador conserva el estado visual de una sección anterior.
+const assistantNavButton=document.querySelector('.homeBottom button[data-tab="assistant"]');
+if(assistantNavButton) assistantNavButton.addEventListener("click",()=>{
+ const panel=$("assistantPanel");
+ const home=$("homeView");
+ if(home) home.style.display="block";
+ if(panel){panel.hidden=false;panel.style.removeProperty("display");panel.style.display="block";}
+ ["chatsPanel","requestsPanel","peopleList","callsPanel","updatesPanel","toolsPanel"].forEach(id=>{
+  const el=$(id);if(el){el.hidden=false;el.style.display="none";}
+ });
+ $("homeSearch").style.display="none";
+ $("homeStatus").style.display="none";
+ document.querySelector(".homeFilters").style.display="none";
+ document.querySelectorAll(".homeBottom button").forEach(b=>b.classList.toggle("active",b===assistantNavButton));
+ requestAnimationFrame(()=>panel&&panel.scrollIntoView({block:"start",behavior:"smooth"}));
+});
 document.querySelectorAll("[data-go-tab]").forEach(button=>button.addEventListener("click",()=>setHomeTab(button.dataset.goTab)));
 document.querySelectorAll("[data-go-filter]").forEach(button=>button.addEventListener("click",()=>{
  setHomeTab("chats");
