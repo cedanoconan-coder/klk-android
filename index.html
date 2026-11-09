@@ -2578,7 +2578,7 @@ $("assistantQuestion").addEventListener("keydown",event=>{
 (function(){
  const box=document.getElementById("messages");
  if(!box)return;
- const records=window.klkMessageRecords||(window.klkMessageRecords=new Map());
+ const records=()=>window.klkMessageRecords||(window.klkMessageRecords=new Map());
  const bar=document.createElement("div");
  bar.className="klkMessageSelectionBar";
  bar.hidden=true;
@@ -2599,7 +2599,7 @@ $("assistantQuestion").addEventListener("keydown",event=>{
   });
  }
  function toggle(id){
-  if(!records.has(id))return;
+  if(!records().has(id))return;
   if(selected.has(id))selected.delete(id);else selected.add(id);
   refresh();
  }
@@ -2610,7 +2610,7 @@ $("assistantQuestion").addEventListener("keydown",event=>{
   const ids=[...selected];
   const positions=new Map([...box.querySelectorAll(".msg[data-message-id]")].map((el,i)=>[el.dataset.messageId,i]));
   ids.sort((a,b)=>(positions.get(a)??0)-(positions.get(b)??0));
-  return ids.map(id=>({id,...records.get(id)})).filter(x=>x.data);
+  return ids.map(id=>({id,...records().get(id)})).filter(x=>x.data);
  }
  box.addEventListener("click",event=>{
   const item=event.target.closest(".msg[data-message-id]");
@@ -2657,7 +2657,7 @@ $("assistantQuestion").addEventListener("keydown",event=>{
   }catch(error){document.getElementById("chatStatus").textContent="No se pudieron copiar los mensajes. "+(error.message||"");}
  }
  async function deleteSelected(){
-  const items=ordered();if(!items.length||!window.auth?.currentUser)return;
+  const items=ordered();if(!items.length||!auth||!auth.currentUser)return;
   const all=window.confirm("¿Eliminar para todos los participantes los mensajes que tú enviaste? Pulsa Cancelar para eliminarlos solo para ti.");
   if(all&&!window.confirm("Confirmar eliminación para todos de tus mensajes seleccionados."))return;
   try{
