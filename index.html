@@ -365,6 +365,17 @@ body:has(#chat.room-open) main{padding:0!important;margin:0!important;max-width:
 .settingsStatus{margin:14px 3px 8px}
 #settingsPanel #resetSettings{margin:4px 0 8px;font-size:13px}
 
+
+/* Visor ampliado de fotos de perfil, estilo mensajería */
+#profilePhotoViewer{display:none;position:fixed;inset:0;z-index:10050;background:rgba(0,0,0,.94);align-items:center;justify-content:center;padding:64px 14px 82px;opacity:0;transition:opacity .18s ease}
+#profilePhotoViewer.is-visible{display:flex;opacity:1}
+#profilePhotoViewer img{display:block;max-width:min(94vw,680px);max-height:calc(100dvh - 150px);width:auto;height:auto;object-fit:contain;border-radius:3px;box-shadow:0 8px 35px #0008}
+#profilePhotoViewer .photoViewerClose{position:absolute;top:calc(12px + env(safe-area-inset-top));right:14px;width:42px;height:42px;margin:0;padding:0;border-radius:50%;background:#ffffff20;color:white;font-size:27px;line-height:1}
+#profilePhotoViewer .photoViewerName{position:absolute;top:calc(20px + env(safe-area-inset-top));left:16px;right:64px;color:#fff;font-size:15px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#profilePhotoViewer .photoViewerHint{position:absolute;bottom:calc(22px + env(safe-area-inset-bottom));left:0;right:0;text-align:center;color:#ffffffa8;font-size:12px}
+#myProfilePhoto,#profilePanelPhoto,#contactProfilePhoto,#roomAvatar,.personAvatar{cursor:zoom-in}
+@media(prefers-reduced-motion:reduce){#profilePhotoViewer{transition:none}}
+
 </style>
 </head>
 <body>
@@ -1900,4 +1911,39 @@ $("assistantQuestion").addEventListener("keydown",event=>{
  if(event.key==="Enter"&&!event.shiftKey){event.preventDefault();$("assistantSend").click();}
 });
 
+<div id="profilePhotoViewer" role="dialog" aria-modal="true" aria-label="Foto de perfil ampliada">
+ <span class="photoViewerName" id="profilePhotoViewerName">Foto de perfil</span>
+ <button class="photoViewerClose" id="profilePhotoViewerClose" type="button" aria-label="Cerrar foto">×</button>
+ <img id="profilePhotoViewerImage" alt="Foto de perfil ampliada">
+ <span class="photoViewerHint">Toca fuera de la foto para cerrar</span>
+</div>
+
+
+/* Abrir cualquier foto de perfil en visor a pantalla completa */
+(function(){
+ const viewer=document.getElementById("profilePhotoViewer");
+ const enlarged=document.getElementById("profilePhotoViewerImage");
+ const label=document.getElementById("profilePhotoViewerName");
+ const closeButton=document.getElementById("profilePhotoViewerClose");
+ if(!viewer||!enlarged||!closeButton)return;
+ function closeViewer(){viewer.classList.remove("is-visible");viewer.setAttribute("aria-hidden","true");enlarged.removeAttribute("src");}
+ function openViewer(source){
+  if(!source||!source.src||source.src.startsWith("data:image/svg+xml"))return;
+  enlarged.src=source.currentSrc||source.src;
+  enlarged.alt=source.alt||"Foto de perfil ampliada";
+  label.textContent=source.alt||"Foto de perfil";
+  viewer.setAttribute("aria-hidden","false");
+  viewer.classList.add("is-visible");
+ }
+ document.addEventListener("click",function(event){
+  const image=event.target.closest&&event.target.closest("#myProfilePhoto,#profilePanelPhoto,#contactProfilePhoto,#roomAvatar,.personAvatar");
+  if(!image)return;
+  event.preventDefault();event.stopPropagation();event.stopImmediatePropagation();
+  openViewer(image);
+ },true);
+ closeButton.addEventListener("click",closeViewer);
+ viewer.addEventListener("click",function(event){if(event.target===viewer)closeViewer();});
+ enlarged.addEventListener("click",function(event){event.stopPropagation();});
+ document.addEventListener("keydown",function(event){if(event.key==="Escape"&&viewer.classList.contains("is-visible"))closeViewer();});
+})();
 </script></body></html>
