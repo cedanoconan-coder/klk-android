@@ -221,3 +221,66 @@ test("rechaza nombres de remitente inválidos en los mensajes", async () => {
     displayName: 123, createdAt: serverTimestamp()
   }));
 });
+
+
+test("solo el propietario y sus contactos aceptados pueden leer estados", async () => {
+  await testEnv.withSecurityRulesDisabled(async context => {
+    const db = context.firestore();
+    await setDoc(doc(db, "contactRequests/owner__friend"), {
+      senderUid: "owner", recipientUid: "friend", status: "accepted"
+    });
+    await setDoc(doc(db, "statuses/status-private"), {
+      uid: "owner", displayName: "Propietario", type: "text", text: "Solo contactos",
+      createdAt: Timestamp.now(), expiresAt: Timestamp.fromMillis(Date.now() + 24*60*60*1000)
+    });
+  });
+  const ownerDb = testEnv.authenticatedContext("owner").firestore();
+  const friendDb = testEnv.authenticatedContext("friend").firestore();
+  const outsiderDb = testEnv.authenticatedContext("outsider").firestore();
+  await assertSucceeds(getDoc(doc(ownerDb, "statuses/status-private")));
+  await assertSucceeds(getDoc(doc(friendDb, "statuses/status-private")));
+  await assertFails(getDoc(doc(outsiderDb, "statuses/status-private")));
+});
+
+test("un contacto aceptado puede dar me gusta y un desconocido no puede leer ni reaccionar", async () => {
+  await testEnv.withSecurityRulesDisabled(async context => {
+    const db = context.firestore();
+    await setDoc(doc(db, "contactRequests/owner__friend"), {
+      senderUid: "owner", recipientUid: "friend", status: "accepted"
+    });
+    await setDoc(doc(db, "statuses/status-likes"), {
+      uid: "owner", displayName: "Propietario", type: "text", text: "Estado",
+      createdAt: Timestamp.now(), expiresAt: Timestamp.fromMillis(Date.now() + 24*60*60*1000)
+    });
+  });
+  const friendDb = testEnv.authenticatedContext("friend").firestore();
+  const outsiderDb = testEnv.authenticatedContext("outsider").firestore();
+  await assertSucceeds(setDoc(doc(friendDb, "statuses/status-likes/likes/friend"), {
+    uid: "friend", displayName: "Amigo", likedAt: serverTimestamp()
+  }));
+  await assertFails(getDocs(collection(outsiderDb, "statuses/status-likes/likes")));
+  await assertFails(setDoc(doc(outsiderDb, "statuses/status-likes/likes/outsider"), {
+    uid: "outsider", displayName: "Desconocido", likedAt: serverTimestamp()
+  }));
+});
+
+test("solo los contactos aceptados pueden registrar visualizaciones de un estado", async () => {
+  await testEnv.withSecurityRulesDisabled(async context => {
+    const db = context.firestore();
+    await setDoc(doc(db, "contactRequests/owner__friend"), {
+      senderUid: "owner", recipientUid: "friend", status: "accepted"
+    });
+    await setDoc(doc(db, "statuses/status-views"), {
+      uid: "owner", displayName: "Propietario", type: "text", text: "Estado",
+      createdAt: Timestamp.now(), expiresAt: Timestamp.fromMillis(Date.now() + 24*60*60*1000)
+    });
+  });
+  const friendDb = testEnv.authenticatedContext("friend").firestore();
+  const outsiderDb = testEnv.authenticatedContext("outsider").firestore();
+  await assertSucceeds(setDoc(doc(friendDb, "statuses/status-views/views/friend"), {
+    uid: "friend", displayName: "Amigo", viewedAt: serverTimestamp()
+  }));
+  await assertFails(setDoc(doc(outsiderDb, "statuses/status-views/views/outsider"), {
+    uid: "outsider", displayName: "Desconocido", viewedAt: serverTimestamp()
+  }));
+});
