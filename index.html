@@ -43,7 +43,7 @@ button{background:#075e54;color:white;border:0;font-weight:700;cursor:pointer}bu
 
 /* Ajustes y notificaciones klk */
 .settingsToggle{width:auto;margin:0 0 0 auto;padding:9px 14px;background:#fff;color:#075e54;border-radius:20px;font-size:14px}
-#settingsPanel{display:none;position:fixed;z-index:20;inset:env(safe-area-inset-top) 0 0;overflow:auto;background:#fff;padding:22px 18px 32px;border-top:1px solid #dce4e1;box-shadow:0 8px 30px #0003}
+#settingsPanel{display:none;position:fixed;z-index:60;top:env(safe-area-inset-top);right:0;bottom:calc(104px + env(safe-area-inset-bottom));left:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;background:#fff;padding:22px 18px 28px;border-top:1px solid #dce4e1;box-shadow:0 8px 30px #0003}
 #settingsPanel h3{margin:4px 0 12px;color:#075e54}
 .settingRow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid #edf0ef;font-size:14px}
 .settingRow input[type=checkbox]{width:22px;height:22px;margin:0;accent-color:#075e54}
