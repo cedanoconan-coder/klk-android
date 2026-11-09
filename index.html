@@ -610,6 +610,18 @@ main,#chat,.homeView{overscroll-behavior-y:contain}
 #roomMediaStatus{font-size:12px;color:var(--klk-muted);padding-bottom:60px}
 #chat.room-open .roomActions #roomMediaToggle{background:#f1f2f2;color:#42515a}
 @media(max-width:360px){.roomMediaGrid{grid-template-columns:repeat(2,minmax(0,1fr))}.roomMediaActions button{font-size:11px}}
+
+/* Menú de adjuntos compacto y claro, inspirado en la sencillez de WhatsApp */
+#chat.room-open #attachmentPanel{padding:12px 14px 14px!important;background:var(--klk-message-bg,#f0f2f5)!important}
+#chat.room-open .attachmentPanelHead{margin:0 0 12px!important;font-size:13px!important;font-weight:650!important;color:var(--klk-muted,#53615d)!important}
+#chat.room-open .attachmentGrid{grid-template-columns:repeat(3,minmax(0,1fr));gap:14px 10px}
+#chat.room-open .attachmentGrid button{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:6px!important;min-height:76px!important;margin:0!important;padding:2px!important;border:0!important;border-radius:12px!important;background:transparent!important;color:var(--klk-text,#26332f)!important;font-size:12px!important;font-weight:500!important;box-shadow:none!important}
+#chat.room-open .attachmentGrid button .attachmentIcon{display:grid;place-items:center;width:48px;height:48px;border-radius:50%;background:var(--klk-surface,#fff);color:var(--klk-accent,#075e54);box-shadow:0 1px 3px #00000012}
+#chat.room-open .attachmentGrid button .attachmentIcon svg{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+#chat.room-open .attachmentGrid button small{font-size:12px;line-height:1.2;color:var(--klk-text,#26332f)}
+#chat.room-open .attachmentGrid button:active .attachmentIcon{transform:scale(.94);background:var(--klk-soft,#e3f2ed)}
+@media(max-width:360px){#chat.room-open .attachmentGrid{gap:10px 6px}#chat.room-open .attachmentGrid button .attachmentIcon{width:44px;height:44px}}
+
 </style>
 <style>
 /* Perfil compacto y selector de foto mediante cámara */
@@ -764,11 +776,11 @@ main,#chat,.homeView{overscroll-behavior-y:contain}
 <section id="attachmentPanel" aria-label="Compartir archivos" aria-hidden="true">
  <div class="attachmentPanelHead">Compartir en klk</div>
  <div class="attachmentGrid">
-  <button id="shareGallery" type="button"><span>🖼️</span>Fotos</button>
-  <button id="shareDocument" type="button"><span>📄</span>Documento</button>
-  <button id="shareMusic" type="button"><span>🎵</span>Música y audio</button>
-  <button id="shareLocation" type="button"><span>📍</span>Ubicación</button>
-  <button id="shareCamera" type="button"><span>📷</span>Cámara</button>
+  <button id="shareGallery" type="button" aria-label="Fotos y videos"><span class="attachmentIcon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="8.5" cy="9" r="1.5"/><path d="m21 15-5-5L5 20"/></svg></span><small>Fotos</small></button>
+  <button id="shareDocument" type="button" aria-label="Documento"><span class="attachmentIcon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h8"/></svg></span><small>Documento</small></button>
+  <button id="shareMusic" type="button" aria-label="Música y audio"><span class="attachmentIcon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></span><small>Audio</small></button>
+  <button id="shareLocation" type="button" aria-label="Ubicación"><span class="attachmentIcon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg></span><small>Ubicación</small></button>
+  <button id="shareCamera" type="button" aria-label="Cámara"><span class="attachmentIcon" aria-hidden="true"><path d="M3 7h4l2-3h6l2 3h4v13H3z"/><circle cx="12" cy="13" r="4"/></svg></span><small>Cámara</small></button>
  </div>
  <button id="sendAudio" type="button" disabled>Enviar audio</button>
 </section>
