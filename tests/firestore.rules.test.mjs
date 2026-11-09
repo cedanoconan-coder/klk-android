@@ -70,6 +70,39 @@ test("cada usuario solo puede leer su perfil privado", async () => {
   await assertFails(getDocs(collection(outsider, "users")));
 });
 
+test("el propietario puede actualizar su perfil aunque el correo del token esté desactualizado", async () => {
+  await testEnv.withSecurityRulesDisabled(async context => {
+    await setDoc(doc(context.firestore(), "users/member-1"), {
+      uid:"member-1", email:"old@example.com", displayName:"Miembro",
+      updatedAt:Timestamp.now()
+    });
+  });
+  const owner = testEnv.authenticatedContext("member-1", {email:"old@example.com"}).firestore();
+  const outsider = testEnv.authenticatedContext("member-2").firestore();
+  await assertSucceeds(setDoc(doc(owner,"users/member-1"), {
+    uid:"member-1", email:"new@example.com", displayName:"Miembro actualizado",
+    updatedAt:serverTimestamp()
+  }, {merge:true}));
+  await assertFails(setDoc(doc(outsider,"users/member-1"), {
+    uid:"member-1", email:"intruso@example.com", displayName:"Intruso",
+    updatedAt:serverTimestamp()
+  }, {merge:true}));
+});
+
+test("el propietario puede guardar su perfil si el token no incluye correo", async () => {
+  await testEnv.withSecurityRulesDisabled(async context => {
+    await setDoc(doc(context.firestore(), "users/member-1"), {
+      uid:"member-1", email:"member@example.com", displayName:"Miembro",
+      updatedAt:Timestamp.now()
+    });
+  });
+  const owner = testEnv.authenticatedContext("member-1").firestore();
+  await assertSucceeds(setDoc(doc(owner,"users/member-1"), {
+    uid:"member-1", email:"", displayName:"Miembro",
+    updatedAt:serverTimestamp()
+  }, {merge:true}));
+});
+
 test("rechaza crear un perfil sin una invitación válida", async () => {
   const db = testEnv.authenticatedContext("member-1", {email:"member1@example.com"}).firestore();
   await assertFails(setDoc(doc(db, "users/member-1"), {
