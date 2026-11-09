@@ -1510,31 +1510,47 @@ function syncComposerMode(){
  $("send").setAttribute("aria-disabled",String(!hasText||sending));
 }
 $("message").addEventListener("input",syncComposerMode);
-$("send").onclick = () => {
+$("send").onclick = async () => {
  const input=$("message"), text=input.value.trim(), user=auth&&auth.currentUser;
  if (!user || !activeConversationId) { $("chatStatus").textContent = "Abre una conversación privada antes de enviar mensajes."; return; }
  if (!text || sending) return;
  const conversationId=activeConversationId;
+ sending=true;
  input.value="";
- sending=true;syncComposerMode();$("chatStatus").textContent="Guardando mensaje...";
- input.focus({preventScroll:true});
- let writePromise;
+ syncComposerMode();
+ $("chatStatus").textContent=navigator.onLine?"Enviando mensaje...":"Sin conexión. Esperando conexión para enviar...";
  try {
-  // Firestore guarda primero la escritura localmente y la sincroniza al recuperar conexión.
-  writePromise=messagesCollection().add({type:"text",text,email:user.email||"",displayName:(peopleCache.get(user.uid)||{}).displayName||(user.email||"Miembro").split("@")[0],uid:user.uid,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
- } catch(error) {
-  sending=false;if(!input.value.trim())input.value=text;syncComposerMode();showError("chatStatus",error);return;
- }
- sending=false;syncComposerMode();input.focus({preventScroll:true});
- $("chatStatus").textContent=navigator.onLine?"Enviando mensaje...":"Sin conexión. El mensaje quedó guardado y se enviará al volver el internet.";
- writePromise.then(sentMessage=>{
+  // Escribir en la conversación capturada y esperar la confirmación del servidor.
+  const sentMessage=await db.collection("conversations").doc(conversationId).collection("messages").add({
+   type:"text",
+   text,
+   email:user.email||"",
+   displayName:(peopleCache.get(user.uid)||{}).displayName||(user.email||"Miembro").split("@")[0],
+   uid:user.uid,
+   createdAt:firebase.firestore.FieldValue.serverTimestamp()
+  });
   void sendKlkPushForMessage(conversationId,sentMessage.id);
-  if($("chatStatus").textContent==="Enviando mensaje..."||$("chatStatus").textContent.startsWith("Sin conexión."))$("chatStatus").textContent="Mensaje enviado.";
- }).catch(error=>{
-  if(!input.value.trim())input.value=text;
-  syncComposerMode();showError("chatStatus",error);
- });
+  if(activeConversationId===conversationId)$("chatStatus").textContent="Mensaje enviado correctamente.";
+ } catch(error) {
+  // No perder el texto cuando Firestore rechaza o no puede completar el envío.
+  if(activeConversationId===conversationId){
+   if(!input.value.trim())input.value=text;
+   showError("chatStatus",error);
+  } else {
+   console.error("No se pudo enviar el mensaje:",error);
+  }
+ } finally {
+  sending=false;
+  syncComposerMode();
+  if(activeConversationId===conversationId)input.focus({preventScroll:true});
+ }
 };
+$("message").addEventListener("keydown",event=>{
+ if(event.key==="Enter"&&!event.shiftKey){
+  event.preventDefault();
+  if(!$("send").disabled)$("send").click();
+ }
+});
 
 const stickersToggle=$("stickersToggle"),stickersPanel=$("stickersPanel");
 function closeStickersPanel(){if(!stickersPanel||!stickersToggle)return;stickersPanel.classList.remove("open");stickersPanel.setAttribute("aria-hidden","true");stickersToggle.setAttribute("aria-expanded","false");}
