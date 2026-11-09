@@ -692,10 +692,10 @@ body:has(#chat.room-open) main{padding:0!important;margin:0!important;max-width:
 <div id="biometricLock" role="dialog" aria-modal="true" aria-label="Desbloquear Klk" style="display:none;position:fixed;z-index:1000;inset:0;background:#f7faf8;color:#15211d;align-items:center;justify-content:center;padding:24px;text-align:center"><div style="width:min(100%,360px);padding:26px;background:#fff;border-radius:22px;box-shadow:0 12px 40px #0002"><div style="font-size:48px">🔐</div><h2>Klk está bloqueado</h2><p class="hint">Confirma tu identidad con la huella, rostro o método seguro configurado en tu teléfono.</p><button id="unlockBiometric" type="button">Desbloquear Klk</button><p id="biometricLockStatus" class="hint" role="status" aria-live="polite"></p></div></div>
 <div id="statusViewer" class="statusViewer" role="dialog" aria-modal="true" aria-label="Ver estado"><div id="statusViewerMeta"></div><div id="statusViewerContent"></div><button id="closeStatusViewer" type="button">Cerrar</button></div>
 <script src="./navigation.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-messaging-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
@@ -800,7 +800,7 @@ try {
  firebase.initializeApp(firebaseConfig);
  auth = firebase.auth(); db = firebase.firestore();
  authPersistenceReady = auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
- firestorePersistenceReady = db.enablePersistence({synchronizeTabs:true}).then(() => true).catch(error => {
+ firestorePersistenceReady = db.enablePersistence().then(() => true).catch(error => {
   console.warn("No se pudo activar el almacenamiento sin conexión de Firestore:", error);
   return false;
  });
