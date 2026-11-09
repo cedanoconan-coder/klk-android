@@ -873,6 +873,11 @@ function messagesCollection() {
 function isAcceptedContact(uid) {
  return (incomingRequests.get(uid) || {}).status === "accepted" || (outgoingRequests.get(uid) || {}).status === "accepted";
 }
+function isInvitedContact(uid) {
+ const incoming=(incomingRequests.get(uid)||{}).status;
+ const outgoing=(outgoingRequests.get(uid)||{}).status;
+ return incoming === "pending" || incoming === "accepted" || outgoing === "pending" || outgoing === "accepted";
+}
 let myProfileUnsubscribe = null;
 function loadMyProfile() {
  if (myProfileUnsubscribe) myProfileUnsubscribe();
@@ -1051,9 +1056,7 @@ function renderPeople() {
   info.append(name,email); row.append(info);
   const view=document.createElement("button");view.type="button";view.className="secondary";view.style.cssText="width:auto;min-width:76px;margin:0 5px 0 0;padding:9px 8px;font-size:12px";view.textContent="Perfil";view.onclick=()=>openContactProfile(uid,person);row.append(view);
   const action = document.createElement("button"); action.style.cssText = "width:auto;min-width:112px;margin:0;padding:9px 12px;font-size:13px";
-  if (isAcceptedContact(uid)) { action.textContent = "Enviar mensaje"; action.onclick = () => openPrivateConversation(uid, person.displayName || person.email || "Conversación"); }
-  else if ((incomingRequests.get(uid) || {}).status === "pending") { action.textContent = "Aceptar solicitud"; action.onclick = () => respondToContactRequest(uid,"accepted"); }
-  else if ((outgoingRequests.get(uid) || {}).status === "pending") { action.textContent = "Solicitud enviada"; action.disabled = true; }
+  if (isInvitedContact(uid)) { action.textContent = "Escribir"; action.onclick = () => openPrivateConversation(uid, person.displayName || person.email || "Conversación"); }
   else if ((outgoingRequests.get(uid) || {}).status === "rejected") { action.textContent = "Solicitud rechazada"; action.disabled = true; }
   else { action.textContent = "Enviar solicitud"; action.onclick = () => sendContactRequest(uid,person); }
   row.append(action); list.append(row);
@@ -1069,7 +1072,7 @@ function renderConversations() {
  const list=$("chatsList"); if(!list)return;
  list.innerHTML="";
  const rows=[...conversationCache.values()].sort((a,b)=>(b.sortTime||0)-(a.sortTime||0));
- if(!rows.length){list.textContent="Todavía no tienes chats. Entra en Personas, envía una solicitud y espera a que la acepten.";return;}
+ if(!rows.length){list.textContent="Todavía no tienes chats. Entra en Personas y envía una invitación para comenzar a escribir.";return;}
  for(const item of rows){
   const row=document.createElement("button");row.type="button";row.className="chatRow";
   const avatar=document.createElement("img");avatar.className="personAvatar";avatar.alt="Foto de "+item.name;avatar.src=item.photoUrl||"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='32' fill='%23edf2ef'/%3E%3Ctext x='32' y='43' text-anchor='middle' font-size='32'%3E%F0%9F%91%A4%3C/text%3E%3C/svg%3E";
@@ -1083,10 +1086,10 @@ function renderConversations() {
 }
 function syncConversationListeners(){
  const user=auth&&auth.currentUser;if(!user)return;
- const accepted=[...peopleCache.entries()].filter(([uid])=>uid!==user.uid&&isAcceptedContact(uid));
- const wanted=new Set(accepted.map(([uid])=>[user.uid,uid].sort().join("__")));
+ const invited=[...peopleCache.entries()].filter(([uid])=>uid!==user.uid&&isInvitedContact(uid));
+ const wanted=new Set(invited.map(([uid])=>[user.uid,uid].sort().join("__")));
  for(const [id,entry] of conversationSubscriptions){if(!wanted.has(id)){if(entry.messages)entry.messages();if(entry.conversation)entry.conversation();conversationSubscriptions.delete(id);conversationCache.delete(id);}}
- for(const [uid,person] of accepted){
+ for(const [uid,person] of invited){
   const id=[user.uid,uid].sort().join("__");if(conversationSubscriptions.has(id))continue;
   const entry={conversation:null,messages:null,lastMessageId:null,messagesInitialized:false};conversationSubscriptions.set(id,entry);
   entry.conversation=db.collection("conversations").doc(id).onSnapshot(snapshot=>{
@@ -1112,13 +1115,13 @@ function renderRequests() {
  const list = $("requestsList"); if (!list) return;
  list.innerHTML = "";
  const pending = [...incomingRequests.entries()].filter(([,r]) => r.status === "pending");
- if (!pending.length) { list.textContent = "No tienes solicitudes pendientes."; renderPeople(); return; }
+ if (!pending.length) { list.textContent = "No tienes invitaciones pendientes."; renderPeople(); return; }
  for (const [uid,r] of pending) {
   const row = document.createElement("div"); row.className = "memberBtn";
-  const label = document.createElement("span"); label.style.flex = "1"; label.textContent = (r.senderName || r.senderEmail || "Usuario") + " quiere agregarte a sus contactos.";
-  const accept = document.createElement("button"); accept.textContent = "Aceptar"; accept.style.width = "auto"; accept.onclick = () => respondToContactRequest(uid,"accepted");
+  const label = document.createElement("span"); label.style.flex = "1"; label.textContent = (r.senderName || r.senderEmail || "Usuario") + " te invitó a conversar. Ya puedes escribirle.";
+  const write = document.createElement("button"); write.textContent = "Escribir"; write.style.width = "auto"; write.onclick = () => openPrivateConversation(uid,r.senderName || r.senderEmail || "Conversación");
   const reject = document.createElement("button"); reject.textContent = "Rechazar"; reject.className = "secondary"; reject.style.width = "auto"; reject.onclick = () => respondToContactRequest(uid,"rejected");
-  row.append(label,accept,reject); list.append(row);
+  row.append(label,write,reject); list.append(row);
  }
  renderPeople();
 }
@@ -1175,7 +1178,7 @@ async function updateRoomAvatar(otherUid) {
 async function openPrivateConversation(otherUid, otherName) {
  const user = auth.currentUser;
  if (!user || !otherUid || otherUid === user.uid) return;
- if (!isAcceptedContact(otherUid)) { $("chatStatus").textContent = "Primero deben aceptar la solicitud de contacto."; return; }
+ if (!isInvitedContact(otherUid)) { $("chatStatus").textContent = "Envía una invitación para poder escribirle."; return; }
  const members = [user.uid,otherUid].sort(), conversationId = members.join("__");
  $("chatStatus").textContent = "Abriendo conversación privada...";
  try {
@@ -1221,7 +1224,7 @@ function formatMessageTime(value) {
 function loadMessages() {
  window.klkNotificationsReady = false;
  if (unsubscribe) unsubscribe();
- if (!activeConversationId) { $("messages").textContent = "Abre un contacto aceptado para ver tus mensajes privados."; return; }
+ if (!activeConversationId) { $("messages").textContent = "Abre una conversación con una persona a la que hayas invitado o que te haya invitado."; return; }
  $("messages").textContent = "Cargando mensajes...";
  unsubscribe = messagesCollection().orderBy("createdAt").limit(100).onSnapshot(async snapshot => {
   const changes = snapshot.docChanges();
