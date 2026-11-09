@@ -942,7 +942,7 @@ auth && auth.onAuthStateChanged(async user => {
     return;
    }
    await profileRef.set({uid:user.uid,email:user.email || "",displayName:user.displayName || (user.email || "Miembro").split("@")[0],updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true}); const privateProfile=(await profileRef.get()).data()||{};
- const publicProfile={uid:user.uid,displayName:privateProfile.displayName||user.displayName||(user.email||"Miembro").split("@")[0],about:privateProfile.about||"",mood:privateProfile.mood||"",directoryVisible:privateProfile.directoryVisible===true,updatedAt:firebase.firestore.FieldValue.serverTimestamp()};
+ const publicProfile={uid:user.uid,displayName:((privateProfile.displayName||user.displayName||(user.email||"").split("@")[0]||"").trim().length>=2?(privateProfile.displayName||user.displayName||(user.email||"").split("@")[0]).trim():"Miembro"),about:privateProfile.about||"",mood:privateProfile.mood||"",directoryVisible:privateProfile.directoryVisible===true,updatedAt:firebase.firestore.FieldValue.serverTimestamp()};
  if(privateProfile.photoPath)publicProfile.photoPath=privateProfile.photoPath;
  if(privateProfile.coverPath)publicProfile.coverPath=privateProfile.coverPath;
  await db.collection("publicProfiles").doc(user.uid).set(publicProfile,{merge:true});
