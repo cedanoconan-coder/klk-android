@@ -317,7 +317,7 @@ body:has(#chat.room-open) main{padding:0!important;margin:0!important;max-width:
 .homeTitle h1{font-size:30px}
 .homeActions{gap:14px}
 .homeActions #profileButton,.homeActions #quickLogout,.homeActions #inviteMember{display:none!important}
-.homeActions #homeCamera,.homeActions #homeMenu{display:grid;place-items:center;width:38px;height:40px;font-size:25px}
+.homeActions #homeMenu{display:grid;place-items:center;width:42px;height:42px;border-radius:50%;font-size:25px}.homeActions #homeMenu svg{width:23px;height:23px;fill:currentColor}
 .homeBottom{left:0;right:0;bottom:0;border-radius:18px 18px 0 0;padding:8px 10px calc(8px + env(safe-area-inset-bottom));grid-template-columns:repeat(4,minmax(0,1fr));box-shadow:0 -2px 14px #10201c12}
 .homeBottom button{min-height:58px;font-size:11px}
 #recordAudio{touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;flex:0 0 48px;width:48px;height:48px;border-radius:50%;background:#128c7e;color:#fff;font-size:22px;margin:0;padding:0}
@@ -353,7 +353,7 @@ body:has(#chat.room-open) main{padding:0!important;margin:0!important;max-width:
 <section id="chat" class="card">
 
 <div id="homeView" class="homeView">
- <div class="homeTitle"><h1>Klk manin</h1><div class="homeActions"><button type="button" id="inviteMember" aria-label="Invitar a klk" title="Invitar a klk">＋</button><button type="button" id="profileButton" class="profileButton" aria-label="Cambiar foto de perfil"><img id="myProfilePhoto" alt="Foto de perfil"><span>Mi perfil</span></button><button type="button" id="quickLogout" class="quickLogout" aria-label="Cerrar sesión" title="Cerrar sesión">↪ Salir</button><input id="profilePhotoInput" type="file" accept="image/*" hidden><button type="button" id="homeCamera" aria-label="Cámara">▣</button><button type="button" id="homeMenu" aria-label="Ajustes">⋮</button></div></div>
+ <div class="homeTitle"><h1>Klk manin</h1><div class="homeActions"><button type="button" id="inviteMember" aria-label="Invitar a klk" title="Invitar a klk">＋</button><button type="button" id="profileButton" class="profileButton" aria-label="Cambiar foto de perfil"><img id="myProfilePhoto" alt="Foto de perfil"><span>Mi perfil</span></button><button type="button" id="quickLogout" class="quickLogout" aria-label="Cerrar sesión" title="Cerrar sesión">↪ Salir</button><input id="profilePhotoInput" type="file" accept="image/*" hidden><button type="button" id="homeMenu" aria-label="Ajustes" title="Ajustes"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg></button></div></div>
  <section id="invitePanel" class="card" style="display:none;margin:0 16px 14px;padding:14px">
   <strong>Invitar a klk</strong>
   <p class="hint">Crea un código de un solo uso, válido durante 7 días. Compártelo solo con la persona que deseas agregar.</p>
@@ -1033,16 +1033,23 @@ function loadMessages() {
   $("messages").scrollTop = $("messages").scrollHeight;
  }, error => showError("chatStatus", error));
 }
+function syncComposerMode(){
+ const hasText=$("message").value.trim().length>0;
+ ["pickPhoto","takePhoto","recordAudio"].forEach(id=>{const control=$(id);if(control)control.disabled=hasText||sending;});
+ $("send").disabled=!hasText||sending;
+ $("send").setAttribute("aria-disabled",String(!hasText||sending));
+}
+$("message").addEventListener("input",syncComposerMode);
 $("send").onclick = async () => {
  const text = $("message").value.trim(), user = auth && auth.currentUser;
  if (!user || !activeConversationId) { $("chatStatus").textContent = "Selecciona un contacto que haya aceptado tu solicitud antes de enviar mensajes."; return; }
  if (!text || sending) return;
- sending = true; $("send").disabled = true; $("chatStatus").textContent = "";
+ sending = true; syncComposerMode(); $("chatStatus").textContent = "";
  try {
   await messagesCollection().add({type:"text", text, email:user.email || "", displayName:(peopleCache.get(user.uid) || {}).displayName || (user.email || "Miembro").split("@")[0], uid:user.uid, createdAt:firebase.firestore.FieldValue.serverTimestamp()});
-  $("message").value = "";
+  $("message").value = ""; syncComposerMode();
  } catch(error) { showError("chatStatus", error); }
- finally { sending = false; $("send").disabled = false; }
+ finally { sending = false; syncComposerMode(); }
 };
 
 async function compressImage(file) {
@@ -1429,7 +1436,7 @@ $("backToChats").addEventListener("click",()=>{
  $("chatSearch").value="";
  $("homeStatus").textContent="";
 });
-$("homeCamera").addEventListener("click",()=>$("profilePhotoInput").click());
+
 $("chatSearch").addEventListener("input",event=>{
  const q=event.target.value.trim().toLocaleLowerCase();
  $("homeGroup").style.display="none";
