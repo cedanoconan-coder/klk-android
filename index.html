@@ -720,7 +720,7 @@ async function uploadProfilePhoto(file) {
  } finally { button.disabled = false; }
 }
 $("profileButton").addEventListener("click", openKlkProfilePanel);
-function openKlkProfilePanel(){const panel=$("homeProfilePanel");if(!panel)return;panel.style.display="block";["homeSearch","homeStatus"].forEach(id=>{const el=$(id);if(el)el.style.display="none";});document.querySelectorAll(".homeFilters,#chatsPanel,#requestsPanel,#peopleList,#callsPanel,#updatesPanel,#toolsPanel,#assistantPanel").forEach(el=>el.style.display="none");panel.scrollIntoView({block:"start",behavior:"smooth"});}
+function openKlkProfilePanel(){const panel=$("homeProfilePanel");if(!panel)return;klkPushView("profile");panel.style.display="block";["homeSearch","homeStatus"].forEach(id=>{const el=$(id);if(el)el.style.display="none";});document.querySelectorAll(".homeFilters,#chatsPanel,#requestsPanel,#peopleList,#callsPanel,#updatesPanel,#toolsPanel,#assistantPanel").forEach(el=>el.style.display="none");panel.scrollIntoView({block:"start",behavior:"smooth"});}
 function closeKlkProfilePanel(){const panel=$("homeProfilePanel");if(panel)panel.style.display="none";["homeSearch","homeStatus"].forEach(id=>{const el=$(id);if(el)el.style.display="";});document.querySelectorAll(".homeFilters").forEach(el=>el.style.display="");const active=document.querySelector('.homeFilters button.active');const filter=active?active.dataset.filter:"chats";$("chatsPanel").style.display=filter==="chats"?"block":"none";$("requestsPanel").style.display=filter==="requests"?"block":"none";$("peopleList").style.display=filter==="people"?"block":"none";}
 $("profileClose").addEventListener("click",closeKlkProfilePanel);$("profileChangePhoto").addEventListener("click",()=>$("profilePhotoInput").click());
 $("profileSave").addEventListener("click",async()=>{const user=auth&&auth.currentUser;if(!user)return;const name=$("profileNameInput").value.trim();if(name.length<2){$("profileStatus").textContent="Escribe un nombre de al menos 2 caracteres.";return;}const button=$("profileSave");button.disabled=true;$("profileStatus").textContent="Guardando perfil...";try{await user.updateProfile({displayName:name});await db.collection("users").doc(user.uid).set({uid:user.uid,email:user.email||"",displayName:name,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});$("profilePanelName").textContent=name;$("profileStatus").textContent="Perfil actualizado correctamente.";}catch(error){$("profileStatus").textContent="No se pudo guardar: "+(error.message||"inténtalo de nuevo");}finally{button.disabled=false;}});
@@ -735,7 +735,7 @@ $("profilePhotoInput").addEventListener("change", async event => {
 let activeContactProfileUid=null,contactProfileReturnTo="people";
 function closeContactProfile(){ $("contactProfilePanel").hidden=true; $("contactProfilePanel").style.display="none"; if(contactProfileReturnTo==="chat"&&activeConversationId){$("chat").classList.add("room-open");$("peopleList").style.display="none";}else{$("chat").classList.remove("room-open");$("peopleList").style.display="";document.querySelectorAll(".homeFilters").forEach(el=>el.style.display="");} }
 async function openContactProfile(uid,person,returnTo="people"){
- activeContactProfileUid=uid;contactProfileReturnTo=returnTo;
+ klkPushView("contact-profile");activeContactProfileUid=uid;contactProfileReturnTo=returnTo;
  $("homeProfilePanel").style.display="none";$("peopleList").style.display="none";
  document.querySelectorAll(".homeFilters").forEach(el=>el.style.display="none");
  $("contactProfilePanel").hidden=false;$("contactProfilePanel").style.display="block";
@@ -937,7 +937,7 @@ async function openPrivateConversation(otherUid, otherName) {
   const ref = db.collection("conversations").doc(conversationId), existing = await ref.get();
   if (!existing.exists) await ref.set({members,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
   activeConversationId = conversationId; activeConversationName = otherName; activeConversationPeerUid = otherUid;
-  $("chat").classList.add("room-open"); const chatFooter=$("chat").querySelector(".chatFoot"); if(chatFooter){chatFooter.hidden=true;chatFooter.style.setProperty("display","none","important");} $("chatTitle").textContent = otherName; updateRoomAvatar(otherUid);
+  klkPushView("conversation");$("chat").classList.add("room-open"); const chatFooter=$("chat").querySelector(".chatFoot"); if(chatFooter){chatFooter.hidden=true;chatFooter.style.setProperty("display","none","important");} $("chatTitle").textContent = otherName; updateRoomAvatar(otherUid);
   $("dmPanel").style.display = "none"; $("messages").style.display = "block";
   document.querySelector(".composer").style.display = "flex"; $("mediaActions").style.display = "flex"; $("recordStatus").style.display = "block";
   $("chatStatus").textContent = "Conversación privada con " + otherName; loadMessages();
@@ -1340,7 +1340,16 @@ $("shareInvite").addEventListener("click",async()=>{
  }
 });
 $("homeGroup").addEventListener("click",()=>{ $("chatStatus").textContent="klk funciona con conversaciones privadas entre contactos aceptados."; });
-function toggleKlkSettings(){const panel=$("settingsPanel");panel.style.display=panel.style.display==="block"?"none":"block";if(panel.style.display==="block")panel.scrollTop=0;}
+function klkPushView(view){try{history.pushState({klkView:view},"",location.href);}catch(error){console.warn("No se pudo registrar la navegación:",error);}}
+function toggleKlkSettings(){const panel=$("settingsPanel");const opening=panel.style.display!=="block";panel.style.display=opening?"block":"none";if(opening){panel.scrollTop=0;klkPushView("settings");}}
+window.addEventListener("popstate",()=>{
+ const settings=$("settingsPanel"),contact=$("contactProfilePanel"),profile=$("homeProfilePanel");
+ if(settings&&settings.style.display==="block"){settings.style.display="none";return;}
+ if(contact&&!contact.hidden&&contact.style.display!=="none"){closeContactProfile();return;}
+ if(profile&&profile.style.display==="block"){closeKlkProfilePanel();return;}
+ if($("chat")&&$("chat").classList.contains("room-open")){$("backToChats").click();return;}
+});
+
 $("homeMenu").addEventListener("click",toggleKlkSettings);
 $("backToChats").addEventListener("click",()=>{
  if(unsubscribe){unsubscribe();unsubscribe=null;}
