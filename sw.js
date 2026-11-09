@@ -1,3 +1,15 @@
+self.addEventListener("notificationclick", event => {
+  event.notification.close();
+  const target = new URL(event.notification.data && event.notification.data.url || "./", self.location.origin).href;
+  event.waitUntil((async () => {
+    const clientsList = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+    for (const client of clientsList) {
+      if ("focus" in client) { await client.focus(); return; }
+    }
+    if (self.clients.openWindow) await self.clients.openWindow(target);
+  })());
+});
+
 importScripts("https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js");
 importScripts("https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js");
 
@@ -24,18 +36,6 @@ messaging.onBackgroundMessage(payload => {
     renotify: true
   });
 });
-self.addEventListener("notificationclick", event => {
-  event.notification.close();
-  const target = new URL(event.notification.data && event.notification.data.url || "./", self.location.origin).href;
-  event.waitUntil((async () => {
-    const clientsList = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
-    for (const client of clientsList) {
-      if ("focus" in client) { await client.focus(); return; }
-    }
-    if (self.clients.openWindow) await self.clients.openWindow(target);
-  })());
-});
-
 const CACHE_NAME = "klk-shell-v28";
 const APP_SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon.svg", "./calls.js", "./navigation.js"];
 self.addEventListener("install", event => {
