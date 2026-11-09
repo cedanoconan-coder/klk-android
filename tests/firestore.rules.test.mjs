@@ -110,6 +110,23 @@ test("cada miembro puede crear su perfil público con visibilidad voluntaria", a
   }));
 });
 
+
+test("permite publicar estados sin exponer el correo electrónico", async () => {
+  const db = testEnv.authenticatedContext("member-1", {email:"member1@example.com"}).firestore();
+  await assertSucceeds(setDoc(doc(db,"statuses/status-safe"), {
+    uid:"member-1",displayName:"Miembro",type:"text",text:"Hola",
+    createdAt:serverTimestamp(),expiresAt:Timestamp.fromMillis(Date.now()+24*60*60*1000)
+  }));
+});
+
+test("rechaza guardar correo electrónico en un estado", async () => {
+  const db = testEnv.authenticatedContext("member-1", {email:"member1@example.com"}).firestore();
+  await assertFails(setDoc(doc(db,"statuses/status-email"), {
+    uid:"member-1",email:"member1@example.com",displayName:"Miembro",type:"text",text:"Hola",
+    createdAt:serverTimestamp(),expiresAt:Timestamp.fromMillis(Date.now()+24*60*60*1000)
+  }));
+});
+
 test("bloquea la colección global heredada de mensajes", async () => {
   const db = testEnv.authenticatedContext("member-1", {
     email: "member1@example.com"
