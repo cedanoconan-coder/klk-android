@@ -1,4 +1,42 @@
-const CACHE_NAME = "klk-shell-v27";
+importScripts("https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js");
+importScripts("https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js");
+
+firebase.initializeApp({
+  apiKey: "AIzaSyAgMkDOS77y-jHnzCEteQW1UgC90gShjuU",
+  authDomain: "klk-familia.firebaseapp.com",
+  projectId: "klk-familia",
+  storageBucket: "klk-familia.firebasestorage.app",
+  messagingSenderId: "184754934059",
+  appId: "1:184754934059:web:1d385677b2c7c00699b56e",
+  measurementId: "G-DXX2PHDNN0"
+});
+const messaging = firebase.messaging();
+messaging.onBackgroundMessage(payload => {
+  const data = payload && payload.data ? payload.data : {};
+  const title = data.title || "klk · Nuevo mensaje";
+  const body = data.body || "Tienes un mensaje nuevo";
+  return self.registration.showNotification(title, {
+    body,
+    icon: "./icon.svg",
+    badge: "./icon.svg",
+    tag: "klk-" + (data.conversationId || "message"),
+    data: { url: "./" },
+    renotify: true
+  });
+});
+self.addEventListener("notificationclick", event => {
+  event.notification.close();
+  const target = new URL(event.notification.data && event.notification.data.url || "./", self.location.origin).href;
+  event.waitUntil((async () => {
+    const clientsList = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+    for (const client of clientsList) {
+      if ("focus" in client) { await client.focus(); return; }
+    }
+    if (self.clients.openWindow) await self.clients.openWindow(target);
+  })());
+});
+
+const CACHE_NAME = "klk-shell-v28";
 const APP_SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon.svg", "./calls.js", "./navigation.js"];
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_SHELL)));
