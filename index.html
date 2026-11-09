@@ -417,6 +417,80 @@ body:has(#chat.room-open) main{padding:0!important;margin:0!important;max-width:
 #usersOverlay #peopleList{display:block!important;visibility:visible!important}
 #chat.room-open #openUsersFab{display:none}
 
+
+/* Entrada principal de klk: perfil personal elegante */
+#chat.profile-open .homeTitle,
+#chat.profile-open .homeBottom,
+#chat.profile-open #openUsersFab{display:none!important}
+#chat.profile-open #homeProfilePanel{
+ display:block!important;
+ min-height:calc(100dvh - 74px);
+ margin:0!important;
+ padding:0 18px calc(34px + env(safe-area-inset-bottom))!important;
+ border:0!important;
+ border-radius:0!important;
+ background:var(--klk-surface)!important;
+ overflow:visible!important;
+}
+#chat.profile-open #homeProfilePanel>.profileHeader{
+ position:sticky;top:0;z-index:5;
+ display:flex;align-items:center;gap:12px;
+ margin:0 -18px 0!important;
+ padding:calc(12px + env(safe-area-inset-top)) 18px 12px!important;
+ background:var(--klk-surface)!important;
+ border-bottom:1px solid var(--klk-line);
+}
+#chat.profile-open #homeProfilePanel>.profileHeader button{
+ width:40px!important;height:40px!important;flex:0 0 40px;
+ margin:0!important;padding:0!important;border-radius:50%;
+ background:var(--klk-message-bg)!important;color:var(--klk-text)!important;
+ font-size:25px!important;
+}
+#chat.profile-open #homeProfilePanel>.profileHeader h2{
+ margin:0!important;font-size:18px!important;font-weight:700;letter-spacing:-.3px;
+}
+#chat.profile-open .profileCover{
+ width:calc(100% + 36px);height:230px;
+ margin:0 -18px 0!important;border-radius:0 0 28px 28px;
+ background-color:#075e54;background-size:cover;background-position:center;
+ box-shadow:inset 0 -70px 90px #061d1a55;
+}
+#chat.profile-open .profileHero{
+ margin:-52px 0 18px!important;padding:0 10px 20px!important;
+ gap:15px;align-items:flex-end;
+}
+#chat.profile-open .profileHero img{
+ width:108px;height:108px;flex:0 0 108px;
+ border:5px solid var(--klk-surface);box-shadow:0 8px 26px #061d1a30;
+}
+#chat.profile-open .profileHero strong{font-size:22px;letter-spacing:-.6px}
+#chat.profile-open .profileHero small{font-size:12px}
+#chat.profile-open .profileMood{
+ border-radius:18px;padding:14px 15px;
+ box-shadow:0 5px 18px #10201c08;
+}
+#chat.profile-open .profileSection{
+ margin-top:14px;padding:19px 2px!important;
+ border-bottom:1px solid var(--klk-line);
+}
+#chat.profile-open .profileSection h3{
+ font-size:11px!important;letter-spacing:1.25px!important;
+}
+#chat.profile-open .profileField span{font-weight:600}
+#chat.profile-open .profileField input,
+#chat.profile-open .profileField textarea{
+ border-radius:15px;border:1px solid var(--klk-line);
+ background:var(--klk-message-bg);padding:14px;
+}
+#chat.profile-open .profileAction{padding:16px 5px;border-color:var(--klk-line)}
+#chat.profile-open .profileButtons button{border-radius:15px;min-height:48px}
+@media(max-width:420px){
+ #chat.profile-open #homeProfilePanel{padding-left:16px!important;padding-right:16px!important}
+ #chat.profile-open #homeProfilePanel>.profileHeader{margin-left:-16px!important;margin-right:-16px!important;padding-left:16px!important;padding-right:16px!important}
+ #chat.profile-open .profileCover{width:calc(100% + 32px);margin-left:-16px!important;margin-right:-16px!important;height:205px}
+ #chat.profile-open .profileHero img{width:96px;height:96px;flex-basis:96px}
+}
+
 </style>
 </head>
 <body>
@@ -868,7 +942,7 @@ auth && auth.onAuthStateChanged(async user => {
     return;
    }
    await profileRef.set({uid:user.uid,email:user.email || "",displayName:user.displayName || (user.email || "Miembro").split("@")[0],updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
-   loadPeople(); loadContactRequests(); loadMyProfile();
+   loadPeople(); loadContactRequests(); loadMyProfile(); await openKlkProfilePanel();
   } catch(error) {
    showError("chatStatus",error);
   }
@@ -989,8 +1063,8 @@ async function uploadProfileCover(file) {
  finally{button.disabled=false;}
 }
 $("profileCoverInput").addEventListener("change",async event=>{const file=event.target.files&&event.target.files[0];if(file)await uploadProfileCover(file);event.target.value="";});
-async function openKlkProfilePanel(){const panel=$("homeProfilePanel");if(!panel)return;klkPushView("profile");panel.style.display="block";const user=auth&&auth.currentUser;if(user){$("profilePanelName").textContent=user.displayName||"Mi perfil";$("profilePanelEmail").textContent=user.email||"Cuenta klk";try{const snap=await db.collection("users").doc(user.uid).get();if(snap.exists){const data=snap.data();$("profileNameInput").value=data.displayName||user.displayName||"";$("profileAboutInput").value=data.about||"¡Hola! Estoy usando klk.";$("profileMoodSelect").value=data.mood||"😊 Feliz";$("myMoodEmoji").textContent=(data.mood||"😊 Feliz").split(" ")[0];$("myMoodLabel").textContent=data.mood||"Comparte cómo te sientes";if(data.coverPath)$("myProfileCover").style.backgroundImage='url("'+await getMediaUrl(data.coverPath)+'")';if(data.photoPath)$("profilePanelPhoto").src=await getMediaUrl(data.photoPath);}}catch(error){console.warn("No se pudo cargar la información del perfil",error);}}["homeSearch","homeStatus"].forEach(id=>{const el=$(id);if(el)el.style.display="none";});document.querySelectorAll(".homeFilters,#chatsPanel,#requestsPanel,#peopleList,#callsPanel,#updatesPanel,#toolsPanel,#assistantPanel").forEach(el=>el.style.display="none");panel.scrollIntoView({block:"start",behavior:"smooth"});}
-function closeKlkProfilePanel(){const panel=$("homeProfilePanel");if(panel)panel.style.display="none";["homeSearch","homeStatus"].forEach(id=>{const el=$(id);if(el)el.style.display="";});document.querySelectorAll(".homeFilters").forEach(el=>el.style.display="");const active=document.querySelector('.homeFilters button.active');const filter=active?active.dataset.filter:"chats";$("chatsPanel").style.display=filter==="chats"?"block":"none";$("requestsPanel").style.display=filter==="requests"?"block":"none";$("peopleList").style.display=filter==="people"?"block":"none";}
+async function openKlkProfilePanel(){const panel=$("homeProfilePanel");if(!panel)return;klkPushView("profile");$("chat").classList.add("profile-open");panel.style.display="block";const user=auth&&auth.currentUser;if(user){$("profilePanelName").textContent=user.displayName||"Mi perfil";$("profilePanelEmail").textContent=user.email||"Cuenta klk";try{const snap=await db.collection("users").doc(user.uid).get();if(snap.exists){const data=snap.data();$("profileNameInput").value=data.displayName||user.displayName||"";$("profileAboutInput").value=data.about||"¡Hola! Estoy usando klk.";$("profileMoodSelect").value=data.mood||"😊 Feliz";$("myMoodEmoji").textContent=(data.mood||"😊 Feliz").split(" ")[0];$("myMoodLabel").textContent=data.mood||"Comparte cómo te sientes";if(data.coverPath)$("myProfileCover").style.backgroundImage='url("'+await getMediaUrl(data.coverPath)+'")';if(data.photoPath)$("profilePanelPhoto").src=await getMediaUrl(data.photoPath);}}catch(error){console.warn("No se pudo cargar la información del perfil",error);}}["homeSearch","homeStatus"].forEach(id=>{const el=$(id);if(el)el.style.display="none";});document.querySelectorAll(".homeFilters,#chatsPanel,#requestsPanel,#peopleList,#callsPanel,#updatesPanel,#toolsPanel,#assistantPanel").forEach(el=>el.style.display="none");panel.scrollIntoView({block:"start",behavior:"smooth"});}
+function closeKlkProfilePanel(){const panel=$("homeProfilePanel");$("chat").classList.remove("profile-open");if(panel)panel.style.display="none";["homeSearch","homeStatus"].forEach(id=>{const el=$(id);if(el)el.style.display="";});document.querySelectorAll(".homeFilters").forEach(el=>el.style.display="");const active=document.querySelector('.homeFilters button.active');const filter=active?active.dataset.filter:"chats";$("chatsPanel").style.display=filter==="chats"?"block":"none";$("requestsPanel").style.display=filter==="requests"?"block":"none";$("peopleList").style.display=filter==="people"?"block":"none";}
 $("profileClose").addEventListener("click",closeKlkProfilePanel);$("profileChangePhoto").addEventListener("click",()=>$("profilePhotoInput").click());
 $("profileSave").addEventListener("click",async()=>{const user=auth&&auth.currentUser;if(!user)return;const name=$("profileNameInput").value.trim();if(name.length<2){$("profileStatus").textContent="Escribe un nombre de al menos 2 caracteres.";return;}const button=$("profileSave");button.disabled=true;$("profileStatus").textContent="Guardando perfil...";try{await user.updateProfile({displayName:name});const about=$("profileAboutInput").value.trim();await db.collection("users").doc(user.uid).set({uid:user.uid,email:user.email||"",displayName:name,about,mood:$("profileMoodSelect").value,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});try{localStorage.setItem("klk-profile-about",about);}catch(e){}$("myMoodEmoji").textContent=$("profileMoodSelect").value.split(" ")[0];$("myMoodLabel").textContent=$("profileMoodSelect").value;$("profilePanelName").textContent=name;$("profileStatus").textContent="Perfil actualizado correctamente.";}catch(error){$("profileStatus").textContent="No se pudo guardar: "+(error.message||"inténtalo de nuevo");}finally{button.disabled=false;}});
 $("profileAboutInput").value=localStorage.getItem("klk-profile-about")||"¡Hola! Estoy usando klk.";$("profileAboutInput").addEventListener("change",()=>{try{localStorage.setItem("klk-profile-about",$("profileAboutInput").value.trim());$("profileStatus").textContent="Tu información se guardó en este teléfono.";}catch(e){$("profileStatus").textContent="No se pudo guardar esta información.";}});
