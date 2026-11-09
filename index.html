@@ -591,9 +591,19 @@ main,#chat,.homeView{overscroll-behavior-y:contain}
 @media(max-width:360px){.roomWallpaperGrid{gap:6px}.wallpaperPreview{height:40px}}
 
 #messages video{display:block;width:100%;max-width:100%;max-height:360px;margin-top:7px;border-radius:9px;background:#111}
-.voiceMessageLayout{display:flex;align-items:center;gap:9px;margin-top:7px;min-width:0}
-.voiceMessageAvatar{width:38px;height:38px;flex:0 0 38px;border-radius:50%;object-fit:cover;background:#e7eeeb}
-.voiceMessageLayout audio{flex:1;min-width:0;margin:0!important;width:auto!important}
+.voiceMessageLayout{display:flex;align-items:center;gap:10px;margin-top:8px;min-width:0;width:min(430px,100%)}
+.voiceMessageAvatar{width:42px;height:42px;flex:0 0 42px;border-radius:50%;object-fit:cover;background:#e7eeeb}
+.voicePlayer{display:grid;grid-template-columns:36px minmax(0,1fr) 42px;align-items:center;gap:9px;flex:1;min-width:0;padding:8px 10px;border-radius:16px;background:var(--klk-message-bg,#f3f4f4)}
+.voicePlayButton{width:34px;height:34px;min-width:34px;margin:0;padding:0;border-radius:50%;display:grid;place-items:center;background:var(--klk-accent,#075e54);color:#fff;font-size:17px}
+.voicePlayerMain{min-width:0;display:flex;flex-direction:column;gap:5px}
+.voiceWaveform{height:28px;display:flex;align-items:center;justify-content:space-between;gap:2px;min-width:0;cursor:pointer;touch-action:pan-y;outline-offset:3px}
+.voiceWaveBar{display:block;flex:1;min-width:2px;max-width:4px;border-radius:4px;background:#aab8b3;height:var(--bar-height,35%)}
+.voiceWaveBar.played{background:var(--klk-accent,#128c7e)}
+.voicePlayerMeta{display:flex;justify-content:space-between;gap:8px;color:var(--klk-muted,#68736f);font-size:11px;line-height:1}
+.voiceSpeedButton{width:40px;height:30px;min-width:40px;margin:0;padding:0;border-radius:16px;background:var(--klk-soft,#e3f2ed);color:var(--klk-accent,#075e54);font-size:12px;font-weight:700}
+.voiceMessageLayout audio{display:none!important}
+.msg.mine .voicePlayer{background:color-mix(in srgb,var(--klk-soft,#e3f2ed) 78%,transparent)}
+@media(max-width:360px){.voiceMessageLayout{gap:7px}.voiceMessageAvatar{width:36px;height:36px;flex-basis:36px}.voicePlayer{grid-template-columns:32px minmax(0,1fr) 38px;gap:6px;padding:7px}.voiceSpeedButton{min-width:36px;width:36px}}
 #roomMediaGallery{position:fixed;z-index:120;inset:0;background:var(--klk-surface,#fff);color:var(--klk-text,#111b21);padding:calc(14px + env(safe-area-inset-top)) 14px calc(14px + env(safe-area-inset-bottom));overflow:auto}
 #roomMediaGallery[hidden]{display:none!important}
 .roomMediaHead{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:18px;font-weight:700}
@@ -1498,8 +1508,27 @@ function loadMessages() {
       const avatar=document.createElement("img");avatar.className="voiceMessageAvatar";avatar.alt="Foto de "+senderName;
       avatar.src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='32' fill='%23e7eeeb'/%3E%3Ctext x='32' y='44' text-anchor='middle' font-size='34'%3E%F0%9F%91%A4%3C/text%3E%3C/svg%3E";
       if(senderProfile&&senderProfile.photoPath){try{const avatarUrl=await getMediaUrl(senderProfile.photoPath);if(avatarUrl)avatar.src=avatarUrl;}catch(e){console.warn("No se pudo cargar el avatar de la nota de voz:",e);}}
-      const audio = document.createElement("audio"); audio.controls = true; audio.preload = "metadata"; audio.src = url;
-      layout.append(avatar,audio);item.appendChild(layout);
+      const player=document.createElement("div");player.className="voicePlayer";
+      const audio=document.createElement("audio");audio.preload="metadata";audio.src=url;
+      const play=document.createElement("button");play.type="button";play.className="voicePlayButton";play.textContent="▶";play.setAttribute("aria-label","Reproducir nota de voz");
+      const main=document.createElement("div");main.className="voicePlayerMain";
+      const waveform=document.createElement("div");waveform.className="voiceWaveform";waveform.setAttribute("role","slider");waveform.setAttribute("tabindex","0");waveform.setAttribute("aria-label","Progreso de la nota de voz");waveform.setAttribute("aria-valuemin","0");waveform.setAttribute("aria-valuemax","100");waveform.setAttribute("aria-valuenow","0");
+      const bars=[];for(let i=0;i<48;i++){const bar=document.createElement("span");bar.className="voiceWaveBar";const height=18+((i*17+Math.floor(i/3)*11)%25);bar.style.setProperty("--bar-height",height+"%");waveform.appendChild(bar);bars.push(bar);}
+      const meta=document.createElement("div");meta.className="voicePlayerMeta";
+      const elapsed=document.createElement("span");elapsed.textContent="00:00";
+      const total=document.createElement("span");total.textContent=formatVoiceTime(Number(data.duration)||0);
+      meta.append(elapsed,total);main.append(waveform,meta);
+      const speed=document.createElement("button");speed.type="button";speed.className="voiceSpeedButton";speed.textContent="1×";speed.setAttribute("aria-label","Velocidad de reproducción: normal");
+      const updateProgress=()=>{const duration=audio.duration||Number(data.duration)||0;const ratio=duration>0?Math.min(1,audio.currentTime/duration):0;const played=Math.floor(ratio*bars.length);bars.forEach((bar,index)=>bar.classList.toggle("played",index<played));elapsed.textContent=formatVoiceTime(audio.currentTime||0);if(Number.isFinite(audio.duration)){total.textContent=formatVoiceTime(audio.duration);}waveform.setAttribute("aria-valuenow",String(Math.round(ratio*100)));};
+      play.addEventListener("click",async()=>{if(audio.paused){try{await audio.play();}catch(error){$("chatStatus").textContent="No se pudo reproducir la nota de voz: "+(error.message||"error");}}else audio.pause();});
+      audio.addEventListener("play",()=>{play.textContent="Ⅱ";play.setAttribute("aria-label","Pausar nota de voz");});
+      audio.addEventListener("pause",()=>{play.textContent="▶";play.setAttribute("aria-label","Reproducir nota de voz");});
+      audio.addEventListener("ended",()=>{audio.currentTime=0;updateProgress();});
+      audio.addEventListener("timeupdate",updateProgress);audio.addEventListener("loadedmetadata",updateProgress);
+      const seekAt=event=>{const rect=waveform.getBoundingClientRect();const ratio=Math.max(0,Math.min(1,(event.clientX-rect.left)/rect.width));const duration=audio.duration||Number(data.duration)||0;if(duration>0){audio.currentTime=ratio*duration;updateProgress();}};
+      waveform.addEventListener("click",seekAt);waveform.addEventListener("keydown",event=>{if(event.key==="ArrowRight"||event.key==="ArrowLeft"){event.preventDefault();const duration=audio.duration||Number(data.duration)||0;if(duration>0){audio.currentTime=Math.max(0,Math.min(duration,audio.currentTime+(event.key==="ArrowRight"?5:-5)));updateProgress();}}});
+      const speeds=[1,1.5,2];let speedIndex=0;speed.addEventListener("click",()=>{speedIndex=(speedIndex+1)%speeds.length;audio.playbackRate=speeds[speedIndex];speed.textContent=speeds[speedIndex]+"×";speed.setAttribute("aria-label","Velocidad de reproducción: "+speeds[speedIndex]+" veces");});
+      player.append(play,main,speed);layout.append(avatar,player,audio);item.appendChild(layout);updateProgress();
      }
     } catch(error) { placeholder.textContent = "No se pudo cargar: " + error.message; }
    } else {
