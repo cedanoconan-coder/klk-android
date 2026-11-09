@@ -1234,10 +1234,10 @@ function loadContactRequests() {
  if (outgoingRequestsUnsubscribe) outgoingRequestsUnsubscribe();
  $("requestsList").textContent = "Cargando solicitudes...";
  incomingRequestsUnsubscribe = db.collection("contactRequests").where("recipientUid","==",uid).onSnapshot(snapshot => {
-  incomingRequests.clear(); snapshot.docs.forEach(d => incomingRequests.set(d.data().senderUid,d.data())); renderRequests();
+  incomingRequests.clear(); snapshot.docs.forEach(d => incomingRequests.set(d.data().senderUid,d.data())); renderRequests(); if(window.klkRenderStatuses)window.klkRenderStatuses();
  },error => { showError("requestsList",error); showError("chatStatus",error); });
  outgoingRequestsUnsubscribe = db.collection("contactRequests").where("senderUid","==",uid).onSnapshot(snapshot => {
-  outgoingRequests.clear(); snapshot.docs.forEach(d => outgoingRequests.set(d.data().recipientUid,d.data())); renderRequests();
+  outgoingRequests.clear(); snapshot.docs.forEach(d => outgoingRequests.set(d.data().recipientUid,d.data())); renderRequests(); if(window.klkRenderStatuses)window.klkRenderStatuses();
  },error => showError("chatStatus",error));
 }
 function loadPeople() {
@@ -1663,8 +1663,12 @@ $("message").addEventListener("keydown", event => { if (event.key === "Enter") $
  $("closeStatusViewer").addEventListener("click",()=>{if(statusAdvanceTimer)clearTimeout(statusAdvanceTimer);statusAdvanceTimer=null;$("statusViewer").classList.remove("visible");});
  $("statusViewer").addEventListener("click",e=>{if(e.target===$("statusViewer"))$("closeStatusViewer").click();});
  async function refresh(){const user=auth&&auth.currentUser,feed=$("statusesFeed");if(!user||!feed)return;feed.innerHTML='<p class="hint">Cargando estados...</p>';try{
-  const snap=await db.collection("statuses").where("expiresAt",">",firebase.firestore.Timestamp.now()).get(),now=Date.now();
-  const items=snap.docs.map(d=>({id:d.id,...d.data()})).filter(x=>x.expiresAt&&x.expiresAt.toMillis()>now).sort((a,b)=>(b.createdAt?.toMillis?.()||0)-(a.createdAt?.toMillis?.()||0));
+  const visibleUids=new Set([user.uid]);
+  incomingRequests.forEach((request,uid)=>{if(request.status==="accepted")visibleUids.add(uid);});
+  outgoingRequests.forEach((request,uid)=>{if(request.status==="accepted")visibleUids.add(uid);});
+  const statusSnapshots=await Promise.all([...visibleUids].map(uid=>db.collection("statuses").where("uid","==",uid).get()));
+  const now=Date.now();
+  const items=statusSnapshots.flatMap(snapshot=>snapshot.docs.map(d=>({id:d.id,...d.data()}))).filter(x=>x.expiresAt&&x.expiresAt.toMillis()>now).sort((a,b)=>(b.createdAt?.toMillis?.()||0)-(a.createdAt?.toMillis?.()||0));
   const statusGroups=new Map();items.forEach(status=>{if(!statusGroups.has(status.uid))statusGroups.set(status.uid,[]);statusGroups.get(status.uid).push(status);});
   currentStatuses=[...statusGroups.values()].sort((a,b)=>(b[b.length-1].createdAt?.toMillis?.()||0)-(a[a.length-1].createdAt?.toMillis?.()||0)).flatMap(group=>group.sort((a,b)=>(a.createdAt?.toMillis?.()||0)-(b.createdAt?.toMillis?.()||0)));
   feed.replaceChildren();if(!items.length){const p=document.createElement("p");p.className="hint";p.textContent="Todavía no hay estados. ¡Sé el primero en compartir uno!";feed.appendChild(p);return;}
