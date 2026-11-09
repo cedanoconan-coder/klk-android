@@ -493,13 +493,30 @@ body:has(#chat.room-open) main{padding:0!important;margin:0!important;max-width:
  #chat.profile-open .profileHero img{width:96px;height:96px;flex-basis:96px}
 }
 
+
+/* Identidad visual oficial klk: pulgar arriba */
+.brandHeader{display:flex!important;align-items:center;gap:11px}
+.brandMark{width:46px;height:46px;flex:0 0 46px;border-radius:13px;box-shadow:0 3px 10px #0002}
+.brandWords{display:flex;flex-direction:column;line-height:1.05}
+.brandWords>span{font-size:29px;font-weight:850;letter-spacing:-1.2px}
+.brandWords small{font-size:12px!important;margin-top:5px!important;color:#61706b!important;opacity:1!important}
+#login{overflow:hidden}
+.loginBrand{display:flex;flex-direction:column;align-items:center;text-align:center;margin:0 auto 18px}
+.loginBrand img{display:block;width:116px;height:116px;border-radius:27px;box-shadow:0 8px 24px #075e5426}
+.loginBrand>span{margin-top:10px;font-size:30px;font-weight:900;letter-spacing:-1px;color:#075e54}
+.loginBrand p{margin:3px 0 0;font-size:13px;color:#68736f}
+#login h2{text-align:center;margin-bottom:6px}
+#login>p:not(.hint){text-align:center;margin-top:0}
+@media(max-width:520px){.brandMark{width:42px;height:42px;flex-basis:42px}.brandWords>span{font-size:27px}.loginBrand img{width:108px;height:108px}}
+
 </style>
 </head>
 <body>
-<header>klk <small>Tu familia, siempre conectada ❤️</small></header>
+<header class="brandHeader"><img src="./icon.svg" alt="Logo de klk: pulgar arriba" class="brandMark"><div class="brandWords"><span>klk</span><small>Tu familia, siempre conectada ❤️</small></div></header>
 <main>
 <button id="installApp" class="secondary" type="button" hidden>Instalar klk en este teléfono</button>
 <section id="login" class="card">
+<div class="loginBrand"><img src="./icon.svg" alt="Pulgar arriba, símbolo de klk"><span>klk</span><p>Conecta. Comparte. Dale 👍.</p></div>
 <h2>Bienvenido a klk</h2><p>Entra o crea tu cuenta familiar.</p>
 <form id="authForm">
 <input id="email" type="email" autocomplete="email" placeholder="Correo electrónico" required>
