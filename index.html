@@ -1181,7 +1181,7 @@ if (window.matchMedia("(display-mode: standalone)").matches || window.navigator.
   root.dataset.contrast=prefs.highContrast?"high":"normal";
   let motionStyle=$("klkReduceMotionStyle");
   if(!motionStyle){motionStyle=document.createElement("style");motionStyle.id="klkReduceMotionStyle";document.head.appendChild(motionStyle);}
-  motionStyle.textContent=prefs.reduceMotion?"*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}":"";
+  motionStyle.textContent=(prefs.reduceMotion?"*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}":"")+(prefs.highContrast?":root[data-contrast=high] button,:root[data-contrast=high] input,:root[data-contrast=high] select,:root[data-contrast=high] textarea{outline:1px solid currentColor!important} :root[data-contrast=high] .hint{color:#26332f!important}":"");
   root.style.setProperty("--klk-border",prefs.highContrast?"#52615d":"#e2e8e5");
   document.body.style.fontSize=prefs.textSize+"px";
  }
