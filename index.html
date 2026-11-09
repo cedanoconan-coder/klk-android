@@ -511,6 +511,7 @@ body:has(#chat.room-open) main{padding:0!important;margin:0!important;max-width:
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const firebaseConfig = {
@@ -533,7 +534,56 @@ function getSupabaseClient() {
  if (!supabaseClient) supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
  return supabaseClient;
 }
+const KLK_VAPID_PUBLIC_KEY = "PENDIENTE_VAPID_PUBLIC_KEY";
+const KLK_PUSH_FUNCTION_URL = SUPABASE_URL + "/functions/v1/klk-push";
+let klkMessaging = null;
+let klkForegroundMessageListenerInstalled = false;
 const mediaUrlCache = new Map();
+
+async function registerKlkWebPush(user, askPermission = false) {
+ if (!user || !("Notification" in window) || !("serviceWorker" in navigator)) throw new Error("Este navegador no admite notificaciones web push.");
+ if (!KLK_VAPID_PUBLIC_KEY || KLK_VAPID_PUBLIC_KEY.startsWith("PENDIENTE_")) throw new Error("Falta configurar la clave pública VAPID de Firebase.");
+ if (askPermission && Notification.permission !== "granted") {
+  const permission = await Notification.requestPermission();
+  if (permission !== "granted") throw new Error("No concediste permiso para las notificaciones.");
+ }
+ if (Notification.permission !== "granted") throw new Error("Activa primero el permiso de notificaciones.");
+ if (!firebase.messaging || !(await firebase.messaging.isSupported())) throw new Error("Este navegador no admite Firebase Web Push.");
+ const registration = await navigator.serviceWorker.ready;
+ klkMessaging = klkMessaging || firebase.messaging();
+ const token = await klkMessaging.getToken({vapidKey:KLK_VAPID_PUBLIC_KEY,serviceWorkerRegistration:registration});
+ if (!token) throw new Error("Firebase no entregó el token de este dispositivo.");
+ const digest = await crypto.subtle.digest("SHA-256",new TextEncoder().encode(token));
+ const tokenId = Array.from(new Uint8Array(digest),byte=>byte.toString(16).padStart(2,"0")).join("");
+ await db.collection("users").doc(user.uid).collection("pushTokens").doc(tokenId).set({
+  token, platform:"web", userAgent:(navigator.userAgent||"").slice(0,300),
+  updatedAt:firebase.firestore.FieldValue.serverTimestamp()
+ },{merge:true});
+ if (!klkForegroundMessageListenerInstalled) {
+  klkMessaging.onMessage(payload => {
+   if (document.visibilityState === "visible" && window.klkPlayNotificationSound) window.klkPlayNotificationSound();
+   const status = $("settingsStatus");
+   if (status && payload && payload.data) status.textContent = "Notificación recibida: " + (payload.data.title || "Nuevo mensaje");
+  });
+  klkForegroundMessageListenerInstalled = true;
+ }
+ return token;
+}
+
+async function sendKlkPushForMessage(conversationId, messageId) {
+ const user = auth && auth.currentUser;
+ if (!user || !conversationId || !messageId) return;
+ try {
+  const idToken = await user.getIdToken();
+  const response = await fetch(KLK_PUSH_FUNCTION_URL,{
+   method:"POST",
+   headers:{"Content-Type":"application/json","apikey":SUPABASE_PUBLISHABLE_KEY,"Authorization":"Bearer "+idToken},
+   body:JSON.stringify({conversationId,messageId})
+  });
+  const result = await response.json().catch(()=>({}));
+  if (!response.ok) console.warn("No se pudo enviar la notificación push:",result.error||response.status);
+ } catch(error) { console.warn("No se pudo conectar con el servicio push:",error); }
+}
 let auth, db, firebaseInitError = null, unsubscribe = null, sending = false, mediaRecorder = null, audioStream = null, audioBlob = null, audioStartedAt = 0;
 let activeConversationId = null, activeConversationName = null, activeConversationPeerUid = null, peopleUnsubscribe = null, incomingRequestsUnsubscribe = null, outgoingRequestsUnsubscribe = null;
 const incomingRequests = new Map(), outgoingRequests = new Map(), peopleCache = new Map(), conversationSubscriptions = new Map(), conversationCache = new Map();
@@ -672,6 +722,7 @@ auth && auth.onAuthStateChanged(async user => {
  $("login").style.display = user ? "none" : "block";
  $("chat").style.display = user ? "block" : "none";
  if (user) {
+  if (Notification.permission === "granted") registerKlkWebPush(user,false).catch(error=>console.warn("Registro push:",error));
   window.klkSetCurrentUid && window.klkSetCurrentUid(user.uid);
   $("who").textContent = "Conectado: " + (user.email || "usuario");
   activeConversationId = null; activeConversationName = null;
@@ -1072,7 +1123,8 @@ $("send").onclick = async () => {
  if (!text || sending) return;
  sending = true; syncComposerMode(); $("chatStatus").textContent = "";
  try {
-  await messagesCollection().add({type:"text", text, email:user.email || "", displayName:(peopleCache.get(user.uid) || {}).displayName || (user.email || "Miembro").split("@")[0], uid:user.uid, createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+  const sentMessage = await messagesCollection().add({type:"text", text, email:user.email || "", displayName:(peopleCache.get(user.uid) || {}).displayName || (user.email || "Miembro").split("@")[0], uid:user.uid, createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+  await sendKlkPushForMessage(activeConversationId,sentMessage.id);
   $("message").value = ""; syncComposerMode();
   $("message").blur();
  } catch(error) { showError("chatStatus", error); }
@@ -1138,11 +1190,12 @@ async function uploadMedia(file, type, durationSeconds = null) {
   $("chatStatus").textContent = type === "image" ? "Subiendo foto optimizada..." : "Subiendo archivo...";
   const { error: uploadError } = await getSupabaseClient().storage.from("Chat-media").uploadToSignedUrl(signed.path, signed.token, uploadFile, { contentType: mimeType });
   if (uploadError) throw uploadError;
-  await messagesCollection().add({
+  const sentMessage = await messagesCollection().add({
    type, storagePath: signed.path, ...(activeConversationId ? {conversationId:activeConversationId} : {}), mimeType, fileName: uploadFile.name || (type === "image" ? "foto" : "nota-de-voz"),
    size: uploadFile.size, ...(durationSeconds === null ? {} : {duration:durationSeconds}),
    email:user.email || "", displayName:(peopleCache.get(user.uid) || {}).displayName || (user.email || "Miembro").split("@")[0], uid:user.uid, createdAt:firebase.firestore.FieldValue.serverTimestamp()
   });
+  await sendKlkPushForMessage(activeConversationId,sentMessage.id);
   $("chatStatus").textContent = type === "image" ? "Foto enviada." : type==="file"?"Documento enviado.":"Nota de voz enviada.";
  } catch(error) {
   console.error("Error al enviar archivo:", error);
@@ -1434,7 +1487,16 @@ if (window.matchMedia("(display-mode: standalone)").matches || window.navigator.
   event.target.value="";
  });
  function permissionButton(){ $("enableNotifications").textContent=("Notification" in window && Notification.permission==="granted")?"Activadas":"Activar";}
- $("enableNotifications").addEventListener("click",async()=>{if(!("Notification" in window)){$("settingsStatus").textContent="Este dispositivo no admite notificaciones web.";return;}try{const p=await Notification.requestPermission();$("settingsStatus").textContent=p==="granted"?"Permiso concedido. Para avisos con la app cerrada falta activar el envío push de Firebase.":"Permiso no concedido; puedes cambiarlo en los ajustes del teléfono.";permissionButton();}catch(e){$("settingsStatus").textContent="No se pudo solicitar el permiso."; }});
+ $("enableNotifications").addEventListener("click",async()=>{
+  const button=$("enableNotifications");button.disabled=true;$("settingsStatus").textContent="Conectando este teléfono con Firebase...";
+  try{
+   const user=auth&&auth.currentUser;if(!user)throw new Error("Inicia sesión para activar las notificaciones.");
+   await registerKlkWebPush(user,true);
+   $("settingsStatus").textContent="Este teléfono quedó registrado para recibir notificaciones web push.";
+   permissionButton();
+  }catch(e){$("settingsStatus").textContent=e.message||"No se pudieron activar las notificaciones.";}
+  finally{button.disabled=false;}
+ });
  if(window.matchMedia){const media=window.matchMedia("(prefers-color-scheme: dark)");if(media.addEventListener)media.addEventListener("change",()=>{if(prefs.theme==="system")apply();});}
  let notificationAudioContext=null, callRingtoneTimer=null;
  function getNotificationAudioContext(){
