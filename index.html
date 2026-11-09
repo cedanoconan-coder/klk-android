@@ -294,6 +294,11 @@ body:has(#chat.room-open) main{padding:0!important;margin:0!important;max-width:
 #chat.room-open #recordStatus{display:none!important}
 @media(max-width:420px){#chat.room-open .chatTop{padding:7px 9px!important}#chat.room-open .roomActions button,#chat.room-open .settingsToggle{width:34px!important;min-width:34px!important;height:34px!important}#chat.room-open .composer{gap:4px!important;padding:6px!important}#chat.room-open .composer button{flex-basis:34px!important;width:34px!important;min-width:34px!important;height:38px!important}#chat.room-open .composer #recordAudio{flex-basis:42px!important;width:42px!important;min-width:42px!important;height:42px!important}}
 
+
+/* Foto del contacto en la barra superior, como WhatsApp */
+#chat.room-open .chatHeading .roomAvatar{display:block!important;flex:0 0 44px!important;width:44px!important;height:44px!important;min-width:44px!important;border-radius:50%!important;object-fit:cover!important;border:2px solid #e4eee9!important;background:#e8efec!important}
+@media(max-width:420px){#chat.room-open .chatHeading .roomAvatar{flex-basis:42px!important;width:42px!important;height:42px!important;min-width:42px!important}}
+
 </style>
 </head>
 <body>
@@ -391,7 +396,7 @@ body:has(#chat.room-open) main{padding:0!important;margin:0!important;max-width:
 
 <section id="callOverlay" aria-label="Llamada"><div><p id="callStatus">Preparando llamada...</p><h2 id="callPeerName">Contacto</h2></div><div id="callVideoStage"><div id="callAvatar">☎️</div><video id="remoteVideo" autoplay playsinline></video><video id="localVideo" autoplay muted playsinline></video><audio id="remoteAudio" autoplay></audio></div><div id="callControls"><button id="answerCall" type="button" hidden>Responder</button><button id="rejectCall" type="button" hidden>Rechazar</button><button id="muteCall" type="button" hidden>Silenciar</button><button id="cameraCall" type="button" hidden>Apagar cámara</button><button id="endCall" type="button" hidden>Finalizar</button></div></section>
 
-<div class="chatTop"><div class="chatHeading"><button id="backToChats" class="chatBack" type="button" aria-label="Volver a chats" title="Volver">‹</button><div class="roomIdentity"><h2 id="chatTitle">👨‍👩‍👧‍👦 Familia klk</h2><p id="who" class="muted">Conversación privada</p></div><div class="roomActions"><button id="roomVoiceCall" type="button" aria-label="Llamada de voz" title="Llamada de voz">☎</button><button id="roomVideoCall" type="button" aria-label="Videollamada" title="Videollamada">▣</button><button id="roomContactInfo" type="button" aria-label="Información del contacto" title="Información">⋮</button></div><button id="settingsToggle" class="settingsToggle" type="button" aria-label="Ajustes">⚙️</button></div></div>
+<div class="chatTop"><div class="chatHeading"><button id="backToChats" class="chatBack" type="button" aria-label="Volver a chats" title="Volver">‹</button><img id="roomAvatar" class="roomAvatar" alt="Foto de perfil del contacto" src="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Crect width=%2764%27 height=%2764%27 rx=%2732%27 fill=%27%23e8efec%27/%3E%3Ctext x=%2732%27 y=%2743%27 text-anchor=%27middle%27 font-size=%2732%27%3E%F0%9F%91%A4%3C/text%3E%3C/svg%3E"><div class="roomIdentity"><h2 id="chatTitle">Familia klk</h2><p id="who" class="muted">Conversación privada</p></div><div class="roomActions"><button id="roomVoiceCall" type="button" aria-label="Llamada de voz" title="Llamada de voz">☎</button><button id="roomVideoCall" type="button" aria-label="Videollamada" title="Videollamada">▣</button><button id="roomContactInfo" type="button" aria-label="Información del contacto" title="Información">⋮</button></div><button id="settingsToggle" class="settingsToggle" type="button" aria-label="Ajustes">⚙️</button></div></div>
 <div id="chatNav"><button id="showGroup" type="button" hidden>Chat grupal desactivado</button><button id="showPeople" type="button" class="secondary">💬 Conversaciones privadas</button></div>
 <div id="dmPanel"><p class="hint">Elige un miembro de la familia para abrir una conversación privada.</p></div>
 <div id="messages" aria-live="polite"><p class="muted">Cargando mensajes...</p></div>
@@ -871,6 +876,15 @@ async function respondToContactRequest(senderUid,status) {
  try { await db.collection("contactRequests").doc(id).update({status}); $("chatStatus").textContent = status === "accepted" ? "Contacto aceptado. Ya pueden enviarse mensajes." : "Solicitud rechazada."; }
  catch(error) { showError("chatStatus",error); }
 }
+async function updateRoomAvatar(otherUid) {
+ const avatar=$("roomAvatar"); if(!avatar)return;
+ const fallback="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Crect width=%2764%27 height=%2764%27 rx=%2732%27 fill=%27%23e8efec%27/%3E%3Ctext x=%2732%27 y=%2743%27 text-anchor=%27middle%27 font-size=%2732%27%3E%F0%9F%91%A4%3C/text%3E%3C/svg%3E";
+ avatar.src=fallback; avatar.alt="Foto de perfil del contacto";
+ const person=peopleCache.get(otherUid);
+ if(!person || !person.photoPath)return;
+ try { const url=await getMediaUrl(person.photoPath); if(url && activeConversationPeerUid===otherUid)avatar.src=url; }
+ catch(error){console.warn("No se pudo cargar la foto del contacto:",error);}
+}
 async function openPrivateConversation(otherUid, otherName) {
  const user = auth.currentUser;
  if (!user || !otherUid || otherUid === user.uid) return;
@@ -881,7 +895,7 @@ async function openPrivateConversation(otherUid, otherName) {
   const ref = db.collection("conversations").doc(conversationId), existing = await ref.get();
   if (!existing.exists) await ref.set({members,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
   activeConversationId = conversationId; activeConversationName = otherName; activeConversationPeerUid = otherUid;
-  $("chat").classList.add("room-open"); $("chatTitle").textContent = "💬 " + otherName;
+  $("chat").classList.add("room-open"); $("chatTitle").textContent = otherName; updateRoomAvatar(otherUid);
   $("dmPanel").style.display = "none"; $("messages").style.display = "block";
   document.querySelector(".composer").style.display = "flex"; $("mediaActions").style.display = "flex"; $("recordStatus").style.display = "block";
   $("chatStatus").textContent = "Conversación privada con " + otherName; loadMessages();
