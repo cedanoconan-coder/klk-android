@@ -141,7 +141,7 @@ service cloud.firestore {
       // Permite comprobar si todavía no existe una conversación, sin revelar documentos existentes.
       allow get: if isConversationMember(conversationId)
         || (signedIn() && !exists(/databases/$(database)/documents/conversations/$(conversationId)));
-      allow list: if signedIn() && resource.data.members is list && request.auth.uid in resource.data.members;
+      allow list: if signedIn() && resource.data.members is list && resource.data.members.hasAny([request.auth.uid]);
       allow create: if signedIn()
         && request.resource.data.keys().hasOnly(['members','createdAt'])
         && request.resource.data.keys().hasAll(['members','createdAt'])
