@@ -451,7 +451,7 @@ body:has(#chat.room-open) main{padding:0!important;margin:0!important;max-width:
  <div class="settingRow"><span>Tema de la aplicación</span><select id="settingTheme"><option value="light">Claro</option><option value="dark">Oscuro</option><option value="system">Automático del teléfono</option></select></div>
  <div class="settingRow"><span>Color principal</span><select id="settingAccent"><option value="teal">Verde</option><option value="blue">Azul</option><option value="purple">Morado</option><option value="rose">Rosa</option><option value="orange">Naranja</option></select></div>
  <div class="settingRow"><span>Espaciado</span><select id="settingDensity"><option value="comfortable">Cómodo</option><option value="compact">Compacto</option></select></div>
- <div class="settingRow"><span>Fondo de conversaciones</span><select id="settingWallpaper"><option value="pattern">Patrón suave</option><option value="plain">Liso</option><option value="gradient">Degradado</option></select></div>
+ <div class="settingRow"><span>Fondo de conversaciones</span><select id="settingWallpaper"><option value="pattern">Puntos suaves</option><option value="plain">Liso</option><option value="gradient">Degradado verde</option><option value="blue">Azul cielo</option><option value="sunset">Atardecer</option><option value="hearts">Corazones</option><option value="nature">Naturaleza</option><option value="night">Noche</option></select></div>
  <div class="settingRow"><span>Estilo de burbujas</span><select id="settingBubbleStyle"><option value="classic">Clásico</option><option value="rounded">Redondeado</option><option value="square">Cuadrado</option></select></div>
  <div class="settingRow"><span>Color de mis mensajes</span><select id="settingOutgoingColor"><option value="green">Verde</option><option value="blue">Azul</option><option value="purple">Morado</option><option value="pink">Rosa</option><option value="gray">Gris</option></select></div>
  <div class="settingRow"><span>Vista previa de mensajes</span><input id="settingPreview" type="checkbox" checked></div>
@@ -1048,6 +1048,7 @@ $("send").onclick = async () => {
  try {
   await messagesCollection().add({type:"text", text, email:user.email || "", displayName:(peopleCache.get(user.uid) || {}).displayName || (user.email || "Miembro").split("@")[0], uid:user.uid, createdAt:firebase.firestore.FieldValue.serverTimestamp()});
   $("message").value = ""; syncComposerMode();
+  $("message").blur();
  } catch(error) { showError("chatStatus", error); }
  finally { sending = false; syncComposerMode(); }
 };
@@ -1267,9 +1268,9 @@ if (window.matchMedia("(display-mode: standalone)").matches || window.navigator.
   const root=document.documentElement, dark=effectiveTheme()==="dark", accent=accents[prefs.accent]||accents.teal;
   root.dataset.theme=dark?"dark":"light";root.dataset.density=prefs.density==="compact"?"compact":"comfortable";
   root.style.setProperty("--klk-accent",dark?accent[0]:accent[0]);root.style.setProperty("--klk-soft",dark?accent[0]+"33":accent[1]);
-  const wallpapers={pattern:"radial-gradient(#c9d2d0 0.7px,transparent 0.7px)",plain:"none",gradient:"linear-gradient(135deg,rgba(7,94,84,.07),rgba(120,150,180,.08))"};
-  root.style.setProperty("--klk-wallpaper",prefs.wallpaper==="pattern"?"radial-gradient(#c9d2d0 0.7px,transparent 0.7px)":prefs.wallpaper==="gradient"?"linear-gradient(135deg,rgba(7,94,84,.07),rgba(120,150,180,.08))":"none");
-  root.style.setProperty("--klk-message-bg",dark?"#142127":(prefs.wallpaper==="gradient"?"#f1f5f4":prefs.wallpaper==="plain"?"#f6f7f7":"#f6f7f7"));
+  const wallpapers={pattern:"radial-gradient(#c9d2d0 0.7px,transparent 0.7px)",plain:"none",gradient:"linear-gradient(135deg,rgba(7,94,84,.10),rgba(120,150,180,.12))",blue:"radial-gradient(circle at 15% 20%,rgba(80,160,230,.18) 0 2px,transparent 3px),linear-gradient(135deg,#eaf5ff,#f7fbff)",sunset:"linear-gradient(135deg,rgba(255,174,120,.22),rgba(194,145,230,.20),rgba(255,225,170,.20))",hearts:"radial-gradient(circle at 20% 25%,rgba(220,90,130,.12) 0 5px,transparent 6px),radial-gradient(circle at 75% 70%,rgba(220,90,130,.10) 0 5px,transparent 6px)",nature:"radial-gradient(circle at 20% 30%,rgba(70,150,95,.15) 0 3px,transparent 4px),linear-gradient(135deg,#edf7ed,#f8fbf4)",night:"radial-gradient(circle at 20% 25%,rgba(170,180,255,.18) 0 1px,transparent 2px),linear-gradient(135deg,#26334d,#34445e)"};
+  root.style.setProperty("--klk-wallpaper",wallpapers[prefs.wallpaper]||wallpapers.pattern);
+  root.style.setProperty("--klk-message-bg",dark?"#142127":(prefs.wallpaper==="gradient"?"#f1f5f4":prefs.wallpaper==="blue"?"#f0f7ff":prefs.wallpaper==="sunset"?"#fff5ef":prefs.wallpaper==="hearts"?"#fff5f8":prefs.wallpaper==="nature"?"#f3f8f0":prefs.wallpaper==="night"?"#e9edf7":"#f6f7f7"));
   const outgoingColors={green:dark?"#245c4b":"#d9fdd3",blue:dark?"#244c70":"#dcecff",purple:dark?"#4a3b68":"#eee3ff",pink:dark?"#663d50":"#ffe3ed",gray:dark?"#3b484e":"#e8ecee"};
   root.style.setProperty("--klk-outgoing-bg",outgoingColors[prefs.outgoingColor]||outgoingColors.green);
   root.dataset.bubbles=["classic","rounded","square"].includes(prefs.bubbleStyle)?prefs.bubbleStyle:"classic";
