@@ -81,6 +81,7 @@ header small{display:none}
 .profileButton{display:flex!important;align-items:center;gap:6px;width:auto!important;height:42px!important;padding:0 4px!important;font-size:12px!important}
 .profileButton img{width:36px;height:36px;border-radius:50%;object-fit:cover;background:#edf2ef}
 .profileButton span{font-size:12px;color:#59636a}
+.quickLogout{width:auto!important;height:36px!important;padding:0 10px!important;border:1px solid #d8dcde!important;border-radius:18px!important;background:#fff!important;color:#b42318!important;font-size:12px!important;font-weight:650!important;white-space:nowrap}
 #peopleList .memberBtn strong{font-size:17px;font-weight:650}
 #peopleList .memberBtn small{font-size:13px;color:#68736f}
 #peopleList .memberBtn:active,.homeGroup:active{background:#f4f6f6}
@@ -328,7 +329,7 @@ body:has(#chat.room-open) main{padding:0!important;margin:0!important;max-width:
 <section id="chat" class="card">
 
 <div id="homeView" class="homeView">
- <div class="homeTitle"><h1>klk</h1><div class="homeActions"><button type="button" id="inviteMember" aria-label="Invitar a klk" title="Invitar a klk">＋</button><button type="button" id="profileButton" class="profileButton" aria-label="Cambiar foto de perfil"><img id="myProfilePhoto" alt="Foto de perfil"><span>Mi perfil</span></button><input id="profilePhotoInput" type="file" accept="image/*" hidden><button type="button" id="homeCamera" aria-label="Cámara">▣</button><button type="button" id="homeMenu" aria-label="Ajustes">⋮</button></div></div>
+ <div class="homeTitle"><h1>klk</h1><div class="homeActions"><button type="button" id="inviteMember" aria-label="Invitar a klk" title="Invitar a klk">＋</button><button type="button" id="profileButton" class="profileButton" aria-label="Cambiar foto de perfil"><img id="myProfilePhoto" alt="Foto de perfil"><span>Mi perfil</span></button><button type="button" id="quickLogout" class="quickLogout" aria-label="Cerrar sesión" title="Cerrar sesión">↪ Salir</button><input id="profilePhotoInput" type="file" accept="image/*" hidden><button type="button" id="homeCamera" aria-label="Cámara">▣</button><button type="button" id="homeMenu" aria-label="Ajustes">⋮</button></div></div>
  <section id="invitePanel" class="card" style="display:none;margin:0 16px 14px;padding:14px">
   <strong>Invitar a klk</strong>
   <p class="hint">Crea un código de un solo uso, válido durante 7 días. Compártelo solo con la persona que deseas agregar.</p>
@@ -533,7 +534,8 @@ $("register").addEventListener("click", async () => {
  if (!auth || !db) { $("status").textContent = "Firebase no está disponible. Comprueba tu conexión e inténtalo de nuevo."; return; }
  const email = $("email").value.trim(), password = $("password").value;
  const code = $("invitationCode").value.trim().toUpperCase();
- if (!email || password.length < 6) { $("status").textContent = "Escribe un correo válido y una contraseña de al menos 6 caracteres."; return; }
+ if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { $("status").textContent = "Escribe un correo electrónico válido."; return; }
+ if (password.length < 8 || !/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password)) { $("status").textContent = "Para crear una cuenta, usa una contraseña de al menos 8 caracteres con mayúscula, minúscula y número. Las cuentas existentes pueden seguir iniciando sesión con su contraseña actual."; return; }
  if (!/^[A-Z0-9]{8,16}$/.test(code)) { $("status").textContent = "Escribe un código de invitación válido."; return; }
  setBusy(true);
  try {
@@ -597,7 +599,23 @@ $("forgot").addEventListener("click", async () => {
   $("status").textContent = messages[error.code] || "No se pudo enviar el correo. Inténtalo de nuevo.";
  } finally { setBusy(false); }
 });
-$("logout").onclick = async () => { if (unsubscribe) { unsubscribe(); unsubscribe = null; } await auth.signOut(); };
+async function performKlkLogout() {
+ const buttons = [$("logout"), $("quickLogout"), $("profileLogout")].filter(Boolean);
+ buttons.forEach(button => button.disabled = true);
+ try {
+  if (!auth) throw new Error("El servicio de inicio de sesión no está disponible.");
+  await auth.signOut();
+  $("status").textContent = "Sesión cerrada correctamente.";
+ } catch (error) {
+  const message = "No se pudo cerrar la sesión. Comprueba tu conexión e inténtalo de nuevo.";
+  if ($("homeStatus")) $("homeStatus").textContent = message;
+  if ($("status")) $("status").textContent = message;
+ } finally {
+  buttons.forEach(button => button.disabled = false);
+ }
+}
+$("logout").onclick = performKlkLogout;
+$("quickLogout").addEventListener("click", performKlkLogout);
 auth && auth.onAuthStateChanged(async user => {
  if (user && invitationActivationInProgress) { $("login").style.display="none"; $("chat").style.display="none"; return; }
  $("login").style.display = user ? "none" : "block";
