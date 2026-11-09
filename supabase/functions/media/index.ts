@@ -96,10 +96,11 @@ Deno.serve(async (request) => {
     const isAudio = type === "audio" && mimeType.startsWith("audio/");
     const isFile = type === "file" && mimeType.length > 0 && mimeType.length <= 128;
     const isAvatar = type === "avatar" && mimeType.startsWith("image/");
-    if ((!isImage && !isAudio && !isAvatar && !isFile) || !Number.isSafeInteger(size) || size <= 0) {
+    const isStatus = type === "status" && mimeType.startsWith("image/");
+    if ((!isImage && !isAudio && !isAvatar && !isStatus && !isFile) || !Number.isSafeInteger(size) || size <= 0) {
       return reply(400, { error: "Tipo o tamaño de archivo no válido." });
     }
-    if ((isImage && size > MAX_IMAGE_BYTES) || (isAudio && size > MAX_AUDIO_BYTES) || (isAvatar && size > MAX_AVATAR_BYTES) || (isFile && size > MAX_FILE_BYTES)) {
+    if ((isImage && size > MAX_IMAGE_BYTES) || (isAudio && size > MAX_AUDIO_BYTES) || (isAvatar && size > MAX_AVATAR_BYTES) || (isStatus && size > MAX_IMAGE_BYTES) || (isFile && size > MAX_FILE_BYTES)) {
       return reply(413, { error: "El archivo supera el límite permitido." });
     }
 
@@ -140,7 +141,7 @@ Deno.serve(async (request) => {
           !/^[A-Za-z0-9-]{16,64}\.[a-z0-9]{1,8}$/i.test(avatarParts[2])) {
         return reply(403, { error: "Ruta de foto de perfil no válida." });
       }
-    } else if (!/^[^/]{1,128}\/[A-Za-z0-9-]{16,64}\.[a-z0-9]{1,8}$/i.test(path)) {
+    } else if (path.startsWith("statuses/")) {\n      if (!/^statuses\\/[A-Za-z0-9_-]{1,128}\\/[A-Za-z0-9-]{16,64}\\.[a-z0-9]{1,8}$/i.test(path)) return reply(403, { error: "Ruta de estado no válida." });\n    } else if (!/^[^/]{1,128}\/[A-Za-z0-9-]{16,64}\.[a-z0-9]{1,8}$/i.test(path)) {
       return reply(403, { error: "Ruta de archivo no válida o sin permiso." });
     }
     const { data, error } = await admin.storage.from(BUCKET).createSignedUrl(path, 60 * 60);
