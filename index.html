@@ -1123,7 +1123,7 @@ let voiceHoldActive = false;
 let voiceStartPending = false;
 let voiceTimerInterval = null;
 function formatVoiceTime(totalSeconds) {
- const safe = Math.max(0,Math.floor(totalSeconds));
+ const safe=Math.max(0,Math.floor(totalSeconds));
  return String(Math.floor(safe/60)).padStart(2,"0")+":"+String(safe%60).padStart(2,"0");
 }
 function updateVoiceTimer() {
@@ -1132,69 +1132,75 @@ function updateVoiceTimer() {
 }
 function stopVoiceTimer() {
  if(voiceTimerInterval){clearInterval(voiceTimerInterval);voiceTimerInterval=null;}
- const timer=$("voiceTimer");
- if(timer) timer.hidden=true;
+ $("voiceTimer").hidden=true;
 }
 async function startVoiceHold() {
- if (mediaRecorder || voiceStartPending) return;
- if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.MediaRecorder) {
-  $("recordStatus").textContent = "Este teléfono o navegador no permite grabar audio. Actualiza Chrome y vuelve a intentarlo.";
-  return;
+ if(mediaRecorder||voiceStartPending)return;
+ if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder){
+  $("recordStatus").textContent="No se puede grabar. Abre klk en Chrome y permite el micrófono.";
+  voiceHoldActive=false;stopVoiceTimer();return;
  }
- voiceStartPending = true;
- try {
-  const stream = await navigator.mediaDevices.getUserMedia({audio:true});
-  if (!voiceHoldActive) { stream.getTracks().forEach(track=>track.stop()); return; }
-  audioStream = stream;
-  const mimeType = ["audio/webm;codecs=opus","audio/webm","audio/mp4"].find(type => MediaRecorder.isTypeSupported(type)) || "";
-  mediaRecorder = new MediaRecorder(stream, mimeType ? {mimeType} : undefined);
-  const recorder = mediaRecorder;
-  const chunks = [];
-  recorder.ondataavailable = event => { if (event.data && event.data.size) chunks.push(event.data); };
-  recorder.onstop = async () => {
-   const type = recorder.mimeType || "audio/webm";
-   audioBlob = new Blob(chunks,{type});
-   $("recordAudio").textContent = "🎙";
-   const seconds = Math.max(1,Math.round((Date.now()-audioStartedAt)/1000));
-   if (audioStream) audioStream.getTracks().forEach(track=>track.stop());
-   stopVoiceTimer(); audioStream = null; mediaRecorder = null; $("recordAudio").disabled = false;
-   if (!audioBlob.size) { $("recordStatus").textContent = "Grabación cancelada."; return; }
-   const ext = type.includes("mp4") ? "m4a" : "webm";
-   const voiceFile = new File([audioBlob],"nota-de-voz." + ext,{type});
-   $("recordStatus").textContent = "Enviando nota de voz…";
+ voiceStartPending=true;
+ try{
+  const stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
+  if(!voiceHoldActive){stream.getTracks().forEach(track=>track.stop());stopVoiceTimer();return;}
+  audioStream=stream;
+  const mimeType=["audio/webm;codecs=opus","audio/webm","audio/mp4"].find(type=>MediaRecorder.isTypeSupported(type))||"";
+  mediaRecorder=new MediaRecorder(stream,mimeType?{mimeType}:undefined);
+  const recorder=mediaRecorder,chunks=[];
+  recorder.ondataavailable=event=>{if(event.data&&event.data.size)chunks.push(event.data);};
+  recorder.onerror=event=>{$("recordStatus").textContent="Error al grabar: "+(event.error?.message||"grabación interrumpida");};
+  recorder.onstop=async()=>{
+   const type=recorder.mimeType||"audio/webm";
+   const blob=new Blob(chunks,{type});
+   const seconds=Math.max(1,Math.round((Date.now()-audioStartedAt)/1000));
+   $("recordAudio").classList.remove("recording");
+   $("recordAudio").textContent="🎙";
+   if(audioStream)audioStream.getTracks().forEach(track=>track.stop());
+   stopVoiceTimer();audioStream=null;mediaRecorder=null;$("recordAudio").disabled=false;
+   if(!blob.size){$("recordStatus").textContent="No se capturó audio. Mantén presionado un poco más.";return;}
+   const ext=type.includes("mp4")?"m4a":"webm";
+   const voiceFile=new File([blob],"nota-de-voz."+ext,{type});
+   $("recordStatus").textContent="Enviando nota de voz ("+formatVoiceTime(seconds)+")…";
    await uploadMedia(voiceFile,"audio",seconds);
-   audioBlob = null;
+   audioBlob=null;
+   if($("chatStatus").textContent)$("recordStatus").textContent=$("chatStatus").textContent;
   };
-  audioStartedAt = Date.now();
-  recorder.start();
+  recorder.start(250);
   $("recordAudio").classList.add("recording");
-  $("voiceTimer").hidden = false;
-  updateVoiceTimer();
-  voiceTimerInterval = setInterval(updateVoiceTimer,250);
-  $("recordStatus").textContent = "🔴 Grabando… " + $("voiceTimer").textContent + " · Suelta para enviar.";
-  if (!voiceHoldActive && recorder.state === "recording") recorder.stop();
- } catch(error) {
-  $("recordStatus").textContent = error.name === "NotAllowedError" ? "Permite el acceso al micrófono para grabar notas de voz." : "No se pudo iniciar la grabación: " + error.message;
-  if (audioStream) audioStream.getTracks().forEach(track=>track.stop());
-  audioStream = null;
- } finally { voiceStartPending = false; }
+  $("recordStatus").textContent="🔴 Grabando… "+$("voiceTimer").textContent+" · Suelta para enviar.";
+  if(!voiceHoldActive&&recorder.state==="recording")recorder.stop();
+ }catch(error){
+  $("recordStatus").textContent=error.name==="NotAllowedError"?"Permite el acceso al micrófono en los ajustes del navegador.":"No se pudo iniciar la grabación: "+(error.message||"error de micrófono");
+  voiceHoldActive=false;stopVoiceTimer();
+  if(audioStream)audioStream.getTracks().forEach(track=>track.stop());
+  audioStream=null;$("recordAudio").disabled=false;
+ }finally{voiceStartPending=false;}
 }
-function stopVoiceHold() {
- voiceHoldActive = false;
- $("recordAudio").classList.remove("recording");
- stopVoiceTimer();
- if (mediaRecorder && mediaRecorder.state === "recording") mediaRecorder.stop();
-}
-$("recordAudio").addEventListener("pointerdown", event => {
- event.preventDefault();
- if (event.button !== undefined && event.button !== 0) return;
- voiceHoldActive = true;
- $("recordAudio").setPointerCapture?.(event.pointerId);
+function beginVoiceHold(event){
+ if(event.cancelable)event.preventDefault();
+ if(event.button!==undefined&&event.button!==0)return;
+ if(voiceHoldActive)return;
+ voiceHoldActive=true;audioStartedAt=Date.now();
+ $("voiceTimer").hidden=false;updateVoiceTimer();
+ voiceTimerInterval=setInterval(updateVoiceTimer,250);
+ $("recordStatus").textContent="Solicitando micrófono… mantén presionado.";
  startVoiceHold();
-});
-["pointerup","pointercancel","lostpointercapture"].forEach(name=>$("recordAudio").addEventListener(name,stopVoiceHold));
-$("recordAudio").addEventListener("contextmenu",event=>event.preventDefault());
-$("recordAudio").addEventListener("click",event=>event.preventDefault());
+}
+function stopVoiceHold(event){
+ if(event?.cancelable)event.preventDefault();
+ if(!voiceHoldActive&&!voiceStartPending)return;
+ voiceHoldActive=false;$("recordAudio").classList.remove("recording");
+ if(mediaRecorder&&mediaRecorder.state==="recording")mediaRecorder.stop();
+ else if(!voiceStartPending)stopVoiceTimer();
+}
+const voiceButton=$("recordAudio");
+voiceButton.addEventListener("pointerdown",beginVoiceHold);
+voiceButton.addEventListener("pointerup",stopVoiceHold);
+voiceButton.addEventListener("pointercancel",stopVoiceHold);
+voiceButton.addEventListener("lostpointercapture",stopVoiceHold);
+voiceButton.addEventListener("contextmenu",event=>event.preventDefault());
+voiceButton.addEventListener("click",event=>event.preventDefault());
 $("sendAudio").onclick = async () => {
  if (!audioBlob) return;
  const ext = audioBlob.type.includes("mp4") ? "m4a" : "webm";
