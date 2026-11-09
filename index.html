@@ -477,6 +477,12 @@ body:has(#chat.room-open) main{padding:0!important;margin:0!important;max-width:
  <div class="settingRow"><span>Sonidos de mensajes y llamadas</span><input id="settingSound" type="checkbox" checked></div>
  <div class="settingRow"><span>Tono de mensajes</span><select id="settingMessageTone"><option value="classic">Clásico</option><option value="bell">Campanita</option><option value="digital">Digital</option><option value="soft">Suave</option><option value="urgent">Alerta</option><option value="chime">Campanas</option><option value="pop">Pop</option><option value="marimba">Marimba</option><option value="pulse">Pulso</option></select></div>
  <div class="settingRow"><span>Sonido de llamadas</span><select id="settingCallTone"><option value="classic">Clásico</option><option value="bell">Campanita</option><option value="digital">Digital</option><option value="soft">Suave</option><option value="urgent">Alerta</option><option value="chime">Campanas</option><option value="pop">Pop</option><option value="marimba">Marimba</option><option value="pulse">Pulso</option></select></div>
+ <div class="settingRow"><span>Agregar sonido desde el teléfono</span><button id="addCustomSound" type="button" style="width:auto;margin:0;padding:9px 12px">＋ Agregar</button></div>
+ <input id="customSoundFile" type="file" accept="audio/*,.mp3,.wav,.ogg,.m4a" hidden>
+ <div class="settingRow"><span>Mis sonidos agregados</span><select id="customSoundLibrary"><option value="">Selecciona un sonido</option></select></div>
+ <div class="settingRow"><span>Probar sonido seleccionado</span><button id="previewCustomSound" type="button" style="width:auto;margin:0;padding:9px 12px">▶ Escuchar</button></div>
+ <div class="settingRow"><span>Eliminar sonido seleccionado</span><button id="deleteCustomSound" type="button" class="secondary" style="width:auto;margin:0;padding:9px 12px">Eliminar</button></div>
+ <p class="hint">Puedes importar archivos de audio de hasta 8 MB. Los sonidos se guardan en este teléfono.</p>
  <div class="settingRow"><span>Probar sonido de mensaje</span><button id="testNotificationSound" type="button" style="width:auto;margin:0;padding:9px 12px">▶ Probar</button></div>
  <div class="settingRow"><span>Probar sonido de llamada</span><button id="testCallSound" type="button" style="width:auto;margin:0;padding:9px 12px">▶ Probar</button></div>
  <div class="settingRow"><span>Notificaciones del teléfono</span><button id="enableNotifications" type="button" style="width:auto;margin:0;padding:9px 12px">Activar</button></div>
@@ -1310,6 +1316,72 @@ if (window.matchMedia("(display-mode: standalone)").matches || window.navigator.
  const defaults={sound:true,vibration:true,preview:true,messageTone:"classic",callTone:"bell",textSize:"15",theme:"light",accent:"teal",density:"comfortable",wallpaper:"pattern",bubbleStyle:"classic",outgoingColor:"green",lastSeen:true,readReceipts:true,autoDownload:false,highContrast:false,reduceMotion:false};
  let prefs={...defaults};
  try{prefs={...defaults,...JSON.parse(localStorage.getItem("klk-settings")||"{}")};}catch(e){}
+
+ const customSoundDB=(()=>new Promise((resolve,reject)=>{
+  if(!("indexedDB" in window)){reject(new Error("Este navegador no permite guardar sonidos."));return;}
+  const request=indexedDB.open("klk-custom-sounds",1);
+  request.onupgradeneeded=()=>{const db=request.result;if(!db.objectStoreNames.contains("sounds"))db.createObjectStore("sounds",{keyPath:"id"});};
+  request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error||new Error("No se pudo abrir la biblioteca."));
+ }))();
+ let customSoundRecords=[];
+ const soundObjectUrls=new Map();
+ function soundStore(mode,action,value){
+  return customSoundDB.then(db=>new Promise((resolve,reject)=>{
+   const tx=db.transaction("sounds",mode),store=tx.objectStore("sounds");
+   let req;if(action==="all")req=store.getAll();else if(action==="put")req=store.put(value);else req=store.delete(value);
+   req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);
+  }));
+ }
+ function customSoundUrl(id,blob){
+  if(soundObjectUrls.has(id))return soundObjectUrls.get(id);
+  const url=URL.createObjectURL(blob);soundObjectUrls.set(id,url);return url;
+ }
+ async function refreshCustomSounds(){
+  try{
+   customSoundRecords=await soundStore("readonly","all")||[];
+   ["settingMessageTone","settingCallTone"].forEach(id=>{
+    const select=$(id);Array.from(select.options).filter(o=>o.value.startsWith("custom:")).forEach(o=>o.remove());
+    customSoundRecords.forEach(item=>{const option=document.createElement("option");option.value="custom:"+item.id;option.textContent="🎵 "+item.name;select.appendChild(option);});
+    if(select.value.startsWith("custom:")&&!customSoundRecords.some(x=>"custom:"+x.id===select.value))select.value=id==="settingMessageTone"?"classic":"bell";
+   });
+   const library=$("customSoundLibrary"),selected=library.value;library.innerHTML='<option value="">Selecciona un sonido</option>';
+   customSoundRecords.forEach(item=>{const option=document.createElement("option");option.value=item.id;option.textContent=item.name;library.appendChild(option);});
+   if(customSoundRecords.some(x=>x.id===selected))library.value=selected;
+   $("deleteCustomSound").disabled=!library.value;
+  }catch(error){$("settingsStatus").textContent=error.message||"No se pudo cargar la biblioteca de sonidos.";}
+ }
+ async function playCustomSound(id){
+  const item=customSoundRecords.find(x=>x.id===id);
+  if(!item)return;
+  try{const audio=new Audio(customSoundUrl(id,item.blob));audio.volume=1;audio.play().catch(()=>{$("settingsStatus").textContent="Toca de nuevo para permitir la reproducción del sonido.";});}
+  catch(error){$("settingsStatus").textContent="No se pudo reproducir ese sonido.";}
+ }
+ $("addCustomSound").addEventListener("click",()=>$("customSoundFile").click());
+ $("customSoundFile").addEventListener("change",async event=>{
+  const file=event.target.files&&event.target.files[0];if(!file)return;
+  try{
+   if(!file.type.startsWith("audio/")&&!/\.(mp3|wav|ogg|m4a|aac|webm)$/i.test(file.name))throw new Error("Elige un archivo de audio válido.");
+   if(file.size>8*1024*1024)throw new Error("El archivo supera el límite de 8 MB.");
+   const id="snd-"+Date.now()+"-"+Math.random().toString(36).slice(2,8);
+   await soundStore("readwrite","put",{id,name:file.name.replace(/\.[^.]+$/,"").slice(0,50)||"Mi sonido",type:file.type,blob:file,createdAt:Date.now()});
+   await refreshCustomSounds();$("customSoundLibrary").value=id;
+   $("settingsStatus").textContent="Sonido agregado. Ya puedes elegirlo en Tono de mensajes o Sonido de llamadas.";
+  }catch(error){$("settingsStatus").textContent=error.message||"No se pudo agregar el sonido.";}
+  event.target.value="";
+ });
+ $("customSoundLibrary").addEventListener("change",()=>{$("deleteCustomSound").disabled=!$("customSoundLibrary").value;});
+ $("previewCustomSound").addEventListener("click",()=>{const id=$("customSoundLibrary").value;if(!id){$("settingsStatus").textContent="Primero selecciona un sonido de la biblioteca.";return;}playCustomSound(id);});
+ $("deleteCustomSound").addEventListener("click",async()=>{
+  const id=$("customSoundLibrary").value;if(!id)return;
+  try{
+   await soundStore("readwrite","delete",id);
+   if(prefs.messageTone==="custom:"+id){prefs.messageTone="classic";}
+   if(prefs.callTone==="custom:"+id){prefs.callTone="bell";}
+   const url=soundObjectUrls.get(id);if(url)URL.revokeObjectURL(url);soundObjectUrls.delete(id);
+   save();await refreshCustomSounds();$("settingsStatus").textContent="Sonido eliminado de este teléfono.";
+  }catch(error){$("settingsStatus").textContent="No se pudo eliminar el sonido.";}
+ });
+
  const accents={teal:["#075e54","#e3f2ed"],blue:["#1769aa","#e4f1fc"],purple:["#7046a8","#efe7fa"],rose:["#b33b65","#fae8ef"],orange:["#b45b16","#fff0df"]};
  function effectiveTheme(){return prefs.theme==="system"?(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"):prefs.theme;}
  function apply(){
@@ -1386,6 +1458,7 @@ if (window.matchMedia("(display-mode: standalone)").matches || window.navigator.
   pulse:{wave:"square",notes:[{f:880,t:0,d:.08},{f:880,t:.2,d:.08},{f:1174,t:.4,d:.08},{f:1174,t:.6,d:.12}]}
  };
  function playPattern(kind){
+  if(typeof kind==="string"&&kind.startsWith("custom:")){playCustomSound(kind.slice(7));return;}
   const context=getNotificationAudioContext();if(!context)return;
   const pattern=soundPatterns[kind]||soundPatterns.classic,base=context.currentTime;
   pattern.notes.forEach(note=>{
@@ -1412,7 +1485,7 @@ if (window.matchMedia("(display-mode: standalone)").matches || window.navigator.
  window.klkStopIncomingCallSound=stopCallRingtone;
  function tone(){playChime();}
  window.klkNotifyIncoming=(data,id)=>{if(!data||data.uid===window.klkCurrentUid)return;if(prefs.vibration&&navigator.vibrate)navigator.vibrate([100,60,100]);if("Notification"in window&&Notification.permission==="granted"&&document.visibilityState!=="visible"){const body=prefs.preview?(data.text||(data.type==="image"?"📷 Foto":data.type==="audio"?"🎙️ Nota de voz":"Nuevo mensaje")):"Tienes un mensaje nuevo";try{const title="klk · "+(data.displayName||data.email||"Mensaje nuevo");if("serviceWorker"in navigator){navigator.serviceWorker.ready.then(registration=>registration.showNotification(title,{body,tag:"klk-"+id,icon:"./icon.svg",badge:"./icon.svg",silent:false})).catch(error=>console.warn("No se pudo mostrar la notificación del sistema:",error));}else{new Notification(title,{body,tag:"klk-"+id});}}catch(e){console.warn("Notificación del sistema no disponible:",e);}}};
- window.klkSetCurrentUid=uid=>{window.klkCurrentUid=uid||null;};apply();permissionButton();
+ window.klkSetCurrentUid=uid=>{window.klkCurrentUid=uid||null;};apply();permissionButton();refreshCustomSounds();
 })();
 
 $("inviteMember").addEventListener("click",()=>{ $("invitePanel").style.display=$("invitePanel").style.display==="block"?"none":"block"; $("inviteStatus").textContent=""; });
