@@ -1544,7 +1544,7 @@ async function uploadMedia(file, type, durationSeconds = null) {
   sending = false; $("send").disabled = false; $("pickPhoto").disabled = false; $("recordAudio").disabled = false; $("sendAudio").disabled = !audioBlob;
  }
 }
-$("pickPhoto").onclick = () => $("galleryInput").click();
+$("pickPhoto").onclick = () => { const panel=$("attachmentPanel"); const opening=!panel.classList.contains("open"); panel.classList.toggle("open",opening); panel.setAttribute("aria-hidden",String(!opening)); $("pickPhoto").setAttribute("aria-expanded",String(opening)); closeStickersPanel(); };
 
 $("galleryInput").addEventListener("change", async event => { const file = event.target.files && event.target.files[0]; if (file) await uploadMedia(file,"image"); event.target.value = ""; });
 $("cameraInput").addEventListener("change", async event => { const file = event.target.files && event.target.files[0]; if (file) await uploadMedia(file,"image"); event.target.value = ""; });
