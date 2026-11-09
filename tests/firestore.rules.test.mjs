@@ -284,3 +284,25 @@ test("solo los contactos aceptados pueden registrar visualizaciones de un estado
     uid: "outsider", displayName: "Desconocido", viewedAt: serverTimestamp()
   }));
 });
+
+
+test("permite enviar stickers del catálogo autorizado y rechaza stickers arbitrarios", async () => {
+  await testEnv.withSecurityRulesDisabled(async context => {
+    const db = context.firestore();
+    await setDoc(doc(db, "contactRequests/member-1__member-2"), {
+      senderUid: "member-1", recipientUid: "member-2", status: "accepted"
+    });
+    await setDoc(doc(db, "conversations/member-1__member-2"), {
+      members: ["member-1", "member-2"], createdAt: Timestamp.now()
+    });
+  });
+  const db = testEnv.authenticatedContext("member-1", {email: "member1@example.com"}).firestore();
+  await assertSucceeds(setDoc(doc(db, "conversations/member-1__member-2/messages/sticker-ok"), {
+    type: "sticker", text: "😂", email: "member1@example.com", uid: "member-1",
+    displayName: "Miembro Uno", createdAt: serverTimestamp()
+  }));
+  await assertFails(setDoc(doc(db, "conversations/member-1__member-2/messages/sticker-invalid"), {
+    type: "sticker", text: "contenido no autorizado", email: "member1@example.com", uid: "member-1",
+    displayName: "Miembro Uno", createdAt: serverTimestamp()
+  }));
+});
