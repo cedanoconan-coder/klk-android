@@ -2,7 +2,7 @@ name: Construir APK de klk
 
 on:
   push:
-    branches: ["main", "integrar-supabase-storage", "features/notificaciones-ajustes", "build/klk-ajustes-apk", "feature/complete-interface-settings", "feature/invitation-only-registration"]
+    branches: ["main", "integrar-supabase-storage", "features/notificaciones-ajustes", "build/klk-ajustes-apk", "feature/complete-interface-settings", "feature/invitation-only-registration", "feature/chat-whatsapp-interface-2026-11-08"]
   workflow_dispatch:
 
 permissions:
