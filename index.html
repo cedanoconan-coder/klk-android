@@ -299,6 +299,21 @@ body:has(#chat.room-open) main{padding:0!important;margin:0!important;max-width:
 #chat.room-open .chatHeading .roomAvatar{display:block!important;flex:0 0 44px!important;width:44px!important;height:44px!important;min-width:44px!important;border-radius:50%!important;object-fit:cover!important;border:2px solid #e4eee9!important;background:#e8efec!important}
 @media(max-width:420px){#chat.room-open .chatHeading .roomAvatar{flex-basis:42px!important;width:42px!important;height:42px!important;min-width:42px!important}}
 
+
+/* Chat limpio: retirar el pie de sesión de la conversación sin borrar su región de estado */
+#chat.room-open .chatFoot{
+ position:absolute!important;
+ width:1px!important;
+ height:1px!important;
+ padding:0!important;
+ margin:-1px!important;
+ overflow:hidden!important;
+ clip:rect(0,0,0,0)!important;
+ white-space:nowrap!important;
+ border:0!important;
+}
+#chat.room-open .chatFoot #logout{display:none!important}
+
 </style>
 </head>
 <body>
