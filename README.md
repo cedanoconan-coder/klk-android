@@ -19,28 +19,40 @@ Aplicación web instalable (PWA) para iniciar sesión y conversar en un chat fam
 - `.github/workflows/pages.yml`: publicación automática en GitHub Pages.
 - `.github/workflows/android-apk.yml`: compilación automática de un APK de prueba para Android.
 
-## Estado de publicación (8 de noviembre de 2026)
+## Estado de publicación (9 de noviembre de 2026)
 
-- **GitHub Pages:** publicado correctamente desde `main`. URL: https://cedanoconan-coder.github.io/klk-android/
-- **APK Android:** compilación de prueba completada correctamente. El artefacto `klk-android-apk` está disponible en GitHub Actions durante 30 días.
-- **Código:** commit publicado `76482f05ab55812e64e72a74fcfed822844cde4d`.
+- **GitHub Pages:** la versión pública actual sigue sirviendo la rama `main`: https://cedanoconan-coder.github.io/klk-android/
+- **Correcciones:** preparadas en el PR [#22](https://github.com/cedanoconan-coder/klk-android/pull/22); todavía no integradas en `main`.
+- **Supabase:** proyecto `Klk-familia` activo; Edge Function `media` en versión 12 y `klk-push` en versión 2.
+- **Storage:** el bucket privado `Chat-media` ya registra cargas y lecturas correctas, incluidas notas de voz WebM.
+- **APK:** el flujo de Android está configurado para compilar también la rama de correcciones; falta confirmar el resultado de esa compilación.
 
-## Pasos externos pendientes para activar el backend
+## Pasos pendientes para publicar las correcciones
 
-La publicación web y la compilación Android ya están completadas. Para que los usuarios puedan registrarse y conversar, falta confirmar en Firebase Console:
+1. Revisar y aprobar las comprobaciones del PR #22.
+2. Integrar el PR en `main` para que GitHub Pages publique la nueva versión.
+3. Publicar el archivo `firestore.rules` actualizado en Firebase Console.
+4. Confirmar la compilación del APK y probar mensajes, notas de voz, fotos, estados y llamadas con dos cuentas reales.
 
-1. Abrir el proyecto `klk-familia`.
-2. Habilitar **Authentication → Correo electrónico/Contraseña**.
-3. Crear la base de datos de **Cloud Firestore**.
-4. Publicar las reglas del archivo `firestore.rules`.
-5. Confirmar que el servicio de carga firmado de Supabase está desplegado y que el bucket `Chat-media` existe.
+## Seguridad y acceso
 
-Estos pasos requieren acceso autorizado a las consolas Firebase y Supabase; no se pueden completar desde este repositorio ni se deben simular como realizados.
+- El registro de cuentas requiere un código de invitación de un solo uso.
+- Los perfiles privados solo los puede leer su propietario.
+- El directorio público solo muestra perfiles con `directoryVisible: true`; la opción queda activada por defecto y cada miembro puede desactivarla.
+- Los chats son conversaciones privadas de dos miembros. Un miembro puede iniciar el chat directamente desde un perfil visible, sin solicitudes ni aceptación de amistad.
+- Solo los dos participantes pueden leer o escribir mensajes y archivos de esa conversación.
+- La colección heredada `contactRequests` está bloqueada.
+- Los estados, sus reacciones y visualizaciones están disponibles para miembros autenticados de klk.
+- Las reglas nuevas están en `firestore.rules` y deben publicarse en Firebase después de integrar los cambios.
 
-## Seguridad
-Las reglas incluidas requieren que el usuario haya iniciado sesión y validan que cada mensaje pertenezca al usuario autenticado. Esta primera versión permite que cualquier cuenta autenticada del proyecto lea el chat; para un chat estrictamente privado entre familiares se debe añadir una lista administrada de miembros autorizados antes de invitar a otras personas.
+## Servicios backend
+
+- El proyecto Supabase `Klk-familia` está activo.
+- La Edge Function `media` está activa en la versión 12 y conserva la validación de sesión Firebase.
+- La función `klk-push` está activa en la versión 2.
+- Los registros recientes confirman cargas y lecturas correctas en el bucket privado `Chat-media`, incluidas notas de voz WebM.
 
 ## Instalar en Android
 Cuando GitHub Pages publique el sitio por HTTPS, abrir la dirección en Chrome para Android y usar el menú **⋮ → Instalar aplicación** o **Añadir a pantalla de inicio**, según la versión de Chrome.
 
-El repositorio incluye un flujo de GitHub Actions (`.github/workflows/android-apk.yml`) que genera un APK de prueba con Capacitor y conserva el logo klk. El APK se descarga desde Actions → ejecución del flujo → Artifacts. El flujo se ejecuta en `main` y en la rama `integrar-supabase-storage`; el APK solo debe compartirse después de verificar que el backend esté configurado y que el inicio de sesión, las fotos y las notas de voz funcionen.
+El repositorio incluye un flujo de GitHub Actions (`.github/workflows/android-apk.yml`) que genera un APK de prueba con Capacitor y conserva el logo klk. El APK se descarga desde Actions → ejecución del flujo → Artifacts. El flujo se ejecuta en `main`, `integrar-supabase-storage` y `fix/integral-klk-reliability`; el APK solo debe compartirse después de verificar el backend y probar inicio de sesión, mensajes, fotos y notas de voz.

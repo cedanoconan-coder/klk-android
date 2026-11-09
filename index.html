@@ -528,13 +528,13 @@ body:has(#chat.room-open) main{padding:0!important;margin:0!important;max-width:
   <p id="inviteStatus" class="hint" role="status" aria-live="polite"></p>
  </section>
  
-<section id="homeProfilePanel" aria-label="Mi perfil y configuración"><div style="display:flex;align-items:center;gap:10px;margin-bottom:12px"><button id="profileClose" class="secondary" type="button" style="width:auto;margin:0">‹ Volver</button><h2 style="margin:0;font-size:20px">Mi perfil</h2></div><div id="myProfileCover" class="profileCover" aria-label="Foto de portada"><button id="profileChangeCover" type="button">Cambiar portada</button></div><div class="profileHero"><img id="profilePanelPhoto" alt="Foto de perfil"><div><strong id="profilePanelName">Mi perfil</strong><small id="profilePanelEmail">Cuenta klk</small><button id="profileChangePhoto" class="secondary" type="button" style="width:auto;margin:8px 0 0;padding:8px 12px">Cambiar foto</button></div></div><div class="profileMood"><span class="moodEmoji" id="myMoodEmoji">😊</span><div style="min-width:0;flex:1"><strong>Mi estado de ánimo</strong><small id="myMoodLabel">Comparte cómo te sientes</small></div><select id="profileMoodSelect" aria-label="Elige tu estado de ánimo"><option value="😊 Feliz">😊 Feliz</option><option value="😌 Tranquilo">😌 Tranquilo</option><option value="❤️ Agradecido">❤️ Agradecido</option><option value="💪 Motivado">💪 Motivado</option><option value="😴 Cansado">😴 Cansado</option><option value="🤔 Pensativo">🤔 Pensativo</option><option value="😔 No muy bien">😔 No muy bien</option><option value="🎉 Emocionado">🎉 Emocionado</option></select></div><div class="profileSection"><h3>Información personal</h3><label class="profileField"><span>Nombre</span><input id="profileNameInput" maxlength="60" autocomplete="name" placeholder="Tu nombre"></label><label class="profileField"><span>Info. / Acerca de ti</span><textarea id="profileAboutInput" maxlength="139" placeholder="¡Hola! Estoy usando klk."></textarea></label><label class="profileField" style="display:flex;align-items:center;gap:12px"><input id="profileDirectoryVisible" type="checkbox" style="width:22px;height:22px;flex:0 0 22px;margin:0;accent-color:#075e54"><span><strong>Mostrar mi perfil en el directorio mundial</strong><small style="display:block;color:var(--klk-muted)">Si lo activas, otros miembros podrán encontrarte. Tu correo nunca se muestra en el directorio.</small></span></label><div class="profileButtons"><button id="profileSave" type="button">Guardar cambios</button></div><p id="profileStatus" class="hint" role="status" aria-live="polite"></p></div><div class="profileSection"><h3>Cuenta y seguridad</h3><button id="profilePassword" class="profileAction" type="button"><span>🔐 Cambiar contraseña<small>Recibirás un enlace seguro en tu correo</small></span><b>›</b></button><button id="profileEmail" class="profileAction" type="button"><span>✉️ Correo de la cuenta<small id="profileEmailValue">—</small></span><b>›</b></button></div><div class="profileSection"><h3>Privacidad y notificaciones</h3><button id="profilePrivacyInfo" class="profileAction" type="button"><span>🛡️ Privacidad<small>Información sobre los controles disponibles</small></span><b>›</b></button><button id="profileOpenSettings" class="profileAction" type="button"><span>🔔 Notificaciones y apariencia<small>Sonidos, vibración, tema, tamaño y fondo</small></span><b>›</b></button><p id="profilePrivacyStatus" class="hint" hidden>Los controles avanzados de privacidad todavía no están activos en klk; no mostraremos opciones que no se apliquen realmente.</p></div><div class="profileSection"><h3>Sesión</h3><button id="profileLogout" class="profileAction" type="button"><span>↪️ Cerrar sesión<small>Salir de esta cuenta en este teléfono</small></span><b>›</b></button></div></section>
+<section id="homeProfilePanel" aria-label="Mi perfil y configuración"><div style="display:flex;align-items:center;gap:10px;margin-bottom:12px"><button id="profileClose" class="secondary" type="button" style="width:auto;margin:0">‹ Volver</button><h2 style="margin:0;font-size:20px">Mi perfil</h2></div><div id="myProfileCover" class="profileCover" aria-label="Foto de portada"><button id="profileChangeCover" type="button">Cambiar portada</button></div><div class="profileHero"><img id="profilePanelPhoto" alt="Foto de perfil"><div><strong id="profilePanelName">Mi perfil</strong><small id="profilePanelEmail">Cuenta klk</small><button id="profileChangePhoto" class="secondary" type="button" style="width:auto;margin:8px 0 0;padding:8px 12px">Cambiar foto</button></div></div><div class="profileMood"><span class="moodEmoji" id="myMoodEmoji">😊</span><div style="min-width:0;flex:1"><strong>Mi estado de ánimo</strong><small id="myMoodLabel">Comparte cómo te sientes</small></div><select id="profileMoodSelect" aria-label="Elige tu estado de ánimo"><option value="😊 Feliz">😊 Feliz</option><option value="😌 Tranquilo">😌 Tranquilo</option><option value="❤️ Agradecido">❤️ Agradecido</option><option value="💪 Motivado">💪 Motivado</option><option value="😴 Cansado">😴 Cansado</option><option value="🤔 Pensativo">🤔 Pensativo</option><option value="😔 No muy bien">😔 No muy bien</option><option value="🎉 Emocionado">🎉 Emocionado</option></select></div><div class="profileSection"><h3>Información personal</h3><label class="profileField"><span>Nombre</span><input id="profileNameInput" maxlength="60" autocomplete="name" placeholder="Tu nombre"></label><label class="profileField"><span>Info. / Acerca de ti</span><textarea id="profileAboutInput" maxlength="139" placeholder="¡Hola! Estoy usando klk."></textarea></label><label class="profileField" style="display:flex;align-items:center;gap:12px"><input id="profileDirectoryVisible" type="checkbox" checked style="width:22px;height:22px;flex:0 0 22px;margin:0;accent-color:#075e54"><span><strong>Mostrar mi perfil en el directorio mundial</strong><small style="display:block;color:var(--klk-muted)">Si lo activas, otros miembros podrán encontrarte. Tu correo nunca se muestra en el directorio.</small></span></label><div class="profileButtons"><button id="profileSave" type="button">Guardar cambios</button></div><p id="profileStatus" class="hint" role="status" aria-live="polite"></p></div><div class="profileSection"><h3>Cuenta y seguridad</h3><button id="profilePassword" class="profileAction" type="button"><span>🔐 Cambiar contraseña<small>Recibirás un enlace seguro en tu correo</small></span><b>›</b></button><button id="profileEmail" class="profileAction" type="button"><span>✉️ Correo de la cuenta<small id="profileEmailValue">—</small></span><b>›</b></button></div><div class="profileSection"><h3>Privacidad y notificaciones</h3><button id="profilePrivacyInfo" class="profileAction" type="button"><span>🛡️ Privacidad<small>Información sobre los controles disponibles</small></span><b>›</b></button><button id="profileOpenSettings" class="profileAction" type="button"><span>🔔 Notificaciones y apariencia<small>Sonidos, vibración, tema, tamaño y fondo</small></span><b>›</b></button><p id="profilePrivacyStatus" class="hint" hidden>Los controles avanzados de privacidad todavía no están activos en klk; no mostraremos opciones que no se apliquen realmente.</p></div><div class="profileSection"><h3>Sesión</h3><button id="profileLogout" class="profileAction" type="button"><span>↪️ Cerrar sesión<small>Salir de esta cuenta en este teléfono</small></span><b>›</b></button></div></section>
 <div class="homeSearch"><input id="chatSearch" type="search" placeholder="Buscar..." aria-label="Buscar conversaciones"></div>
  <p id="homeStatus" class="hint" role="status" aria-live="polite" style="padding:0 20px;min-height:18px"></p>
 
- <button id="homeGroup" class="homeGroup" type="button" hidden><span class="homeAvatar">👥</span><span class="homeGroupText"><strong>Chats privados</strong><small>klk permite conversaciones entre contactos aceptados</small></span></button>
+ <button id="homeGroup" class="homeGroup" type="button" hidden><span class="homeAvatar">👥</span><span class="homeGroupText"><strong>Chats privados</strong><small>Conversaciones privadas entre miembros de klk</small></span></button>
  <section id="chatsPanel" style="padding:4px 0 12px"><div id="chatsList" aria-label="Conversaciones recientes" class="hint" style="padding:12px 20px">Cargando conversaciones...</div></section>
- <section id="requestsPanel" hidden style="display:none;padding:8px 20px"><h3 style="font-size:16px;margin:8px 0">Solicitudes recibidas</h3><div id="requestsList" class="hint">Cargando solicitudes...</div></section>
+ <section id="requestsPanel" hidden aria-hidden="true" style="display:none;padding:8px 20px"></section>
  <div id="peopleList" hidden style="display:none" aria-label="Personas registradas">Cargando personas...</div>
 <section id="contactProfilePanel" class="contactProfilePanel" aria-label="Perfil del contacto" hidden>
 <div class="contactProfileTop"><button id="contactProfileBack" class="secondary" type="button" aria-label="Volver">‹</button><strong>Info. del contacto</strong></div>
@@ -754,7 +754,7 @@ async function sendKlkPushForMessage(conversationId, messageId) {
 }
 let auth, db, firebaseInitError = null, unsubscribe = null, sending = false, mediaRecorder = null, audioStream = null, audioBlob = null, audioStartedAt = 0;
 let authPersistenceReady = Promise.resolve(), firestorePersistenceReady = Promise.resolve(true);
-let activeConversationId = null, activeConversationName = null, activeConversationPeerUid = null, peopleUnsubscribe = null, incomingRequestsUnsubscribe = null, outgoingRequestsUnsubscribe = null;
+let activeConversationId = null, activeConversationName = null, activeConversationPeerUid = null, peopleUnsubscribe = null, incomingRequestsUnsubscribe = null, outgoingRequestsUnsubscribe = null, conversationListUnsubscribe = null;
 const incomingRequests = new Map(), outgoingRequests = new Map(), peopleCache = new Map(), conversationSubscriptions = new Map(), conversationCache = new Map();
 let activeHomeFilter = "chats";
 function showError(target, error) {
@@ -840,7 +840,7 @@ $("register").addEventListener("click", async () => {
    transaction.update(invitationRef,{redeemedBy:newUser.uid,redeemedAt:firebase.firestore.FieldValue.serverTimestamp()});
    transaction.set(profileRef,{
     uid:newUser.uid,email:newUser.email || email,displayName:newUser.displayName || email.split("@")[0],
-    inviteCode:code,invitedBy:fresh.data().createdBy,
+    inviteCode:code,invitedBy:fresh.data().createdBy,directoryVisible:true,
     updatedAt:firebase.firestore.FieldValue.serverTimestamp()
    });
   });
@@ -954,7 +954,7 @@ auth && auth.onAuthStateChanged(async user => {
     return;
    }
    await profileRef.set({uid:user.uid,email:user.email || "",displayName:user.displayName || (user.email || "Miembro").split("@")[0],updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true}); const privateProfile=(await profileRef.get()).data()||{};
- const publicProfile={uid:user.uid,displayName:((privateProfile.displayName||user.displayName||(user.email||"").split("@")[0]||"").trim().length>=2?(privateProfile.displayName||user.displayName||(user.email||"").split("@")[0]).trim():"Miembro"),about:privateProfile.about||"",mood:privateProfile.mood||"",directoryVisible:privateProfile.directoryVisible===true,updatedAt:firebase.firestore.FieldValue.serverTimestamp()};
+ const publicProfile={uid:user.uid,displayName:((privateProfile.displayName||user.displayName||(user.email||"").split("@")[0]||"").trim().length>=2?(privateProfile.displayName||user.displayName||(user.email||"").split("@")[0]).trim():"Miembro"),about:privateProfile.about||"",mood:privateProfile.mood||"",directoryVisible:privateProfile.directoryVisible!==false,updatedAt:firebase.firestore.FieldValue.serverTimestamp()};
  if(privateProfile.photoPath)publicProfile.photoPath=privateProfile.photoPath;
  if(privateProfile.coverPath)publicProfile.coverPath=privateProfile.coverPath;
  await db.collection("publicProfiles").doc(user.uid).set(publicProfile,{merge:true});
@@ -970,6 +970,7 @@ auth && auth.onAuthStateChanged(async user => {
   if (myProfileUnsubscribe) myProfileUnsubscribe(); myProfileUnsubscribe = null;
   if (incomingRequestsUnsubscribe) incomingRequestsUnsubscribe(); incomingRequestsUnsubscribe = null;
   if (outgoingRequestsUnsubscribe) outgoingRequestsUnsubscribe(); outgoingRequestsUnsubscribe = null;
+  if (conversationListUnsubscribe) conversationListUnsubscribe(); conversationListUnsubscribe = null;
   for (const entry of conversationSubscriptions.values()) { if (entry.messages) entry.messages(); if (entry.conversation) entry.conversation(); }
   conversationSubscriptions.clear(); conversationCache.clear();
   incomingRequests.clear(); outgoingRequests.clear(); peopleCache.clear();
@@ -980,14 +981,8 @@ function messagesCollection() {
  if (!activeConversationId) return null;
  return db.collection("conversations").doc(activeConversationId).collection("messages");
 }
-function isAcceptedContact(uid) {
- return (incomingRequests.get(uid) || {}).status === "accepted" || (outgoingRequests.get(uid) || {}).status === "accepted";
-}
-function isInvitedContact(uid) {
- const incoming=(incomingRequests.get(uid)||{}).status;
- const outgoing=(outgoingRequests.get(uid)||{}).status;
- return incoming === "pending" || incoming === "accepted" || outgoing === "pending" || outgoing === "accepted";
-}
+function isAcceptedContact(uid) { return Boolean(peopleCache.has(uid)); }
+function isInvitedContact(uid) { return Boolean(peopleCache.has(uid)); }
 let myProfileUnsubscribe = null;
 function loadMyProfile() {
  if (myProfileUnsubscribe) myProfileUnsubscribe();
@@ -1081,7 +1076,7 @@ async function uploadProfileCover(file) {
  finally{button.disabled=false;}
 }
 $("profileCoverInput").addEventListener("change",async event=>{const file=event.target.files&&event.target.files[0];if(file)await uploadProfileCover(file);event.target.value="";});
-async function openKlkProfilePanel(){const panel=$("homeProfilePanel");if(!panel)return;klkPushView("profile");$("chat").classList.add("profile-open");panel.style.display="block";const user=auth&&auth.currentUser;if(user){$("profilePanelName").textContent=user.displayName||"Mi perfil";$("profilePanelEmail").textContent=user.email||"Cuenta klk";try{const snap=await db.collection("users").doc(user.uid).get();if(snap.exists){const data=snap.data();$("profileNameInput").value=data.displayName||user.displayName||"";$("profileAboutInput").value=data.about||"¡Hola! Estoy usando klk.";$("profileMoodSelect").value=data.mood||"😊 Feliz";$("profileDirectoryVisible").checked=data.directoryVisible===true;$("myMoodEmoji").textContent=(data.mood||"😊 Feliz").split(" ")[0];$("myMoodLabel").textContent=data.mood||"Comparte cómo te sientes";if(data.coverPath)$("myProfileCover").style.backgroundImage='url("'+await getMediaUrl(data.coverPath)+'")';if(data.photoPath)$("profilePanelPhoto").src=await getMediaUrl(data.photoPath);}}catch(error){console.warn("No se pudo cargar la información del perfil",error);}}["homeSearch","homeStatus"].forEach(id=>{const el=$(id);if(el)el.style.display="none";});document.querySelectorAll(".homeFilters,#chatsPanel,#requestsPanel,#peopleList,#callsPanel,#updatesPanel,#toolsPanel,#assistantPanel").forEach(el=>el.style.display="none");panel.scrollIntoView({block:"start",behavior:"smooth"});}
+async function openKlkProfilePanel(){const panel=$("homeProfilePanel");if(!panel)return;klkPushView("profile");$("chat").classList.add("profile-open");panel.style.display="block";const user=auth&&auth.currentUser;if(user){$("profilePanelName").textContent=user.displayName||"Mi perfil";$("profilePanelEmail").textContent=user.email||"Cuenta klk";try{const snap=await db.collection("users").doc(user.uid).get();if(snap.exists){const data=snap.data();$("profileNameInput").value=data.displayName||user.displayName||"";$("profileAboutInput").value=data.about||"¡Hola! Estoy usando klk.";$("profileMoodSelect").value=data.mood||"😊 Feliz";$("profileDirectoryVisible").checked=data.directoryVisible!==false;$("myMoodEmoji").textContent=(data.mood||"😊 Feliz").split(" ")[0];$("myMoodLabel").textContent=data.mood||"Comparte cómo te sientes";if(data.coverPath)$("myProfileCover").style.backgroundImage='url("'+await getMediaUrl(data.coverPath)+'")';if(data.photoPath)$("profilePanelPhoto").src=await getMediaUrl(data.photoPath);}}catch(error){console.warn("No se pudo cargar la información del perfil",error);}}["homeSearch","homeStatus"].forEach(id=>{const el=$(id);if(el)el.style.display="none";});document.querySelectorAll(".homeFilters,#chatsPanel,#requestsPanel,#peopleList,#callsPanel,#updatesPanel,#toolsPanel,#assistantPanel").forEach(el=>el.style.display="none");panel.scrollIntoView({block:"start",behavior:"smooth"});}
 function closeKlkProfilePanel(){const panel=$("homeProfilePanel");$("chat").classList.remove("profile-open");if(panel)panel.style.display="none";["homeSearch","homeStatus"].forEach(id=>{const el=$(id);if(el)el.style.display="";});document.querySelectorAll(".homeFilters").forEach(el=>el.style.display="");const active=document.querySelector('.homeFilters button.active');const filter=active?active.dataset.filter:"chats";$("chatsPanel").style.display=filter==="chats"?"block":"none";$("requestsPanel").style.display=filter==="requests"?"block":"none";$("peopleList").style.display=filter==="people"?"block":"none";}
 $("profileClose").addEventListener("click",closeKlkProfilePanel);$("profileChangePhoto").addEventListener("click",()=>$("profilePhotoInput").click());
 $("profileSave").addEventListener("click",async()=>{const user=auth&&auth.currentUser;if(!user)return;const name=$("profileNameInput").value.trim();if(name.length<2){$("profileStatus").textContent="Escribe un nombre de al menos 2 caracteres.";return;}const button=$("profileSave");button.disabled=true;$("profileStatus").textContent="Guardando perfil...";try{await user.updateProfile({displayName:name});const about=$("profileAboutInput").value.trim();const mood=$("profileMoodSelect").value,directoryVisible=$("profileDirectoryVisible").checked,updatedAt=firebase.firestore.FieldValue.serverTimestamp();await db.collection("users").doc(user.uid).set({uid:user.uid,email:user.email||"",displayName:name,about,mood,directoryVisible,updatedAt},{merge:true});await db.collection("publicProfiles").doc(user.uid).set({uid:user.uid,displayName:name,about,mood,directoryVisible,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});try{localStorage.setItem("klk-profile-about",about);}catch(e){}$("myMoodEmoji").textContent=$("profileMoodSelect").value.split(" ")[0];$("myMoodLabel").textContent=$("profileMoodSelect").value;$("profilePanelName").textContent=name;$("profileStatus").textContent="Perfil actualizado correctamente.";}catch(error){$("profileStatus").textContent="No se pudo guardar: "+(error.message||"inténtalo de nuevo");}finally{button.disabled=false;}});
@@ -1115,7 +1110,7 @@ async function openContactProfile(uid,person,returnTo="people"){
  const canWrite=isInvitedContact(uid), accepted=isAcceptedContact(uid);
  $("contactProfileMessage").disabled=!canWrite;
  ["contactProfileVoice","contactProfileVideo","contactProfileShare"].forEach(id=>$(id).disabled=!accepted);
- $("contactProfileStatus").textContent=canWrite?"Ya pueden escribirse mensajes. Las llamadas requieren que ambos sean contactos aceptados.":"Envía una invitación para comenzar a escribir.";
+ $("contactProfileStatus").textContent=canWrite?"Puedes iniciar una conversación y llamar a este miembro.":"Este perfil no está disponible para iniciar conversaciones.";
  $("contactProfileMessage").onclick=()=>{closeContactProfile();openPrivateConversation(uid,displayName||"Conversación");};
  $("contactProfileVoice").onclick=()=>window.klkStartCall&&window.klkStartCall(uid,displayName,"audio");
  $("contactProfileVideo").onclick=()=>window.klkStartCall&&window.klkStartCall(uid,displayName,"video");
@@ -1130,7 +1125,7 @@ async function openContactProfile(uid,person,returnTo="people"){
  await renderContactSharedMedia("image");
  $("contactProfilePanel").scrollIntoView({block:"start",behavior:"smooth"});
 }
-async function renderContactSharedMedia(type){document.querySelectorAll(".contactMediaTabs button").forEach(b=>b.classList.toggle("active",b.dataset.mediaTab===type));const box=$("contactSharedMedia");if(!activeContactProfileUid||!auth.currentUser||!isAcceptedContact(activeContactProfileUid)){box.textContent="El contenido compartido estará disponible cuando el contacto esté aceptado.";return;}box.textContent="Cargando contenido...";const cid=[auth.currentUser.uid,activeContactProfileUid].sort().join("__");try{const snap=await db.collection("conversations").doc(cid).collection("messages").orderBy("createdAt","desc").limit(100).get();box.innerHTML="";const data=snap.docs.map(d=>d.data()).filter(d=>d.type==="image"||d.type==="file").filter(d=>type==="all"||d.type===type);if(!data.length){box.textContent=type==="image"?"No hay fotos compartidas.":type==="file"?"No hay documentos compartidos.":"No hay contenido compartido.";return;}for(const item of data){try{const url=await getMediaUrl(item.storagePath,cid);if(item.type==="image"){const img=document.createElement("img");img.src=url;img.alt=item.fileName||"Foto compartida";img.loading="lazy";img.onclick=()=>window.open(url,"_blank","noopener");box.append(img);}else{const a=document.createElement("a");a.href=url;a.target="_blank";a.rel="noopener";a.textContent="📄 "+(item.fileName||"Documento");box.append(a);}}catch(e){const p=document.createElement("p");p.textContent="Archivo no disponible";box.append(p);}}}catch(e){box.textContent="No se pudo consultar el contenido: "+e.message;}}
+async function renderContactSharedMedia(type){document.querySelectorAll(".contactMediaTabs button").forEach(b=>b.classList.toggle("active",b.dataset.mediaTab===type));const box=$("contactSharedMedia");if(!activeContactProfileUid||!auth.currentUser||!isAcceptedContact(activeContactProfileUid)){box.textContent="Abre primero una conversación privada con este miembro para consultar el contenido compartido.";return;}box.textContent="Cargando contenido...";const cid=[auth.currentUser.uid,activeContactProfileUid].sort().join("__");try{const snap=await db.collection("conversations").doc(cid).collection("messages").orderBy("createdAt","desc").limit(100).get();box.innerHTML="";const data=snap.docs.map(d=>d.data()).filter(d=>d.type==="image"||d.type==="file").filter(d=>type==="all"||d.type===type);if(!data.length){box.textContent=type==="image"?"No hay fotos compartidas.":type==="file"?"No hay documentos compartidos.":"No hay contenido compartido.";return;}for(const item of data){try{const url=await getMediaUrl(item.storagePath,cid);if(item.type==="image"){const img=document.createElement("img");img.src=url;img.alt=item.fileName||"Foto compartida";img.loading="lazy";img.onclick=()=>window.open(url,"_blank","noopener");box.append(img);}else{const a=document.createElement("a");a.href=url;a.target="_blank";a.rel="noopener";a.textContent="📄 "+(item.fileName||"Documento");box.append(a);}}catch(e){const p=document.createElement("p");p.textContent="Archivo no disponible";box.append(p);}}}catch(e){box.textContent="No se pudo consultar el contenido: "+e.message;}}
 $("contactProfileBack").addEventListener("click",closeContactProfile);$("chatTitle").addEventListener("click",()=>{if(!activeConversationId||!auth.currentUser)return;const uid=activeConversationId.split("__").find(id=>id!==auth.currentUser.uid);const person=peopleCache.get(uid);if(uid&&person)openContactProfile(uid,person,"chat");});document.querySelectorAll(".contactMediaTabs button").forEach(b=>b.addEventListener("click",()=>renderContactSharedMedia(b.dataset.mediaTab)));
 
 function renderPeople() {
@@ -1169,11 +1164,12 @@ function renderPeople() {
   const about = document.createElement("small"); about.textContent = person.about || "Perfil público de klk";
   info.append(name,about); row.append(info);
   const view=document.createElement("button");view.type="button";view.className="secondary";view.style.cssText="width:auto;min-width:76px;margin:0 5px 0 0;padding:9px 8px;font-size:12px";view.textContent="Perfil";view.onclick=()=>openContactProfile(uid,person);row.append(view);
-  const action = document.createElement("button"); action.style.cssText = "width:auto;min-width:112px;margin:0;padding:9px 12px;font-size:13px";
-  if (isInvitedContact(uid)) { action.textContent = "Escribir"; action.onclick = () => openPrivateConversation(uid, person.displayName || person.email || "Conversación"); }
-  else if ((outgoingRequests.get(uid) || {}).status === "rejected") { action.textContent = "Solicitud rechazada"; action.disabled = true; }
-  else { action.textContent = "Enviar solicitud"; action.onclick = () => sendContactRequest(uid,person); }
-  row.append(action); list.append(row);
+  const action = document.createElement("button");
+  action.type = "button";
+  action.style.cssText = "width:auto;min-width:92px;margin:0;padding:9px 12px;font-size:13px";
+  action.textContent = "Escribir";
+  action.onclick = () => openPrivateConversation(uid, person.displayName || person.email || "Conversación");
+  row.append(action); list.append(row);  row.append(action); list.append(row);
  }
  syncConversationListeners();
  if(window.klkRefreshCallContacts)window.klkRefreshCallContacts();
@@ -1186,7 +1182,7 @@ function renderConversations() {
  const list=$("chatsList"); if(!list)return;
  list.innerHTML="";
  const rows=[...conversationCache.values()].sort((a,b)=>(b.sortTime||0)-(a.sortTime||0));
- if(!rows.length){list.textContent="Todavía no tienes chats. Entra en Personas y envía una invitación para comenzar a escribir.";return;}
+ if(!rows.length){list.textContent="Todavía no tienes chats. Pulsa + para encontrar miembros y comenzar a conversar.";return;}
  for(const item of rows){
   const row=document.createElement("button");row.type="button";row.className="chatRow";
   const avatar=document.createElement("img");avatar.className="personAvatar";avatar.alt="Foto de "+item.name;avatar.src=item.photoUrl||"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='32' fill='%23edf2ef'/%3E%3Ctext x='32' y='43' text-anchor='middle' font-size='32'%3E%F0%9F%91%A4%3C/text%3E%3C/svg%3E";
@@ -1199,17 +1195,28 @@ function renderConversations() {
  }
 }
 function syncConversationListeners(){
- const user=auth&&auth.currentUser;if(!user)return;
- const invitedUids=[...new Set([...incomingRequests.keys(),...outgoingRequests.keys()])].filter(uid=>uid!==user.uid&&isInvitedContact(uid));
- const invited=invitedUids.map(uid=>{const request=incomingRequests.get(uid)||outgoingRequests.get(uid)||{};const fallbackName=request.senderUid===uid?request.senderName:request.recipientName;return [uid,peopleCache.get(uid)||{displayName:fallbackName||"Contacto"}];});
- const wanted=new Set(invited.map(([uid])=>[user.uid,uid].sort().join("__")));
- for(const [id,entry] of conversationSubscriptions){if(!wanted.has(id)){if(entry.messages)entry.messages();if(entry.conversation)entry.conversation();conversationSubscriptions.delete(id);conversationCache.delete(id);}}
- for(const [uid,person] of invited){
-  const id=[user.uid,uid].sort().join("__");if(conversationSubscriptions.has(id))continue;
-  const entry={conversation:null,messages:null,lastMessageId:null,messagesInitialized:false};conversationSubscriptions.set(id,entry);
-  entry.conversation=db.collection("conversations").doc(id).onSnapshot(snapshot=>{
-   if(!snapshot.exists){if(entry.messages){entry.messages();entry.messages=null;}conversationCache.delete(id);renderConversations();return;}
-   if(!entry.messages){entry.messages=db.collection("conversations").doc(id).collection("messages").orderBy("createdAt","desc").limit(1).onSnapshot(messages=>{
+ const user=auth&&auth.currentUser;
+ if(!user||!db)return;
+ if(conversationListUnsubscribe){conversationListUnsubscribe();conversationListUnsubscribe=null;}
+ conversationListUnsubscribe=db.collection("conversations").where("members","array-contains",user.uid).onSnapshot(snapshot=>{
+  const wanted=new Set(snapshot.docs.map(doc=>doc.id));
+  for(const [id,entry] of conversationSubscriptions){
+   if(!wanted.has(id)){
+    if(entry.messages)entry.messages();
+    if(entry.conversation)entry.conversation();
+    conversationSubscriptions.delete(id);conversationCache.delete(id);
+   }
+  }
+  for(const conversationDoc of snapshot.docs){
+   const id=conversationDoc.id;
+   const members=conversationDoc.data().members||[];
+   const uid=members.find(member=>member!==user.uid);
+   if(!uid)continue;
+   const person=peopleCache.get(uid)||{displayName:"Contacto"};
+   let entry=conversationSubscriptions.get(id);
+   if(!entry){entry={conversation:null,messages:null,lastMessageId:null,messagesInitialized:false};conversationSubscriptions.set(id,entry);}
+   if(entry.messages)continue;
+   entry.messages=db.collection("conversations").doc(id).collection("messages").orderBy("createdAt","desc").limit(1).onSnapshot(messages=>{
     const lastDoc=messages.empty?null:messages.docs[0];
     const last=lastDoc?lastDoc.data():null;
     if(entry.messagesInitialized&&lastDoc&&lastDoc.id!==entry.lastMessageId&&last&&last.uid!==user.uid){
@@ -1217,40 +1224,24 @@ function syncConversationListeners(){
     }
     entry.messagesInitialized=true;entry.lastMessageId=lastDoc?lastDoc.id:null;
     const latestPerson=peopleCache.get(uid)||person;
-    conversationCache.set(id,{uid,name:latestPerson.displayName||latestPerson.email||"Contacto",photoUrl:null,preview:last?(last.type==="image"?"📷 Foto":last.type==="audio"?"🎙️ Nota de voz":last.text||"Mensaje"):"Todavía no hay mensajes",time:last?formatConversationTime(last.createdAt):"",sortTime:last&&last.createdAt&&last.createdAt.toMillis?last.createdAt.toMillis():0});
-    const cached=conversationCache.get(id);
+    const cached={uid,name:latestPerson.displayName||latestPerson.email||"Contacto",photoUrl:null,preview:last?(last.type==="image"?"📷 Foto":last.type==="audio"?"🎙️ Nota de voz":last.type==="file"?"📎 Documento":last.text||"Mensaje"):"Todavía no hay mensajes",time:last?formatConversationTime(last.createdAt):"",sortTime:last&&last.createdAt&&last.createdAt.toMillis?last.createdAt.toMillis():0};
+    conversationCache.set(id,cached);
     if(latestPerson.photoPath)getMediaUrl(latestPerson.photoPath).then(url=>{if(conversationCache.has(id)){cached.photoUrl=url;renderConversations();}}).catch(()=>{});
     renderConversations();
-   },error=>showError("chatStatus",error));}
-  },error=>showError("chatStatus",error));
- }
- renderConversations();
+   },error=>showError("chatStatus",error));
+  }
+  renderConversations();
+ },error=>showError("chatStatus",error));
 }
 function renderRequests() {
- const list = $("requestsList"); if (!list) return;
- list.innerHTML = "";
- const pending = [...incomingRequests.entries()].filter(([,r]) => r.status === "pending");
- if (!pending.length) { list.textContent = "No tienes invitaciones pendientes."; renderPeople(); return; }
- for (const [uid,r] of pending) {
-  const row = document.createElement("div"); row.className = "memberBtn";
-  const label = document.createElement("span"); label.style.flex = "1"; label.textContent = (r.senderName || r.senderEmail || "Usuario") + " te invitó a conversar. Ya puedes escribirle.";
-  const write = document.createElement("button"); write.textContent = "Escribir"; write.style.width = "auto"; write.onclick = () => openPrivateConversation(uid,r.senderName || r.senderEmail || "Conversación");
-  const reject = document.createElement("button"); reject.textContent = "Rechazar"; reject.className = "secondary"; reject.style.width = "auto"; reject.onclick = () => respondToContactRequest(uid,"rejected");
-  row.append(label,write,reject); list.append(row);
- }
- renderPeople();
+ const list=$("requestsList");
+ if(list)list.textContent="";
+ const panel=$("requestsPanel");
+ if(panel){panel.hidden=true;panel.style.display="none";}
 }
 function loadContactRequests() {
- const uid = auth.currentUser.uid;
- if (incomingRequestsUnsubscribe) incomingRequestsUnsubscribe();
- if (outgoingRequestsUnsubscribe) outgoingRequestsUnsubscribe();
- $("requestsList").textContent = "Cargando solicitudes...";
- incomingRequestsUnsubscribe = db.collection("contactRequests").where("recipientUid","==",uid).onSnapshot(snapshot => {
-  incomingRequests.clear(); snapshot.docs.forEach(d => incomingRequests.set(d.data().senderUid,d.data())); renderRequests(); if(window.klkRenderStatuses)window.klkRenderStatuses();
- },error => { showError("requestsList",error); showError("chatStatus",error); });
- outgoingRequestsUnsubscribe = db.collection("contactRequests").where("senderUid","==",uid).onSnapshot(snapshot => {
-  outgoingRequests.clear(); snapshot.docs.forEach(d => outgoingRequests.set(d.data().recipientUid,d.data())); renderRequests(); if(window.klkRenderStatuses)window.klkRenderStatuses();
- },error => showError("chatStatus",error));
+ incomingRequests.clear();outgoingRequests.clear();
+ renderRequests();
 }
 function loadPeople() {
  if (peopleUnsubscribe) peopleUnsubscribe();
@@ -1270,17 +1261,11 @@ function loadPeople() {
  });
 }
 async function sendContactRequest(otherUid, person) {
- const user = auth.currentUser; if (!user || !otherUid || otherUid === user.uid) return;
- const id = user.uid + "__" + otherUid;
- try {
-  await db.collection("contactRequests").doc(id).set({senderUid:user.uid,recipientUid:otherUid,senderEmail:user.email || "",senderName:user.displayName || (user.email || "Miembro").split("@")[0],recipientEmail:person.email || "",recipientName:person.displayName || "",status:"pending",createdAt:firebase.firestore.FieldValue.serverTimestamp()});
-  $("chatStatus").textContent = "Solicitud enviada.";
- } catch(error) { showError("chatStatus",error); }
+ if(!otherUid)return;
+ return openPrivateConversation(otherUid,(person&&person.displayName)||"Conversación");
 }
-async function respondToContactRequest(senderUid,status) {
- const id = senderUid + "__" + auth.currentUser.uid;
- try { await db.collection("contactRequests").doc(id).update({status}); $("chatStatus").textContent = status === "accepted" ? "Contacto aceptado. Ya pueden enviarse mensajes." : "Solicitud rechazada."; }
- catch(error) { showError("chatStatus",error); }
+async function respondToContactRequest() {
+ $("chatStatus").textContent="klk ya no utiliza solicitudes de amistad.";
 }
 async function updateRoomAvatar(otherUid) {
  const avatar=$("roomAvatar"); if(!avatar)return;
@@ -1294,7 +1279,6 @@ async function updateRoomAvatar(otherUid) {
 async function openPrivateConversation(otherUid, otherName) {
  const user = auth.currentUser;
  if (!user || !otherUid || otherUid === user.uid) return;
- if (!isInvitedContact(otherUid)) { $("chatStatus").textContent = "Envía una invitación para poder escribirle."; return; }
  const members = [user.uid,otherUid].sort(), conversationId = members.join("__");
  $("chatStatus").textContent = "Abriendo conversación privada...";
  try {
@@ -1307,7 +1291,7 @@ async function openPrivateConversation(otherUid, otherName) {
   $("chatStatus").textContent = "Conversación privada con " + otherName; loadMessages();
  } catch(error) { showError("chatStatus",error); }
 }
-$("showGroup").onclick = () => { $("chatStatus").textContent = "klk solo permite conversaciones privadas entre contactos aceptados."; };
+$("showGroup").onclick = () => { $("chatStatus").textContent = "klk permite conversaciones privadas entre miembros."; };
 function openActiveContactProfile(){if(!activeConversationPeerUid)return;const person=peopleCache.get(activeConversationPeerUid)||{displayName:activeConversationName||"Contacto"};openContactProfile(activeConversationPeerUid,person,"chat");}
 $("roomContactInfo").addEventListener("click",openActiveContactProfile);
 $("chatTitle").addEventListener("click",openActiveContactProfile);
@@ -1377,7 +1361,7 @@ function loadMessages() {
    const addMenuAction=(label,action)=>{const button=document.createElement("button");button.type="button";button.textContent=label;button.addEventListener("click",async event=>{event.stopPropagation();menu.hidden=true;menuButton.setAttribute("aria-expanded","false");await action();});menu.appendChild(button);};
    addMenuAction("↗ Reenviar",async()=>{
     const candidates=[...peopleCache.entries()].filter(([uid])=>uid!==auth.currentUser.uid&&isAcceptedContact(uid));
-    if(!candidates.length){$("chatStatus").textContent="No tienes otros contactos aceptados para reenviar.";return;}
+    if(!candidates.length){$("chatStatus").textContent="No hay otros miembros visibles para reenviar.";return;}
     const choice=window.prompt("Reenviar a:\n"+candidates.map(([uid,p],n)=>(n+1)+". "+(p.displayName||p.email||"Contacto")).join("\n")+"\n\nEscribe el número del contacto:");
     if(choice===null)return;const target=candidates[Number(choice)-1];if(!target){$("chatStatus").textContent="Número de contacto no válido.";return;}
     if(!["text","location","sticker"].includes(data.type)){ $("chatStatus").textContent="Por ahora puedes reenviar mensajes de texto, stickers y ubicaciones. Los archivos multimedia requieren una copia segura.";return;}
@@ -1442,7 +1426,7 @@ function syncComposerMode(){
 $("message").addEventListener("input",syncComposerMode);
 $("send").onclick = () => {
  const input=$("message"), text=input.value.trim(), user=auth&&auth.currentUser;
- if (!user || !activeConversationId) { $("chatStatus").textContent = "Selecciona un contacto que haya aceptado tu solicitud antes de enviar mensajes."; return; }
+ if (!user || !activeConversationId) { $("chatStatus").textContent = "Abre una conversación privada antes de enviar mensajes."; return; }
  if (!text || sending) return;
  const conversationId=activeConversationId;
  input.value="";
@@ -1506,7 +1490,7 @@ async function compressImage(file) {
 }
 async function uploadMedia(file, type, durationSeconds = null) {
  const user = auth && auth.currentUser;
- if (!user || !activeConversationId) { $("chatStatus").textContent = "Selecciona un contacto aceptado antes de compartir archivos."; return; }
+ if (!user || !activeConversationId) { $("chatStatus").textContent = "Abre una conversación privada antes de compartir archivos."; return; }
  if (!file || sending) return;
  if (type === "image" && !file.type.startsWith("image/")) { $("chatStatus").textContent = "Selecciona un archivo de imagen."; return; }
  if (type === "audio" && !file.type.startsWith("audio/")) { $("chatStatus").textContent = "No se pudo reconocer el formato del audio."; return; }
@@ -1688,12 +1672,9 @@ $("message").addEventListener("keydown", event => { if (event.key === "Enter") $
  $("closeStatusViewer").addEventListener("click",()=>{if(statusAdvanceTimer)clearTimeout(statusAdvanceTimer);statusAdvanceTimer=null;$("statusViewer").classList.remove("visible");});
  $("statusViewer").addEventListener("click",e=>{if(e.target===$("statusViewer"))$("closeStatusViewer").click();});
  async function refresh(){const user=auth&&auth.currentUser,feed=$("statusesFeed");if(!user||!feed)return;feed.innerHTML='<p class="hint">Cargando estados...</p>';try{
-  const visibleUids=new Set([user.uid]);
-  incomingRequests.forEach((request,uid)=>{if(request.status==="accepted")visibleUids.add(uid);});
-  outgoingRequests.forEach((request,uid)=>{if(request.status==="accepted")visibleUids.add(uid);});
-  const statusSnapshots=await Promise.all([...visibleUids].map(uid=>db.collection("statuses").where("uid","==",uid).get()));
   const now=Date.now();
-  const items=statusSnapshots.flatMap(snapshot=>snapshot.docs.map(d=>({id:d.id,...d.data()}))).filter(x=>x.expiresAt&&x.expiresAt.toMillis()>now).sort((a,b)=>(b.createdAt?.toMillis?.()||0)-(a.createdAt?.toMillis?.()||0));
+  const statusSnapshot=await db.collection("statuses").where("expiresAt",">",firebase.firestore.Timestamp.fromMillis(now)).get();
+  const items=statusSnapshot.docs.map(d=>({id:d.id,...d.data()})).filter(x=>x.expiresAt&&x.expiresAt.toMillis()>now).sort((a,b)=>(b.createdAt?.toMillis?.()||0)-(a.createdAt?.toMillis?.()||0));
   const statusGroups=new Map();items.forEach(status=>{if(!statusGroups.has(status.uid))statusGroups.set(status.uid,[]);statusGroups.get(status.uid).push(status);});
   currentStatuses=[...statusGroups.values()].sort((a,b)=>(b[b.length-1].createdAt?.toMillis?.()||0)-(a[a.length-1].createdAt?.toMillis?.()||0)).flatMap(group=>group.sort((a,b)=>(a.createdAt?.toMillis?.()||0)-(b.createdAt?.toMillis?.()||0)));
   feed.replaceChildren();if(!items.length){const p=document.createElement("p");p.className="hint";p.textContent="Todavía no hay estados. ¡Sé el primero en compartir uno!";feed.appendChild(p);return;}
@@ -1982,7 +1963,7 @@ $("shareInvite").addEventListener("click",async()=>{
   $("shareInvite").disabled=false;
  }
 });
-$("homeGroup").addEventListener("click",()=>{ $("chatStatus").textContent="klk funciona con conversaciones privadas entre contactos aceptados."; });
+$("homeGroup").addEventListener("click",()=>{ $("chatStatus").textContent="klk funciona con conversaciones privadas entre miembros."; });
 function klkPushView(view){try{history.pushState({klkView:view},"",location.href);}catch(error){console.warn("No se pudo registrar la navegación:",error);}}
 function toggleKlkSettings(){const panel=$("settingsPanel");const opening=panel.style.display!=="block";panel.style.display=opening?"block":"none";if(opening){panel.scrollTop=0;klkPushView("settings");}}
 window.addEventListener("popstate",()=>{

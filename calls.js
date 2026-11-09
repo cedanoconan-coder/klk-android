@@ -4,19 +4,41 @@
  const configuredTurn=Array.isArray(window.KLK_TURN_SERVERS)?window.KLK_TURN_SERVERS:[];
  const ICE_CONFIG={iceServers:[{urls:["stun:stun.l.google.com:19302","stun:stun1.l.google.com:19302"]},...configuredTurn]};
  let currentUid=null, incomingUnsub=null, activeCallUnsub=null, localStream=null, peer=null, callRef=null;
- let callPeople=new Map(), callIncomingRequests=new Map(), callOutgoingRequests=new Map();
- let callPeopleUnsub=null, callIncomingRequestsUnsub=null, callOutgoingRequestsUnsub=null;
+ let callPeople=new Map(), callDirectoryPeople=new Map(), callConversationPeople=new Map();
+ let callPeopleUnsub=null, callConversationUnsub=null;
  let callRole=null, callMode="audio", callState=null, callStarting=false, remoteCandidatesUnsub=null, localCandidatesUnsub=null, queuedCandidates=[];
  let incomingCall=null, incomingDocUnsub=null, ringTimeout=null, muted=false, cameraOff=false, ending=false, pendingLocalCandidates=[];
  const overlay=$("callOverlay");
  const setStatus=(message)=>{if($("callsStatus"))$("callsStatus").textContent=message||"";};
- function isCallContactAccepted(uid){return (callIncomingRequests.get(uid)||{}).status==="accepted"||(callOutgoingRequests.get(uid)||{}).status==="accepted";}
+ function isCallContactAccepted(uid){return callPeople.has(uid);}
  function acceptedPeople(){return [...callPeople.entries()].filter(([uid])=>uid!==currentUid&&isCallContactAccepted(uid));}
+ function updateCallPeople(){
+  callPeople=new Map(callConversationPeople);
+  for(const [peerUid,profile] of callDirectoryPeople)callPeople.set(peerUid,profile);
+  renderCallContacts();
+ }
  function watchCallContacts(uid){
-  [callPeopleUnsub,callIncomingRequestsUnsub,callOutgoingRequestsUnsub].forEach(stop=>{if(stop)stop();});
-  callPeopleUnsub=db.collection("users").onSnapshot(snapshot=>{callPeople.clear();snapshot.docs.forEach(doc=>callPeople.set(doc.id,doc.data()));renderCallContacts();},error=>{console.error("Directorio de llamadas:",error);$("callContacts").textContent="No se pudo cargar el directorio: "+error.message;});
-  callIncomingRequestsUnsub=db.collection("contactRequests").where("recipientUid","==",uid).onSnapshot(snapshot=>{callIncomingRequests.clear();snapshot.docs.forEach(doc=>callIncomingRequests.set(doc.data().senderUid,doc.data()));renderCallContacts();},error=>{console.error("Solicitudes recibidas para llamadas:",error);setStatus("No se pudieron consultar tus contactos: "+error.message);});
-  callOutgoingRequestsUnsub=db.collection("contactRequests").where("senderUid","==",uid).onSnapshot(snapshot=>{callOutgoingRequests.clear();snapshot.docs.forEach(doc=>callOutgoingRequests.set(doc.data().recipientUid,doc.data()));renderCallContacts();},error=>{console.error("Solicitudes enviadas para llamadas:",error);setStatus("No se pudieron consultar tus contactos: "+error.message);});
+  if(callPeopleUnsub){callPeopleUnsub();callPeopleUnsub=null;}
+  if(callConversationUnsub){callConversationUnsub();callConversationUnsub=null;}
+  callPeopleUnsub=db.collection("publicProfiles").where("directoryVisible","==",true).onSnapshot(snapshot=>{
+   callDirectoryPeople.clear();
+   snapshot.docs.forEach(doc=>callDirectoryPeople.set(doc.id,doc.data()));
+   updateCallPeople();
+  },error=>{
+   console.error("Directorio de llamadas:",error);
+   $("callContacts").textContent="No se pudo cargar el directorio: "+error.message;
+  });
+  callConversationUnsub=db.collection("conversations").where("members","array-contains",uid).onSnapshot(snapshot=>{
+   callConversationPeople.clear();
+   snapshot.docs.forEach(doc=>{
+    const peerUid=(doc.data().members||[]).find(member=>member!==uid);
+    if(peerUid)callConversationPeople.set(peerUid,{displayName:"Contacto"});
+   });
+   updateCallPeople();
+  },error=>{
+   console.error("Conversaciones disponibles para llamadas:",error);
+   setStatus("No se pudieron cargar los chats para llamadas: "+error.message);
+  });
  }
  function formatCallTime(value){
   if(!value)return "Fecha no disponible";
@@ -162,7 +184,7 @@
  function setTimeoutSafeCleanup(){window.setTimeout(cleanup,1600);}
  async function startCall(uid,name,mode){
   if(callRef||callStarting){setStatus("Ya tienes una llamada en curso o preparándose.");return;}
-  if(!auth||!auth.currentUser||!isCallContactAccepted(uid)){setStatus("Solo puedes llamar a contactos que hayan aceptado tu solicitud.");return;}
+  if(!auth||!auth.currentUser||!isCallContactAccepted(uid)){setStatus("Solo puedes llamar a miembros visibles en el directorio de klk.");return;}
   callStarting=true;
   try{
    callMode=mode;callRole="caller";showOverlay(name,mode==="video"?"Solicitando cámara y micrófono...":"Solicitando micrófono...");
@@ -262,7 +284,7 @@
  if(auth)auth.onAuthStateChanged(user=>{
   currentUid=user?user.uid:null;
   if(incomingUnsub){incomingUnsub();incomingUnsub=null;}
-  if(!user){if(callRef)endCall();cleanup();callPeople.clear();callIncomingRequests.clear();callOutgoingRequests.clear();[callPeopleUnsub,callIncomingRequestsUnsub,callOutgoingRequestsUnsub].forEach(stop=>{if(stop)stop();});callPeopleUnsub=callIncomingRequestsUnsub=callOutgoingRequestsUnsub=null;renderCallContacts();return;}
+  if(!user){if(callRef)endCall();cleanup();if(window.klkCallHistoryUnsubs){window.klkCallHistoryUnsubs.forEach(stop=>stop());window.klkCallHistoryUnsubs=[];}callPeople.clear();callDirectoryPeople.clear();callConversationPeople.clear();[callPeopleUnsub,callConversationUnsub].forEach(stop=>{if(stop)stop();});callPeopleUnsub=callConversationUnsub=null;renderCallContacts();return;}
   listenIncoming(user.uid);watchCallContacts(user.uid);watchCallHistory(user.uid);renderCallContacts();
  });
 
