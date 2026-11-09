@@ -309,6 +309,21 @@ body:has(#chat.room-open) main{padding:0!important;margin:0!important;max-width:
 #chat .chatFoot{display:none!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;border:0!important;overflow:hidden!important}
 #chat .chatFoot #chatStatus,#chat .chatFoot #logout{display:none!important}
 
+
+/* Ajustes visuales solicitados: portada de chats y navegación compacta */
+#login{max-width:460px;margin:24px auto;padding:26px 22px;border-radius:18px;box-shadow:0 8px 28px #10201c12}
+#login h2{font-size:25px;letter-spacing:-.4px;color:#111b21}
+#login #enter{background:#128c7e}
+.homeTitle h1{font-size:30px}
+.homeActions{gap:14px}
+.homeActions #profileButton,.homeActions #quickLogout,.homeActions #inviteMember{display:none!important}
+.homeActions #homeCamera,.homeActions #homeMenu{display:grid;place-items:center;width:38px;height:40px;font-size:25px}
+.homeBottom{left:0;right:0;bottom:0;border-radius:18px 18px 0 0;padding:8px 10px calc(8px + env(safe-area-inset-bottom));grid-template-columns:repeat(4,minmax(0,1fr));box-shadow:0 -2px 14px #10201c12}
+.homeBottom button{min-height:58px;font-size:11px}
+#recordAudio{touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;flex:0 0 48px;width:48px;height:48px;border-radius:50%;background:#128c7e;color:#fff;font-size:22px;margin:0;padding:0}
+#recordAudio.recording{background:#d93025;transform:scale(1.06);box-shadow:0 0 0 6px #d9302522}
+#sendAudio{background:#128c7e;color:#fff}
+@media(max-width:520px){main{padding-left:0;padding-right:0}#login{margin:18px 14px;padding:24px 20px}#chat{border-radius:0}}
 </style>
 </head>
 <body>
@@ -397,10 +412,9 @@ body:has(#chat.room-open) main{padding:0!important;margin:0!important;max-width:
 
  <nav class="homeBottom" aria-label="Navegación principal" role="navigation">
   <button type="button" class="active" data-tab="chats" aria-current="page"><span class="navIcon" aria-hidden="true">▤</span><span class="navLabel">Chats</span></button>
-  <button type="button" data-tab="contacts"><span class="navIcon" aria-hidden="true">👥</span><span class="navLabel">Contactos</span></button>
   <button type="button" data-tab="calls"><span class="navIcon" aria-hidden="true">☎</span><span class="navLabel">Llamadas</span></button>
   <button type="button" data-tab="updates"><span class="navIcon" aria-hidden="true">◉</span><span class="navLabel">Novedades</span></button>
-  <button type="button" data-tab="tools"><span class="navIcon" aria-hidden="true">☷</span><span class="navLabel">Más</span></button>
+  <button type="button" data-tab="tools"><span class="navIcon" aria-hidden="true">☷</span><span class="navLabel">Herramientas</span></button>
  </nav>
 </div>
 
@@ -1098,44 +1112,61 @@ $("takePhoto").onclick = () => $("cameraInput").click();
 $("galleryInput").addEventListener("change", async event => { const file = event.target.files && event.target.files[0]; if (file) await uploadMedia(file,"image"); event.target.value = ""; });
 $("cameraInput").addEventListener("change", async event => { const file = event.target.files && event.target.files[0]; if (file) await uploadMedia(file,"image"); event.target.value = ""; });
 $("shareDocument").addEventListener("click",()=>$("documentInput").click());$("documentInput").addEventListener("change",async event=>{const file=event.target.files&&event.target.files[0];if(file)await uploadMedia(file,"file");event.target.value="";});
-$("recordAudio").addEventListener("click", async () => {
- if (mediaRecorder && mediaRecorder.state === "recording") {
-  mediaRecorder.stop();
-  return;
- }
+let voiceHoldActive = false;
+let voiceStartPending = false;
+async function startVoiceHold() {
+ if (mediaRecorder || voiceStartPending) return;
  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.MediaRecorder) {
-  $("recordStatus").textContent = "Este teléfono o navegador no permite grabar audio aquí. Actualiza Chrome y vuelve a intentarlo.";
+  $("recordStatus").textContent = "Este teléfono o navegador no permite grabar audio. Actualiza Chrome y vuelve a intentarlo.";
   return;
  }
+ voiceStartPending = true;
  try {
-  audioStream = await navigator.mediaDevices.getUserMedia({audio:true});
+  const stream = await navigator.mediaDevices.getUserMedia({audio:true});
+  if (!voiceHoldActive) { stream.getTracks().forEach(track=>track.stop()); return; }
+  audioStream = stream;
   const mimeType = ["audio/webm;codecs=opus","audio/webm","audio/mp4"].find(type => MediaRecorder.isTypeSupported(type)) || "";
-  mediaRecorder = new MediaRecorder(audioStream, mimeType ? {mimeType} : undefined);
+  mediaRecorder = new MediaRecorder(stream, mimeType ? {mimeType} : undefined);
+  const recorder = mediaRecorder;
   const chunks = [];
-  mediaRecorder.ondataavailable = event => { if (event.data && event.data.size) chunks.push(event.data); };
-  mediaRecorder.onstop = () => {
-   const type = mediaRecorder.mimeType || "audio/webm";
+  recorder.ondataavailable = event => { if (event.data && event.data.size) chunks.push(event.data); };
+  recorder.onstop = () => {
+   const type = recorder.mimeType || "audio/webm";
    audioBlob = new Blob(chunks,{type});
    $("sendAudio").disabled = !audioBlob.size;
-   $("recordAudio").textContent = "🎙️ Grabar otra vez";
+   $("recordAudio").textContent = "🎙";
    const seconds = Math.max(1,Math.round((Date.now()-audioStartedAt)/1000));
-   $("recordStatus").textContent = "Audio grabado (" + seconds + " s). Pulsa «Enviar nota de voz».";
-   if (audioStream) audioStream.getTracks().forEach(track => track.stop());
-   audioStream = null;
-   mediaRecorder = null;
-   $("recordAudio").disabled = false;
+   $("recordStatus").textContent = audioBlob.size ? "Nota de voz lista (" + seconds + " s). Pulsa Enviar para compartirla." : "Grabación cancelada.";
+   if (audioStream) audioStream.getTracks().forEach(track=>track.stop());
+   audioStream = null; mediaRecorder = null; $("recordAudio").disabled = false;
    $("sendAudio").dataset.duration = String(seconds);
   };
-  mediaRecorder.start();
   audioStartedAt = Date.now();
-  $("recordAudio").textContent = "⏹️ Detener grabación";
-  $("recordStatus").textContent = "Grabando... Pulsa detener cuando termines.";
+  recorder.start();
+  $("recordAudio").classList.add("recording");
+  $("recordStatus").textContent = "🔴 Grabando… suelta el botón para terminar.";
+  if (!voiceHoldActive && recorder.state === "recording") recorder.stop();
  } catch(error) {
   $("recordStatus").textContent = error.name === "NotAllowedError" ? "Permite el acceso al micrófono para grabar notas de voz." : "No se pudo iniciar la grabación: " + error.message;
-  if (audioStream) audioStream.getTracks().forEach(track => track.stop());
+  if (audioStream) audioStream.getTracks().forEach(track=>track.stop());
   audioStream = null;
- }
+ } finally { voiceStartPending = false; }
+}
+function stopVoiceHold() {
+ voiceHoldActive = false;
+ $("recordAudio").classList.remove("recording");
+ if (mediaRecorder && mediaRecorder.state === "recording") mediaRecorder.stop();
+}
+$("recordAudio").addEventListener("pointerdown", event => {
+ event.preventDefault();
+ if (event.button !== undefined && event.button !== 0) return;
+ voiceHoldActive = true;
+ $("recordAudio").setPointerCapture?.(event.pointerId);
+ startVoiceHold();
 });
+["pointerup","pointercancel","lostpointercapture"].forEach(name=>$("recordAudio").addEventListener(name,stopVoiceHold));
+$("recordAudio").addEventListener("contextmenu",event=>event.preventDefault());
+$("recordAudio").addEventListener("click",event=>event.preventDefault());
 $("sendAudio").onclick = async () => {
  if (!audioBlob) return;
  const ext = audioBlob.type.includes("mp4") ? "m4a" : "webm";
