@@ -1130,16 +1130,19 @@ async function startVoiceHold() {
   const recorder = mediaRecorder;
   const chunks = [];
   recorder.ondataavailable = event => { if (event.data && event.data.size) chunks.push(event.data); };
-  recorder.onstop = () => {
+  recorder.onstop = async () => {
    const type = recorder.mimeType || "audio/webm";
    audioBlob = new Blob(chunks,{type});
-   $("sendAudio").disabled = !audioBlob.size;
    $("recordAudio").textContent = "🎙";
    const seconds = Math.max(1,Math.round((Date.now()-audioStartedAt)/1000));
-   $("recordStatus").textContent = audioBlob.size ? "Nota de voz lista (" + seconds + " s). Pulsa Enviar para compartirla." : "Grabación cancelada.";
    if (audioStream) audioStream.getTracks().forEach(track=>track.stop());
    audioStream = null; mediaRecorder = null; $("recordAudio").disabled = false;
-   $("sendAudio").dataset.duration = String(seconds);
+   if (!audioBlob.size) { $("recordStatus").textContent = "Grabación cancelada."; return; }
+   const ext = type.includes("mp4") ? "m4a" : "webm";
+   const voiceFile = new File([audioBlob],"nota-de-voz." + ext,{type});
+   $("recordStatus").textContent = "Enviando nota de voz…";
+   await uploadMedia(voiceFile,"audio",seconds);
+   audioBlob = null;
   };
   audioStartedAt = Date.now();
   recorder.start();
