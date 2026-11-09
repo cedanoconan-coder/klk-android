@@ -50,7 +50,8 @@
    const title=document.createElement("strong");title.textContent=(data.mode==="video"?"▣ Videollamada":"☎ Llamada de voz")+" · "+name;
    const status=document.createElement("small");
    const missed=!outgoing&&!data.connectedAt;
-   status.textContent=(missed?"Perdida":outgoing?"Realizada":"Recibida")+" · "+formatCallTime(data.createdAt)+(callDuration(data)?" · "+callDuration(data):"");
+   const outcome=missed?"Perdida":outgoing&&!data.connectedAt?(data.status==="rejected"?"Rechazada":"Sin respuesta"):outgoing?"Realizada":"Recibida";
+   status.textContent=outcome+" · "+formatCallTime(data.createdAt)+(callDuration(data)?" · "+callDuration(data):"");
    if(missed)status.classList.add("callMissed");
    info.append(title,status);row.append(info);
    const again=document.createElement("button");again.type="button";again.className="secondary";again.textContent="↗";again.title="Volver a llamar";again.setAttribute("aria-label","Volver a llamar a "+name);
