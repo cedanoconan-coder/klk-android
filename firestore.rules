@@ -225,10 +225,9 @@ service cloud.firestore {
     match /statuses/{statusId} {
       allow read: if signedIn();
       allow create: if signedIn()
-        && request.resource.data.keys().hasOnly(['uid','email','displayName','type','text','storagePath','mimeType','size','createdAt','expiresAt'])
-        && request.resource.data.keys().hasAll(['uid','email','displayName','type','text','createdAt','expiresAt'])
+        && request.resource.data.keys().hasOnly(['uid','displayName','type','text','storagePath','mimeType','size','createdAt','expiresAt'])
+        && request.resource.data.keys().hasAll(['uid','displayName','type','text','createdAt','expiresAt'])
         && request.resource.data.uid == request.auth.uid
-        && request.resource.data.email == request.auth.token.email
         && request.resource.data.displayName is string
         && request.resource.data.displayName.size() <= 100
         && request.resource.data.type in ['text','image']
