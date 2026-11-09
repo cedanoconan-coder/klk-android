@@ -1547,7 +1547,7 @@ if (window.matchMedia("(display-mode: standalone)").matches || window.navigator.
  window.klkStartIncomingCallSound=startCallRingtone;
  window.klkStopIncomingCallSound=stopCallRingtone;
  function tone(){playChime();}
- window.klkNotifyIncoming=(data,id)=>{if(!data||data.uid===window.klkCurrentUid)return;if(prefs.vibration&&navigator.vibrate)navigator.vibrate([100,60,100]);if("Notification"in window&&Notification.permission==="granted"&&document.visibilityState!=="visible"){const body=prefs.preview?(data.text||(data.type==="image"?"📷 Foto":data.type==="audio"?"🎙️ Nota de voz":"Nuevo mensaje")):"Tienes un mensaje nuevo";try{const title="klk · "+(data.displayName||data.email||"Mensaje nuevo");if("serviceWorker"in navigator){navigator.serviceWorker.ready.then(registration=>registration.showNotification(title,{body,tag:"klk-"+id,icon:"./icon.svg",badge:"./icon.svg",silent:false})).catch(error=>console.warn("No se pudo mostrar la notificación del sistema:",error));}else{new Notification(title,{body,tag:"klk-"+id});}}catch(e){console.warn("Notificación del sistema no disponible:",e);}}};
+ window.klkNotifyIncoming=(data,id)=>{if(!data||data.uid===window.klkCurrentUid)return;if(prefs.vibration&&navigator.vibrate)navigator.vibrate([100,60,100]);};
  window.klkSetCurrentUid=uid=>{window.klkCurrentUid=uid||null;};apply();permissionButton();refreshCustomSounds();
 })();
 
