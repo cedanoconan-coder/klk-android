@@ -12,7 +12,8 @@ import {
   getDoc,
   getDocs,
   setDoc,
-  Timestamp
+  Timestamp,
+  serverTimestamp
 } from "firebase/firestore";
 
 let testEnv;
@@ -111,4 +112,38 @@ test("solo permite leer mensajes a miembros de la conversación", async () => {
     outsiderDb,
     "conversations/member-1__member-2/messages/message-1"
   )));
+});
+
+test("permite enviar mensajes de texto con el nombre del remitente a contactos aceptados", async () => {
+  await testEnv.withSecurityRulesDisabled(async context => {
+    const db = context.firestore();
+    await setDoc(doc(db, "contactRequests/member-1__member-2"), {
+      senderUid: "member-1", recipientUid: "member-2", status: "accepted"
+    });
+    await setDoc(doc(db, "conversations/member-1__member-2"), {
+      members: ["member-1", "member-2"], createdAt: Timestamp.now()
+    });
+  });
+  const db = testEnv.authenticatedContext("member-1", {email: "member1@example.com"}).firestore();
+  await assertSucceeds(setDoc(doc(db, "conversations/member-1__member-2/messages/message-sent"), {
+    type: "text", text: "Hola", email: "member1@example.com", uid: "member-1",
+    displayName: "Miembro Uno", createdAt: serverTimestamp()
+  }));
+});
+
+test("rechaza nombres de remitente inválidos en los mensajes", async () => {
+  await testEnv.withSecurityRulesDisabled(async context => {
+    const db = context.firestore();
+    await setDoc(doc(db, "contactRequests/member-1__member-2"), {
+      senderUid: "member-1", recipientUid: "member-2", status: "accepted"
+    });
+    await setDoc(doc(db, "conversations/member-1__member-2"), {
+      members: ["member-1", "member-2"], createdAt: Timestamp.now()
+    });
+  });
+  const db = testEnv.authenticatedContext("member-1", {email: "member1@example.com"}).firestore();
+  await assertFails(setDoc(doc(db, "conversations/member-1__member-2/messages/message-invalid"), {
+    type: "text", text: "No debe enviarse", email: "member1@example.com", uid: "member-1",
+    displayName: 123, createdAt: serverTimestamp()
+  }));
 });
