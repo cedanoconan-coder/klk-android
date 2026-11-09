@@ -922,7 +922,20 @@ async function uploadProfilePhoto(file) {
  } finally { button.disabled = false; }
 }
 $("profileButton").addEventListener("click", openKlkProfilePanel);
-$("profileChangeCover").addEventListener("click", ()=>$("profileCoverInput").click());
+document.addEventListener("click",event=>{
+ const coverButton=event.target&&event.target.closest?event.target.closest("#profileChangeCover"):null;
+ if(!coverButton)return;
+ event.preventDefault();
+ const picker=$("profileCoverInput");
+ if(!picker){$("profileStatus").textContent="No se encontró el selector de imágenes.";return;}
+ try{
+  if(typeof picker.showPicker==="function")picker.showPicker();
+  else picker.click();
+ }catch(error){
+  console.warn("showPicker no disponible; usando apertura alternativa:",error);
+  try{picker.click();}catch(fallbackError){$("profileStatus").textContent="No se pudo abrir la galería. Prueba desde Chrome.";}
+ }
+},true);
 
 async function uploadProfileCover(file) {
  const user=auth&&auth.currentUser;if(!user||!file)return;
