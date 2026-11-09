@@ -95,11 +95,26 @@ service cloud.firestore {
           && (!request.resource.data.keys().hasAny(['photoPath']) || (request.resource.data.photoPath is string && request.resource.data.photoPath.size() <= 500))
           && (!request.resource.data.keys().hasAny(['coverPath']) || (request.resource.data.coverPath is string && request.resource.data.coverPath.size() <= 500));
       }
+      function validPublicProfileUpdate() {
+        let changed = request.resource.data.diff(resource.data).affectedKeys();
+        return signedIn()
+          && request.auth.uid == userId
+          && request.resource.data.uid == userId
+          && changed.hasOnly(['uid','displayName','about','mood','photoPath','coverPath','directoryVisible','updatedAt'])
+          && (!changed.hasAny(['displayName']) || (request.resource.data.displayName is string && request.resource.data.displayName.size() >= 2 && request.resource.data.displayName.size() <= 100))
+          && (!changed.hasAny(['directoryVisible']) || request.resource.data.directoryVisible is bool)
+          && (!changed.hasAny(['about']) || (request.resource.data.about is string && request.resource.data.about.size() <= 139))
+          && (!changed.hasAny(['mood']) || (request.resource.data.mood is string && request.resource.data.mood.size() <= 40))
+          && (!changed.hasAny(['photoPath']) || (request.resource.data.photoPath is string && request.resource.data.photoPath.size() <= 500))
+          && (!changed.hasAny(['coverPath']) || (request.resource.data.coverPath is string && request.resource.data.coverPath.size() <= 500))
+          && (!changed.hasAny(['updatedAt']) || request.resource.data.updatedAt == request.time);
+      }
       allow list: if signedIn() && resource.data.directoryVisible == true;
       allow get: if signedIn() && (request.auth.uid == userId || resource.data.directoryVisible == true);
       allow create: if validPublicProfile();
-      allow update: if validPublicProfile()
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['uid','displayName','about','mood','photoPath','coverPath','directoryVisible','updatedAt']);
+      // En documentos antiguos, validar solo los campos modificados sin bloquear
+      // la actualización por campos heredados que esta versión ya no utiliza.
+      allow update: if validPublicProfileUpdate();
       allow delete: if false;
     }
 
