@@ -245,7 +245,15 @@ html[data-density="comfortable"] .chatRow,html[data-density="comfortable"] #peop
 #chat.room-open .messageMeta{display:flex;justify-content:flex-end;align-items:center;gap:4px;min-height:14px;margin-top:2px;color:#66736f;font-size:10px;line-height:1}
 #chat.room-open .messageTick{color:#89969b;font-size:13px;font-weight:800;letter-spacing:-3px;margin-right:3px}#chat.room-open .messageTick.read{color:#1684c7}
 #chat.room-open .msg a{display:inline-block;margin:5px 0;color:#075e54;overflow-wrap:anywhere}
-\n/* Cabecera de conversación estilo WhatsApp, conservando los servicios reales de klk */\n#chat.room-open .chatTop{background:#075e54;color:#fff;padding:10px 12px;box-shadow:0 2px 5px #0002}\n#chat.room-open .chatHeading{display:flex;align-items:center;gap:8px;min-width:0}\n#chat.room-open .roomIdentity{flex:1;min-width:0}\n#chat.room-open .roomIdentity h2{margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#fff;font-size:16px;font-weight:650}\n#chat.room-open .roomIdentity #who{margin:3px 0 0;color:#d5eee8;font-size:11px}\n#chat.room-open .roomActions{display:flex;align-items:center;gap:2px}\n#chat.room-open .roomActions button,#chat.room-open .chatBack{width:38px;height:38px;min-width:38px;margin:0;padding:0;border-radius:50%;background:transparent;color:#fff;font-size:20px}\n#chat.room-open .settingsToggle{width:auto;margin:0;padding:8px 9px;border-radius:20px;background:#ffffff1c;color:#fff;font-size:13px}\n#chat.room-open #messages{min-height:180px}\n#chat.room-open .composer{position:sticky;bottom:0;z-index:4;gap:7px;padding:9px;background:#f0f2f5;border-top:1px solid #dfe4e7}\n#chat.room-open .composer input{min-width:0;border:0;border-radius:22px;background:#fff;padding:12px 15px;box-shadow:none}\n#chat.room-open .composer #pickPhoto{width:42px;min-width:42px;height:42px;margin:0;padding:0;border-radius:50%;background:#fff;color:#54656f;font-size:22px}\n#chat.room-open .composer #send{width:44px;min-width:44px;height:44px;margin:0;padding:0;border-radius:50%;background:#00a884;font-size:19px}\n#chat.room-open #mediaActions{padding:5px 9px;background:#f0f2f5}\n@media(max-width:390px){#chat.room-open .roomActions button{width:34px;min-width:34px}#chat.room-open .settingsToggle{font-size:0;width:34px;height:34px;padding:0}#chat.room-open .settingsToggle:after{content:"⚙";font-size:17px}}\n
+\n/* Cabecera de conversación estilo WhatsApp, conservando los servicios reales de klk */\n#chat.room-open .chatTop{background:#075e54;color:#fff;padding:10px 12px;box-shadow:0 2px 5px #0002}\n#chat.room-open .chatHeading{display:flex;align-items:center;gap:8px;min-width:0}\n#chat.room-open .roomIdentity{flex:1;min-width:0}\n#chat.room-open .roomIdentity h2{margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#fff;font-size:16px;font-weight:650}\n#chat.room-open .roomIdentity #who{margin:3px 0 0;color:#d5eee8;font-size:11px}\n#chat.room-open .roomActions{display:flex;align-items:center;gap:2px}\n#chat.room-open .roomActions button,#chat.room-open .chatBack{width:38px;height:38px;min-width:38px;margin:0;padding:0;border-radius:50%;background:transparent;color:#fff;font-size:20px}\n#chat.room-open .settingsToggle{width:auto;margin:0;padding:8px 9px;border-radius:20px;background:#ffffff1c;color:#fff;font-size:13px}\n#chat.room-open #messages{min-height:180px}
+#chat.room-open .msg{position:relative;padding-right:38px}
+.messageMenuToggle{position:absolute;right:5px;top:5px;width:28px;height:28px;margin:0;padding:0;border:0;border-radius:50%;background:transparent!important;color:var(--klk-muted);font-size:19px;line-height:1}
+.messageMenu{position:absolute;z-index:12;right:7px;top:34px;min-width:190px;padding:6px;background:var(--klk-surface);border:1px solid var(--klk-line);border-radius:13px;box-shadow:0 8px 24px #0003}
+.messageMenu button{display:block;width:100%;margin:0;padding:11px 12px;border:0;border-radius:8px;background:transparent!important;color:var(--klk-text);text-align:left;font-size:14px;font-weight:500}
+.messageMenu button:active{background:var(--klk-soft)!important}
+.messageMenu[hidden]{display:none}
+#shareLocation{background:var(--klk-soft)!important;color:var(--klk-accent)!important}
+\n#chat.room-open .composer{position:sticky;bottom:0;z-index:4;gap:7px;padding:9px;background:#f0f2f5;border-top:1px solid #dfe4e7}\n#chat.room-open .composer input{min-width:0;border:0;border-radius:22px;background:#fff;padding:12px 15px;box-shadow:none}\n#chat.room-open .composer #pickPhoto{width:42px;min-width:42px;height:42px;margin:0;padding:0;border-radius:50%;background:#fff;color:#54656f;font-size:22px}\n#chat.room-open .composer #send{width:44px;min-width:44px;height:44px;margin:0;padding:0;border-radius:50%;background:#00a884;font-size:19px}\n#chat.room-open #mediaActions{padding:5px 9px;background:#f0f2f5}\n@media(max-width:390px){#chat.room-open .roomActions button{width:34px;min-width:34px}#chat.room-open .settingsToggle{font-size:0;width:34px;height:34px;padding:0}#chat.room-open .settingsToggle:after{content:"⚙";font-size:17px}}\n
 /* Rediseño de conversación klk: referencia visual solicitada */
 #chat.room-open{background:#f7f4ec}
 #chat.room-open .chatTop{background:#fff;color:#172126;padding:12px 14px;box-shadow:0 1px 3px #00000012}
@@ -506,6 +514,7 @@ body:has(#chat.room-open) main{padding:0!important;margin:0!important;max-width:
 <div id="mediaActions">
  <button id="shareDocument" type="button">📄 Documento</button>
  <button id="sendAudio" type="button" disabled>Enviar audio</button>
+ <button id="shareLocation" type="button">📍 Ubicación</button>
 </div>
 <input id="galleryInput" type="file" accept="image/*" hidden>
 <input id="cameraInput" type="file" accept="image/*" capture="environment" hidden><input id="documentInput" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip" hidden>
@@ -1222,6 +1231,7 @@ function loadMessages() {
   if (snapshot.empty) { $("messages").textContent = "Todavía no hay mensajes. ¡Envía el primero!"; return; }
   for (const doc of snapshot.docs) {
    const data = doc.data(), item = document.createElement("div");
+   if (Array.isArray(data.deletedFor) && auth.currentUser && data.deletedFor.includes(auth.currentUser.uid)) continue;
    item.className = "msg" + (auth.currentUser && data.uid === auth.currentUser.uid ? " mine" : "");
    const sender = document.createElement("b");
    const senderProfile = data.uid ? peopleCache.get(data.uid) : null;
@@ -1240,6 +1250,40 @@ function loadMessages() {
    } else {
     const body = document.createElement("p"); body.textContent = data.text || (data.type === "image" ? "📷 Foto" : data.type === "audio" ? "🎙️ Nota de voz" : ""); item.appendChild(body);
    }
+   if (data.type === "location" && Number.isFinite(data.latitude) && Number.isFinite(data.longitude)) {
+    const mapLink=document.createElement("a");mapLink.href="https://www.google.com/maps?q="+encodeURIComponent(data.latitude+","+data.longitude);mapLink.target="_blank";mapLink.rel="noopener";mapLink.textContent="📍 Ver ubicación compartida";item.appendChild(mapLink);
+   }
+   const menuButton=document.createElement("button");menuButton.type="button";menuButton.className="messageMenuToggle";menuButton.textContent="⋮";menuButton.setAttribute("aria-label","Opciones del mensaje");menuButton.setAttribute("aria-expanded","false");
+   const menu=document.createElement("div");menu.className="messageMenu";menu.hidden=true;
+   const addMenuAction=(label,action)=>{const button=document.createElement("button");button.type="button";button.textContent=label;button.addEventListener("click",async event=>{event.stopPropagation();menu.hidden=true;menuButton.setAttribute("aria-expanded","false");await action();});menu.appendChild(button);};
+   addMenuAction("↗ Reenviar",async()=>{
+    const candidates=[...peopleCache.entries()].filter(([uid])=>uid!==auth.currentUser.uid&&isAcceptedContact(uid));
+    if(!candidates.length){$("chatStatus").textContent="No tienes otros contactos aceptados para reenviar.";return;}
+    const choice=window.prompt("Reenviar a:\n"+candidates.map(([uid,p],n)=>(n+1)+". "+(p.displayName||p.email||"Contacto")).join("\n")+"\n\nEscribe el número del contacto:");
+    if(choice===null)return;const target=candidates[Number(choice)-1];if(!target){$("chatStatus").textContent="Número de contacto no válido.";return;}
+    if(!["text","location"].includes(data.type)){ $("chatStatus").textContent="Por ahora puedes reenviar mensajes de texto y ubicaciones. Los archivos multimedia requieren una copia segura.";return;}
+    const ids=[auth.currentUser.uid,target[0]].sort();const targetConversation=ids.join("__");
+    try{
+     const conversationRef=db.collection("conversations").doc(targetConversation);const conversationSnap=await conversationRef.get();
+     if(!conversationSnap.exists)await conversationRef.set({members:ids,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+     const payload={type:data.type,email:auth.currentUser.email||"",displayName:(peopleCache.get(auth.currentUser.uid)||{}).displayName||(auth.currentUser.email||"Miembro").split("@")[0],uid:auth.currentUser.uid,createdAt:firebase.firestore.FieldValue.serverTimestamp()};
+     if(data.type==="text")payload.text=data.text;
+     if(data.type==="location"){payload.latitude=data.latitude;payload.longitude=data.longitude;}
+     const sent=await db.collection("conversations").doc(targetConversation).collection("messages").add(payload);
+     void sendKlkPushForMessage(targetConversation,sent.id);$("chatStatus").textContent="Mensaje reenviado a "+(target[1].displayName||"tu contacto")+".";
+    }catch(error){showError("chatStatus",error);}
+   });
+   addMenuAction("Eliminar para mí",async()=>{
+    try{await doc.ref.update({deletedFor:firebase.firestore.FieldValue.arrayUnion(auth.currentUser.uid)});$("chatStatus").textContent="Mensaje eliminado para ti.";}
+    catch(error){showError("chatStatus",error);}
+   });
+   if(data.uid===auth.currentUser.uid)addMenuAction("Eliminar para todos",async()=>{
+    if(!window.confirm("¿Eliminar este mensaje para todos los participantes?"))return;
+    try{await doc.ref.delete();$("chatStatus").textContent="Mensaje eliminado para todos.";}
+    catch(error){showError("chatStatus",error);}
+   });
+   menuButton.addEventListener("click",event=>{event.stopPropagation();document.querySelectorAll(".messageMenu").forEach(other=>{if(other!==menu)other.hidden=true;});const opening=menu.hidden;menu.hidden=!opening;menuButton.setAttribute("aria-expanded",String(opening));});
+   item.appendChild(menuButton);item.appendChild(menu);
    const meta=document.createElement("div");meta.className="messageMeta";
    const time=document.createElement("time");time.dateTime=data.createdAt&&typeof data.createdAt.toDate==="function"?data.createdAt.toDate().toISOString():"";time.textContent=formatMessageTime(data.createdAt);meta.appendChild(time);
    if(item.classList.contains("mine")){const tick=document.createElement("span");const peerUid=activeConversationPeerUid||activeConversationId.split("__").find(uid=>uid!==auth.currentUser.uid);const isRead=Array.isArray(data.readBy)&&data.readBy.includes(peerUid);tick.className="messageTick"+(isRead?" read":"");tick.setAttribute("aria-label",isRead?"Leído":"Enviado");tick.textContent=isRead?"✓✓":"✓";meta.appendChild(tick);}
@@ -1250,6 +1294,24 @@ function loadMessages() {
   $("messages").scrollTop = $("messages").scrollHeight;
  }, error => showError("chatStatus", error));
 }
+$("shareLocation").addEventListener("click",()=>{
+ const user=auth&&auth.currentUser;
+ if(!user||!activeConversationId){$("chatStatus").textContent="Abre una conversación antes de compartir tu ubicación.";return;}
+ if(!navigator.geolocation){$("chatStatus").textContent="Este dispositivo no permite obtener la ubicación desde el navegador.";return;}
+ if(!window.confirm("¿Deseas compartir tu ubicación actual una sola vez con este contacto?"))return;
+ const button=$("shareLocation");button.disabled=true;$("chatStatus").textContent="Obteniendo tu ubicación actual...";
+ navigator.geolocation.getCurrentPosition(async position=>{
+  try{
+   const latitude=position.coords.latitude,longitude=position.coords.longitude;
+   const sent=await messagesCollection().add({type:"location",latitude,longitude,email:user.email||"",displayName:(peopleCache.get(user.uid)||{}).displayName||(user.email||"Miembro").split("@")[0],uid:user.uid,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+   void sendKlkPushForMessage(activeConversationId,sent.id);$("chatStatus").textContent="Ubicación compartida una sola vez.";
+  }catch(error){showError("chatStatus",error);}
+  finally{button.disabled=false;}
+ },error=>{
+  button.disabled=false;$("chatStatus").textContent=error.code===1?"No diste permiso para compartir tu ubicación.":error.code===3?"No se pudo obtener la ubicación a tiempo. Inténtalo de nuevo.":"No se pudo obtener tu ubicación.";
+ },{enableHighAccuracy:false,timeout:15000,maximumAge:0});
+});
+document.addEventListener("click",event=>{if(!event.target.closest(".msg"))document.querySelectorAll(".messageMenu").forEach(menu=>menu.hidden=true);});
 function syncComposerMode(){
  const hasText=$("message").value.trim().length>0;
  ["pickPhoto","takePhoto","recordAudio"].forEach(id=>{const control=$(id);if(control)control.disabled=hasText||sending;});
