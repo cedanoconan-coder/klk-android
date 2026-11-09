@@ -145,6 +145,35 @@ service cloud.firestore {
       }
     }
 
+    match /statuses/{statusId} {
+      allow read: if signedIn();
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['uid','email','displayName','type','text','storagePath','mimeType','size','createdAt','expiresAt'])
+        && request.resource.data.keys().hasAll(['uid','email','displayName','type','text','createdAt','expiresAt'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.displayName is string
+        && request.resource.data.displayName.size() <= 100
+        && request.resource.data.type in ['text','image']
+        && request.resource.data.text is string
+        && request.resource.data.text.size() <= 500
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.expiresAt is timestamp
+        && request.resource.data.expiresAt > request.time + duration.value(23, 'h')
+        && request.resource.data.expiresAt <= request.time + duration.value(25, 'h')
+        && ((request.resource.data.type == 'text' && !request.resource.data.keys().hasAny(['storagePath','mimeType','size']))
+          || (request.resource.data.type == 'image'
+            && request.resource.data.keys().hasAll(['storagePath','mimeType','size'])
+            && request.resource.data.storagePath is string
+            && request.resource.data.storagePath.matches('statuses/' + request.auth.uid + '/[^/]+')
+            && request.resource.data.mimeType.matches('image/.*')
+            && request.resource.data.size is int
+            && request.resource.data.size > 0
+            && request.resource.data.size <= 10485760));
+      allow delete: if signedIn() && resource.data.uid == request.auth.uid;
+      allow update: if false;
+    }
+
     match /calls/{callId} {
       function callParticipant() {
         return signedIn() && (resource.data.callerUid == request.auth.uid || resource.data.calleeUid == request.auth.uid);
