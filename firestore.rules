@@ -63,13 +63,13 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      // The signed-in member directory is required by the Personas screen.
-      allow read: if signedIn();
+      // Datos privados: solo el propietario puede leer su propio documento.
+      allow read: if signedIn() && request.auth.uid == userId;
 
       // New profiles may contain only fields managed by klk.
       allow create: if validUserProfile(userId)
         && validInvitationForProfile()
-        && request.resource.data.keys().hasOnly(['uid','email','displayName','photoPath','updatedAt','inviteCode','invitedBy'])
+        && request.resource.data.keys().hasOnly(['uid','email','displayName','photoPath','coverPath','about','mood','directoryVisible','updatedAt','inviteCode','invitedBy'])
         && request.resource.data.keys().hasAll(['uid','email','displayName','updatedAt','inviteCode','invitedBy'])
         && request.resource.data.updatedAt == request.time;
 
@@ -77,12 +77,37 @@ service cloud.firestore {
       // photoPath without failing because older documents contain old fields.
       allow update: if validUserProfile(userId)
         && request.resource.data.diff(resource.data).affectedKeys()
-          .hasOnly(['uid','email','displayName','photoPath','updatedAt'])
+          .hasOnly(['uid','email','displayName','photoPath','coverPath','about','mood','directoryVisible','updatedAt'])
         && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['updatedAt'])
           || request.resource.data.updatedAt == request.time);
 
       allow delete: if false;
     }
+    match /publicProfiles/{userId} {
+      function validPublicProfile() {
+        return signedIn()
+          && request.auth.uid == userId
+          && request.resource.data.uid == userId
+          && request.resource.data.keys().hasOnly(['uid','displayName','about','mood','photoPath','coverPath','directoryVisible','updatedAt'])
+          && request.resource.data.keys().hasAll(['uid','displayName','directoryVisible','updatedAt'])
+          && request.resource.data.displayName is string
+          && request.resource.data.displayName.size() >= 2
+          && request.resource.data.displayName.size() <= 100
+          && request.resource.data.directoryVisible is bool
+          && request.resource.data.updatedAt == request.time
+          && (!request.resource.data.keys().hasAny(['about']) || (request.resource.data.about is string && request.resource.data.about.size() <= 139))
+          && (!request.resource.data.keys().hasAny(['mood']) || (request.resource.data.mood is string && request.resource.data.mood.size() <= 40))
+          && (!request.resource.data.keys().hasAny(['photoPath']) || (request.resource.data.photoPath is string && request.resource.data.photoPath.size() <= 500))
+          && (!request.resource.data.keys().hasAny(['coverPath']) || (request.resource.data.coverPath is string && request.resource.data.coverPath.size() <= 500));
+      }
+      allow list: if signedIn() && resource.data.directoryVisible == true;
+      allow get: if signedIn() && (request.auth.uid == userId || resource.data.directoryVisible == true);
+      allow create: if validPublicProfile();
+      allow update: if validPublicProfile()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['uid','displayName','about','mood','photoPath','coverPath','directoryVisible','updatedAt']);
+      allow delete: if false;
+    }
+
     match /users/{userId}/pushTokens/{tokenId} {
       // Cada miembro solo puede registrar o actualizar sus propios dispositivos.
       allow create, update: if signedIn()
