@@ -319,7 +319,15 @@ body:has(#chat.room-open) main{padding:0!important;margin:0!important;max-width:
 .statusAvatar img{width:100%;height:100%;object-fit:cover}.statusCardBody{min-width:0;flex:1}.statusCardBody strong{display:block}.statusCardBody p{margin:3px 0 0;overflow-wrap:anywhere;font-size:13px;color:var(--klk-muted)}
 .statusCard button{width:auto;margin:0;padding:7px 10px;font-size:12px}
 .statusViewer{position:fixed;z-index:120;inset:0;background:#10191e;color:#fff;display:none;flex-direction:column;justify-content:space-between;padding:calc(18px + env(safe-area-inset-top)) 18px calc(18px + env(safe-area-inset-bottom))}
-.statusViewer.visible{display:flex}.statusViewer img{max-width:100%;max-height:72vh;object-fit:contain;align-self:center}.statusViewerText{font-size:25px;text-align:center;white-space:pre-wrap;overflow-wrap:anywhere;margin:auto 0}.statusViewer button{width:auto;align-self:flex-end;background:#ffffff22}
+.statusViewer.visible{display:flex}.statusViewer img{max-width:100%;max-height:58vh;object-fit:contain;align-self:center}
+.statusViewerPeople{display:flex;gap:10px;overflow-x:auto;padding:12px 2px;max-width:100%;scrollbar-width:thin}
+.statusViewerPerson{flex:0 0 66px;display:flex;flex-direction:column;align-items:center;gap:5px;background:transparent!important;padding:4px!important;border:0!important;opacity:.75}
+.statusViewerPerson.active{opacity:1}
+.statusViewerMiniAvatar{width:48px;height:48px;border-radius:50%;border:3px solid #25d366;display:grid;place-items:center;overflow:hidden;font-size:22px}
+.statusViewerMiniAvatar img{width:100%;height:100%;object-fit:cover}
+.statusViewerPerson small{max-width:66px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px}
+.statusViewerNav{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:12px 0}
+.statusViewerNav button{align-self:auto!important}.statusViewerNav span{font-size:13px;opacity:.8}.statusViewerText{font-size:25px;text-align:center;white-space:pre-wrap;overflow-wrap:anywhere;margin:auto 0}.statusViewer button{width:auto;align-self:flex-end;background:#ffffff22}
 
 /* Foto del contacto en la barra superior, como WhatsApp */
 #chat.room-open .chatHeading .roomAvatar{display:block!important;flex:0 0 44px!important;width:44px!important;height:44px!important;min-width:44px!important;border-radius:50%!important;object-fit:cover!important;border:2px solid #e4eee9!important;background:#e8efec!important}
@@ -1540,13 +1548,32 @@ $("message").addEventListener("keydown", event => { if (event.key === "Enter") $
 <script>
 (()=>{const $=id=>document.getElementById(id);const expiryMs=86400000;
  const age=v=>{const d=v&&v.toDate?v.toDate():new Date(v||Date.now()),m=Math.max(0,Math.floor((Date.now()-d.getTime())/60000));return m<1?"Ahora":m<60?m+" min":Math.floor(m/60)+" h";};
- async function view(item){$("statusViewerMeta").textContent=(item.displayName||"Contacto")+" · "+age(item.createdAt);const box=$("statusViewerContent");box.replaceChildren();if(item.type==="image"&&item.url){const img=document.createElement("img");img.src=item.url;img.alt="Foto del estado";box.appendChild(img);}else{const p=document.createElement("p");p.className="statusViewerText";p.textContent=item.text||"Estado";box.appendChild(p);} $("statusViewer").classList.add("visible");const viewer=auth&&auth.currentUser;if(viewer&&viewer.uid!==item.uid){try{const profile=peopleCache.get(viewer.uid)||{};await db.collection("statuses").doc(item.id).collection("views").doc(viewer.uid).set({uid:viewer.uid,displayName:profile.displayName||viewer.displayName||(viewer.email||"Contacto").split("@")[0],viewedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});}catch(error){console.warn("No se pudo registrar la vista del estado:",error);}}}
+ let currentStatuses=[];
+ async function renderViewerAt(index){
+  const item=currentStatuses[index];if(!item)return;
+  $("statusViewerMeta").replaceChildren();
+  const heading=document.createElement("strong");heading.textContent=(item.uid===(auth&&auth.currentUser&&auth.currentUser.uid)?"Mi estado":item.displayName||"Contacto")+" · "+age(item.createdAt);$("statusViewerMeta").appendChild(heading);
+  const strip=document.createElement("div");strip.className="statusViewerPeople";
+  currentStatuses.forEach((status,i)=>{const button=document.createElement("button");button.type="button";button.className="statusViewerPerson"+(i===index?" active":"");button.title=status.displayName||"Estado";const avatar=document.createElement("span");avatar.className="statusViewerMiniAvatar";if(status.url){const img=document.createElement("img");img.src=status.url;img.alt="";avatar.appendChild(img);}else avatar.textContent="◉";const label=document.createElement("small");label.textContent=status.uid===(auth&&auth.currentUser&&auth.currentUser.uid)?"Tú":(status.displayName||"Contacto");button.append(avatar,label);button.onclick=()=>renderViewerAt(i);strip.appendChild(button);});
+  $("statusViewerMeta").appendChild(strip);
+  const box=$("statusViewerContent");box.replaceChildren();
+  if(item.type==="image"&&item.url){const img=document.createElement("img");img.src=item.url;img.alt="Foto del estado";box.appendChild(img);}else{const p=document.createElement("p");p.className="statusViewerText";p.textContent=item.text||"Estado";box.appendChild(p);}
+  const controls=document.createElement("div");controls.className="statusViewerNav";
+  const prev=document.createElement("button");prev.type="button";prev.textContent="‹ Anterior";prev.disabled=index===0;prev.onclick=()=>renderViewerAt(index-1);
+  const count=document.createElement("span");count.textContent=(index+1)+" / "+currentStatuses.length;
+  const next=document.createElement("button");next.type="button";next.textContent="Siguiente ›";next.disabled=index===currentStatuses.length-1;next.onclick=()=>renderViewerAt(index+1);
+  controls.append(prev,count,next);box.appendChild(controls);
+  $("statusViewer").classList.add("visible");
+  const viewer=auth&&auth.currentUser;if(viewer&&viewer.uid!==item.uid){try{const profile=peopleCache.get(viewer.uid)||{};await db.collection("statuses").doc(item.id).collection("views").doc(viewer.uid).set({uid:viewer.uid,displayName:profile.displayName||viewer.displayName||(viewer.email||"Contacto").split("@")[0],viewedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});}catch(error){console.warn("No se pudo registrar la vista del estado:",error);}}
+ }
+ async function view(item){currentStatuses=currentStatuses.length?currentStatuses: [item];const index=currentStatuses.findIndex(x=>x.id===item.id);await renderViewerAt(index<0?0:index);}
  async function showStatusViews(item){const box=$("statusViewerContent");$("statusViewerMeta").textContent="Personas que vieron tu estado";box.replaceChildren();$("statusViewer").classList.add("visible");const loading=document.createElement("p");loading.className="statusViewerText";loading.textContent="Cargando visualizaciones...";box.appendChild(loading);try{const snap=await db.collection("statuses").doc(item.id).collection("views").orderBy("viewedAt","desc").get();box.replaceChildren();if(!snap.size){const empty=document.createElement("p");empty.className="statusViewerText";empty.textContent="Todavía nadie ha visto este estado.";box.appendChild(empty);return;}const heading=document.createElement("p");heading.textContent=snap.size+" visualización"+(snap.size===1?"":"es");heading.style.fontWeight="700";box.appendChild(heading);snap.forEach(doc=>{const data=doc.data(),row=document.createElement("div");row.style.cssText="display:flex;justify-content:space-between;gap:12px;padding:12px 4px;border-bottom:1px solid #ffffff33;text-align:left";const name=document.createElement("strong");name.textContent=data.displayName||"Contacto";const time=document.createElement("span");time.textContent=data.viewedAt&&data.viewedAt.toDate?data.viewedAt.toDate().toLocaleString():"Hora no disponible";time.style.cssText="font-size:12px;opacity:.8;text-align:right";row.append(name,time);box.appendChild(row);});}catch(error){box.replaceChildren();const p=document.createElement("p");p.className="statusViewerText";p.textContent="No se pudieron cargar las visualizaciones: "+(error.message||"error");box.appendChild(p);}}
  $("closeStatusViewer").addEventListener("click",()=>$("statusViewer").classList.remove("visible"));
  $("statusViewer").addEventListener("click",e=>{if(e.target===$("statusViewer"))$("statusViewer").classList.remove("visible");});
  async function refresh(){const user=auth&&auth.currentUser,feed=$("statusesFeed");if(!user||!feed)return;feed.innerHTML='<p class="hint">Cargando estados...</p>';try{
   const snap=await db.collection("statuses").where("expiresAt",">",firebase.firestore.Timestamp.now()).get(),now=Date.now();
   const items=snap.docs.map(d=>({id:d.id,...d.data()})).filter(x=>x.expiresAt&&x.expiresAt.toMillis()>now).sort((a,b)=>(b.createdAt?.toMillis?.()||0)-(a.createdAt?.toMillis?.()||0));
+  currentStatuses=items;
   feed.replaceChildren();if(!items.length){const p=document.createElement("p");p.className="hint";p.textContent="Todavía no hay estados. ¡Sé el primero en compartir uno!";feed.appendChild(p);return;}
   for(const item of items){let url="";if(item.storagePath)try{url=await getMediaUrl(item.storagePath);}catch(e){console.warn(e);}item.url=url;
    const card=document.createElement("article");card.className="statusCard";const avatar=document.createElement("div");avatar.className="statusAvatar";avatar.textContent="◉";
