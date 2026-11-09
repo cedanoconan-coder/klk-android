@@ -1110,7 +1110,7 @@ async function openContactProfile(uid,person,returnTo="people"){
  const canWrite=isInvitedContact(uid), accepted=isAcceptedContact(uid);
  $("contactProfileMessage").disabled=!canWrite;
  ["contactProfileVoice","contactProfileVideo","contactProfileShare"].forEach(id=>$(id).disabled=!accepted);
- $("contactProfileStatus").textContent=canWrite?"Ya pueden escribirse mensajes. Las llamadas requieren que ambos sean contactos aceptados.":"Envía una invitación para comenzar a escribir.";
+ $("contactProfileStatus").textContent=canWrite?"Puedes iniciar una conversación y llamar a este miembro.":"Este perfil no está disponible para iniciar conversaciones.";
  $("contactProfileMessage").onclick=()=>{closeContactProfile();openPrivateConversation(uid,displayName||"Conversación");};
  $("contactProfileVoice").onclick=()=>window.klkStartCall&&window.klkStartCall(uid,displayName,"audio");
  $("contactProfileVideo").onclick=()=>window.klkStartCall&&window.klkStartCall(uid,displayName,"video");
@@ -1125,7 +1125,7 @@ async function openContactProfile(uid,person,returnTo="people"){
  await renderContactSharedMedia("image");
  $("contactProfilePanel").scrollIntoView({block:"start",behavior:"smooth"});
 }
-async function renderContactSharedMedia(type){document.querySelectorAll(".contactMediaTabs button").forEach(b=>b.classList.toggle("active",b.dataset.mediaTab===type));const box=$("contactSharedMedia");if(!activeContactProfileUid||!auth.currentUser||!isAcceptedContact(activeContactProfileUid)){box.textContent="El contenido compartido estará disponible cuando el contacto esté aceptado.";return;}box.textContent="Cargando contenido...";const cid=[auth.currentUser.uid,activeContactProfileUid].sort().join("__");try{const snap=await db.collection("conversations").doc(cid).collection("messages").orderBy("createdAt","desc").limit(100).get();box.innerHTML="";const data=snap.docs.map(d=>d.data()).filter(d=>d.type==="image"||d.type==="file").filter(d=>type==="all"||d.type===type);if(!data.length){box.textContent=type==="image"?"No hay fotos compartidas.":type==="file"?"No hay documentos compartidos.":"No hay contenido compartido.";return;}for(const item of data){try{const url=await getMediaUrl(item.storagePath,cid);if(item.type==="image"){const img=document.createElement("img");img.src=url;img.alt=item.fileName||"Foto compartida";img.loading="lazy";img.onclick=()=>window.open(url,"_blank","noopener");box.append(img);}else{const a=document.createElement("a");a.href=url;a.target="_blank";a.rel="noopener";a.textContent="📄 "+(item.fileName||"Documento");box.append(a);}}catch(e){const p=document.createElement("p");p.textContent="Archivo no disponible";box.append(p);}}}catch(e){box.textContent="No se pudo consultar el contenido: "+e.message;}}
+async function renderContactSharedMedia(type){document.querySelectorAll(".contactMediaTabs button").forEach(b=>b.classList.toggle("active",b.dataset.mediaTab===type));const box=$("contactSharedMedia");if(!activeContactProfileUid||!auth.currentUser||!isAcceptedContact(activeContactProfileUid)){box.textContent="Abre primero una conversación privada con este miembro para consultar el contenido compartido.";return;}box.textContent="Cargando contenido...";const cid=[auth.currentUser.uid,activeContactProfileUid].sort().join("__");try{const snap=await db.collection("conversations").doc(cid).collection("messages").orderBy("createdAt","desc").limit(100).get();box.innerHTML="";const data=snap.docs.map(d=>d.data()).filter(d=>d.type==="image"||d.type==="file").filter(d=>type==="all"||d.type===type);if(!data.length){box.textContent=type==="image"?"No hay fotos compartidas.":type==="file"?"No hay documentos compartidos.":"No hay contenido compartido.";return;}for(const item of data){try{const url=await getMediaUrl(item.storagePath,cid);if(item.type==="image"){const img=document.createElement("img");img.src=url;img.alt=item.fileName||"Foto compartida";img.loading="lazy";img.onclick=()=>window.open(url,"_blank","noopener");box.append(img);}else{const a=document.createElement("a");a.href=url;a.target="_blank";a.rel="noopener";a.textContent="📄 "+(item.fileName||"Documento");box.append(a);}}catch(e){const p=document.createElement("p");p.textContent="Archivo no disponible";box.append(p);}}}catch(e){box.textContent="No se pudo consultar el contenido: "+e.message;}}
 $("contactProfileBack").addEventListener("click",closeContactProfile);$("chatTitle").addEventListener("click",()=>{if(!activeConversationId||!auth.currentUser)return;const uid=activeConversationId.split("__").find(id=>id!==auth.currentUser.uid);const person=peopleCache.get(uid);if(uid&&person)openContactProfile(uid,person,"chat");});document.querySelectorAll(".contactMediaTabs button").forEach(b=>b.addEventListener("click",()=>renderContactSharedMedia(b.dataset.mediaTab)));
 
 function renderPeople() {
@@ -1361,7 +1361,7 @@ function loadMessages() {
    const addMenuAction=(label,action)=>{const button=document.createElement("button");button.type="button";button.textContent=label;button.addEventListener("click",async event=>{event.stopPropagation();menu.hidden=true;menuButton.setAttribute("aria-expanded","false");await action();});menu.appendChild(button);};
    addMenuAction("↗ Reenviar",async()=>{
     const candidates=[...peopleCache.entries()].filter(([uid])=>uid!==auth.currentUser.uid&&isAcceptedContact(uid));
-    if(!candidates.length){$("chatStatus").textContent="No tienes otros contactos aceptados para reenviar.";return;}
+    if(!candidates.length){$("chatStatus").textContent="No hay otros miembros visibles para reenviar.";return;}
     const choice=window.prompt("Reenviar a:\n"+candidates.map(([uid,p],n)=>(n+1)+". "+(p.displayName||p.email||"Contacto")).join("\n")+"\n\nEscribe el número del contacto:");
     if(choice===null)return;const target=candidates[Number(choice)-1];if(!target){$("chatStatus").textContent="Número de contacto no válido.";return;}
     if(!["text","location","sticker"].includes(data.type)){ $("chatStatus").textContent="Por ahora puedes reenviar mensajes de texto, stickers y ubicaciones. Los archivos multimedia requieren una copia segura.";return;}
@@ -1426,7 +1426,7 @@ function syncComposerMode(){
 $("message").addEventListener("input",syncComposerMode);
 $("send").onclick = () => {
  const input=$("message"), text=input.value.trim(), user=auth&&auth.currentUser;
- if (!user || !activeConversationId) { $("chatStatus").textContent = "Selecciona un contacto que haya aceptado tu solicitud antes de enviar mensajes."; return; }
+ if (!user || !activeConversationId) { $("chatStatus").textContent = "Abre una conversación privada antes de enviar mensajes."; return; }
  if (!text || sending) return;
  const conversationId=activeConversationId;
  input.value="";
@@ -1966,7 +1966,7 @@ $("shareInvite").addEventListener("click",async()=>{
   $("shareInvite").disabled=false;
  }
 });
-$("homeGroup").addEventListener("click",()=>{ $("chatStatus").textContent="klk funciona con conversaciones privadas entre contactos aceptados."; });
+$("homeGroup").addEventListener("click",()=>{ $("chatStatus").textContent="klk funciona con conversaciones privadas entre miembros."; });
 function klkPushView(view){try{history.pushState({klkView:view},"",location.href);}catch(error){console.warn("No se pudo registrar la navegación:",error);}}
 function toggleKlkSettings(){const panel=$("settingsPanel");const opening=panel.style.display!=="block";panel.style.display=opening?"block":"none";if(opening){panel.scrollTop=0;klkPushView("settings");}}
 window.addEventListener("popstate",()=>{
