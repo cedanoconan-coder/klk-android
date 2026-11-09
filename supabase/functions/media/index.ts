@@ -111,6 +111,8 @@ Deno.serve(async (request) => {
     let path: string;
     if (isAvatar) {
       path = `avatars/${uid}/${crypto.randomUUID()}.${extension}`;
+    } else if (isStatus) {
+      path = `statuses/${uid}/${crypto.randomUUID()}.${extension}`;
     } else if (body.conversationId) {
       const members = await verifyConversationMember(body.conversationId, firebaseToken, uid);
       if (!members) return reply(403, { error: "No perteneces a esta conversación privada." });
@@ -141,7 +143,9 @@ Deno.serve(async (request) => {
           !/^[A-Za-z0-9-]{16,64}\.[a-z0-9]{1,8}$/i.test(avatarParts[2])) {
         return reply(403, { error: "Ruta de foto de perfil no válida." });
       }
-    } else if (path.startsWith("statuses/")) {\n      if (!/^statuses\\/[A-Za-z0-9_-]{1,128}\\/[A-Za-z0-9-]{16,64}\\.[a-z0-9]{1,8}$/i.test(path)) return reply(403, { error: "Ruta de estado no válida." });\n    } else if (!/^[^/]{1,128}\/[A-Za-z0-9-]{16,64}\.[a-z0-9]{1,8}$/i.test(path)) {
+    } else if (path.startsWith("statuses/")) {
+      if (!/^statuses\/[A-Za-z0-9_-]{1,128}\/[A-Za-z0-9-]{16,64}\.[a-z0-9]{1,8}$/i.test(path)) return reply(403, { error: "Ruta de estado no válida." });
+    } else if (!/^[^/]{1,128}\/[A-Za-z0-9-]{16,64}\.[a-z0-9]{1,8}$/i.test(path)) {
       return reply(403, { error: "Ruta de archivo no válida o sin permiso." });
     }
     const { data, error } = await admin.storage.from(BUCKET).createSignedUrl(path, 60 * 60);
