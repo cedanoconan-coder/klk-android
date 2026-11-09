@@ -95,12 +95,12 @@ jobs:
               anchor = "dependencies {"
               if anchor not in root_text:
                   raise SystemExit("No se encontró dependencies en android/build.gradle.")
-              root_text = root_text.replace(anchor, anchor + "\\n        " + classpath, 1)
+              root_text = root_text.replace(anchor, anchor + chr(10) + "        " + classpath, 1)
               root.write_text(root_text)
           app_text = app.read_text()
           plugin = "apply plugin: 'com.google.gms.google-services'"
           if plugin not in app_text:
-              app.write_text(app_text.rstrip() + "\\n\\n" + plugin + "\\n")
+              app.write_text(app_text.rstrip() + chr(10) + chr(10) + plugin + chr(10))
           PY
 
       - name: Instalar herramienta para iconos Android
