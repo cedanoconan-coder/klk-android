@@ -1343,7 +1343,7 @@ async function openPrivateConversation(otherUid, otherName) {
   activeConversationId = conversationId; activeConversationName = otherName; activeConversationPeerUid = otherUid;
   klkPushView("conversation");$("chat").classList.add("room-open"); const chatFooter=$("chat").querySelector(".chatFoot"); if(chatFooter){chatFooter.hidden=false;chatFooter.style.display="block";} $("chatTitle").textContent = otherName; updateRoomAvatar(otherUid);
   $("dmPanel").style.display = "none"; $("messages").style.display = "block";
-  document.querySelector(".composer").style.display = "flex"; $("mediaActions").style.display = "flex"; $("recordStatus").style.display = "block";
+  const composer=document.querySelector(".composer"); if(composer) composer.style.display="flex"; const recordStatus=$("recordStatus"); if(recordStatus) recordStatus.style.display="block";
   $("chatStatus").textContent = "Conversación privada con " + otherName; loadMessages();
  } catch(error) { showError("chatStatus",error); }
 }
@@ -2095,7 +2095,7 @@ function setHomeTab(tab){
  panelIds.forEach(id=>{const el=$(id);if(el){el.hidden=false;el.style.display="none";}});
  const isChats=tab==="chats";
  const isContacts=tab==="contacts";
- $("homeSearch").style.display=(isChats||isContacts)?"block":"none";
+ const homeSearch=document.querySelector(".homeSearch"); if(homeSearch) homeSearch.style.display=(isChats||isContacts)?"block":"none";
  $("homeStatus").style.display=isChats?"block":"none";
  document.querySelectorAll(".homeFilters").forEach(el=>el.style.display="none");
  if(isChats){
