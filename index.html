@@ -589,6 +589,27 @@ main,#chat,.homeView{overscroll-behavior-y:contain}
 .wp-lilac{background:linear-gradient(135deg,#eee5ff,#f9f4ff 55%,#e5dcfa)}.wp-ocean{background:linear-gradient(135deg,#d7f1ff,#e7f7f5 55%,#c9ddf6)}.wp-sunset{background:linear-gradient(135deg,#ffe0c8,#f4d9e9,#ffeebd)}
 .wp-hearts{background-color:#fff2f6;background-image:radial-gradient(circle at 25% 35%,#e9a9c2 0 4px,transparent 5px),radial-gradient(circle at 75% 70%,#e9a9c2 0 4px,transparent 5px)}.wp-nature{background:linear-gradient(135deg,#dcefdc,#f4f8e9 55%,#cde5d0)}.wp-night{background:linear-gradient(135deg,#202b49,#455779)}.wp-minimal{background:linear-gradient(135deg,#f5f5f5,#e6e9ed)}
 @media(max-width:360px){.roomWallpaperGrid{gap:6px}.wallpaperPreview{height:40px}}
+
+#messages video{display:block;width:100%;max-width:100%;max-height:360px;margin-top:7px;border-radius:9px;background:#111}
+.voiceMessageLayout{display:flex;align-items:center;gap:9px;margin-top:7px;min-width:0}
+.voiceMessageAvatar{width:38px;height:38px;flex:0 0 38px;border-radius:50%;object-fit:cover;background:#e7eeeb}
+.voiceMessageLayout audio{flex:1;min-width:0;margin:0!important;width:auto!important}
+#roomMediaGallery{position:fixed;z-index:120;inset:0;background:var(--klk-surface,#fff);color:var(--klk-text,#111b21);padding:calc(14px + env(safe-area-inset-top)) 14px calc(14px + env(safe-area-inset-bottom));overflow:auto}
+#roomMediaGallery[hidden]{display:none!important}
+.roomMediaHead{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:18px;font-weight:700}
+.roomMediaHead button{width:40px;height:40px;margin:0;padding:0;border-radius:50%;background:var(--klk-message-bg);color:var(--klk-text);font-size:24px}
+.roomMediaHint{font-size:13px;color:var(--klk-muted)}
+.roomMediaGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding-bottom:100px}
+.roomMediaCard{position:relative;min-width:0;aspect-ratio:1;background:var(--klk-message-bg);border-radius:10px;overflow:hidden}
+.roomMediaCard img,.roomMediaCard video{width:100%;height:100%;object-fit:cover;display:block}
+.roomMediaCard input{position:absolute;top:7px;right:7px;width:24px;height:24px;margin:0;accent-color:#075e54}
+.roomMediaCard.selected{outline:3px solid #8b5cf6;outline-offset:-3px}
+.roomMediaVideoMark{position:absolute;left:7px;bottom:6px;padding:3px 6px;border-radius:9px;background:#0009;color:#fff;font-size:11px}
+.roomMediaActions{position:fixed;left:0;right:0;bottom:0;display:flex;gap:7px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:var(--klk-surface);border-top:1px solid var(--klk-line)}
+.roomMediaActions button{flex:1;min-width:0;margin:0;padding:11px 5px;font-size:12px;border-radius:12px}
+#roomMediaStatus{font-size:12px;color:var(--klk-muted);padding-bottom:60px}
+#chat.room-open .roomActions #roomMediaToggle{background:#f1f2f2;color:#42515a}
+@media(max-width:360px){.roomMediaGrid{grid-template-columns:repeat(2,minmax(0,1fr))}.roomMediaActions button{font-size:11px}}
 </style>
 <style>
 /* Perfil compacto y selector de foto mediante cámara */
@@ -709,7 +730,7 @@ main,#chat,.homeView{overscroll-behavior-y:contain}
 
 <section id="callOverlay" aria-label="Llamada"><div><p id="callStatus">Preparando llamada...</p><h2 id="callPeerName">Contacto</h2></div><div id="callVideoStage"><div id="callAvatar">☎️</div><video id="remoteVideo" autoplay playsinline></video><video id="localVideo" autoplay muted playsinline></video><audio id="remoteAudio" autoplay></audio></div><div id="callControls"><button id="answerCall" type="button" hidden>Responder</button><button id="rejectCall" type="button" hidden>Rechazar</button><button id="muteCall" type="button" hidden>Silenciar</button><button id="cameraCall" type="button" hidden>Apagar cámara</button><button id="endCall" type="button" hidden>Finalizar</button></div></section>
 
-<div class="chatTop"><div class="chatHeading"><button id="backToChats" class="chatBack" type="button" aria-label="Volver a chats" title="Volver">‹</button><img id="roomAvatar" class="roomAvatar" alt="Foto de perfil del contacto" src="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Crect width=%2764%27 height=%2764%27 rx=%2732%27 fill=%27%23e8efec%27/%3E%3Ctext x=%2732%27 y=%2743%27 text-anchor=%27middle%27 font-size=%2732%27%3E%F0%9F%91%A4%3C/text%3E%3C/svg%3E"><div class="roomIdentity"><h2 id="chatTitle">Familia klk</h2><p id="who" class="muted">Conversación privada</p></div><div class="roomActions"><button id="roomWallpaperToggle" type="button" aria-label="Cambiar fondo del chat" title="Fondo del chat">🎨</button><button id="roomVoiceCall" type="button" aria-label="Llamada de voz" title="Llamada de voz">☎</button><button id="roomVideoCall" type="button" aria-label="Videollamada" title="Videollamada">▣</button><button id="roomContactInfo" type="button" aria-label="Información del contacto" title="Información">⋮</button></div><button id="settingsToggle" class="settingsToggle" type="button" aria-label="Ajustes">⚙️</button></div></div>
+<div class="chatTop"><div class="chatHeading"><button id="backToChats" class="chatBack" type="button" aria-label="Volver a chats" title="Volver">‹</button><img id="roomAvatar" class="roomAvatar" alt="Foto de perfil del contacto" src="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Crect width=%2764%27 height=%2764%27 rx=%2732%27 fill=%27%23e8efec%27/%3E%3Ctext x=%2732%27 y=%2743%27 text-anchor=%27middle%27 font-size=%2732%27%3E%F0%9F%91%A4%3C/text%3E%3C/svg%3E"><div class="roomIdentity"><h2 id="chatTitle">Familia klk</h2><p id="who" class="muted">Conversación privada</p></div><div class="roomActions"><button id="roomMediaToggle" type="button" aria-label="Fotos y videos del chat" title="Fotos y videos">▧</button><button id="roomWallpaperToggle" type="button" aria-label="Cambiar fondo del chat" title="Fondo del chat">🎨</button><button id="roomVoiceCall" type="button" aria-label="Llamada de voz" title="Llamada de voz">☎</button><button id="roomVideoCall" type="button" aria-label="Videollamada" title="Videollamada">▣</button><button id="roomContactInfo" type="button" aria-label="Información del contacto" title="Información">⋮</button></div><button id="settingsToggle" class="settingsToggle" type="button" aria-label="Ajustes">⚙️</button></div></div>
 <section id="roomWallpaperPanel" hidden aria-label="Fondos de esta conversación"><div class="roomWallpaperHead"><strong>Fondo de este chat</strong><button id="closeRoomWallpapers" type="button" aria-label="Cerrar">×</button></div><p>Elige un diseño. Solo cambiará esta conversación.</p><div class="roomWallpaperGrid">
 <button type="button" data-room-wallpaper="default"><span class="wallpaperPreview wp-default"></span><small>Original</small></button>
 <button type="button" data-room-wallpaper="lilac"><span class="wallpaperPreview wp-lilac"></span><small>Lila</small></button>
@@ -720,6 +741,13 @@ main,#chat,.homeView{overscroll-behavior-y:contain}
 <button type="button" data-room-wallpaper="night"><span class="wallpaperPreview wp-night"></span><small>Noche</small></button>
 <button type="button" data-room-wallpaper="minimal"><span class="wallpaperPreview wp-minimal"></span><small>Minimalista</small></button>
 </div><p id="roomWallpaperStatus" role="status" aria-live="polite"></p></section>
+<section id="roomMediaGallery" hidden aria-label="Fotos y videos de esta conversación">
+ <div class="roomMediaHead"><strong>Fotos y videos del chat</strong><button id="closeRoomMedia" type="button" aria-label="Cerrar">×</button></div>
+ <p class="roomMediaHint">Selecciona uno o varios elementos para gestionarlos.</p>
+ <div id="roomMediaGrid" class="roomMediaGrid"><p class="hint">Cargando contenido...</p></div>
+ <div class="roomMediaActions"><button id="roomMediaForward" type="button" disabled>↗ Reenviar</button><button id="roomMediaDownload" type="button" disabled>⬇ Descargar</button><button id="roomMediaDelete" type="button" disabled>Eliminar</button></div>
+ <p id="roomMediaStatus" role="status" aria-live="polite"></p>
+</section>
 <div id="chatNav"><button id="showGroup" type="button" hidden>Chat grupal desactivado</button><button id="showPeople" type="button" class="secondary">💬 Conversaciones privadas</button></div>
 <div id="dmPanel"><p class="hint">Elige un miembro de la familia para abrir una conversación privada.</p></div>
 <div id="messages" aria-live="polite"><p class="muted">Cargando mensajes...</p></div>
@@ -1448,9 +1476,19 @@ function loadMessages() {
     try {
      const url = data.storagePath ? await getMediaUrl(data.storagePath, data.conversationId || null) : data.mediaUrl;
      placeholder.remove();
-     if (data.type === "image") { const img = document.createElement("img"); img.src = url; img.alt = "Foto compartida"; img.loading = "lazy"; item.appendChild(img); }
+     if (data.type === "image") {
+      if((data.mimeType||"").startsWith("video/")){const video=document.createElement("video");video.src=url;video.controls=true;video.preload="metadata";video.playsInline=true;item.appendChild(video);}
+      else { const img = document.createElement("img"); img.src = url; img.alt = "Foto compartida"; img.loading = "lazy"; item.appendChild(img); }
+     }
      else if(data.type==="file"){const link=document.createElement("a");link.href=url;link.target="_blank";link.rel="noopener";link.textContent="📄 "+(data.fileName||"Abrir documento");item.appendChild(link);}
-     else { const audio = document.createElement("audio"); audio.controls = true; audio.preload = "metadata"; audio.src = url; item.appendChild(audio); }
+     else {
+      const layout=document.createElement("div");layout.className="voiceMessageLayout";
+      const avatar=document.createElement("img");avatar.className="voiceMessageAvatar";avatar.alt="Foto de "+senderName;
+      avatar.src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='32' fill='%23e7eeeb'/%3E%3Ctext x='32' y='44' text-anchor='middle' font-size='34'%3E%F0%9F%91%A4%3C/text%3E%3C/svg%3E";
+      if(senderProfile&&senderProfile.photoPath){try{const avatarUrl=await getMediaUrl(senderProfile.photoPath);if(avatarUrl)avatar.src=avatarUrl;}catch(e){console.warn("No se pudo cargar el avatar de la nota de voz:",e);}}
+      const audio = document.createElement("audio"); audio.controls = true; audio.preload = "metadata"; audio.src = url;
+      layout.append(avatar,audio);item.appendChild(layout);
+     }
     } catch(error) { placeholder.textContent = "No se pudo cargar: " + error.message; }
    } else {
     const body = document.createElement("p"); body.textContent = data.text || (data.type === "image" ? "📷 Foto" : data.type === "audio" ? "🎙️ Nota de voz" : ""); if(data.type==="sticker"){body.className="stickerMessage";body.setAttribute("aria-label","Sticker "+(data.text||""));} item.appendChild(body);
@@ -2389,6 +2427,81 @@ $("assistantQuestion").addEventListener("keydown",event=>{
  viewer.addEventListener("click",function(event){if(event.target===viewer)closeViewer();});
  enlarged.addEventListener("click",function(event){event.stopPropagation();});
  document.addEventListener("keydown",function(event){if(event.key==="Escape"&&viewer.classList.contains("is-visible"))closeViewer();});
+})();
+
+
+/* Galería de fotos y videos por conversación: selección, descarga, reenvío y borrado */
+(function(){
+ const $id=id=>document.getElementById(id);
+ const gallery=$id("roomMediaGallery"),grid=$id("roomMediaGrid");
+ if(!gallery||!grid)return;
+ let entries=[],selected=new Set(),loading=false;
+ const status=$id("roomMediaStatus");
+ function syncActions(){const n=selected.size;["roomMediaForward","roomMediaDownload","roomMediaDelete"].forEach(id=>$id(id).disabled=!n);}
+ function close(){gallery.hidden=true;selected.clear();syncActions();}
+ async function open(){
+  if(!activeConversationId||!auth||!auth.currentUser){$("chatStatus").textContent="Abre una conversación para ver sus archivos.";return;}
+  gallery.hidden=false;grid.textContent="Cargando fotos y videos...";status.textContent="";selected.clear();syncActions();loading=true;
+  try{
+   const snap=await db.collection("conversations").doc(activeConversationId).collection("messages").orderBy("createdAt","desc").limit(200).get();
+   entries=snap.docs.filter(d=>{const x=d.data();return x.type==="image"&&x.storagePath&&!((x.deletedFor||[]).includes(auth.currentUser.uid));}).map(d=>({id:d.id,ref:d.ref,data:d.data(),url:null}));
+   grid.replaceChildren();
+   if(!entries.length){grid.textContent="Todavía no hay fotos ni videos en esta conversación.";return;}
+   for(const entry of entries){
+    const card=document.createElement("label");card.className="roomMediaCard";
+    try{
+     entry.url=await getMediaUrl(entry.data.storagePath,activeConversationId);
+     if((entry.data.mimeType||"").startsWith("video/")){const video=document.createElement("video");video.src=entry.url;video.muted=true;video.playsInline=true;video.preload="metadata";card.append(video);const mark=document.createElement("span");mark.className="roomMediaVideoMark";mark.textContent="▶ Video";card.append(mark);}
+     else{const img=document.createElement("img");img.src=entry.url;img.alt=entry.data.fileName||"Foto del chat";img.loading="lazy";card.append(img);}
+     const check=document.createElement("input");check.type="checkbox";check.setAttribute("aria-label","Seleccionar "+(entry.data.fileName||"archivo"));check.addEventListener("change",()=>{if(check.checked){selected.add(entry.id);card.classList.add("selected");}else{selected.delete(entry.id);card.classList.remove("selected");}syncActions();});card.append(check);grid.append(card);
+    }catch(error){console.warn("No se pudo cargar un elemento de la galería",error);}
+   }
+   if(!grid.children.length)grid.textContent="No se pudieron cargar los archivos de esta conversación.";
+  }catch(error){grid.textContent="No se pudo cargar la galería: "+(error.message||"error");}
+  finally{loading=false;}
+ }
+ function chosen(){return entries.filter(x=>selected.has(x.id));}
+ async function downloadSelected(){
+  const items=chosen();for(let i=0;i<items.length;i++){const x=items[i];if(!x.url)continue;const a=document.createElement("a");a.href=x.url;a.download=x.data.fileName||((x.data.mimeType||"").startsWith("video/")?"video":"foto");a.target="_blank";a.rel="noopener";document.body.append(a);a.click();a.remove();await new Promise(resolve=>setTimeout(resolve,180));}
+  status.textContent=items.length+" archivo(s) enviado(s) a descarga.";
+ }
+ async function deleteSelected(){
+  const items=chosen();if(!items.length)return;
+  const own=items.filter(x=>x.data.uid===auth.currentUser.uid);
+  const others=items.length-own.length;
+  const mode=window.confirm("¿Eliminar también para todos los participantes los archivos que tú enviaste? Pulsa Cancelar para eliminarlos solo para ti.");
+  if(mode&&own.length&&!window.confirm("Confirmar: "+own.length+" archivo(s) se eliminarán para todos."))return;
+  try{
+   for(const x of items){if(mode&&x.data.uid===auth.currentUser.uid)await x.ref.delete();else await x.ref.update({deletedFor:firebase.firestore.FieldValue.arrayUnion(auth.currentUser.uid)});}
+   status.textContent="Archivos eliminados.";await open();
+  }catch(error){status.textContent="No se pudieron eliminar todos los archivos: "+(error.message||"error");}
+ }
+ async function forwardSelected(){
+  const items=chosen();if(!items.length)return;
+  const candidates=[...peopleCache.entries()].filter(([uid])=>uid!==auth.currentUser.uid&&isAcceptedContact(uid));
+  if(!candidates.length){status.textContent="No hay otros contactos disponibles para reenviar.";return;}
+  const choice=window.prompt("Reenviar a:\n"+candidates.map(([uid,p],i)=>(i+1)+". "+(p.displayName||p.email||"Contacto")).join("\n")+"\n\nEscribe el número:");
+  if(choice===null)return;const target=candidates[Number(choice)-1];if(!target){status.textContent="Número de contacto no válido.";return;}
+  const ids=[auth.currentUser.uid,target[0]].sort(),targetId=ids.join("__");
+  try{
+   const conversationRef=db.collection("conversations").doc(targetId);const conversationSnap=await conversationRef.get();
+   if(!conversationSnap.exists)await conversationRef.set({members:ids,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+   for(const x of items){
+    const response=await fetch(x.url);if(!response.ok)throw new Error("No se pudo descargar un archivo para reenviarlo.");
+    const blob=await response.blob();const mimeType=x.data.mimeType||blob.type||"application/octet-stream";
+    const token=await auth.currentUser.getIdToken();
+    const uploadResponse=await fetch(SUPABASE_URL+"/functions/v1/media",{method:"POST",headers:{"Content-Type":"application/json","apikey":SUPABASE_PUBLISHABLE_KEY,"Authorization":"Bearer "+token},body:JSON.stringify({action:"create-upload",type:"image",size:blob.size,mimeType,conversationId:targetId})});
+    const signed=await uploadResponse.json().catch(()=>({}));if(!uploadResponse.ok||!signed.path||!signed.token)throw new Error(signed.error||"No se pudo preparar la copia del archivo.");
+    const {error}=await getSupabaseClient().storage.from("Chat-media").uploadToSignedUrl(signed.path,signed.token,blob,{contentType:mimeType});if(error)throw error;
+    const sent=await conversationRef.collection("messages").add({type:"image",storagePath:signed.path,conversationId:targetId,mimeType,fileName:x.data.fileName||"archivo compartido",size:blob.size,email:auth.currentUser.email||"",displayName:(peopleCache.get(auth.currentUser.uid)||{}).displayName||(auth.currentUser.email||"Miembro").split("@")[0],uid:auth.currentUser.uid,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+    void sendKlkPushForMessage(targetId,sent.id);
+   }
+   status.textContent="Archivo(s) reenviado(s) a "+(target[1].displayName||"tu contacto")+".";
+  }catch(error){status.textContent="No se pudo completar el reenvío: "+(error.message||"error");}
+ }
+ $id("roomMediaToggle").addEventListener("click",open);$id("closeRoomMedia").addEventListener("click",close);
+ $id("roomMediaDownload").addEventListener("click",downloadSelected);$id("roomMediaDelete").addEventListener("click",deleteSelected);$id("roomMediaForward").addEventListener("click",forwardSelected);
+ gallery.addEventListener("click",event=>{if(event.target===gallery)close();});
 })();
 
 </script><div id="profilePhotoViewer" role="dialog" aria-modal="true" aria-label="Foto de perfil ampliada">
