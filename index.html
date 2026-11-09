@@ -397,6 +397,18 @@ body:has(#chat.room-open) main{padding:0!important;margin:0!important;max-width:
 #contactProfilePanel .contactProfileHero h2{margin-top:12px}
 #contactProfilePanel .contactProfileMood{display:inline-flex;align-items:center;gap:7px;margin-top:10px;padding:8px 13px;border-radius:20px;background:var(--klk-soft);color:var(--klk-text);font-size:13px}
 @media(max-width:420px){.profileCover{height:185px}#contactProfilePanel .contactCover{height:205px}.profileHero img{width:94px;height:94px;flex-basis:94px}}
+
+/* Acceso flotante a usuarios, estilo mensajería */
+#openUsersFab{position:fixed;z-index:70;right:20px;bottom:calc(88px + env(safe-area-inset-bottom));width:58px;height:58px;border:0;border-radius:20px;background:var(--klk-accent,#075e54);color:#fff;box-shadow:0 6px 18px #0003;font-size:27px;display:grid;place-items:center}
+#usersOverlay{position:fixed;inset:0;z-index:90;background:var(--klk-surface,#fff);display:none;overflow:auto;padding:env(safe-area-inset-top) 0 calc(24px + env(safe-area-inset-bottom))}
+#usersOverlay.open{display:block}
+.usersOverlayHead{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:14px;padding:16px 18px;background:var(--klk-surface,#fff);border-bottom:1px solid var(--klk-line,#e7ebea)}
+.usersOverlayHead button{width:40px;height:40px;margin:0;border-radius:50%;font-size:22px}
+.usersOverlayHead strong{font-size:19px;color:var(--klk-text)}
+#usersOverlaySearch{display:block;width:calc(100% - 36px);margin:14px 18px;padding:13px 16px;border:0;border-radius:24px;background:var(--klk-message-bg);color:var(--klk-text)}
+#usersOverlay #peopleList{display:block!important;visibility:visible!important}
+#chat.room-open #openUsersFab{display:none}
+
 </style>
 </head>
 <body>
@@ -492,6 +504,9 @@ body:has(#chat.room-open) main{padding:0!important;margin:0!important;max-width:
   <button type="button" data-tab="updates"><span class="navIcon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><path d="M12 3.5v2M20.5 12h-2"/></svg></span><span class="navLabel">Novedades</span></button>
   <button type="button" data-tab="tools"><span class="navIcon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></svg></span><span class="navLabel">Herramientas</span></button>
  </nav>
+
+<div id="usersOverlay" aria-label="Otros usuarios" aria-hidden="true"><div class="usersOverlayHead"><button type="button" id="closeUsersOverlay" class="secondary" aria-label="Cerrar">‹</button><strong>Nuevo chat</strong></div><input id="usersOverlaySearch" type="search" placeholder="Buscar usuarios..." aria-label="Buscar usuarios"><div id="usersOverlayPeopleMount"></div></div>
+<button type="button" id="openUsersFab" aria-label="Nuevo chat: ver usuarios" title="Nuevo chat">＋</button>
 </div>
 
 <section id="callOverlay" aria-label="Llamada"><div><p id="callStatus">Preparando llamada...</p><h2 id="callPeerName">Contacto</h2></div><div id="callVideoStage"><div id="callAvatar">☎️</div><video id="remoteVideo" autoplay playsinline></video><video id="localVideo" autoplay muted playsinline></video><audio id="remoteAudio" autoplay></audio></div><div id="callControls"><button id="answerCall" type="button" hidden>Responder</button><button id="rejectCall" type="button" hidden>Rechazar</button><button id="muteCall" type="button" hidden>Silenciar</button><button id="cameraCall" type="button" hidden>Apagar cámara</button><button id="endCall" type="button" hidden>Finalizar</button></div></section>
@@ -1884,6 +1899,20 @@ function setHomeTab(tab){
  if(tab!=="chats") window.scrollTo({top:0,behavior:"smooth"});
 }
 document.querySelectorAll(".homeBottom button").forEach(button=>button.addEventListener("click",()=>setHomeTab(button.dataset.tab)));
+
+// Botón flotante de nuevo chat: muestra el directorio de usuarios sin mezclarlo con las conversaciones.
+(function setupUsersOverlay(){
+ const overlay=$("usersOverlay"), mount=$("usersOverlayPeopleMount"), people=$("peopleList"), fab=$("openUsersFab");
+ if(!overlay||!mount||!people||!fab)return;
+ mount.appendChild(people);
+ const close=()=>{overlay.classList.remove("open");overlay.setAttribute("aria-hidden","true");$("usersOverlaySearch").value="";people.querySelectorAll(".memberBtn").forEach(row=>row.style.display="flex");};
+ fab.addEventListener("click",()=>{overlay.classList.add("open");overlay.setAttribute("aria-hidden","false");if(!people.children.length)renderPeople();$("usersOverlaySearch").focus();});
+ $("closeUsersOverlay").addEventListener("click",close);
+ $("usersOverlaySearch").addEventListener("input",event=>{const q=event.target.value.trim().toLocaleLowerCase();people.querySelectorAll(".memberBtn").forEach(row=>row.style.display=row.textContent.toLocaleLowerCase().includes(q)?"flex":"none");});
+ overlay.addEventListener("click",event=>{if(event.target===overlay)close();});
+ window.addEventListener("keydown",event=>{if(event.key==="Escape"&&overlay.classList.contains("open"))close();});
+})();
+
 document.querySelectorAll("[data-go-tab]").forEach(button=>button.addEventListener("click",()=>setHomeTab(button.dataset.goTab)));
 document.querySelectorAll("[data-go-filter]").forEach(button=>button.addEventListener("click",()=>{
  setHomeTab("contacts");
