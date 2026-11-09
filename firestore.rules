@@ -116,7 +116,7 @@ service cloud.firestore {
         allow create: if isConversationMember(conversationId)
           && request.resource.data.keys().hasOnly([
             'type','text','storagePath','conversationId','mimeType','fileName',
-            'size','duration','email','uid','displayName','createdAt','readBy'
+            'size','duration','email','uid','displayName','createdAt'
           ])
           && request.resource.data.keys().hasAll(['type','email','uid','createdAt'])
           && request.resource.data.uid == request.auth.uid
