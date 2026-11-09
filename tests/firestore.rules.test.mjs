@@ -8,6 +8,8 @@ import {
 } from "@firebase/rules-unit-testing";
 import {
   collection,
+  query,
+  where,
   doc,
   getDoc,
   getDocs,
@@ -40,7 +42,7 @@ test("bloquea la lectura de perfiles sin iniciar sesión", async () => {
   await assertFails(getDoc(doc(db, "users/member-1")));
 });
 
-test("permite a un usuario autenticado consultar el directorio", async () => {
+test("un usuario autenticado no puede listar documentos privados de otros miembros", async () => {
   await testEnv.withSecurityRulesDisabled(async context => {
     await setDoc(doc(context.firestore(), "users/member-1"), {
       uid: "member-1",
@@ -52,7 +54,8 @@ test("permite a un usuario autenticado consultar el directorio", async () => {
     email: "member2@example.com"
   }).firestore();
 
-  await assertSucceeds(getDocs(collection(db, "users")));
+  await assertFails(getDocs(collection(db, "users")));
+  await assertFails(getDoc(doc(db, "users/member-1")));
 });
 
 test("rechaza crear perfiles sin una invitación válida", async () => {
@@ -67,6 +70,43 @@ test("rechaza crear perfiles sin una invitación válida", async () => {
     updatedAt: Timestamp.now(),
     inviteCode: "inexistente",
     invitedBy: "admin"
+  }));
+});
+
+
+test("cada usuario puede leer su propio perfil privado", async () => {
+  await testEnv.withSecurityRulesDisabled(async context => {
+    await setDoc(doc(context.firestore(), "users/member-1"), {uid:"member-1",email:"private@example.com"});
+  });
+  const db = testEnv.authenticatedContext("member-1", {email:"private@example.com"}).firestore();
+  await assertSucceeds(getDoc(doc(db, "users/member-1")));
+});
+
+test("el directorio solo devuelve perfiles con visibilidad activada", async () => {
+  await testEnv.withSecurityRulesDisabled(async context => {
+    const db = context.firestore();
+    await setDoc(doc(db,"publicProfiles/visible"), {uid:"visible",displayName:"Visible",directoryVisible:true,updatedAt:Timestamp.now()});
+    await setDoc(doc(db,"publicProfiles/hidden"), {uid:"hidden",displayName:"Oculto",directoryVisible:false,updatedAt:Timestamp.now()});
+  });
+  const db = testEnv.authenticatedContext("visitor").firestore();
+  const visible = await assertSucceeds(getDocs(query(collection(db,"publicProfiles"),where("directoryVisible","==",true))));
+  assert.equal(visible.size,1);
+  assert.equal(visible.docs[0].id,"visible");
+  await assertFails(getDoc(doc(db,"publicProfiles/hidden")));
+});
+
+test("un perfil público no puede incluir correo electrónico", async () => {
+  const db = testEnv.authenticatedContext("member-1").firestore();
+  await assertFails(setDoc(doc(db,"publicProfiles/member-1"), {
+    uid:"member-1",displayName:"Miembro",email:"private@example.com",
+    directoryVisible:true,updatedAt:serverTimestamp()
+  }));
+});
+
+test("cada miembro puede crear su perfil público con visibilidad voluntaria", async () => {
+  const db = testEnv.authenticatedContext("member-1").firestore();
+  await assertSucceeds(setDoc(doc(db,"publicProfiles/member-1"), {
+    uid:"member-1",displayName:"Miembro",about:"Hola",directoryVisible:false,updatedAt:serverTimestamp()
   }));
 });
 
