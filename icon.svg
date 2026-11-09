@@ -1,30 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
 <defs>
- <linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#28ff16"/><stop offset=".42" stop-color="#00c927"/><stop offset="1" stop-color="#006b20"/></linearGradient>
- <radialGradient id="shine" cx=".48" cy=".24" r=".8"><stop stop-color="#7dff4d" stop-opacity=".85"/><stop offset=".58" stop-color="#00a82a" stop-opacity=".08"/><stop offset="1" stop-color="#003d18" stop-opacity=".65"/></radialGradient>
- <linearGradient id="deep" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#009d1b"/><stop offset="1" stop-color="#003e18"/></linearGradient>
- <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff52b"/><stop offset=".55" stop-color="#ffd400"/><stop offset="1" stop-color="#ff9d00"/></linearGradient>
- <filter id="ds" x="-30%" y="-30%" width="160%" height="170%"><feGaussianBlur in="SourceAlpha" stdDeviation="7"/><feOffset dy="8"/><feComponentTransfer><feFuncA type="linear" slope=".5"/></feComponentTransfer><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+ <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#0b806f"/><stop offset="1" stop-color="#063f39"/></linearGradient>
+ <linearGradient id="drop" x1=".25" y1="0" x2=".8" y2="1"><stop stop-color="#d7fff1"/><stop offset=".48" stop-color="#62dfc0"/><stop offset="1" stop-color="#00a884"/></linearGradient>
+ <filter id="shadow" x="-30%" y="-30%" width="160%" height="170%"><feGaussianBlur in="SourceAlpha" stdDeviation="10"/><feOffset dy="10"/><feComponentTransfer><feFuncA type="linear" slope=".28"/></feComponentTransfer><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>
 </defs>
-<rect x="2" y="2" width="508" height="508" rx="90" fill="url(#g)" stroke="#00ec19" stroke-width="5"/>
-<rect x="9" y="9" width="494" height="494" rx="82" fill="url(#shine)"/>
-<path d="M15 86Q80 8 220 12M300 12Q454 15 498 90" fill="none" stroke="#aaff58" stroke-width="8" opacity=".32"/>
-<path d="M36 248Q34 72 205 45Q403 16 476 176Q504 254 470 340L433 412Q402 466 328 472H118Q35 465 35 375Z" fill="url(#deep)" opacity=".55"/>
-<!-- Family group -->
-<g fill="#fff" filter="url(#ds)">
- <circle cx="174" cy="128" r="43"/><path d="M126 205Q127 156 174 156Q222 156 224 205L232 284H116Z"/>
- <circle cx="324" cy="143" r="42"/><path d="M276 218Q278 170 324 170Q370 170 373 218L385 287H264Z"/>
- <circle cx="254" cy="220" r="34"/><path d="M215 282Q218 244 254 244Q290 244 294 282L302 332H205Z"/>
- <circle cx="143" cy="254" r="31"/><path d="M108 310Q111 278 143 278Q176 278 180 310L187 349H99Z"/>
- <circle cx="369" cy="258" r="31"/><path d="M334 313Q337 282 369 282Q402 282 405 313L413 350H326Z"/>
-</g>
-<!-- Chat bubble -->
-<path d="M54 276Q54 206 124 206H387Q458 206 458 276V345Q458 416 387 416H179L83 468L104 405Q54 383 54 345Z" fill="#fff" filter="url(#ds)"/>
-<path d="M69 278Q69 222 125 222H386Q442 222 442 278V344Q442 400 386 400H181L112 438L126 391Q69 374 69 344Z" fill="url(#deep)" stroke="#00d43c" stroke-width="5"/>
-<!-- klk lettering -->
-<text x="255" y="361" text-anchor="middle" font-family="DejaVu Sans,Arial,sans-serif" font-size="153" font-weight="900" letter-spacing="-13" fill="#fff" stroke="#003d19" stroke-width="15" stroke-linejoin="round" paint-order="stroke" filter="url(#ds)">klk</text>
-<path d="M92 405Q218 354 361 386Q386 392 365 406Q229 381 92 405Z" fill="url(#gold)" stroke="#ffbd00" stroke-width="3"/>
-<!-- yellow message badge -->
-<path d="M365 397Q375 362 422 360Q482 358 495 403Q509 449 463 470Q436 482 405 466L368 490L379 454Q358 430 365 397Z" fill="url(#gold)" stroke="#fff23c" stroke-width="5" filter="url(#ds)"/>
-<g fill="#17451e"><circle cx="405" cy="419" r="9"/><circle cx="436" cy="419" r="9"/><circle cx="467" cy="419" r="9"/></g>
+<rect width="512" height="512" rx="112" fill="url(#bg)"/>
+<circle cx="110" cy="105" r="155" fill="#fff" opacity=".045"/>
+<path d="M256 53C218 116 112 235 112 326c0 83 64 143 144 143s144-60 144-143C400 235 294 116 256 53Z" fill="url(#drop)" filter="url(#shadow)"/>
+<path d="M184 315c0-46 42-105 72-149" fill="none" stroke="#fff" stroke-width="17" stroke-linecap="round" opacity=".48"/>
+<path d="M165 359c12 43 48 68 91 68" fill="none" stroke="#fff" stroke-width="12" stroke-linecap="round" opacity=".32"/>
+<text x="256" y="365" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="92" font-weight="900" letter-spacing="-8" fill="#06483f" stroke="#eafff8" stroke-width="5" paint-order="stroke">klk</text>
 </svg>
