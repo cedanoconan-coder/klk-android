@@ -66,20 +66,7 @@ async function verifyConversationMember(conversationId: string, token: string, u
 
 async function verifyStatusVisible(statusOwnerUid: string, token: string, requesterUid: string): Promise<boolean> {
   if (statusOwnerUid === requesterUid) return true;
-  if (!/^[A-Za-z0-9_-]{1,128}$/.test(statusOwnerUid) || !/^[A-Za-z0-9_-]{1,128}$/.test(requesterUid)) return false;
-  const requestIds = [`${requesterUid}__${statusOwnerUid}`, `${statusOwnerUid}__${requesterUid}`];
-  for (const requestId of requestIds) {
-    const url = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents/contactRequests/${encodeURIComponent(requestId)}`;
-    try {
-      const response = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-      if (!response.ok) continue;
-      const document = await response.json();
-      if (document?.fields?.status?.stringValue === "accepted") return true;
-    } catch {
-      // A missing or unreadable request does not grant access.
-    }
-  }
-  return false;
+  return await verifyPublicProfileVisible(statusOwnerUid, token, requesterUid);
 }
 
 async function verifyPublicProfileVisible(profileUid: string, token: string, requesterUid: string): Promise<boolean> {
