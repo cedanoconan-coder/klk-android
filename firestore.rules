@@ -31,7 +31,11 @@ service cloud.firestore {
         && request.resource.data.displayName.size() <= 100
         && (!request.resource.data.keys().hasAny(['photoPath'])
           || (request.resource.data.photoPath is string
-            && request.resource.data.photoPath.matches('avatars/' + request.auth.uid + '/[^/]+')));
+            && request.resource.data.photoPath.matches('avatars/' + request.auth.uid + '/[^/]+')))
+        && (!request.resource.data.keys().hasAny(['coverPath']) || (request.resource.data.coverPath is string && request.resource.data.coverPath.size() <= 500))
+        && (!request.resource.data.keys().hasAny(['about']) || (request.resource.data.about is string && request.resource.data.about.size() <= 139))
+        && (!request.resource.data.keys().hasAny(['mood']) || (request.resource.data.mood is string && request.resource.data.mood.size() <= 40))
+        && (!request.resource.data.keys().hasAny(['directoryVisible']) || request.resource.data.directoryVisible is bool);
     }
     function validInvitationForProfile() {
       return request.resource.data.inviteCode is string
