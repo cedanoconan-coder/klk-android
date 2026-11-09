@@ -172,6 +172,22 @@ service cloud.firestore {
             && request.resource.data.size <= 10485760));
       allow delete: if signedIn() && resource.data.uid == request.auth.uid;
       allow update: if false;
+
+      match /views/{viewerUid} {
+        allow read: if signedIn()
+          && get(/databases/$(database)/documents/statuses/$(statusId)).data.uid == request.auth.uid;
+        allow create, update: if signedIn()
+          && viewerUid == request.auth.uid
+          && get(/databases/$(database)/documents/statuses/$(statusId)).data.uid != request.auth.uid
+          && get(/databases/$(database)/documents/statuses/$(statusId)).data.expiresAt > request.time
+          && request.resource.data.keys().hasOnly(['uid','displayName','viewedAt'])
+          && request.resource.data.keys().hasAll(['uid','displayName','viewedAt'])
+          && request.resource.data.uid == request.auth.uid
+          && request.resource.data.displayName is string
+          && request.resource.data.displayName.size() <= 100
+          && request.resource.data.viewedAt == request.time;
+        allow delete: if false;
+      }
     }
 
     match /calls/{callId} {
