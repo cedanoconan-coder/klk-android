@@ -644,6 +644,23 @@ main,#chat,.homeView{overscroll-behavior-y:contain}
 .profileIdentityCard .profilePhotoAction{position:absolute!important;z-index:3;top:43px;left:calc(50% + 13px);display:grid!important;place-items:center;width:30px!important;height:30px!important;min-width:30px!important;margin:0!important;padding:0!important;border:2px solid #fff!important;border-radius:50%!important;background:#f4d58b!important;color:#173b35!important;font-size:15px!important;line-height:1!important;box-shadow:0 3px 9px #001a1745!important}
 .profileIdentityCard .profilePhotoAction:active{transform:scale(.94)}
 #profilePanelPhoto:focus-visible,#myProfilePhoto:focus-visible,#contactProfilePhoto:focus-visible,#roomAvatar:focus-visible,.personAvatar:focus-visible{outline:3px solid #c8b5ff;outline-offset:3px}
+
+/* Notas de voz amplias y velocidades configurables */
+.msg:has(.voiceMessageLayout){width:min(540px,96%);max-width:96%}
+.msg .voiceMessageLayout{width:100%;max-width:none}
+.msg .voicePlayer{min-height:58px}
+.msg .voiceWaveform{min-height:30px}
+.voiceSpeedButton{font-variant-numeric:tabular-nums}
+
+/* Selección múltiple de mensajes */
+.klkMessageSelectionBar{position:sticky;top:0;z-index:12;display:flex;align-items:center;gap:7px;padding:9px 10px;background:var(--klk-surface,#fff);border-bottom:1px solid var(--klk-line,#e7ebea);box-shadow:0 2px 8px #00000012}
+.klkMessageSelectionBar[hidden]{display:none!important}
+.klkMessageSelectionCount{flex:1;min-width:0;font-size:13px;font-weight:700;color:var(--klk-text,#111b21)}
+.klkMessageSelectionBar button{width:auto;min-width:0;margin:0;padding:9px 10px;border-radius:18px;font-size:12px;white-space:nowrap}
+.klkMessageSelectionBar .klkSelectionCancel{background:var(--klk-message-bg,#f3f4f4)!important;color:var(--klk-text,#111b21)!important}
+.msg.klk-selected{outline:2px solid #8b5cf6;outline-offset:1px}
+.msg.klk-selectable{cursor:pointer}
+@media(max-width:380px){.klkMessageSelectionBar{gap:4px;padding:8px 6px}.klkMessageSelectionBar button{padding:8px 7px;font-size:11px}}
 </style></head>
 <body>
 <header class="brandHeader"><img src="./icon.svg" alt="Logo de klk: pulgar arriba" class="brandMark"><div class="brandWords"><span>klk</span><small>Tu familia, siempre conectada ❤️</small></div></header>
@@ -1483,11 +1500,14 @@ function loadMessages() {
   if (window.klkNotificationsReady) changes.filter(change => change.type === "added").forEach(change => window.klkNotifyIncoming && window.klkNotifyIncoming(change.doc.data(), change.doc.id));
   else window.klkNotificationsReady = true;
   $("messages").innerHTML = "";
+  window.klkMessageRecords = new Map();
   if (snapshot.empty) { $("messages").textContent = "Todavía no hay mensajes. ¡Envía el primero!"; return; }
   for (const doc of snapshot.docs.slice().reverse()) {
    const data = doc.data(), item = document.createElement("div");
    if (Array.isArray(data.deletedFor) && auth.currentUser && data.deletedFor.includes(auth.currentUser.uid)) continue;
    item.className = "msg" + (auth.currentUser && data.uid === auth.currentUser.uid ? " mine" : "");
+   item.dataset.messageId=doc.id;
+   window.klkMessageRecords.set(doc.id,{ref:doc.ref,data,conversationId:activeConversationId});
    const sender = document.createElement("b");
    const senderProfile = data.uid ? peopleCache.get(data.uid) : null;
    const senderName = (senderProfile && senderProfile.displayName) || data.displayName || (auth.currentUser && data.uid === auth.currentUser.uid ? (peopleCache.get(auth.currentUser.uid) || {}).displayName : "") || (data.email || "").split("@")[0] || "Familia";
@@ -1527,7 +1547,7 @@ function loadMessages() {
       audio.addEventListener("timeupdate",updateProgress);audio.addEventListener("loadedmetadata",updateProgress);
       const seekAt=event=>{const rect=waveform.getBoundingClientRect();const ratio=Math.max(0,Math.min(1,(event.clientX-rect.left)/rect.width));const duration=audio.duration||Number(data.duration)||0;if(duration>0){audio.currentTime=ratio*duration;updateProgress();}};
       waveform.addEventListener("click",seekAt);waveform.addEventListener("keydown",event=>{if(event.key==="ArrowRight"||event.key==="ArrowLeft"){event.preventDefault();const duration=audio.duration||Number(data.duration)||0;if(duration>0){audio.currentTime=Math.max(0,Math.min(duration,audio.currentTime+(event.key==="ArrowRight"?5:-5)));updateProgress();}}});
-      const speeds=[1,1.5,2];let speedIndex=0;speed.addEventListener("click",()=>{speedIndex=(speedIndex+1)%speeds.length;audio.playbackRate=speeds[speedIndex];speed.textContent=speeds[speedIndex]+"×";speed.setAttribute("aria-label","Velocidad de reproducción: "+speeds[speedIndex]+" veces");});
+      const speeds=[0.5,1,1.5,2];let speedIndex=1;speed.addEventListener("click",()=>{speedIndex=(speedIndex+1)%speeds.length;audio.playbackRate=speeds[speedIndex];speed.textContent=speeds[speedIndex]+"×";speed.setAttribute("aria-label","Velocidad de reproducción: "+speeds[speedIndex]+" veces");});
       player.append(play,main,speed);layout.append(avatar,player,audio);item.appendChild(layout);updateProgress();
      }
     } catch(error) { placeholder.textContent = "No se pudo cargar: " + error.message; }
@@ -1540,6 +1560,7 @@ function loadMessages() {
    const menuButton=document.createElement("button");menuButton.type="button";menuButton.className="messageMenuToggle";menuButton.textContent="⋮";menuButton.setAttribute("aria-label","Opciones del mensaje");menuButton.setAttribute("aria-expanded","false");
    const menu=document.createElement("div");menu.className="messageMenu";menu.hidden=true;
    const addMenuAction=(label,action)=>{const button=document.createElement("button");button.type="button";button.textContent=label;button.addEventListener("click",async event=>{event.stopPropagation();menu.hidden=true;menuButton.setAttribute("aria-expanded","false");await action();});menu.appendChild(button);};
+   addMenuAction("☑ Seleccionar",()=>window.klkStartMessageSelection(doc.id));
    addMenuAction("↗ Reenviar",async()=>{
     const candidates=[...peopleCache.entries()].filter(([uid])=>uid!==auth.currentUser.uid&&isAcceptedContact(uid));
     if(!candidates.length){$("chatStatus").textContent="No hay otros miembros visibles para reenviar.";return;}
@@ -2551,4 +2572,151 @@ $("assistantQuestion").addEventListener("keydown",event=>{
  <img id="profilePhotoViewerImage" alt="Foto de perfil ampliada">
  <span class="photoViewerHint">Toca fuera de la foto para cerrar</span>
 </div>
+
+<script>
+/* Selección múltiple de mensajes: copiar, reenviar y eliminar */
+(function(){
+ const box=document.getElementById("messages");
+ if(!box)return;
+ const records=window.klkMessageRecords||(window.klkMessageRecords=new Map());
+ const bar=document.createElement("div");
+ bar.className="klkMessageSelectionBar";
+ bar.hidden=true;
+ bar.innerHTML='<span class="klkMessageSelectionCount" aria-live="polite">0 seleccionados</span><button type="button" data-action="copy">Copiar</button><button type="button" data-action="forward">Enviar</button><button type="button" data-action="delete">Eliminar</button><button type="button" class="klkSelectionCancel" data-action="cancel">Cancelar</button>';
+ box.parentNode.insertBefore(bar,box);
+ const count=bar.querySelector(".klkMessageSelectionCount");
+ const selected=new Set();
+ let pressTimer=null,pressStart=null,suppressClickUntil=0;
+ const messageNode=id=>[...box.querySelectorAll(".msg[data-message-id]")].find(el=>el.dataset.messageId===id);
+ function refresh(){
+  bar.hidden=selected.size===0;
+  count.textContent=selected.size+" seleccionado"+(selected.size===1?"":"s");
+  box.querySelectorAll(".msg[data-message-id]").forEach(el=>{
+   const active=selected.has(el.dataset.messageId);
+   el.classList.toggle("klk-selected",active);
+   el.classList.toggle("klk-selectable",selected.size>0);
+   el.setAttribute("aria-pressed",String(active));
+  });
+ }
+ function toggle(id){
+  if(!records.has(id))return;
+  if(selected.has(id))selected.delete(id);else selected.add(id);
+  refresh();
+ }
+ function start(id){if(!records.has(id))return;selected.add(id);refresh();}
+ function cancel(){selected.clear();refresh();}
+ window.klkStartMessageSelection=start;
+ function ordered(){
+  const ids=[...selected];
+  const positions=new Map([...box.querySelectorAll(".msg[data-message-id]")].map((el,i)=>[el.dataset.messageId,i]));
+  ids.sort((a,b)=>(positions.get(a)??0)-(positions.get(b)??0));
+  return ids.map(id=>({id,...records.get(id)})).filter(x=>x.data);
+ }
+ box.addEventListener("click",event=>{
+  const item=event.target.closest(".msg[data-message-id]");
+  if(!item)return;
+  if(Date.now()<suppressClickUntil){event.preventDefault();event.stopPropagation();return;}
+  if(!selected.size)return;
+  if(event.target.closest("button,a,audio,video"))return;
+  event.preventDefault();event.stopPropagation();toggle(item.dataset.messageId);
+ },true);
+ box.addEventListener("contextmenu",event=>{
+  const item=event.target.closest(".msg[data-message-id]");
+  if(!item)return;
+  event.preventDefault();suppressClickUntil=Date.now()+500;start(item.dataset.messageId);
+ });
+ box.addEventListener("touchstart",event=>{
+  const item=event.target.closest(".msg[data-message-id]");
+  if(!item||event.target.closest("button,a,audio,video"))return;
+  const touch=event.touches&&event.touches[0];if(!touch)return;
+  pressStart={x:touch.clientX,y:touch.clientY,id:item.dataset.messageId};
+  clearTimeout(pressTimer);
+  pressTimer=setTimeout(()=>{if(pressStart){suppressClickUntil=Date.now()+600;start(pressStart.id);}},520);
+ },{passive:true});
+ box.addEventListener("touchmove",event=>{
+  if(!pressStart)return;const touch=event.touches&&event.touches[0];if(!touch)return;
+  if(Math.abs(touch.clientX-pressStart.x)>12||Math.abs(touch.clientY-pressStart.y)>12){clearTimeout(pressTimer);pressStart=null;}
+ },{passive:true});
+ ["touchend","touchcancel"].forEach(name=>box.addEventListener(name,()=>{clearTimeout(pressTimer);pressStart=null;},{passive:true}));
+ async function copySelected(){
+  const items=ordered();
+  const lines=items.map(x=>{
+   const d=x.data;
+   if(d.text)return d.text;
+   if(d.type==="image")return "[Foto]";
+   if(d.type==="audio")return "[Nota de voz]";
+   if(d.type==="file")return "[Archivo: "+(d.fileName||"documento")+"]";
+   if(d.type==="location")return "Ubicación: https://www.google.com/maps?q="+d.latitude+","+d.longitude;
+   return "[Mensaje]";
+  });
+  const value=lines.join("\n");
+  try{
+   if(navigator.clipboard&&navigator.clipboard.writeText)await navigator.clipboard.writeText(value);
+   else{const area=document.createElement("textarea");area.value=value;area.style.position="fixed";area.style.opacity="0";document.body.append(area);area.select();document.execCommand("copy");area.remove();}
+   document.getElementById("chatStatus").textContent=items.length+" mensaje(s) copiado(s).";cancel();
+  }catch(error){document.getElementById("chatStatus").textContent="No se pudieron copiar los mensajes. "+(error.message||"");}
+ }
+ async function deleteSelected(){
+  const items=ordered();if(!items.length||!window.auth?.currentUser)return;
+  const all=window.confirm("¿Eliminar para todos los participantes los mensajes que tú enviaste? Pulsa Cancelar para eliminarlos solo para ti.");
+  if(all&&!window.confirm("Confirmar eliminación para todos de tus mensajes seleccionados."))return;
+  try{
+   for(const item of items){
+    if(all&&item.data.uid===auth.currentUser.uid)await item.ref.delete();
+    else await item.ref.update({deletedFor:firebase.firestore.FieldValue.arrayUnion(auth.currentUser.uid)});
+   }
+   document.getElementById("chatStatus").textContent="Mensajes eliminados.";
+   cancel();
+  }catch(error){document.getElementById("chatStatus").textContent="No se pudieron eliminar todos los mensajes: "+(error.message||"error");}
+ }
+ async function forwardSelected(){
+  const items=ordered();if(!items.length||!auth?.currentUser)return;
+  const candidates=[...peopleCache.entries()].filter(([uid])=>uid!==auth.currentUser.uid&&isAcceptedContact(uid));
+  if(!candidates.length){document.getElementById("chatStatus").textContent="No hay otros contactos disponibles para reenviar.";return;}
+  const choice=window.prompt("Enviar los "+items.length+" mensajes a:\n"+candidates.map(([uid,p],i)=>(i+1)+". "+(p.displayName||p.email||"Contacto")).join("\n")+"\n\nEscribe el número:");
+  if(choice===null)return;const target=candidates[Number(choice)-1];
+  if(!target){document.getElementById("chatStatus").textContent="Número de contacto no válido.";return;}
+  const ids=[auth.currentUser.uid,target[0]].sort(),targetId=ids.join("__");
+  const status=document.getElementById("chatStatus");
+  try{
+   const conversationRef=db.collection("conversations").doc(targetId);
+   const conversationSnap=await conversationRef.get();
+   if(!conversationSnap.exists)await conversationRef.set({members:ids,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+   for(const item of items){
+    const d=item.data;
+    const payload={type:d.type||"text",email:auth.currentUser.email||"",displayName:(peopleCache.get(auth.currentUser.uid)||{}).displayName||(auth.currentUser.email||"Miembro").split("@")[0],uid:auth.currentUser.uid,createdAt:firebase.firestore.FieldValue.serverTimestamp()};
+    if(["text","sticker"].includes(d.type)){payload.text=d.text||"";}
+    else if(d.type==="location"){payload.latitude=d.latitude;payload.longitude=d.longitude;}
+    else if(["image","audio","file"].includes(d.type)){
+     const sourceUrl=d.storagePath?await getMediaUrl(d.storagePath,item.conversationId):d.mediaUrl;
+     if(!sourceUrl)throw new Error("No se pudo abrir un archivo seleccionado.");
+     const response=await fetch(sourceUrl);if(!response.ok)throw new Error("No se pudo descargar un archivo para reenviarlo.");
+     const blob=await response.blob(),mimeType=d.mimeType||blob.type||"application/octet-stream";
+     const token=await auth.currentUser.getIdToken();
+     const uploadResponse=await fetch(SUPABASE_URL+"/functions/v1/media",{method:"POST",headers:{"Content-Type":"application/json","apikey":SUPABASE_PUBLISHABLE_KEY,"Authorization":"Bearer "+token},body:JSON.stringify({action:"create-upload",type:d.type,size:blob.size,mimeType,conversationId:targetId})});
+     const signed=await uploadResponse.json().catch(()=>({}));
+     if(!uploadResponse.ok||!signed.path||!signed.token)throw new Error(signed.error||"No se pudo preparar la copia del archivo.");
+     const upload=await getSupabaseClient().storage.from("Chat-media").uploadToSignedUrl(signed.path,signed.token,blob,{contentType:mimeType});
+     if(upload.error)throw upload.error;
+     Object.assign(payload,{storagePath:signed.path,conversationId:targetId,mimeType,fileName:d.fileName||"archivo compartido",size:blob.size});
+     if(d.duration)payload.duration=d.duration;
+    }else{payload.text=d.text||"";}
+    const sent=await conversationRef.collection("messages").add(payload);
+    void sendKlkPushForMessage(targetId,sent.id);
+   }
+   status.textContent=items.length+" mensaje(s) enviados a "+(target[1].displayName||"tu contacto")+".";
+   cancel();
+  }catch(error){status.textContent="No se pudo completar el envío: "+(error.message||"error");}
+ }
+ bar.addEventListener("click",event=>{
+  const button=event.target.closest("button[data-action]");if(!button)return;
+  const action=button.dataset.action;
+  if(action==="cancel")cancel();
+  else if(action==="copy")copySelected();
+  else if(action==="delete")deleteSelected();
+  else if(action==="forward")forwardSelected();
+ });
+})();
+</script>
+
 </body></html>
