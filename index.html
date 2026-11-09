@@ -532,9 +532,9 @@ body:has(#chat.room-open) main{padding:0!important;margin:0!important;max-width:
 <div class="homeSearch"><input id="chatSearch" type="search" placeholder="Buscar..." aria-label="Buscar conversaciones"></div>
  <p id="homeStatus" class="hint" role="status" aria-live="polite" style="padding:0 20px;min-height:18px"></p>
 
- <button id="homeGroup" class="homeGroup" type="button" hidden><span class="homeAvatar">👥</span><span class="homeGroupText"><strong>Chats privados</strong><small>klk permite conversaciones entre contactos aceptados</small></span></button>
+ <button id="homeGroup" class="homeGroup" type="button" hidden><span class="homeAvatar">👥</span><span class="homeGroupText"><strong>Chats privados</strong><small>Conversaciones privadas entre miembros de klk</small></span></button>
  <section id="chatsPanel" style="padding:4px 0 12px"><div id="chatsList" aria-label="Conversaciones recientes" class="hint" style="padding:12px 20px">Cargando conversaciones...</div></section>
- <section id="requestsPanel" hidden style="display:none;padding:8px 20px"><h3 style="font-size:16px;margin:8px 0">Solicitudes recibidas</h3><div id="requestsList" class="hint">Cargando solicitudes...</div></section>
+ <section id="requestsPanel" hidden aria-hidden="true" style="display:none;padding:8px 20px"></section>
  <div id="peopleList" hidden style="display:none" aria-label="Personas registradas">Cargando personas...</div>
 <section id="contactProfilePanel" class="contactProfilePanel" aria-label="Perfil del contacto" hidden>
 <div class="contactProfileTop"><button id="contactProfileBack" class="secondary" type="button" aria-label="Volver">‹</button><strong>Info. del contacto</strong></div>
@@ -754,7 +754,7 @@ async function sendKlkPushForMessage(conversationId, messageId) {
 }
 let auth, db, firebaseInitError = null, unsubscribe = null, sending = false, mediaRecorder = null, audioStream = null, audioBlob = null, audioStartedAt = 0;
 let authPersistenceReady = Promise.resolve(), firestorePersistenceReady = Promise.resolve(true);
-let activeConversationId = null, activeConversationName = null, activeConversationPeerUid = null, peopleUnsubscribe = null, incomingRequestsUnsubscribe = null, outgoingRequestsUnsubscribe = null;
+let activeConversationId = null, activeConversationName = null, activeConversationPeerUid = null, peopleUnsubscribe = null, incomingRequestsUnsubscribe = null, outgoingRequestsUnsubscribe = null, conversationListUnsubscribe = null;
 const incomingRequests = new Map(), outgoingRequests = new Map(), peopleCache = new Map(), conversationSubscriptions = new Map(), conversationCache = new Map();
 let activeHomeFilter = "chats";
 function showError(target, error) {
@@ -970,6 +970,7 @@ auth && auth.onAuthStateChanged(async user => {
   if (myProfileUnsubscribe) myProfileUnsubscribe(); myProfileUnsubscribe = null;
   if (incomingRequestsUnsubscribe) incomingRequestsUnsubscribe(); incomingRequestsUnsubscribe = null;
   if (outgoingRequestsUnsubscribe) outgoingRequestsUnsubscribe(); outgoingRequestsUnsubscribe = null;
+  if (conversationListUnsubscribe) conversationListUnsubscribe(); conversationListUnsubscribe = null;
   for (const entry of conversationSubscriptions.values()) { if (entry.messages) entry.messages(); if (entry.conversation) entry.conversation(); }
   conversationSubscriptions.clear(); conversationCache.clear();
   incomingRequests.clear(); outgoingRequests.clear(); peopleCache.clear();
@@ -980,14 +981,8 @@ function messagesCollection() {
  if (!activeConversationId) return null;
  return db.collection("conversations").doc(activeConversationId).collection("messages");
 }
-function isAcceptedContact(uid) {
- return (incomingRequests.get(uid) || {}).status === "accepted" || (outgoingRequests.get(uid) || {}).status === "accepted";
-}
-function isInvitedContact(uid) {
- const incoming=(incomingRequests.get(uid)||{}).status;
- const outgoing=(outgoingRequests.get(uid)||{}).status;
- return incoming === "pending" || incoming === "accepted" || outgoing === "pending" || outgoing === "accepted";
-}
+function isAcceptedContact(uid) { return Boolean(peopleCache.has(uid)); }
+function isInvitedContact(uid) { return Boolean(peopleCache.has(uid)); }
 let myProfileUnsubscribe = null;
 function loadMyProfile() {
  if (myProfileUnsubscribe) myProfileUnsubscribe();
@@ -1169,11 +1164,12 @@ function renderPeople() {
   const about = document.createElement("small"); about.textContent = person.about || "Perfil público de klk";
   info.append(name,about); row.append(info);
   const view=document.createElement("button");view.type="button";view.className="secondary";view.style.cssText="width:auto;min-width:76px;margin:0 5px 0 0;padding:9px 8px;font-size:12px";view.textContent="Perfil";view.onclick=()=>openContactProfile(uid,person);row.append(view);
-  const action = document.createElement("button"); action.style.cssText = "width:auto;min-width:112px;margin:0;padding:9px 12px;font-size:13px";
-  if (isInvitedContact(uid)) { action.textContent = "Escribir"; action.onclick = () => openPrivateConversation(uid, person.displayName || person.email || "Conversación"); }
-  else if ((outgoingRequests.get(uid) || {}).status === "rejected") { action.textContent = "Solicitud rechazada"; action.disabled = true; }
-  else { action.textContent = "Enviar solicitud"; action.onclick = () => sendContactRequest(uid,person); }
-  row.append(action); list.append(row);
+  const action = document.createElement("button");
+  action.type = "button";
+  action.style.cssText = "width:auto;min-width:92px;margin:0;padding:9px 12px;font-size:13px";
+  action.textContent = "Escribir";
+  action.onclick = () => openPrivateConversation(uid, person.displayName || person.email || "Conversación");
+  row.append(action); list.append(row);  row.append(action); list.append(row);
  }
  syncConversationListeners();
  if(window.klkRefreshCallContacts)window.klkRefreshCallContacts();
@@ -1199,17 +1195,28 @@ function renderConversations() {
  }
 }
 function syncConversationListeners(){
- const user=auth&&auth.currentUser;if(!user)return;
- const invitedUids=[...new Set([...incomingRequests.keys(),...outgoingRequests.keys()])].filter(uid=>uid!==user.uid&&isInvitedContact(uid));
- const invited=invitedUids.map(uid=>{const request=incomingRequests.get(uid)||outgoingRequests.get(uid)||{};const fallbackName=request.senderUid===uid?request.senderName:request.recipientName;return [uid,peopleCache.get(uid)||{displayName:fallbackName||"Contacto"}];});
- const wanted=new Set(invited.map(([uid])=>[user.uid,uid].sort().join("__")));
- for(const [id,entry] of conversationSubscriptions){if(!wanted.has(id)){if(entry.messages)entry.messages();if(entry.conversation)entry.conversation();conversationSubscriptions.delete(id);conversationCache.delete(id);}}
- for(const [uid,person] of invited){
-  const id=[user.uid,uid].sort().join("__");if(conversationSubscriptions.has(id))continue;
-  const entry={conversation:null,messages:null,lastMessageId:null,messagesInitialized:false};conversationSubscriptions.set(id,entry);
-  entry.conversation=db.collection("conversations").doc(id).onSnapshot(snapshot=>{
-   if(!snapshot.exists){if(entry.messages){entry.messages();entry.messages=null;}conversationCache.delete(id);renderConversations();return;}
-   if(!entry.messages){entry.messages=db.collection("conversations").doc(id).collection("messages").orderBy("createdAt","desc").limit(1).onSnapshot(messages=>{
+ const user=auth&&auth.currentUser;
+ if(!user||!db)return;
+ if(conversationListUnsubscribe){conversationListUnsubscribe();conversationListUnsubscribe=null;}
+ conversationListUnsubscribe=db.collection("conversations").where("members","array-contains",user.uid).onSnapshot(snapshot=>{
+  const wanted=new Set(snapshot.docs.map(doc=>doc.id));
+  for(const [id,entry] of conversationSubscriptions){
+   if(!wanted.has(id)){
+    if(entry.messages)entry.messages();
+    if(entry.conversation)entry.conversation();
+    conversationSubscriptions.delete(id);conversationCache.delete(id);
+   }
+  }
+  for(const conversationDoc of snapshot.docs){
+   const id=conversationDoc.id;
+   const members=conversationDoc.data().members||[];
+   const uid=members.find(member=>member!==user.uid);
+   if(!uid)continue;
+   const person=peopleCache.get(uid)||{displayName:"Contacto"};
+   let entry=conversationSubscriptions.get(id);
+   if(!entry){entry={conversation:null,messages:null,lastMessageId:null,messagesInitialized:false};conversationSubscriptions.set(id,entry);}
+   if(entry.messages)continue;
+   entry.messages=db.collection("conversations").doc(id).collection("messages").orderBy("createdAt","desc").limit(1).onSnapshot(messages=>{
     const lastDoc=messages.empty?null:messages.docs[0];
     const last=lastDoc?lastDoc.data():null;
     if(entry.messagesInitialized&&lastDoc&&lastDoc.id!==entry.lastMessageId&&last&&last.uid!==user.uid){
@@ -1217,40 +1224,24 @@ function syncConversationListeners(){
     }
     entry.messagesInitialized=true;entry.lastMessageId=lastDoc?lastDoc.id:null;
     const latestPerson=peopleCache.get(uid)||person;
-    conversationCache.set(id,{uid,name:latestPerson.displayName||latestPerson.email||"Contacto",photoUrl:null,preview:last?(last.type==="image"?"📷 Foto":last.type==="audio"?"🎙️ Nota de voz":last.text||"Mensaje"):"Todavía no hay mensajes",time:last?formatConversationTime(last.createdAt):"",sortTime:last&&last.createdAt&&last.createdAt.toMillis?last.createdAt.toMillis():0});
-    const cached=conversationCache.get(id);
+    const cached={uid,name:latestPerson.displayName||latestPerson.email||"Contacto",photoUrl:null,preview:last?(last.type==="image"?"📷 Foto":last.type==="audio"?"🎙️ Nota de voz":last.type==="file"?"📎 Documento":last.text||"Mensaje"):"Todavía no hay mensajes",time:last?formatConversationTime(last.createdAt):"",sortTime:last&&last.createdAt&&last.createdAt.toMillis?last.createdAt.toMillis():0};
+    conversationCache.set(id,cached);
     if(latestPerson.photoPath)getMediaUrl(latestPerson.photoPath).then(url=>{if(conversationCache.has(id)){cached.photoUrl=url;renderConversations();}}).catch(()=>{});
     renderConversations();
-   },error=>showError("chatStatus",error));}
-  },error=>showError("chatStatus",error));
- }
- renderConversations();
+   },error=>showError("chatStatus",error));
+  }
+  renderConversations();
+ },error=>showError("chatStatus",error));
 }
 function renderRequests() {
- const list = $("requestsList"); if (!list) return;
- list.innerHTML = "";
- const pending = [...incomingRequests.entries()].filter(([,r]) => r.status === "pending");
- if (!pending.length) { list.textContent = "No tienes invitaciones pendientes."; renderPeople(); return; }
- for (const [uid,r] of pending) {
-  const row = document.createElement("div"); row.className = "memberBtn";
-  const label = document.createElement("span"); label.style.flex = "1"; label.textContent = (r.senderName || r.senderEmail || "Usuario") + " te invitó a conversar. Ya puedes escribirle.";
-  const write = document.createElement("button"); write.textContent = "Escribir"; write.style.width = "auto"; write.onclick = () => openPrivateConversation(uid,r.senderName || r.senderEmail || "Conversación");
-  const reject = document.createElement("button"); reject.textContent = "Rechazar"; reject.className = "secondary"; reject.style.width = "auto"; reject.onclick = () => respondToContactRequest(uid,"rejected");
-  row.append(label,write,reject); list.append(row);
- }
- renderPeople();
+ const list=$("requestsList");
+ if(list)list.textContent="";
+ const panel=$("requestsPanel");
+ if(panel){panel.hidden=true;panel.style.display="none";}
 }
 function loadContactRequests() {
- const uid = auth.currentUser.uid;
- if (incomingRequestsUnsubscribe) incomingRequestsUnsubscribe();
- if (outgoingRequestsUnsubscribe) outgoingRequestsUnsubscribe();
- $("requestsList").textContent = "Cargando solicitudes...";
- incomingRequestsUnsubscribe = db.collection("contactRequests").where("recipientUid","==",uid).onSnapshot(snapshot => {
-  incomingRequests.clear(); snapshot.docs.forEach(d => incomingRequests.set(d.data().senderUid,d.data())); renderRequests(); if(window.klkRenderStatuses)window.klkRenderStatuses();
- },error => { showError("requestsList",error); showError("chatStatus",error); });
- outgoingRequestsUnsubscribe = db.collection("contactRequests").where("senderUid","==",uid).onSnapshot(snapshot => {
-  outgoingRequests.clear(); snapshot.docs.forEach(d => outgoingRequests.set(d.data().recipientUid,d.data())); renderRequests(); if(window.klkRenderStatuses)window.klkRenderStatuses();
- },error => showError("chatStatus",error));
+ incomingRequests.clear();outgoingRequests.clear();
+ renderRequests();
 }
 function loadPeople() {
  if (peopleUnsubscribe) peopleUnsubscribe();
@@ -1270,17 +1261,11 @@ function loadPeople() {
  });
 }
 async function sendContactRequest(otherUid, person) {
- const user = auth.currentUser; if (!user || !otherUid || otherUid === user.uid) return;
- const id = user.uid + "__" + otherUid;
- try {
-  await db.collection("contactRequests").doc(id).set({senderUid:user.uid,recipientUid:otherUid,senderEmail:user.email || "",senderName:user.displayName || (user.email || "Miembro").split("@")[0],recipientEmail:person.email || "",recipientName:person.displayName || "",status:"pending",createdAt:firebase.firestore.FieldValue.serverTimestamp()});
-  $("chatStatus").textContent = "Solicitud enviada.";
- } catch(error) { showError("chatStatus",error); }
+ if(!otherUid)return;
+ return openPrivateConversation(otherUid,(person&&person.displayName)||"Conversación");
 }
-async function respondToContactRequest(senderUid,status) {
- const id = senderUid + "__" + auth.currentUser.uid;
- try { await db.collection("contactRequests").doc(id).update({status}); $("chatStatus").textContent = status === "accepted" ? "Contacto aceptado. Ya pueden enviarse mensajes." : "Solicitud rechazada."; }
- catch(error) { showError("chatStatus",error); }
+async function respondToContactRequest() {
+ $("chatStatus").textContent="klk ya no utiliza solicitudes de amistad.";
 }
 async function updateRoomAvatar(otherUid) {
  const avatar=$("roomAvatar"); if(!avatar)return;
@@ -1294,7 +1279,6 @@ async function updateRoomAvatar(otherUid) {
 async function openPrivateConversation(otherUid, otherName) {
  const user = auth.currentUser;
  if (!user || !otherUid || otherUid === user.uid) return;
- if (!isInvitedContact(otherUid)) { $("chatStatus").textContent = "Envía una invitación para poder escribirle."; return; }
  const members = [user.uid,otherUid].sort(), conversationId = members.join("__");
  $("chatStatus").textContent = "Abriendo conversación privada...";
  try {
@@ -1307,7 +1291,7 @@ async function openPrivateConversation(otherUid, otherName) {
   $("chatStatus").textContent = "Conversación privada con " + otherName; loadMessages();
  } catch(error) { showError("chatStatus",error); }
 }
-$("showGroup").onclick = () => { $("chatStatus").textContent = "klk solo permite conversaciones privadas entre contactos aceptados."; };
+$("showGroup").onclick = () => { $("chatStatus").textContent = "klk permite conversaciones privadas entre miembros."; };
 function openActiveContactProfile(){if(!activeConversationPeerUid)return;const person=peopleCache.get(activeConversationPeerUid)||{displayName:activeConversationName||"Contacto"};openContactProfile(activeConversationPeerUid,person,"chat");}
 $("roomContactInfo").addEventListener("click",openActiveContactProfile);
 $("chatTitle").addEventListener("click",openActiveContactProfile);
@@ -1506,7 +1490,7 @@ async function compressImage(file) {
 }
 async function uploadMedia(file, type, durationSeconds = null) {
  const user = auth && auth.currentUser;
- if (!user || !activeConversationId) { $("chatStatus").textContent = "Selecciona un contacto aceptado antes de compartir archivos."; return; }
+ if (!user || !activeConversationId) { $("chatStatus").textContent = "Abre una conversación privada antes de compartir archivos."; return; }
  if (!file || sending) return;
  if (type === "image" && !file.type.startsWith("image/")) { $("chatStatus").textContent = "Selecciona un archivo de imagen."; return; }
  if (type === "audio" && !file.type.startsWith("audio/")) { $("chatStatus").textContent = "No se pudo reconocer el formato del audio."; return; }
