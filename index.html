@@ -344,7 +344,7 @@ body:has(#chat.room-open) main{padding:0!important;margin:0!important;max-width:
 .voiceTimer[hidden]{display:none!important}
 #recordAudio.recording{background:#d93025!important;color:#fff!important;animation:klkMicPulse 1.1s ease-in-out infinite}
 @keyframes klkMicPulse{0%,100%{box-shadow:0 0 0 0 #d9302530}50%{box-shadow:0 0 0 7px #d9302520}}
-</style>
+\n/* Icono de envío nítido y botón accesible */\n#send{display:grid;place-items:center;transition:opacity .15s ease,transform .15s ease}\n#send .sendGlyph{width:22px;height:22px;display:block}\n#send:disabled{opacity:.42;cursor:not-allowed}\n#chat.room-open .composer #send .sendGlyph{width:21px;height:21px}\n#chat.room-open .composer #send:active:not(:disabled){transform:scale(.94)}\n</style>
 </head>
 <body>
 <header>klk <small>Tu familia, siempre conectada ❤️</small></header>
@@ -452,7 +452,7 @@ body:has(#chat.room-open) main{padding:0!important;margin:0!important;max-width:
  <button id="pickPhoto" class="iconBtn" type="button" aria-label="Adjuntar archivo" title="Adjuntar archivo">＋</button>
  <input id="message" maxlength="2000" placeholder="Mensaje" autocomplete="off" aria-label="Escribe un mensaje">
  <button id="takePhoto" type="button" aria-label="Cámara" title="Cámara">📷</button>
- <button id="send" type="button" aria-label="Enviar mensaje" title="Enviar">➤</button>
+ <button id="send" type="button" aria-label="Enviar mensaje" title="Enviar"><svg class="sendGlyph" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3.4 20.1 21 12 3.4 3.9l.1 6.3 11.1 1.8-11.1 1.8-.1 6.3Z" fill="currentColor" stroke="currentColor" stroke-linejoin="round" stroke-width="1.1"/></svg></button>
  <span id="voiceTimer" class="voiceTimer" aria-live="off" hidden>00:00</span>
  <button id="recordAudio" type="button" aria-label="Mantén presionado para grabar una nota de voz" title="Mantén presionado para grabar">🎙</button>
 </div>
@@ -1124,9 +1124,11 @@ $("send").onclick = async () => {
  sending = true; syncComposerMode(); $("chatStatus").textContent = "";
  try {
   const sentMessage = await messagesCollection().add({type:"text", text, email:user.email || "", displayName:(peopleCache.get(user.uid) || {}).displayName || (user.email || "Miembro").split("@")[0], uid:user.uid, createdAt:firebase.firestore.FieldValue.serverTimestamp()});
-  await sendKlkPushForMessage(activeConversationId,sentMessage.id);
-  $("message").value = ""; syncComposerMode();
-  $("message").blur();
+  // Vaciar el campo inmediatamente tras guardar el mensaje; el push no debe bloquear el envío ni la escritura siguiente.
+  $("message").value = "";
+  syncComposerMode();
+  $("message").focus({preventScroll:true});
+  void sendKlkPushForMessage(activeConversationId,sentMessage.id);
  } catch(error) { showError("chatStatus", error); }
  finally { sending = false; syncComposerMode(); }
 };
