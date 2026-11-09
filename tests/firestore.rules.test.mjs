@@ -160,7 +160,11 @@ test("solo los miembros pueden leer y enviar mensajes privados", async () => {
     displayName:"Miembro Uno", createdAt:serverTimestamp()
   };
   await assertSucceeds(setDoc(doc(member,"conversations/member-1__member-2/messages/message-1"),message));
+  // UID is the authoritative sender identity; a missing/stale email claim must not block delivery.
+  const {email: _email, ...messageWithoutEmail} = message;
+  await assertSucceeds(setDoc(doc(member,"conversations/member-1__member-2/messages/message-2"),messageWithoutEmail));
   await assertSucceeds(getDoc(doc(recipient,"conversations/member-1__member-2/messages/message-1")));
+  await assertSucceeds(getDoc(doc(recipient,"conversations/member-1__member-2/messages/message-2")));
   await assertFails(getDoc(doc(outsider,"conversations/member-1__member-2/messages/message-1")));
   await assertFails(setDoc(doc(outsider,"conversations/member-1__member-2/messages/message-2"),{
     ...message, uid:"outsider", email:"outsider@example.com"
