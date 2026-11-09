@@ -1117,7 +1117,7 @@ function syncComposerMode(){
  $("send").setAttribute("aria-disabled",String(!hasText||sending));
 }
 $("message").addEventListener("input",syncComposerMode);
-$$("send").onclick = async () => {
+$("send").onclick = async () => {
  const input=$("message"), text=input.value.trim(), user=auth&&auth.currentUser;
  if (!user || !activeConversationId) { $("chatStatus").textContent = "Selecciona un contacto que haya aceptado tu solicitud antes de enviar mensajes."; return; }
  if (!text || sending) return;
