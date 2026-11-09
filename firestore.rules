@@ -161,7 +161,7 @@ service cloud.firestore {
             'type','text','storagePath','conversationId','mimeType','fileName',
             'size','duration','latitude','longitude','email','uid','displayName','createdAt'
           ])
-          && request.resource.data.keys().hasAll(['type','email','uid','createdAt'])
+          && request.resource.data.keys().hasAll(['type','uid','createdAt'])
           && request.resource.data.uid == request.auth.uid
           && (!request.resource.data.keys().hasAny(['email'])
             || (request.resource.data.email is string && request.resource.data.email.size() <= 254))
