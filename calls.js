@@ -32,7 +32,7 @@
    callConversationPeople.clear();
    snapshot.docs.forEach(doc=>{
     const peerUid=(doc.data().members||[]).find(member=>member!==uid);
-    if(peerUid&&!callDirectoryPeople.has(peerUid))callConversationPeople.set(peerUid,{displayName:"Contacto"});
+    if(peerUid)callConversationPeople.set(peerUid,{displayName:"Contacto"});
    });
    updateCallPeople();
   },error=>{
