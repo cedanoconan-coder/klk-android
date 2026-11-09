@@ -1000,9 +1000,10 @@ async function openContactProfile(uid,person,returnTo="people"){
  const cover=$("contactProfileCover");cover.style.backgroundImage="";if(person.coverPath)try{cover.style.backgroundImage='url("' + await getMediaUrl(person.coverPath) + '")';}catch(error){}
  $("contactProfilePhoto").src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ctext x='32' y='45' text-anchor='middle' font-size='44'%3E%F0%9F%91%A4%3C/text%3E%3C/svg%3E";
  if(person.photoPath)try{$("contactProfilePhoto").src=await getMediaUrl(person.photoPath);}catch(e){}
- const ok=isAcceptedContact(uid);
- ["contactProfileMessage","contactProfileVoice","contactProfileVideo","contactProfileShare"].forEach(id=>$(id).disabled=!ok);
- $("contactProfileStatus").textContent=ok?"Contacto aceptado":"Acepta la solicitud para iniciar una conversación o llamar.";
+ const canWrite=isInvitedContact(uid), accepted=isAcceptedContact(uid);
+ $("contactProfileMessage").disabled=!canWrite;
+ ["contactProfileVoice","contactProfileVideo","contactProfileShare"].forEach(id=>$(id).disabled=!accepted);
+ $("contactProfileStatus").textContent=canWrite?"Ya pueden escribirse mensajes. Las llamadas requieren que ambos sean contactos aceptados.":"Envía una invitación para comenzar a escribir.";
  $("contactProfileMessage").onclick=()=>{closeContactProfile();openPrivateConversation(uid,displayName||"Conversación");};
  $("contactProfileVoice").onclick=()=>window.klkStartCall&&window.klkStartCall(uid,displayName,"audio");
  $("contactProfileVideo").onclick=()=>window.klkStartCall&&window.klkStartCall(uid,displayName,"video");
