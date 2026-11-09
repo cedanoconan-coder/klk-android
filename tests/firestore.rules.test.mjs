@@ -166,8 +166,8 @@ test("permite enviar stickers autorizados y rechaza contenido arbitrario", async
   }));
 });
 
-test("solo los perfiles visibles exponen sus estados a miembros autenticados", async () => {
-  await seedPublicProfile("owner", true);
+test("los estados se pueden consultar por cualquier miembro autenticado", async () => {
+  await seedPublicProfile("owner", false);
   await testEnv.withSecurityRulesDisabled(async context => {
     await setDoc(doc(context.firestore(),"statuses/status-visible"),{
       uid:"owner",displayName:"Propietario",type:"text",text:"Hola",
@@ -180,10 +180,12 @@ test("solo los perfiles visibles exponen sus estados a miembros autenticados", a
   await assertSucceeds(getDoc(doc(owner,"statuses/status-visible")));
   await assertSucceeds(getDoc(doc(member,"statuses/status-visible")));
   await assertSucceeds(getDoc(doc(outsider,"statuses/status-visible")));
+  const anonymous = testEnv.unauthenticatedContext().firestore();
+  await assertFails(getDoc(doc(anonymous,"statuses/status-visible")));
 });
 
 test("un miembro puede reaccionar y registrar una visualización en un estado visible", async () => {
-  await seedPublicProfile("owner", true);
+  await seedPublicProfile("owner", false);
   await testEnv.withSecurityRulesDisabled(async context => {
     await setDoc(doc(context.firestore(),"statuses/status-interactions"),{
       uid:"owner",displayName:"Propietario",type:"text",text:"Estado",
