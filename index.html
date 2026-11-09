@@ -739,7 +739,7 @@ $("settingsLogout").addEventListener("click", performKlkLogout);
 const KLK_BIOMETRIC_KEY="klk-biometric-credential-v1";
 const klkRandomBytes=n=>{const b=new Uint8Array(n);crypto.getRandomValues(b);return b;};
 const klkB64url=b=>btoa(String.fromCharCode(...new Uint8Array(b))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
-const klkFromB64url=s=>Uint8Array.from(atob(s.replace(/-/g,"+").replace(/_/g,"/")+"===".slice((4-(s.length%4))%4)),c=>c.charCodeAt(0));
+const klkFromB64url=s=>{const clean=String(s||"").replace(/-/g,"+").replace(/_/g,"/").replace(/[^A-Za-z0-9+/=]/g,"");const rem=clean.length%4;if(rem===1)throw new Error("La credencial biométrica guardada está dañada. Desactiva y vuelve a activar la huella.");const padded=clean.replace(/=+$/,"")+(rem===2?"==":rem===3?"=":"");return Uint8Array.from(atob(padded),c=>c.charCodeAt(0));};
 function showKlkBiometricLock(){const el=$("biometricLock");if(el)el.style.display="flex";}
 function hideKlkBiometricLock(){const el=$("biometricLock");if(el)el.style.display="none";}
 async function enableKlkBiometric(){
