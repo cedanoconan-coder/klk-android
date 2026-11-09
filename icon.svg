@@ -1,19 +1,19 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="klk, puño levantado">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="klk, pulgar arriba">
 <defs>
- <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#16d66b"/><stop offset=".55" stop-color="#087b51"/><stop offset="1" stop-color="#043d35"/></linearGradient>
- <linearGradient id="skin" x1=".15" y1="0" x2=".8" y2="1"><stop stop-color="#fff0d4"/><stop offset=".55" stop-color="#f5b66f"/><stop offset="1" stop-color="#d87935"/></linearGradient>
+ <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#18d978"/><stop offset=".58" stop-color="#087b51"/><stop offset="1" stop-color="#043d35"/></linearGradient>
+ <linearGradient id="skin" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff0d5"/><stop offset=".58" stop-color="#f2b66e"/><stop offset="1" stop-color="#d77b3e"/></linearGradient>
  <filter id="shadow" x="-30%" y="-30%" width="160%" height="170%"><feGaussianBlur in="SourceAlpha" stdDeviation="9"/><feOffset dy="10"/><feComponentTransfer><feFuncA type="linear" slope=".3"/></feComponentTransfer><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>
 </defs>
 <rect width="512" height="512" rx="112" fill="url(#bg)"/>
 <circle cx="410" cy="95" r="150" fill="#fff" opacity=".07"/>
-<path d="M256 52 286 85 330 68 343 111 390 120 380 165 416 195 385 229 399 273 352 284 333 329 289 307 256 345 223 307 179 329 160 284 113 273 127 229 96 195 132 165 122 120 169 111 182 68 226 85Z" fill="#b8ffdc" opacity=".18"/>
+<path d="M256 62 278 91 316 77 330 112 368 120 361 158 391 184 366 213 378 250 339 261 322 298 286 280 256 310 226 280 190 298 173 261 134 250 146 213 121 184 151 158 144 120 182 112 196 77 234 91Z" fill="#b8ffdc" opacity=".16"/>
 <g filter="url(#shadow)" stroke="#693b20" stroke-width="11" stroke-linejoin="round" stroke-linecap="round">
- <!-- Puño cerrado levantado: muñeca abajo y nudillos arriba -->
- <path d="M205 404 196 345c-3-20 5-36 20-46l-4-93c-1-20 12-35 31-36 19-1 33 13 34 32l3 67 7-89c2-19 17-32 36-30 19 2 31 17 29 36l-6 89 12-65c4-18 20-29 38-25 18 4 28 21 24 39l-17 83c-3 17-12 31-27 42l-20 15 4 40Z" fill="url(#skin)"/>
- <path d="M205 404 196 345c-3-20 5-36 20-46l-4-93c-1-20 12-35 31-36 19-1 33 13 34 32l3 67 7-89c2-19 17-32 36-30 19 2 31 17 29 36l-6 89 12-65c4-18 20-29 38-25 18 4 28 21 24 39l-17 83c-3 17-12 31-27 42l-20 15 4 40" fill="none"/>
- <path d="M212 295c20-13 39-14 58-4l31 18c13 8 17 24 9 37-8 13-24 17-37 9l-25-14-17 22 8 41H205l-9-59c-3-21 3-39 16-50Z" fill="url(#skin)"/>
- <path d="M211 289c16-10 36-11 52-3M282 270l-2 26M350 273l-7 26M418 270l-9 30" fill="none" stroke="#fff" stroke-width="7" opacity=".35"/>
- <path d="M203 396h111v48H203z" fill="#1689ed"/>
+ <!-- Mano con pulgar levantado -->
+ <path d="M194 402 177 354c-8-22-2-44 16-57l37-27 12-118c2-21 18-36 39-34 21 2 34 19 32 40l-7 72 53-8c25-4 44 13 42 37l-10 103c-3 30-27 53-58 53H194Z" fill="url(#skin)"/>
+ <path d="M177 354c-8-22-2-44 16-57l37-27 12-118c2-21 18-36 39-34 21 2 34 19 32 40l-7 72 53-8c25-4 44 13 42 37l-10 103c-3 30-27 53-58 53H194" fill="none"/>
+ <path d="M242 271c20-7 39-8 58-4l40 8c15 3 25 17 22 32-3 15-17 25-32 22l-45-7M238 300c24-8 47-8 70-2" fill="none" stroke="#c97840" stroke-width="8"/>
+ <path d="M183 344c14-10 30-15 48-15l15 73H194Z" fill="#1689ed" stroke="#14528b"/>
+ <path d="M258 111c10-7 21-8 31-3" fill="none" stroke="#fff" stroke-width="7" opacity=".45"/>
 </g>
 <path d="M96 116h38M115 97v38M396 350h26M409 337v26" stroke="#fff" stroke-width="9" stroke-linecap="round" opacity=".8"/>
 <text x="256" y="478" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="58" font-weight="900" letter-spacing="-3" fill="#fff" stroke="#064a37" stroke-width="8" paint-order="stroke">klk</text>
