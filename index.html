@@ -534,7 +534,7 @@ function getSupabaseClient() {
  if (!supabaseClient) supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
  return supabaseClient;
 }
-const KLK_VAPID_PUBLIC_KEY = "PENDIENTE_VAPID_PUBLIC_KEY";
+const KLK_VAPID_PUBLIC_KEY = "BHfCXTC4j8dITGiGCSIgh-1w56AV7OMj1QLhVetlVqxXU6WUTNmsEqWbkRCYnh4k7TJT7vFYj3FGDlCxLPkNt7M";
 const KLK_PUSH_FUNCTION_URL = SUPABASE_URL + "/functions/v1/klk-push";
 let klkMessaging = null;
 let klkForegroundMessageListenerInstalled = false;
