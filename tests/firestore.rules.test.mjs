@@ -131,6 +131,7 @@ test("cada miembro puede listar sus propias conversaciones", async () => {
   await seedConversation();
   const member = testEnv.authenticatedContext("member-1").firestore();
   const outsider = testEnv.authenticatedContext("outsider").firestore();
+  await assertFails(getDocs(collection(member,"conversations")));
   const own = await assertSucceeds(getDocs(query(
     collection(member,"conversations"),where("members","array-contains","member-1")
   )));
