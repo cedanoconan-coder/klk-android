@@ -749,7 +749,7 @@ async function enableKlkBiometric(){
   if(!auth||!auth.currentUser)throw new Error("Inicia sesión antes de activar esta protección.");
   status.textContent="Solicitando la autenticación segura del teléfono...";
   const user=auth.currentUser,challenge=klkRandomBytes(32),userId=klkRandomBytes(16);
-  const credential=await navigator.credentials.create({publicKey:{challenge,rp:{name:"Klk",id:location.hostname},user:{id:userId,name:user.email||user.uid,displayName:user.displayName||"Usuario de Klk"},pubKeyCredParams:[{type:"public-key",alg:-7},{type:"public-key",alg:-257}],authenticatorSelection:{authenticatorAttachment:"platform",residentKey:"discouraged",userVerification:"required"},timeout:60000,attestation:"none"}});
+  const credential=await navigator.credentials.create({publicKey:{challenge,rp:{name:"Klk",id:location.hostname},user:{id:userId,name:user.uid,displayName:(user.displayName||"Usuario de Klk").slice(0,64)},pubKeyCredParams:[{type:"public-key",alg:-7},{type:"public-key",alg:-257}],authenticatorSelection:{authenticatorAttachment:"platform",residentKey:"discouraged",userVerification:"required"},timeout:60000,attestation:"none"}});
   if(!credential)throw new Error("No se pudo registrar la autenticación del teléfono.");
   localStorage.setItem(KLK_BIOMETRIC_KEY,JSON.stringify({id:klkB64url(credential.rawId),uid:user.uid,createdAt:Date.now()}));
   status.textContent="Protección activada. La próxima vez que abras Klk, el teléfono te pedirá verificar tu identidad.";
@@ -766,7 +766,7 @@ async function unlockKlkBiometric(){
   hideKlkBiometricLock();status.textContent="";
  }catch(error){status.textContent=error.message||"No se pudo desbloquear Klk. Inténtalo otra vez."}
 }
-$("enableBiometric").addEventListener("click",enableKlkBiometric);
+$("enableBiometric").addEventListener("click",()=>{let saved=null;try{saved=JSON.parse(localStorage.getItem(KLK_BIOMETRIC_KEY)||"null");}catch(e){}if(saved){if(window.confirm("¿Quieres desactivar el bloqueo biométrico de este teléfono?")){localStorage.removeItem(KLK_BIOMETRIC_KEY);$("enableBiometric").textContent="Activar";$("biometricStatus").textContent="Bloqueo biométrico desactivado en este teléfono."}}else enableKlkBiometric();});
 $("unlockBiometric").addEventListener("click",unlockKlkBiometric);
 try{const savedBiometric=JSON.parse(localStorage.getItem(KLK_BIOMETRIC_KEY)||"null");if(savedBiometric)$("enableBiometric").textContent="Activada";}catch(e){}
 auth && auth.onAuthStateChanged(async user => {
