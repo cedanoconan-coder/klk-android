@@ -131,6 +131,23 @@ test("permite enviar mensajes de texto con el nombre del remitente a contactos a
   }));
 });
 
+test("permite iniciar una conversación con una invitación pendiente sin aceptarla", async () => {
+  await testEnv.withSecurityRulesDisabled(async context => {
+    await setDoc(doc(context.firestore(), "contactRequests/member-1__member-2"), {
+      senderUid: "member-1", recipientUid: "member-2", status: "pending"
+    });
+  });
+
+  const db = testEnv.authenticatedContext("member-1", {
+    email: "member1@example.com"
+  }).firestore();
+
+  await assertSucceeds(setDoc(doc(db, "conversations/member-1__member-2"), {
+    members: ["member-1", "member-2"],
+    createdAt: serverTimestamp()
+  }));
+});
+
 test("rechaza nombres de remitente inválidos en los mensajes", async () => {
   await testEnv.withSecurityRulesDisabled(async context => {
     const db = context.firestore();
