@@ -205,7 +205,7 @@ service cloud.firestore {
     }
 
     match /statuses/{statusId} {
-      // Los miembros autenticados pueden ver estados de perfiles visibles en el directorio.
+      // Los estados se comparten dentro de la comunidad de miembros autenticados.
       allow read: if signedIn();
       allow create: if signedIn()
         && request.resource.data.keys().hasOnly(['uid','displayName','type','text','storagePath','mimeType','size','createdAt','expiresAt'])
@@ -251,7 +251,6 @@ service cloud.firestore {
       // Cada usuario puede registrar o quitar su propio me gusta en un estado.
       match /likes/{likerUid} {
         allow read: if signedIn()
-          && exists(/databases/$(database)/documents/statuses/$(statusId))
           && exists(/databases/$(database)/documents/statuses/$(statusId));
         allow create: if signedIn()
           && likerUid == request.auth.uid
