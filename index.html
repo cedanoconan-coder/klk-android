@@ -570,6 +570,10 @@ body:has(#chat.room-open) main{padding:0!important;margin:0!important;max-width:
 @keyframes klkThumbBounce{0%,100%{transform:translateY(0) rotate(0deg)}25%{transform:translateY(-10px) rotate(-3deg)}50%{transform:translateY(0) rotate(0deg)}75%{transform:translateY(-5px) rotate(2deg)}}
 @media(prefers-reduced-motion:reduce){.loginBrand img{animation:none;will-change:auto}}
 
+
+/* Evita que un gesto lateral accidental saque al usuario de la navegación de klk; el desplazamiento vertical sigue libre. */
+html,body{overscroll-behavior-x:none}
+main,#chat,.homeView{overscroll-behavior-y:contain}
 </style>
 <style>
 /* Perfil compacto y selector de foto mediante cámara */
