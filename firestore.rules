@@ -116,11 +116,15 @@ service cloud.firestore {
         allow create: if isConversationMember(conversationId)
           && request.resource.data.keys().hasOnly([
             'type','text','storagePath','conversationId','mimeType','fileName',
-            'size','duration','email','uid','createdAt'
+            'size','duration','email','uid','displayName','createdAt'
           ])
           && request.resource.data.keys().hasAll(['type','email','uid','createdAt'])
           && request.resource.data.uid == request.auth.uid
           && request.resource.data.email == request.auth.token.email
+          && (!request.resource.data.keys().hasAny(['displayName'])
+            || (request.resource.data.displayName is string
+              && request.resource.data.displayName.size() > 0
+              && request.resource.data.displayName.size() <= 100))
           && request.resource.data.createdAt == request.time
           && (
             (request.resource.data.type == 'text'
