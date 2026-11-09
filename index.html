@@ -25,9 +25,11 @@ button{background:#075e54;color:white;border:0;font-weight:700;cursor:pointer}bu
 .msg{background:#fff;padding:9px 12px;border-radius:3px 12px 12px 12px;margin:8px 0;overflow-wrap:anywhere;max-width:88%;width:fit-content;box-shadow:0 1px 1px #00000012}
 .msg.mine{background:#d9fdd3;margin-left:auto;border-radius:12px 3px 12px 12px}
 .msg b{font-size:12px;color:#087568}.msg p{margin:5px 0 0;white-space:pre-wrap;font-size:15px;line-height:1.35}
-#messages img{display:block;max-width:100%;max-height:340px;border-radius:8px;margin-top:7px}#messages audio{display:block;width:min(260px,70vw);max-width:100%;margin-top:7px}
+#messages img{display:block;max-width:100%;max-height:340px;border-radius:8px;margin-top:7px}#messages .stickerMessage{font-size:64px;line-height:1.15;margin:5px 0 2px;white-space:normal;text-align:center}#messages audio{display:block;width:min(260px,70vw);max-width:100%;margin-top:7px}
 .composer{display:flex;align-items:center;gap:7px;padding:9px;background:#f0f2f5}
 .composer input{flex:1;min-width:0;margin:0;border:0;border-radius:24px;padding:13px 16px;background:#fff}
+.stickersToggle{width:42px;height:42px;flex:0 0 42px;margin:0;padding:0;border-radius:50%;background:transparent;color:#54656f;font-size:25px}.stickersToggle[aria-expanded="true"]{background:#dce9e4;color:#075e54}
+#stickersPanel{display:none;padding:12px 14px 14px;background:#f0f2f5;border-top:1px solid #dce4e1}#stickersPanel.open{display:block}.stickersPanelHead{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;color:#40514c;font-size:13px;font-weight:700}.stickersGrid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:7px}.stickerChoice{display:grid;place-items:center;min-width:0;aspect-ratio:1;margin:0;padding:4px;border-radius:13px;background:#fff;color:inherit;font-size:30px;line-height:1}.stickerChoice:active{transform:scale(.93)}@media(max-width:360px){.stickersGrid{grid-template-columns:repeat(5,minmax(0,1fr))}.stickerChoice{font-size:27px}}
 .iconBtn{width:44px;height:44px;flex:0 0 44px;margin:0;padding:0;border-radius:50%;font-size:20px;background:#fff;color:#54656f}
 #send{width:46px;height:46px;flex:0 0 46px;margin:0;padding:0;border-radius:50%;font-size:18px}
 #mediaActions{display:flex;gap:7px;padding:0 12px 8px;background:#f0f2f5}#mediaActions button{width:auto;flex:1;margin:0;padding:9px 5px;border-radius:20px;font-size:13px}
@@ -598,6 +600,7 @@ body:has(#chat.room-open) main{padding:0!important;margin:0!important;max-width:
 <div id="dmPanel"><p class="hint">Elige un miembro de la familia para abrir una conversación privada.</p></div>
 <div id="messages" aria-live="polite"><p class="muted">Cargando mensajes...</p></div>
 <div class="composer">
+ <button id="stickersToggle" class="stickersToggle" type="button" aria-label="Abrir stickers" aria-expanded="false" title="Stickers">☺</button>
  <button id="pickPhoto" class="iconBtn" type="button" aria-label="Adjuntar archivo" title="Adjuntar archivo">＋</button>
  <input id="message" maxlength="2000" placeholder="Mensaje" autocomplete="off" aria-label="Escribe un mensaje">
  <button id="takePhoto" type="button" aria-label="Cámara" title="Cámara">📷</button>
@@ -605,6 +608,7 @@ body:has(#chat.room-open) main{padding:0!important;margin:0!important;max-width:
  <span id="voiceTimer" class="voiceTimer" aria-live="off" hidden>00:00</span>
  <button id="recordAudio" type="button" aria-label="Mantén presionado para grabar una nota de voz" title="Mantén presionado para grabar">🎙</button>
 </div>
+<section id="stickersPanel" aria-label="Stickers" aria-hidden="true"><div class="stickersPanelHead"><span>Stickers de klk</span><span>😊</span></div><div class="stickersGrid"><button class="stickerChoice" type="button" data-sticker="❤️" aria-label="Enviar sticker ❤️">❤️</button><button class="stickerChoice" type="button" data-sticker="😂" aria-label="Enviar sticker 😂">😂</button><button class="stickerChoice" type="button" data-sticker="😍" aria-label="Enviar sticker 😍">😍</button><button class="stickerChoice" type="button" data-sticker="🥰" aria-label="Enviar sticker 🥰">🥰</button><button class="stickerChoice" type="button" data-sticker="😘" aria-label="Enviar sticker 😘">😘</button><button class="stickerChoice" type="button" data-sticker="😭" aria-label="Enviar sticker 😭">😭</button><button class="stickerChoice" type="button" data-sticker="😎" aria-label="Enviar sticker 😎">😎</button><button class="stickerChoice" type="button" data-sticker="🥳" aria-label="Enviar sticker 🥳">🥳</button><button class="stickerChoice" type="button" data-sticker="🔥" aria-label="Enviar sticker 🔥">🔥</button><button class="stickerChoice" type="button" data-sticker="👍" aria-label="Enviar sticker 👍">👍</button><button class="stickerChoice" type="button" data-sticker="👎" aria-label="Enviar sticker 👎">👎</button><button class="stickerChoice" type="button" data-sticker="👏" aria-label="Enviar sticker 👏">👏</button><button class="stickerChoice" type="button" data-sticker="🙏" aria-label="Enviar sticker 🙏">🙏</button><button class="stickerChoice" type="button" data-sticker="💯" aria-label="Enviar sticker 💯">💯</button><button class="stickerChoice" type="button" data-sticker="🤔" aria-label="Enviar sticker 🤔">🤔</button><button class="stickerChoice" type="button" data-sticker="😴" aria-label="Enviar sticker 😴">😴</button><button class="stickerChoice" type="button" data-sticker="🤗" aria-label="Enviar sticker 🤗">🤗</button><button class="stickerChoice" type="button" data-sticker="🎉" aria-label="Enviar sticker 🎉">🎉</button><button class="stickerChoice" type="button" data-sticker="💔" aria-label="Enviar sticker 💔">💔</button><button class="stickerChoice" type="button" data-sticker="🤩" aria-label="Enviar sticker 🤩">🤩</button><button class="stickerChoice" type="button" data-sticker="😡" aria-label="Enviar sticker 😡">😡</button><button class="stickerChoice" type="button" data-sticker="🤝" aria-label="Enviar sticker 🤝">🤝</button><button class="stickerChoice" type="button" data-sticker="👋" aria-label="Enviar sticker 👋">👋</button><button class="stickerChoice" type="button" data-sticker="🙌" aria-label="Enviar sticker 🙌">🙌</button></div></section>
 <div id="mediaActions">
  <button id="shareDocument" type="button">📄 Documento</button>
  <button id="sendAudio" type="button" disabled>Enviar audio</button>
@@ -1355,7 +1359,7 @@ function loadMessages() {
      else { const audio = document.createElement("audio"); audio.controls = true; audio.preload = "metadata"; audio.src = url; item.appendChild(audio); }
     } catch(error) { placeholder.textContent = "No se pudo cargar: " + error.message; }
    } else {
-    const body = document.createElement("p"); body.textContent = data.text || (data.type === "image" ? "📷 Foto" : data.type === "audio" ? "🎙️ Nota de voz" : ""); item.appendChild(body);
+    const body = document.createElement("p"); body.textContent = data.text || (data.type === "image" ? "📷 Foto" : data.type === "audio" ? "🎙️ Nota de voz" : ""); if(data.type==="sticker"){body.className="stickerMessage";body.setAttribute("aria-label","Sticker "+(data.text||""));} item.appendChild(body);
    }
    if (data.type === "location" && Number.isFinite(data.latitude) && Number.isFinite(data.longitude)) {
     const mapLink=document.createElement("a");mapLink.href="https://www.google.com/maps?q="+encodeURIComponent(data.latitude+","+data.longitude);mapLink.target="_blank";mapLink.rel="noopener";mapLink.textContent="📍 Ver ubicación compartida";item.appendChild(mapLink);
@@ -1368,13 +1372,13 @@ function loadMessages() {
     if(!candidates.length){$("chatStatus").textContent="No tienes otros contactos aceptados para reenviar.";return;}
     const choice=window.prompt("Reenviar a:\n"+candidates.map(([uid,p],n)=>(n+1)+". "+(p.displayName||p.email||"Contacto")).join("\n")+"\n\nEscribe el número del contacto:");
     if(choice===null)return;const target=candidates[Number(choice)-1];if(!target){$("chatStatus").textContent="Número de contacto no válido.";return;}
-    if(!["text","location"].includes(data.type)){ $("chatStatus").textContent="Por ahora puedes reenviar mensajes de texto y ubicaciones. Los archivos multimedia requieren una copia segura.";return;}
+    if(!["text","location","sticker"].includes(data.type)){ $("chatStatus").textContent="Por ahora puedes reenviar mensajes de texto, stickers y ubicaciones. Los archivos multimedia requieren una copia segura.";return;}
     const ids=[auth.currentUser.uid,target[0]].sort();const targetConversation=ids.join("__");
     try{
      const conversationRef=db.collection("conversations").doc(targetConversation);const conversationSnap=await conversationRef.get();
      if(!conversationSnap.exists)await conversationRef.set({members:ids,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
      const payload={type:data.type,email:auth.currentUser.email||"",displayName:(peopleCache.get(auth.currentUser.uid)||{}).displayName||(auth.currentUser.email||"Miembro").split("@")[0],uid:auth.currentUser.uid,createdAt:firebase.firestore.FieldValue.serverTimestamp()};
-     if(data.type==="text")payload.text=data.text;
+     if(data.type==="text"||data.type==="sticker")payload.text=data.text;
      if(data.type==="location"){payload.latitude=data.latitude;payload.longitude=data.longitude;}
      const sent=await db.collection("conversations").doc(targetConversation).collection("messages").add(payload);
      void sendKlkPushForMessage(targetConversation,sent.id);$("chatStatus").textContent="Mensaje reenviado a "+(target[1].displayName||"tu contacto")+".";
@@ -1453,6 +1457,11 @@ $("send").onclick = () => {
  });
 };
 
+const stickersToggle=$("stickersToggle"),stickersPanel=$("stickersPanel");
+function closeStickersPanel(){if(!stickersPanel||!stickersToggle)return;stickersPanel.classList.remove("open");stickersPanel.setAttribute("aria-hidden","true");stickersToggle.setAttribute("aria-expanded","false");}
+stickersToggle.addEventListener("click",()=>{const opening=!stickersPanel.classList.contains("open");if(opening){stickersPanel.classList.add("open");stickersPanel.setAttribute("aria-hidden","false");stickersToggle.setAttribute("aria-expanded","true");$("message").blur();}else closeStickersPanel();});
+stickersPanel.addEventListener("click",async event=>{const choice=event.target.closest("[data-sticker]");if(!choice)return;const sticker=choice.dataset.sticker,user=auth&&auth.currentUser;if(!user||!activeConversationId){$("chatStatus").textContent="Abre una conversación para enviar stickers.";return;}if(sending)return;const conversationId=activeConversationId;sending=true;stickersPanel.querySelectorAll("button").forEach(button=>button.disabled=true);$("chatStatus").textContent="Enviando sticker...";try{const sent=await messagesCollection().add({type:"sticker",text:sticker,email:user.email||"",displayName:(peopleCache.get(user.uid)||{}).displayName||(user.email||"Miembro").split("@")[0],uid:user.uid,createdAt:firebase.firestore.FieldValue.serverTimestamp()});void sendKlkPushForMessage(conversationId,sent.id);$("chatStatus").textContent="Sticker enviado.";closeStickersPanel();}catch(error){showError("chatStatus",error);}finally{sending=false;stickersPanel.querySelectorAll("button").forEach(button=>button.disabled=false);syncComposerMode();}});
+$("message").addEventListener("focus",closeStickersPanel);
 async function compressImage(file) {
  if (!file || !file.type.startsWith("image/") || file.size < 900 * 1024) return file;
  let bitmap, objectUrl;
