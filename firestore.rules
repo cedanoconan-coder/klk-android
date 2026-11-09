@@ -184,6 +184,11 @@ service cloud.firestore {
               && request.resource.data.text.size() > 0
               && request.resource.data.text.size() <= 2000)
             ||
+            (request.resource.data.type == 'sticker'
+              && request.resource.data.keys().hasAll(['text'])
+              && request.resource.data.text is string
+              && request.resource.data.text in ['❤️','😂','😍','🥰','😘','😭','😎','🥳','🔥','👍','👎','👏','🙏','💯','🤔','😴','🤗','🎉','💔','🤩','😡','🤝','👋','🙌'])
+            ||
             (request.resource.data.type == 'location'
               && request.resource.data.keys().hasAll(['latitude','longitude'])
               && request.resource.data.latitude is number
