@@ -18,35 +18,55 @@
   callIncomingRequestsUnsub=db.collection("contactRequests").where("recipientUid","==",uid).onSnapshot(snapshot=>{callIncomingRequests.clear();snapshot.docs.forEach(doc=>callIncomingRequests.set(doc.data().senderUid,doc.data()));renderCallContacts();},error=>{console.error("Solicitudes recibidas para llamadas:",error);setStatus("No se pudieron consultar tus contactos: "+error.message);});
   callOutgoingRequestsUnsub=db.collection("contactRequests").where("senderUid","==",uid).onSnapshot(snapshot=>{callOutgoingRequests.clear();snapshot.docs.forEach(doc=>callOutgoingRequests.set(doc.data().recipientUid,doc.data()));renderCallContacts();},error=>{console.error("Solicitudes enviadas para llamadas:",error);setStatus("No se pudieron consultar tus contactos: "+error.message);});
  }
+ function formatCallTime(value){
+  if(!value)return "Fecha no disponible";
+  const date=value.toDate?value.toDate():new Date(value);
+  return Number.isNaN(date.getTime())?"Fecha no disponible":date.toLocaleString("es-DO",{dateStyle:"medium",timeStyle:"short"});
+ }
+ function callDuration(data){
+  const start=data.connectedAt&&(data.connectedAt.toDate?data.connectedAt.toDate():new Date(data.connectedAt));
+  const end=data.endedAt&&(data.endedAt.toDate?data.endedAt.toDate():new Date(data.endedAt));
+  if(!start||!end||Number.isNaN(start.getTime())||Number.isNaN(end.getTime()))return "";
+  const seconds=Math.max(0,Math.floor((end-start)/1000));
+  return Math.floor(seconds/60)+" min "+(seconds%60)+" s";
+ }
  function renderCallContacts(){
   const list=$("callContacts"); if(!list)return;
   list.innerHTML="";
-  if(!auth||!auth.currentUser){list.textContent="Inicia sesión para ver los contactos disponibles para llamar.";return;}
-  const people=acceptedPeople();
-  if(!people.length){
-   const message=document.createElement("p");
-   message.textContent=callPeople.size<=1
-    ?"Todavía no aparecen contactos aceptados. Entra en Personas y comprueba que el otro usuario haya creado su cuenta; después acepta su solicitud."
-    :"No tienes contactos aceptados todavía. Acepta una solicitud para habilitar las llamadas.";
-   list.append(message);
-   const refresh=document.createElement("button");refresh.type="button";refresh.className="secondary";refresh.textContent="Actualizar contactos";
-   refresh.onclick=async()=>{refresh.disabled=true;refresh.textContent="Actualizando...";try{const [users,incoming,outgoing]=await Promise.all([db.collection("users").get(),db.collection("contactRequests").where("recipientUid","==",currentUid).get(),db.collection("contactRequests").where("senderUid","==",currentUid).get()]);callPeople.clear();users.docs.forEach(doc=>callPeople.set(doc.id,doc.data()));callIncomingRequests.clear();incoming.docs.forEach(doc=>callIncomingRequests.set(doc.data().senderUid,doc.data()));callOutgoingRequests.clear();outgoing.docs.forEach(doc=>callOutgoingRequests.set(doc.data().recipientUid,doc.data()));setStatus("Contactos actualizados.");renderCallContacts();}catch(error){console.error("Actualizar contactos de llamadas:",error);setStatus("No se pudieron actualizar los contactos: "+error.message);}finally{refresh.disabled=false;refresh.textContent="Actualizar contactos";}};
-   const peopleButton=document.createElement("button");peopleButton.type="button";peopleButton.className="secondary";peopleButton.textContent="Ir a Personas";
-   peopleButton.onclick=()=>{if(typeof window.setHomeTab==="function")window.setHomeTab("chats");const filter=document.querySelector('.homeFilters button[data-filter="people"]');if(filter)filter.click();};
-   list.append(refresh,peopleButton);return;
-  }
-  for(const [uid,p] of people){
-   const row=document.createElement("div");row.className="callContact";
+  if(!auth||!auth.currentUser){list.textContent="Inicia sesión para consultar tu historial de llamadas.";return;}
+  const entries=[...(window.klkCallHistory||new Map()).values()].sort((a,b)=>{
+   const av=a.data.createdAt&&(a.data.createdAt.toMillis?a.data.createdAt.toMillis():new Date(a.data.createdAt).getTime())||0;
+   const bv=b.data.createdAt&&(b.data.createdAt.toMillis?b.data.createdAt.toMillis():new Date(b.data.createdAt).getTime())||0;
+   return bv-av;
+  });
+  if(!entries.length){const empty=document.createElement("p");empty.className="hint";empty.textContent="Todavía no tienes llamadas. Aquí aparecerán tus llamadas de voz y videollamadas.";list.append(empty);return;}
+  entries.forEach(({id,data})=>{
+   const outgoing=data.callerUid===currentUid;
+   const otherUid=outgoing?data.calleeUid:data.callerUid;
+   const person=callPeople.get(otherUid)||{};
+   const name=person.displayName||person.email||"Contacto";
+   const row=document.createElement("div");row.className="callContact callHistoryItem";
    const info=document.createElement("div");info.className="callContactInfo";
-   const name=document.createElement("strong");name.textContent=p.displayName||p.email||"Contacto";
-   const sub=document.createElement("small");sub.textContent=p.email||"Disponible para llamar";
-   info.append(name,sub);row.append(info);
-   const voice=document.createElement("button");voice.type="button";voice.textContent="☎ Voz";voice.title="Llamada de voz";voice.setAttribute("aria-label","Llamar por voz a "+name.textContent);
-   voice.onclick=()=>startCall(uid,name.textContent,"audio");
-   const video=document.createElement("button");video.type="button";video.textContent="▣ Video";video.title="Videollamada";video.setAttribute("aria-label","Videollamar a "+name.textContent);
-   video.onclick=()=>startCall(uid,name.textContent,"video");
-   row.append(voice,video);list.append(row);
-  }
+   const title=document.createElement("strong");title.textContent=(data.mode==="video"?"▣ Videollamada":"☎ Llamada de voz")+" · "+name;
+   const status=document.createElement("small");
+   const missed=!outgoing&&!data.connectedAt;
+   status.textContent=(missed?"Perdida":outgoing?"Realizada":"Recibida")+" · "+formatCallTime(data.createdAt)+(callDuration(data)?" · "+callDuration(data):"");
+   if(missed)status.classList.add("callMissed");
+   info.append(title,status);row.append(info);
+   const again=document.createElement("button");again.type="button";again.className="secondary";again.textContent="↗";again.title="Volver a llamar";again.setAttribute("aria-label","Volver a llamar a "+name);
+   again.disabled=!isCallContactAccepted(otherUid);
+   again.onclick=()=>startCall(otherUid,name,data.mode==="video"?"video":"audio");
+   row.append(again);list.append(row);
+  });
+ }
+ function watchCallHistory(uid){
+  if(window.klkCallHistoryUnsubs)window.klkCallHistoryUnsubs.forEach(stop=>stop());
+  const history=new Map();window.klkCallHistory=history;
+  const render=()=>renderCallContacts();
+  const handle=snapshot=>{snapshot.docs.forEach(doc=>history.set(doc.id,{id:doc.id,data:doc.data()}));render();};
+  const a=db.collection("calls").where("callerUid","==",uid).onSnapshot(handle,error=>{console.error("Historial de llamadas realizadas:",error);setStatus("No se pudo cargar el historial: "+error.message);});
+  const b=db.collection("calls").where("calleeUid","==",uid).onSnapshot(handle,error=>{console.error("Historial de llamadas recibidas:",error);setStatus("No se pudo cargar el historial: "+error.message);});
+  window.klkCallHistoryUnsubs=[a,b];
  }
  function showOverlay(name,status){
   $("callPeerName").textContent=name||"Contacto";
@@ -181,7 +201,7 @@
    if(callMode==="video")$("localVideo").srcObject=localStream;
    await peer.setRemoteDescription(new RTCSessionDescription(data.offer));await flushCandidates();
    const answer=await peer.createAnswer();await peer.setLocalDescription(answer);
-   await callRef.update({answer:{type:answer.type,sdp:answer.sdp},status:"active",updatedAt:firebase.firestore.FieldValue.serverTimestamp()});
+   await callRef.update({answer:{type:answer.type,sdp:answer.sdp},status:"active",connectedAt:firebase.firestore.FieldValue.serverTimestamp(),updatedAt:firebase.firestore.FieldValue.serverTimestamp()});
    showActiveControls();$("callStatus").textContent="Conectando...";
    watchCallDocument();watchRemoteCandidates();
   }catch(error){console.error("No se pudo responder:",error);$("callStatus").textContent=permissionMessage(error);try{await callRef.update({status:"ended",updatedAt:firebase.firestore.FieldValue.serverTimestamp()});}catch(e){}setTimeoutSafeCleanup();}
@@ -196,7 +216,7 @@
  async function endCall(){
   if(ending)return;ending=true;
   const ref=callRef;
-  try{if(ref)await ref.update({status:"ended",updatedAt:firebase.firestore.FieldValue.serverTimestamp()});}
+  try{if(ref)await ref.update({status:"ended",endedAt:firebase.firestore.FieldValue.serverTimestamp(),updatedAt:firebase.firestore.FieldValue.serverTimestamp()});}
   catch(error){console.warn("No se pudo actualizar el estado de la llamada:",error);}
   cleanup();
  }
@@ -242,7 +262,7 @@
   currentUid=user?user.uid:null;
   if(incomingUnsub){incomingUnsub();incomingUnsub=null;}
   if(!user){if(callRef)endCall();cleanup();callPeople.clear();callIncomingRequests.clear();callOutgoingRequests.clear();[callPeopleUnsub,callIncomingRequestsUnsub,callOutgoingRequestsUnsub].forEach(stop=>{if(stop)stop();});callPeopleUnsub=callIncomingRequestsUnsub=callOutgoingRequestsUnsub=null;renderCallContacts();return;}
-  listenIncoming(user.uid);watchCallContacts(user.uid);renderCallContacts();
+  listenIncoming(user.uid);watchCallContacts(user.uid);watchCallHistory(user.uid);renderCallContacts();
  });
 
  window.klkStartCall=startCall;
