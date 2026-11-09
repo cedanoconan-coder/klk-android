@@ -561,7 +561,7 @@ async function registerKlkWebPush(user, askPermission = false) {
  },{merge:true});
  if (!klkForegroundMessageListenerInstalled) {
   klkMessaging.onMessage(payload => {
-   
+   if (navigator.vibrate && (!window.klkVibrationEnabled || window.klkVibrationEnabled())) navigator.vibrate([180,80,180]);
    const status = $("settingsStatus");
    if (status && payload && payload.data) status.textContent = "Notificación recibida: " + (payload.data.title || "Nuevo mensaje");
   });
