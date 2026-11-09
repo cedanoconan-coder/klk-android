@@ -336,10 +336,10 @@ body:has(#chat.room-open) main{padding:0!important;margin:0!important;max-width:
 @media(max-width:420px){#chat.room-open .chatHeading .roomAvatar{flex-basis:42px!important;width:42px!important;height:42px!important;min-width:42px!important}}
 
 
-/* Chat limpio: retirar el pie de sesión de la conversación sin borrar su región de estado */
-/* Ocultar por completo el pie duplicado de sesión durante el uso del chat. */
-#chat .chatFoot{display:none!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;border:0!important;overflow:hidden!important}
-#chat .chatFoot #chatStatus,#chat .chatFoot #logout{display:none!important}
+/* Mantener visible el estado para mostrar errores reales de mensajes y archivos. */
+#chat .chatFoot{display:block!important;height:auto!important;min-height:0!important;margin:8px 0 0!important;padding:0!important;border:0!important;overflow:visible!important}
+#chat .chatFoot #chatStatus{display:block!important;visibility:visible!important}
+#chat .chatFoot #logout{display:none!important}
 
 
 /* Ajustes visuales solicitados: portada de chats y navegación compacta */
@@ -1285,7 +1285,7 @@ async function openPrivateConversation(otherUid, otherName) {
   const ref = db.collection("conversations").doc(conversationId), existing = await ref.get();
   if (!existing.exists) await ref.set({members,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
   activeConversationId = conversationId; activeConversationName = otherName; activeConversationPeerUid = otherUid;
-  klkPushView("conversation");$("chat").classList.add("room-open"); const chatFooter=$("chat").querySelector(".chatFoot"); if(chatFooter){chatFooter.hidden=true;chatFooter.style.setProperty("display","none","important");} $("chatTitle").textContent = otherName; updateRoomAvatar(otherUid);
+  klkPushView("conversation");$("chat").classList.add("room-open"); const chatFooter=$("chat").querySelector(".chatFoot"); if(chatFooter){chatFooter.hidden=false;chatFooter.style.display="block";} $("chatTitle").textContent = otherName; updateRoomAvatar(otherUid);
   $("dmPanel").style.display = "none"; $("messages").style.display = "block";
   document.querySelector(".composer").style.display = "flex"; $("mediaActions").style.display = "flex"; $("recordStatus").style.display = "block";
   $("chatStatus").textContent = "Conversación privada con " + otherName; loadMessages();
@@ -1321,12 +1321,28 @@ function formatMessageTime(value) {
  if (Number.isNaN(date.getTime())) return "";
  return new Intl.DateTimeFormat("es-DO",{hour:"2-digit",minute:"2-digit"}).format(date);
 }
+let messagesLoadingTimeout = null;
 function loadMessages() {
+ if (messagesLoadingTimeout) clearTimeout(messagesLoadingTimeout);
  window.klkNotificationsReady = false;
  if (unsubscribe) unsubscribe();
  if (!activeConversationId) { $("messages").textContent = "Abre una conversación con una persona a la que hayas invitado o que te haya invitado."; return; }
  $("messages").textContent = "Cargando mensajes...";
+ messagesLoadingTimeout = setTimeout(() => {
+  if ($("messages").textContent !== "Cargando mensajes...") return;
+  $("messages").innerHTML = "";
+  const notice = document.createElement("p");
+  notice.className = "muted";
+  notice.textContent = "La conexión está tardando. Comprueba tu internet y vuelve a intentarlo.";
+  const retry = document.createElement("button");
+  retry.type = "button";
+  retry.textContent = "Reintentar";
+  retry.addEventListener("click", loadMessages);
+  $("messages").append(notice, retry);
+ }, 15000);
  unsubscribe = messagesCollection().orderBy("createdAt").limit(100).onSnapshot(async snapshot => {
+  if (messagesLoadingTimeout) clearTimeout(messagesLoadingTimeout);
+  messagesLoadingTimeout = null;
   const changes = snapshot.docChanges();
   if (window.klkNotificationsReady) changes.filter(change => change.type === "added").forEach(change => window.klkNotifyIncoming && window.klkNotifyIncoming(change.doc.data(), change.doc.id));
   else window.klkNotificationsReady = true;
@@ -1395,7 +1411,21 @@ function loadMessages() {
    if(data.uid!==auth.currentUser.uid&&(!Array.isArray(data.readBy)||!data.readBy.includes(auth.currentUser.uid))){doc.ref.update({readBy:firebase.firestore.FieldValue.arrayUnion(auth.currentUser.uid)}).catch(error=>console.warn("No se pudo guardar la confirmación de lectura:",error));}
   }
   $("messages").scrollTop = $("messages").scrollHeight;
- }, error => showError("chatStatus", error));
+ }, error => {
+  if (messagesLoadingTimeout) clearTimeout(messagesLoadingTimeout);
+  messagesLoadingTimeout = null;
+  const messages = $("messages");
+  messages.innerHTML = "";
+  const notice = document.createElement("p");
+  notice.className = "muted";
+  notice.textContent = "No se pudieron cargar los mensajes: " + (error && error.message ? error.message : "Error de conexión o permisos.");
+  const retry = document.createElement("button");
+  retry.type = "button";
+  retry.textContent = "Reintentar";
+  retry.addEventListener("click", loadMessages);
+  messages.append(notice, retry);
+  showError("chatStatus", error);
+ });
 }
 $("shareLocation").addEventListener("click",()=>{
  closeAttachmentPanel();
