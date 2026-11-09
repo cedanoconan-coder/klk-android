@@ -585,6 +585,7 @@ async function sendKlkPushForMessage(conversationId, messageId) {
  } catch(error) { console.warn("No se pudo conectar con el servicio push:",error); }
 }
 let auth, db, firebaseInitError = null, unsubscribe = null, sending = false, mediaRecorder = null, audioStream = null, audioBlob = null, audioStartedAt = 0;
+let authPersistenceReady = Promise.resolve(), firestorePersistenceReady = Promise.resolve(true);
 let activeConversationId = null, activeConversationName = null, activeConversationPeerUid = null, peopleUnsubscribe = null, incomingRequestsUnsubscribe = null, outgoingRequestsUnsubscribe = null;
 const incomingRequests = new Map(), outgoingRequests = new Map(), peopleCache = new Map(), conversationSubscriptions = new Map(), conversationCache = new Map();
 let activeHomeFilter = "chats";
@@ -613,12 +614,17 @@ function setBusy(busy) {
 try {
  firebase.initializeApp(firebaseConfig);
  auth = firebase.auth(); db = firebase.firestore();
+ authPersistenceReady = auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+ firestorePersistenceReady = db.enablePersistence({synchronizeTabs:true}).then(() => true).catch(error => {
+  console.warn("No se pudo activar el almacenamiento sin conexión de Firestore:", error);
+  return false;
+ });
 } catch (error) { firebaseInitError = error; $("status").textContent = "No se pudo iniciar Firebase. Comprueba la conexión a Internet y vuelve a abrir klk. Detalle: " + error.message; }
 $("authForm").addEventListener("submit", async event => {
  event.preventDefault(); $("status").textContent = "";
  if (!auth) { $("status").textContent = "Firebase no está disponible. " + (firebaseInitError && firebaseInitError.message ? firebaseInitError.message : "Comprueba tu conexión a Internet y vuelve a abrir klk."); return; }
  setBusy(true);
- try { await auth.signInWithEmailAndPassword($("email").value.trim(), $("password").value); }
+ try { await authPersistenceReady; await auth.signInWithEmailAndPassword($("email").value.trim(), $("password").value); }
  catch(error) { showError("status", error); }
  finally { setBusy(false); }
 });
@@ -646,6 +652,7 @@ $("register").addEventListener("click", async () => {
   const invitation = invitationSnapshot.data();
   if (invitation.redeemedBy || !invitation.expiresAt || invitation.expiresAt.toDate() <= new Date()) throw new Error("Este código ya se utilizó o ha caducado. Pide otra invitación.");
   invitationActivationInProgress = true;
+  await authPersistenceReady;
   let credential;
   try {
    credential = await auth.createUserWithEmailAndPassword(email, password);
@@ -729,6 +736,9 @@ auth && auth.onAuthStateChanged(async user => {
   $("chat").classList.remove("room-open");
   $("chatTitle").textContent = "👨‍👩‍👧‍👦 Familia klk"; $("dmPanel").style.display = "none"; $("messages").style.display = "block";
   try {
+   await authPersistenceReady;
+   const persistenceEnabled = await firestorePersistenceReady;
+   if (!persistenceEnabled) console.warn("Klk seguirá funcionando conectado, pero el modo sin conexión no quedó disponible en este navegador.");
    const profileRef = db.collection("users").doc(user.uid);
    const profileSnapshot = await profileRef.get();
    if (!profileSnapshot.exists) {
@@ -1117,25 +1127,30 @@ function syncComposerMode(){
  $("send").setAttribute("aria-disabled",String(!hasText||sending));
 }
 $("message").addEventListener("input",syncComposerMode);
-$("send").onclick = async () => {
+$("send").onclick = () => {
  const input=$("message"), text=input.value.trim(), user=auth&&auth.currentUser;
  if (!user || !activeConversationId) { $("chatStatus").textContent = "Selecciona un contacto que haya aceptado tu solicitud antes de enviar mensajes."; return; }
  if (!text || sending) return;
  const conversationId=activeConversationId;
- // Limpiar el campo al instante, sin esperar a Firestore ni al servicio de notificaciones.
  input.value="";
- sending=true;syncComposerMode();$("chatStatus").textContent="";
+ sending=true;syncComposerMode();$("chatStatus").textContent="Guardando mensaje...";
  input.focus({preventScroll:true});
+ let writePromise;
  try {
-  const sentMessage=await messagesCollection().add({type:"text",text,email:user.email||"",displayName:(peopleCache.get(user.uid)||{}).displayName||(user.email||"Miembro").split("@")[0],uid:user.uid,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
-  void sendKlkPushForMessage(conversationId,sentMessage.id);
-  $("chatStatus").textContent="Mensaje enviado.";
+  // Firestore guarda primero la escritura localmente y la sincroniza al recuperar conexión.
+  writePromise=messagesCollection().add({type:"text",text,email:user.email||"",displayName:(peopleCache.get(user.uid)||{}).displayName||(user.email||"Miembro").split("@")[0],uid:user.uid,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
  } catch(error) {
-  if(!input.value.trim())input.value=text;
-  showError("chatStatus",error);
- } finally {
-  sending=false;syncComposerMode();input.focus({preventScroll:true});
+  sending=false;if(!input.value.trim())input.value=text;syncComposerMode();showError("chatStatus",error);return;
  }
+ sending=false;syncComposerMode();input.focus({preventScroll:true});
+ $("chatStatus").textContent=navigator.onLine?"Enviando mensaje...":"Sin conexión. El mensaje quedó guardado y se enviará al volver el internet.";
+ writePromise.then(sentMessage=>{
+  void sendKlkPushForMessage(conversationId,sentMessage.id);
+  if($("chatStatus").textContent==="Enviando mensaje..."||$("chatStatus").textContent.startsWith("Sin conexión."))$("chatStatus").textContent="Mensaje enviado.";
+ }).catch(error=>{
+  if(!input.value.trim())input.value=text;
+  syncComposerMode();showError("chatStatus",error);
+ });
 };
 
 async function compressImage(file) {
