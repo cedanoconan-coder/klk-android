@@ -124,24 +124,9 @@ service cloud.firestore {
       allow read, delete: if false;
     }
 
+    // Solicitudes de amistad retiradas: el chat se inicia directamente desde perfiles visibles.
     match /contactRequests/{requestId} {
-      allow read: if signedIn()
-        && (resource.data.senderUid == request.auth.uid || resource.data.recipientUid == request.auth.uid);
-      allow create: if signedIn()
-        && request.resource.data.keys().hasOnly(['senderUid','recipientUid','senderEmail','senderName','recipientEmail','recipientName','status','createdAt'])
-        && request.resource.data.keys().hasAll(['senderUid','recipientUid','status','createdAt'])
-        && request.resource.data.senderUid == request.auth.uid
-        && request.resource.data.recipientUid is string
-        && request.resource.data.recipientUid != request.auth.uid
-        && request.resource.data.status == 'pending'
-        && request.resource.data.createdAt == request.time
-        && requestId == request.auth.uid + '__' + request.resource.data.recipientUid;
-      allow update: if signedIn()
-        && resource.data.recipientUid == request.auth.uid
-        && resource.data.status == 'pending'
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
-        && request.resource.data.status in ['accepted','rejected'];
-      allow delete: if false;
+      allow read, write: if false;
     }
     match /conversations/{conversationId} {
       // Permite comprobar si todavía no existe una conversación, sin revelar documentos existentes.
@@ -226,7 +211,7 @@ service cloud.firestore {
     }
 
     match /statuses/{statusId} {
-      // Solo el propietario y sus contactos aceptados pueden ver el estado.
+      // Los miembros autenticados pueden ver estados de perfiles visibles en el directorio.
       allow read: if signedIn()
         && canViewStatus(resource.data.uid);
       allow create: if signedIn()
@@ -314,8 +299,7 @@ service cloud.firestore {
         && request.resource.data.offer.sdp is string
         && request.resource.data.createdAt == request.time
         && request.resource.data.updatedAt == request.time
-        && isConversationMember(request.resource.data.conversationId)
-        ;
+        && isConversationMember(request.resource.data.conversationId);
       allow update: if callParticipant()
         && request.resource.data.callerUid == resource.data.callerUid
         && request.resource.data.calleeUid == resource.data.calleeUid
