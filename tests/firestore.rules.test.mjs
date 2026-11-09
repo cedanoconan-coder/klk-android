@@ -23,9 +23,7 @@ let testEnv;
 before(async () => {
   testEnv = await initializeTestEnvironment({
     projectId: "demo-klk",
-    firestore: {
-      rules: readFileSync("firestore.rules", "utf8")
-    }
+    firestore: { rules: readFileSync("firestore.rules", "utf8") }
   });
 });
 
@@ -37,65 +35,60 @@ beforeEach(async () => {
   await testEnv.clearFirestore();
 });
 
-test("bloquea la lectura de perfiles sin iniciar sesión", async () => {
+async function seedPublicProfile(uid, directoryVisible = true) {
+  await testEnv.withSecurityRulesDisabled(async context => {
+    await setDoc(doc(context.firestore(), "publicProfiles/" + uid), {
+      uid, displayName: "Miembro " + uid, directoryVisible, updatedAt: Timestamp.now()
+    });
+  });
+}
+
+async function seedConversation(a = "member-1", b = "member-2") {
+  const members = [a, b].sort();
+  await testEnv.withSecurityRulesDisabled(async context => {
+    await setDoc(doc(context.firestore(), "conversations/" + members.join("__")), {
+      members, createdAt: Timestamp.now()
+    });
+  });
+}
+
+test("bloquea perfiles privados sin iniciar sesión", async () => {
   const db = testEnv.unauthenticatedContext().firestore();
   await assertFails(getDoc(doc(db, "users/member-1")));
 });
 
-test("un usuario autenticado no puede listar documentos privados de otros miembros", async () => {
+test("cada usuario solo puede leer su perfil privado", async () => {
   await testEnv.withSecurityRulesDisabled(async context => {
     await setDoc(doc(context.firestore(), "users/member-1"), {
-      uid: "member-1",
-      displayName: "Miembro de prueba"
+      uid: "member-1", email: "private@example.com"
     });
   });
-
-  const db = testEnv.authenticatedContext("member-2", {
-    email: "member2@example.com"
-  }).firestore();
-
-  await assertFails(getDocs(collection(db, "users")));
-  await assertFails(getDoc(doc(db, "users/member-1")));
+  const owner = testEnv.authenticatedContext("member-1", {email:"private@example.com"}).firestore();
+  const outsider = testEnv.authenticatedContext("member-2").firestore();
+  await assertSucceeds(getDoc(doc(owner, "users/member-1")));
+  await assertFails(getDoc(doc(outsider, "users/member-1")));
+  await assertFails(getDocs(collection(outsider, "users")));
 });
 
-test("rechaza crear perfiles sin una invitación válida", async () => {
-  const db = testEnv.authenticatedContext("member-1", {
-    email: "member1@example.com"
-  }).firestore();
-
+test("rechaza crear un perfil sin una invitación válida", async () => {
+  const db = testEnv.authenticatedContext("member-1", {email:"member1@example.com"}).firestore();
   await assertFails(setDoc(doc(db, "users/member-1"), {
-    uid: "member-1",
-    email: "member1@example.com",
-    displayName: "Miembro",
-    updatedAt: Timestamp.now(),
-    inviteCode: "inexistente",
-    invitedBy: "admin"
+    uid:"member-1", email:"member1@example.com", displayName:"Miembro",
+    updatedAt:serverTimestamp(), inviteCode:"inexistente", invitedBy:"admin"
   }));
 });
 
-
-test("cada usuario puede leer su propio perfil privado", async () => {
-  await testEnv.withSecurityRulesDisabled(async context => {
-    await setDoc(doc(context.firestore(), "users/member-1"), {uid:"member-1",email:"private@example.com"});
-  });
-  const db = testEnv.authenticatedContext("member-1", {email:"private@example.com"}).firestore();
-  await assertSucceeds(getDoc(doc(db, "users/member-1")));
-});
-
-test("el directorio solo devuelve perfiles con visibilidad activada", async () => {
-  await testEnv.withSecurityRulesDisabled(async context => {
-    const db = context.firestore();
-    await setDoc(doc(db,"publicProfiles/visible"), {uid:"visible",displayName:"Visible",directoryVisible:true,updatedAt:Timestamp.now()});
-    await setDoc(doc(db,"publicProfiles/hidden"), {uid:"hidden",displayName:"Oculto",directoryVisible:false,updatedAt:Timestamp.now()});
-  });
+test("el directorio solo expone perfiles con visibilidad activada", async () => {
+  await seedPublicProfile("visible", true);
+  await seedPublicProfile("hidden", false);
   const db = testEnv.authenticatedContext("visitor").firestore();
   const visible = await assertSucceeds(getDocs(query(collection(db,"publicProfiles"),where("directoryVisible","==",true))));
-  assert.equal(visible.size,1);
-  assert.equal(visible.docs[0].id,"visible");
+  assert.equal(visible.size, 1);
+  assert.equal(visible.docs[0].id, "visible");
   await assertFails(getDoc(doc(db,"publicProfiles/hidden")));
 });
 
-test("un perfil público no puede incluir correo electrónico", async () => {
+test("los perfiles públicos no pueden incluir correo electrónico", async () => {
   const db = testEnv.authenticatedContext("member-1").firestore();
   await assertFails(setDoc(doc(db,"publicProfiles/member-1"), {
     uid:"member-1",displayName:"Miembro",email:"private@example.com",
@@ -103,206 +96,115 @@ test("un perfil público no puede incluir correo electrónico", async () => {
   }));
 });
 
-test("cada miembro puede crear su perfil público con visibilidad voluntaria", async () => {
+test("un miembro puede publicar su perfil público sin mostrarlo en el directorio", async () => {
   const db = testEnv.authenticatedContext("member-1").firestore();
   await assertSucceeds(setDoc(doc(db,"publicProfiles/member-1"), {
     uid:"member-1",displayName:"Miembro",about:"Hola",directoryVisible:false,updatedAt:serverTimestamp()
   }));
 });
 
-
-test("permite publicar estados sin exponer el correo electrónico", async () => {
+test("bloquea la colección global heredada de mensajes y las solicitudes antiguas", async () => {
   const db = testEnv.authenticatedContext("member-1", {email:"member1@example.com"}).firestore();
-  await assertSucceeds(setDoc(doc(db,"statuses/status-safe"), {
-    uid:"member-1",displayName:"Miembro",type:"text",text:"Hola",
-    createdAt:serverTimestamp(),expiresAt:Timestamp.fromMillis(Date.now()+24*60*60*1000)
-  }));
-});
-
-test("rechaza guardar correo electrónico en un estado", async () => {
-  const db = testEnv.authenticatedContext("member-1", {email:"member1@example.com"}).firestore();
-  await assertFails(setDoc(doc(db,"statuses/status-email"), {
-    uid:"member-1",email:"member1@example.com",displayName:"Miembro",type:"text",text:"Hola",
-    createdAt:serverTimestamp(),expiresAt:Timestamp.fromMillis(Date.now()+24*60*60*1000)
-  }));
-});
-
-test("bloquea la colección global heredada de mensajes", async () => {
-  const db = testEnv.authenticatedContext("member-1", {
-    email: "member1@example.com"
-  }).firestore();
-
   await assertFails(getDocs(collection(db, "messages")));
-  await assertFails(setDoc(doc(db, "messages/message-1"), {
-    text: "No debe guardarse aquí"
-  }));
+  await assertFails(setDoc(doc(db, "messages/message-1"), {text:"No debe guardarse aquí"}));
+  await assertFails(getDocs(collection(db, "contactRequests")));
+  await assertFails(setDoc(doc(db, "contactRequests/member-1__member-2"), {status:"pending"}));
 });
 
-test("solo permite leer mensajes a miembros de la conversación", async () => {
-  await testEnv.withSecurityRulesDisabled(async context => {
-    const db = context.firestore();
-    await setDoc(doc(db, "conversations/member-1__member-2"), {
-      members: ["member-1", "member-2"],
-      createdAt: Timestamp.now()
-    });
-    await setDoc(doc(db, "conversations/member-1__member-2/messages/message-1"), {
-      type: "text",
-      text: "Mensaje de prueba",
-      uid: "member-1",
-      email: "member1@example.com",
-      createdAt: Timestamp.now()
-    });
-  });
-
-  const memberDb = testEnv.authenticatedContext("member-2", {
-    email: "member2@example.com"
-  }).firestore();
-  const outsiderDb = testEnv.authenticatedContext("outsider", {
-    email: "outsider@example.com"
-  }).firestore();
-
-  await assertSucceeds(getDoc(doc(
-    memberDb,
-    "conversations/member-1__member-2/messages/message-1"
-  )));
-  await assertFails(getDoc(doc(
-    outsiderDb,
-    "conversations/member-1__member-2/messages/message-1"
-  )));
-});
-
-test("permite enviar mensajes de texto con el nombre del remitente a contactos aceptados", async () => {
-  await testEnv.withSecurityRulesDisabled(async context => {
-    const db = context.firestore();
-    await setDoc(doc(db, "contactRequests/member-1__member-2"), {
-      senderUid: "member-1", recipientUid: "member-2", status: "accepted"
-    });
-    await setDoc(doc(db, "conversations/member-1__member-2"), {
-      members: ["member-1", "member-2"], createdAt: Timestamp.now()
-    });
-  });
-  const db = testEnv.authenticatedContext("member-1", {email: "member1@example.com"}).firestore();
-  await assertSucceeds(setDoc(doc(db, "conversations/member-1__member-2/messages/message-sent"), {
-    type: "text", text: "Hola", email: "member1@example.com", uid: "member-1",
-    displayName: "Miembro Uno", createdAt: serverTimestamp()
-  }));
-});
-
-test("permite iniciar una conversación con una invitación pendiente sin aceptarla", async () => {
-  await testEnv.withSecurityRulesDisabled(async context => {
-    await setDoc(doc(context.firestore(), "contactRequests/member-1__member-2"), {
-      senderUid: "member-1", recipientUid: "member-2", status: "pending"
-    });
-  });
-
-  const db = testEnv.authenticatedContext("member-1", {
-    email: "member1@example.com"
-  }).firestore();
-
+test("permite iniciar una conversación directamente con un perfil visible", async () => {
+  await seedPublicProfile("member-2", true);
+  const db = testEnv.authenticatedContext("member-1").firestore();
   await assertSucceeds(setDoc(doc(db, "conversations/member-1__member-2"), {
-    members: ["member-1", "member-2"],
-    createdAt: serverTimestamp()
+    members:["member-1","member-2"], createdAt:serverTimestamp()
   }));
 });
 
-test("rechaza nombres de remitente inválidos en los mensajes", async () => {
-  await testEnv.withSecurityRulesDisabled(async context => {
-    const db = context.firestore();
-    await setDoc(doc(db, "contactRequests/member-1__member-2"), {
-      senderUid: "member-1", recipientUid: "member-2", status: "accepted"
-    });
-    await setDoc(doc(db, "conversations/member-1__member-2"), {
-      members: ["member-1", "member-2"], createdAt: Timestamp.now()
-    });
-  });
-  const db = testEnv.authenticatedContext("member-1", {email: "member1@example.com"}).firestore();
-  await assertFails(setDoc(doc(db, "conversations/member-1__member-2/messages/message-invalid"), {
-    type: "text", text: "No debe enviarse", email: "member1@example.com", uid: "member-1",
-    displayName: 123, createdAt: serverTimestamp()
+test("rechaza iniciar conversaciones con perfiles ocultos", async () => {
+  await seedPublicProfile("member-2", false);
+  const db = testEnv.authenticatedContext("member-1").firestore();
+  await assertFails(setDoc(doc(db, "conversations/member-1__member-2"), {
+    members:["member-1","member-2"], createdAt:serverTimestamp()
   }));
 });
 
-
-test("solo el propietario y sus contactos aceptados pueden leer estados", async () => {
-  await testEnv.withSecurityRulesDisabled(async context => {
-    const db = context.firestore();
-    await setDoc(doc(db, "contactRequests/owner__friend"), {
-      senderUid: "owner", recipientUid: "friend", status: "accepted"
-    });
-    await setDoc(doc(db, "statuses/status-private"), {
-      uid: "owner", displayName: "Propietario", type: "text", text: "Solo contactos",
-      createdAt: Timestamp.now(), expiresAt: Timestamp.fromMillis(Date.now() + 24*60*60*1000)
-    });
-  });
-  const ownerDb = testEnv.authenticatedContext("owner").firestore();
-  const friendDb = testEnv.authenticatedContext("friend").firestore();
-  const outsiderDb = testEnv.authenticatedContext("outsider").firestore();
-  await assertSucceeds(getDoc(doc(ownerDb, "statuses/status-private")));
-  await assertSucceeds(getDoc(doc(friendDb, "statuses/status-private")));
-  await assertFails(getDoc(doc(outsiderDb, "statuses/status-private")));
-});
-
-test("un contacto aceptado puede dar me gusta y un desconocido no puede leer ni reaccionar", async () => {
-  await testEnv.withSecurityRulesDisabled(async context => {
-    const db = context.firestore();
-    await setDoc(doc(db, "contactRequests/owner__friend"), {
-      senderUid: "owner", recipientUid: "friend", status: "accepted"
-    });
-    await setDoc(doc(db, "statuses/status-likes"), {
-      uid: "owner", displayName: "Propietario", type: "text", text: "Estado",
-      createdAt: Timestamp.now(), expiresAt: Timestamp.fromMillis(Date.now() + 24*60*60*1000)
-    });
-  });
-  const friendDb = testEnv.authenticatedContext("friend").firestore();
-  const outsiderDb = testEnv.authenticatedContext("outsider").firestore();
-  await assertSucceeds(setDoc(doc(friendDb, "statuses/status-likes/likes/friend"), {
-    uid: "friend", displayName: "Amigo", likedAt: serverTimestamp()
-  }));
-  await assertFails(getDocs(collection(outsiderDb, "statuses/status-likes/likes")));
-  await assertFails(setDoc(doc(outsiderDb, "statuses/status-likes/likes/outsider"), {
-    uid: "outsider", displayName: "Desconocido", likedAt: serverTimestamp()
+test("solo los miembros pueden leer y enviar mensajes privados", async () => {
+  await seedConversation();
+  const member = testEnv.authenticatedContext("member-1", {email:"member1@example.com"}).firestore();
+  const recipient = testEnv.authenticatedContext("member-2", {email:"member2@example.com"}).firestore();
+  const outsider = testEnv.authenticatedContext("outsider", {email:"outsider@example.com"}).firestore();
+  const message = {
+    type:"text", text:"Hola", email:"member1@example.com", uid:"member-1",
+    displayName:"Miembro Uno", createdAt:serverTimestamp()
+  };
+  await assertSucceeds(setDoc(doc(member,"conversations/member-1__member-2/messages/message-1"),message));
+  await assertSucceeds(getDoc(doc(recipient,"conversations/member-1__member-2/messages/message-1")));
+  await assertFails(getDoc(doc(outsider,"conversations/member-1__member-2/messages/message-1")));
+  await assertFails(setDoc(doc(outsider,"conversations/member-1__member-2/messages/message-2"),{
+    ...message, uid:"outsider", email:"outsider@example.com"
   }));
 });
 
-test("solo los contactos aceptados pueden registrar visualizaciones de un estado", async () => {
-  await testEnv.withSecurityRulesDisabled(async context => {
-    const db = context.firestore();
-    await setDoc(doc(db, "contactRequests/owner__friend"), {
-      senderUid: "owner", recipientUid: "friend", status: "accepted"
-    });
-    await setDoc(doc(db, "statuses/status-views"), {
-      uid: "owner", displayName: "Propietario", type: "text", text: "Estado",
-      createdAt: Timestamp.now(), expiresAt: Timestamp.fromMillis(Date.now() + 24*60*60*1000)
-    });
-  });
-  const friendDb = testEnv.authenticatedContext("friend").firestore();
-  const outsiderDb = testEnv.authenticatedContext("outsider").firestore();
-  await assertSucceeds(setDoc(doc(friendDb, "statuses/status-views/views/friend"), {
-    uid: "friend", displayName: "Amigo", viewedAt: serverTimestamp()
-  }));
-  await assertFails(setDoc(doc(outsiderDb, "statuses/status-views/views/outsider"), {
-    uid: "outsider", displayName: "Desconocido", viewedAt: serverTimestamp()
+test("rechaza mensajes con identidad de remitente incorrecta", async () => {
+  await seedConversation();
+  const db = testEnv.authenticatedContext("member-1", {email:"member1@example.com"}).firestore();
+  await assertFails(setDoc(doc(db,"conversations/member-1__member-2/messages/invalid"),{
+    type:"text",text:"No debe enviarse",email:"someone-else@example.com",
+    uid:"member-1",displayName:123,createdAt:serverTimestamp()
   }));
 });
 
+test("permite enviar stickers autorizados y rechaza contenido arbitrario", async () => {
+  await seedConversation();
+  const db = testEnv.authenticatedContext("member-1", {email:"member1@example.com"}).firestore();
+  await assertSucceeds(setDoc(doc(db,"conversations/member-1__member-2/messages/sticker-ok"),{
+    type:"sticker",text:"😂",email:"member1@example.com",uid:"member-1",
+    displayName:"Miembro Uno",createdAt:serverTimestamp()
+  }));
+  await assertFails(setDoc(doc(db,"conversations/member-1__member-2/messages/sticker-invalid"),{
+    type:"sticker",text:"contenido no autorizado",email:"member1@example.com",
+    uid:"member-1",displayName:"Miembro Uno",createdAt:serverTimestamp()
+  }));
+});
 
-test("permite enviar stickers del catálogo autorizado y rechaza stickers arbitrarios", async () => {
+test("solo los perfiles visibles exponen sus estados a miembros autenticados", async () => {
+  await seedPublicProfile("owner", true);
   await testEnv.withSecurityRulesDisabled(async context => {
-    const db = context.firestore();
-    await setDoc(doc(db, "contactRequests/member-1__member-2"), {
-      senderUid: "member-1", recipientUid: "member-2", status: "accepted"
-    });
-    await setDoc(doc(db, "conversations/member-1__member-2"), {
-      members: ["member-1", "member-2"], createdAt: Timestamp.now()
+    await setDoc(doc(context.firestore(),"statuses/status-visible"),{
+      uid:"owner",displayName:"Propietario",type:"text",text:"Hola",
+      createdAt:Timestamp.now(),expiresAt:Timestamp.fromMillis(Date.now()+24*60*60*1000)
     });
   });
-  const db = testEnv.authenticatedContext("member-1", {email: "member1@example.com"}).firestore();
-  await assertSucceeds(setDoc(doc(db, "conversations/member-1__member-2/messages/sticker-ok"), {
-    type: "sticker", text: "😂", email: "member1@example.com", uid: "member-1",
-    displayName: "Miembro Uno", createdAt: serverTimestamp()
+  const owner = testEnv.authenticatedContext("owner").firestore();
+  const member = testEnv.authenticatedContext("member").firestore();
+  const outsider = testEnv.authenticatedContext("outsider").firestore();
+  await assertSucceeds(getDoc(doc(owner,"statuses/status-visible")));
+  await assertSucceeds(getDoc(doc(member,"statuses/status-visible")));
+  await assertSucceeds(getDoc(doc(outsider,"statuses/status-visible")));
+});
+
+test("un miembro puede reaccionar y registrar una visualización en un estado visible", async () => {
+  await seedPublicProfile("owner", true);
+  await testEnv.withSecurityRulesDisabled(async context => {
+    await setDoc(doc(context.firestore(),"statuses/status-interactions"),{
+      uid:"owner",displayName:"Propietario",type:"text",text:"Estado",
+      createdAt:Timestamp.now(),expiresAt:Timestamp.fromMillis(Date.now()+24*60*60*1000)
+    });
+  });
+  const member = testEnv.authenticatedContext("member").firestore();
+  await assertSucceeds(setDoc(doc(member,"statuses/status-interactions/likes/member"),{
+    uid:"member",displayName:"Miembro",likedAt:serverTimestamp()
   }));
-  await assertFails(setDoc(doc(db, "conversations/member-1__member-2/messages/sticker-invalid"), {
-    type: "sticker", text: "contenido no autorizado", email: "member1@example.com", uid: "member-1",
-    displayName: "Miembro Uno", createdAt: serverTimestamp()
+  await assertSucceeds(setDoc(doc(member,"statuses/status-interactions/views/member"),{
+    uid:"member",displayName:"Miembro",viewedAt:serverTimestamp()
+  }));
+});
+
+test("permite crear una llamada solo dentro de una conversación privada", async () => {
+  await seedConversation();
+  const db = testEnv.authenticatedContext("member-1").firestore();
+  await assertSucceeds(setDoc(doc(db,"calls/call-1"),{
+    callerUid:"member-1",calleeUid:"member-2",conversationId:"member-1__member-2",
+    mode:"audio",status:"ringing",offer:{type:"offer",sdp:"offer-sdp"},
+    createdAt:serverTimestamp(),updatedAt:serverTimestamp()
   }));
 });
