@@ -808,7 +808,7 @@ function renderPeople() {
    try {
     const snapshot = await db.collection("users").get();
     peopleCache.clear(); snapshot.docs.forEach(doc => peopleCache.set(doc.id, doc.data()));
-    $("homeStatus").textContent = "Directorio actualizado desde Firestore: " + snapshot.size + " perfil(es).";
+    $("homeStatus").textContent = "";
     renderPeople();
    } catch(error) { showError("homeStatus", error); }
    finally { refresh.disabled = false; refresh.textContent = "Actualizar personas"; }
@@ -917,8 +917,7 @@ function loadPeople() {
  $("chatsList").textContent = "Cargando conversaciones...";
  peopleUnsubscribe = db.collection("users").onSnapshot({includeMetadataChanges:true}, snapshot => {
   peopleCache.clear(); snapshot.docs.forEach(d => peopleCache.set(d.id,d.data()));
-  const source = snapshot.metadata && snapshot.metadata.fromCache ? " (datos guardados en este teléfono)" : " (sincronizado con Firebase)";
-  $("homeStatus").textContent = "Directorio klk: " + snapshot.size + " perfil(es)" + source + ".";
+  $("homeStatus").textContent = "";
   renderPeople();
  },error => {
   showError("peopleList",error);
