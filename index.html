@@ -376,6 +376,19 @@ body:has(#chat.room-open) main{padding:0!important;margin:0!important;max-width:
 #myProfilePhoto,#profilePanelPhoto,#contactProfilePhoto,#roomAvatar,.personAvatar{cursor:zoom-in}
 @media(prefers-reduced-motion:reduce){#profilePhotoViewer{transition:none}}
 
+
+/* Klk profile experience - final visual layer */
+#homeProfilePanel{padding:16px 18px 28px;background:var(--klk-surface);border-radius:22px 22px 0 0;overflow:hidden}
+#homeProfilePanel>.profileHero{margin-top:-48px}
+#homeProfilePanel .profileSection{padding:18px 2px;border-bottom:1px solid var(--klk-line)}
+#homeProfilePanel .profileSection h3{font-size:12px;letter-spacing:1px;color:var(--klk-muted)}
+#homeProfilePanel .profileField input,#homeProfilePanel .profileField textarea{border-radius:14px;padding:13px}
+#homeProfilePanel .profileButtons button{border-radius:14px;min-height:46px}
+#contactProfilePanel .contactProfileHero{margin-top:-58px;padding:0 18px 22px;background:transparent;position:relative;z-index:2}
+#contactProfilePanel .contactProfileHero img{width:116px;height:116px;border:5px solid var(--klk-surface);box-shadow:0 8px 25px #001a1725}
+#contactProfilePanel .contactProfileHero h2{margin-top:12px}
+#contactProfilePanel .contactProfileMood{display:inline-flex;align-items:center;gap:7px;margin-top:10px;padding:8px 13px;border-radius:20px;background:var(--klk-soft);color:var(--klk-text);font-size:13px}
+@media(max-width:420px){.profileCover{height:185px}#contactProfilePanel .contactCover{height:205px}.profileHero img{width:94px;height:94px;flex-basis:94px}}
 </style>
 </head>
 <body>
