@@ -7,12 +7,6 @@ service cloud.firestore {
       return exists(/databases/$(database)/documents/publicProfiles/$(otherUid))
         && get(/databases/$(database)/documents/publicProfiles/$(otherUid)).data.directoryVisible == true;
     }
-    function canViewStatus(ownerUid) {
-      return signedIn()
-        && (ownerUid == request.auth.uid
-          || (exists(/databases/$(database)/documents/publicProfiles/$(ownerUid))
-            && get(/databases/$(database)/documents/publicProfiles/$(ownerUid)).data.directoryVisible == true));
-    }
     function isConversationMember(conversationId) {
       return signedIn()
         && exists(/databases/$(database)/documents/conversations/$(conversationId))
@@ -212,8 +206,7 @@ service cloud.firestore {
 
     match /statuses/{statusId} {
       // Los miembros autenticados pueden ver estados de perfiles visibles en el directorio.
-      allow read: if signedIn()
-        && canViewStatus(resource.data.uid);
+      allow read: if signedIn();
       allow create: if signedIn()
         && request.resource.data.keys().hasOnly(['uid','displayName','type','text','storagePath','mimeType','size','createdAt','expiresAt'])
         && request.resource.data.keys().hasAll(['uid','displayName','type','text','createdAt','expiresAt'])
@@ -245,7 +238,6 @@ service cloud.firestore {
         allow create, update: if signedIn()
           && viewerUid == request.auth.uid
           && get(/databases/$(database)/documents/statuses/$(statusId)).data.uid != request.auth.uid
-          && canViewStatus(get(/databases/$(database)/documents/statuses/$(statusId)).data.uid)
           && get(/databases/$(database)/documents/statuses/$(statusId)).data.expiresAt > request.time
           && request.resource.data.keys().hasOnly(['uid','displayName','viewedAt'])
           && request.resource.data.keys().hasAll(['uid','displayName','viewedAt'])
@@ -260,12 +252,10 @@ service cloud.firestore {
       match /likes/{likerUid} {
         allow read: if signedIn()
           && exists(/databases/$(database)/documents/statuses/$(statusId))
-          && (get(/databases/$(database)/documents/statuses/$(statusId)).data.uid == request.auth.uid
-            || canViewStatus(get(/databases/$(database)/documents/statuses/$(statusId)).data.uid));
+          && exists(/databases/$(database)/documents/statuses/$(statusId));
         allow create: if signedIn()
           && likerUid == request.auth.uid
           && exists(/databases/$(database)/documents/statuses/$(statusId))
-          && canViewStatus(get(/databases/$(database)/documents/statuses/$(statusId)).data.uid)
           && get(/databases/$(database)/documents/statuses/$(statusId)).data.expiresAt > request.time
           && request.resource.data.keys().hasOnly(['uid','displayName','likedAt'])
           && request.resource.data.keys().hasAll(['uid','displayName','likedAt'])
