@@ -1285,7 +1285,7 @@ async function openPrivateConversation(otherUid, otherName) {
   const ref = db.collection("conversations").doc(conversationId), existing = await ref.get();
   if (!existing.exists) await ref.set({members,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
   activeConversationId = conversationId; activeConversationName = otherName; activeConversationPeerUid = otherUid;
-  klkPushView("conversation");$("chat").classList.add("room-open"); const chatFooter=$("chat").querySelector(".chatFoot"); if(chatFooter){chatFooter.hidden=true;chatFooter.style.setProperty("display","none","important");} $("chatTitle").textContent = otherName; updateRoomAvatar(otherUid);
+  klkPushView("conversation");$("chat").classList.add("room-open"); const chatFooter=$("chat").querySelector(".chatFoot"); if(chatFooter){chatFooter.hidden=false;chatFooter.style.display="block";} $("chatTitle").textContent = otherName; updateRoomAvatar(otherUid);
   $("dmPanel").style.display = "none"; $("messages").style.display = "block";
   document.querySelector(".composer").style.display = "flex"; $("mediaActions").style.display = "flex"; $("recordStatus").style.display = "block";
   $("chatStatus").textContent = "Conversación privada con " + otherName; loadMessages();
