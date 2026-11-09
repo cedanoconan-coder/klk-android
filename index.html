@@ -1008,7 +1008,11 @@ function loadMessages() {
   for (const doc of snapshot.docs) {
    const data = doc.data(), item = document.createElement("div");
    item.className = "msg" + (auth.currentUser && data.uid === auth.currentUser.uid ? " mine" : "");
-   const sender = document.createElement("b"); sender.textContent = data.email || "Familia"; item.appendChild(sender);
+   const sender = document.createElement("b");
+   const senderProfile = data.uid ? peopleCache.get(data.uid) : null;
+   const senderName = (senderProfile && senderProfile.displayName) || data.displayName || (auth.currentUser && data.uid === auth.currentUser.uid ? (peopleCache.get(auth.currentUser.uid) || {}).displayName : "") || (data.email || "").split("@")[0] || "Familia";
+   sender.textContent = senderName;
+   item.appendChild(sender);
    if ((data.type === "image" || data.type === "audio" || data.type === "file") && (data.storagePath || data.mediaUrl)) {
     const placeholder = document.createElement("p"); placeholder.textContent = "Cargando archivo..."; item.appendChild(placeholder); $("messages").appendChild(item);
     try {
@@ -1036,7 +1040,7 @@ $("send").onclick = async () => {
  if (!text || sending) return;
  sending = true; $("send").disabled = true; $("chatStatus").textContent = "";
  try {
-  await messagesCollection().add({type:"text", text, email:user.email || "", uid:user.uid, createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+  await messagesCollection().add({type:"text", text, email:user.email || "", displayName:(peopleCache.get(user.uid) || {}).displayName || (user.email || "Miembro").split("@")[0], uid:user.uid, createdAt:firebase.firestore.FieldValue.serverTimestamp()});
   $("message").value = "";
  } catch(error) { showError("chatStatus", error); }
  finally { sending = false; $("send").disabled = false; }
@@ -1104,7 +1108,7 @@ async function uploadMedia(file, type, durationSeconds = null) {
   await messagesCollection().add({
    type, storagePath: signed.path, ...(activeConversationId ? {conversationId:activeConversationId} : {}), mimeType, fileName: uploadFile.name || (type === "image" ? "foto" : "nota-de-voz"),
    size: uploadFile.size, ...(durationSeconds === null ? {} : {duration:durationSeconds}),
-   email:user.email || "", uid:user.uid, createdAt:firebase.firestore.FieldValue.serverTimestamp()
+   email:user.email || "", displayName:(peopleCache.get(user.uid) || {}).displayName || (user.email || "Miembro").split("@")[0], uid:user.uid, createdAt:firebase.firestore.FieldValue.serverTimestamp()
   });
   $("chatStatus").textContent = type === "image" ? "Foto enviada." : type==="file"?"Documento enviado.":"Nota de voz enviada.";
  } catch(error) {
