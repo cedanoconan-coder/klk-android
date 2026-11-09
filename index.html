@@ -1321,12 +1321,28 @@ function formatMessageTime(value) {
  if (Number.isNaN(date.getTime())) return "";
  return new Intl.DateTimeFormat("es-DO",{hour:"2-digit",minute:"2-digit"}).format(date);
 }
+let messagesLoadingTimeout = null;
 function loadMessages() {
+ if (messagesLoadingTimeout) clearTimeout(messagesLoadingTimeout);
  window.klkNotificationsReady = false;
  if (unsubscribe) unsubscribe();
  if (!activeConversationId) { $("messages").textContent = "Abre una conversación con una persona a la que hayas invitado o que te haya invitado."; return; }
  $("messages").textContent = "Cargando mensajes...";
+ messagesLoadingTimeout = setTimeout(() => {
+  if ($("messages").textContent !== "Cargando mensajes...") return;
+  $("messages").innerHTML = "";
+  const notice = document.createElement("p");
+  notice.className = "muted";
+  notice.textContent = "La conexión está tardando. Comprueba tu internet y vuelve a intentarlo.";
+  const retry = document.createElement("button");
+  retry.type = "button";
+  retry.textContent = "Reintentar";
+  retry.addEventListener("click", loadMessages);
+  $("messages").append(notice, retry);
+ }, 15000);
  unsubscribe = messagesCollection().orderBy("createdAt").limit(100).onSnapshot(async snapshot => {
+  if (messagesLoadingTimeout) clearTimeout(messagesLoadingTimeout);
+  messagesLoadingTimeout = null;
   const changes = snapshot.docChanges();
   if (window.klkNotificationsReady) changes.filter(change => change.type === "added").forEach(change => window.klkNotifyIncoming && window.klkNotifyIncoming(change.doc.data(), change.doc.id));
   else window.klkNotificationsReady = true;
@@ -1396,6 +1412,8 @@ function loadMessages() {
   }
   $("messages").scrollTop = $("messages").scrollHeight;
  }, error => {
+  if (messagesLoadingTimeout) clearTimeout(messagesLoadingTimeout);
+  messagesLoadingTimeout = null;
   const messages = $("messages");
   messages.innerHTML = "";
   const notice = document.createElement("p");
