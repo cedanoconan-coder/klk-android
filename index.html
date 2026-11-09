@@ -772,7 +772,7 @@ main,#chat,.homeView{overscroll-behavior-y:contain}
  </div>
  <button id="sendAudio" type="button" disabled>Enviar audio</button>
 </section>
-<input id="galleryInput" class="filePickerInput" type="file" accept="image/*" aria-label="Seleccionar fotos o videos">
+<input id="galleryInput" class="filePickerInput" type="file" accept="image/*,video/*" aria-label="Seleccionar fotos o videos">
 <input id="cameraInput" class="filePickerInput" type="file" accept="image/*" capture="environment" aria-label="Tomar una foto">
 <input id="documentInput" class="filePickerInput" type="file" aria-label="Seleccionar cualquier archivo">
 <input id="musicInput" class="filePickerInput" type="file" accept="audio/*,.mp3,.m4a,.wav,.ogg" aria-label="Seleccionar audio">
@@ -1480,7 +1480,7 @@ function loadMessages() {
       if((data.mimeType||"").startsWith("video/")){const video=document.createElement("video");video.src=url;video.controls=true;video.preload="metadata";video.playsInline=true;item.appendChild(video);}
       else { const img = document.createElement("img"); img.src = url; img.alt = "Foto compartida"; img.loading = "lazy"; item.appendChild(img); }
      }
-     else if(data.type==="file"){const link=document.createElement("a");link.href=url;link.target="_blank";link.rel="noopener";link.textContent="📄 "+(data.fileName||"Abrir documento");item.appendChild(link);}
+     else if(data.type==="file"&&(data.mimeType||"").startsWith("video/")){const video=document.createElement("video");video.src=url;video.controls=true;video.preload="metadata";video.playsInline=true;item.appendChild(video);} else if(data.type==="file"){const link=document.createElement("a");link.href=url;link.target="_blank";link.rel="noopener";link.textContent="📄 "+(data.fileName||"Abrir documento");item.appendChild(link);}
      else {
       const layout=document.createElement("div");layout.className="voiceMessageLayout";
       const avatar=document.createElement("img");avatar.className="voiceMessageAvatar";avatar.alt="Foto de "+senderName;
@@ -1733,7 +1733,7 @@ async function uploadMedia(file, type, durationSeconds = null) {
 }
 $("pickPhoto").onclick = () => { const panel=$("attachmentPanel"); const opening=!panel.classList.contains("open"); panel.classList.toggle("open",opening); panel.setAttribute("aria-hidden",String(!opening)); $("pickPhoto").setAttribute("aria-expanded",String(opening)); closeStickersPanel(); };
 
-$("galleryInput").addEventListener("change", async event => { const file = event.target.files && event.target.files[0]; if (file) await uploadMedia(file,"image"); event.target.value = ""; });
+$("galleryInput").addEventListener("change", async event => { const file = event.target.files && event.target.files[0]; if (file) await uploadMedia(file,file.type&&file.type.startsWith("video/")?"file":"image"); event.target.value = ""; });
 $("cameraInput").addEventListener("change", async event => { const file = event.target.files && event.target.files[0]; if (file) await uploadMedia(file,"image"); event.target.value = ""; });
 function openAttachmentFilePicker(inputId){
  const input=$(inputId);
@@ -2444,7 +2444,7 @@ $("assistantQuestion").addEventListener("keydown",event=>{
   gallery.hidden=false;grid.textContent="Cargando fotos y videos...";status.textContent="";selected.clear();syncActions();loading=true;
   try{
    const snap=await db.collection("conversations").doc(activeConversationId).collection("messages").orderBy("createdAt","desc").limit(200).get();
-   entries=snap.docs.filter(d=>{const x=d.data();return x.type==="image"&&x.storagePath&&!((x.deletedFor||[]).includes(auth.currentUser.uid));}).map(d=>({id:d.id,ref:d.ref,data:d.data(),url:null}));
+   entries=snap.docs.filter(d=>{const x=d.data();return (x.type==="image"||(x.type==="file"&&(x.mimeType||"").startsWith("video/")))&&x.storagePath&&!((x.deletedFor||[]).includes(auth.currentUser.uid));}).map(d=>({id:d.id,ref:d.ref,data:d.data(),url:null}));
    grid.replaceChildren();
    if(!entries.length){grid.textContent="Todavía no hay fotos ni videos en esta conversación.";return;}
    for(const entry of entries){
@@ -2490,10 +2490,10 @@ $("assistantQuestion").addEventListener("keydown",event=>{
     const response=await fetch(x.url);if(!response.ok)throw new Error("No se pudo descargar un archivo para reenviarlo.");
     const blob=await response.blob();const mimeType=x.data.mimeType||blob.type||"application/octet-stream";
     const token=await auth.currentUser.getIdToken();
-    const uploadResponse=await fetch(SUPABASE_URL+"/functions/v1/media",{method:"POST",headers:{"Content-Type":"application/json","apikey":SUPABASE_PUBLISHABLE_KEY,"Authorization":"Bearer "+token},body:JSON.stringify({action:"create-upload",type:"image",size:blob.size,mimeType,conversationId:targetId})});
+    const uploadResponse=await fetch(SUPABASE_URL+"/functions/v1/media",{method:"POST",headers:{"Content-Type":"application/json","apikey":SUPABASE_PUBLISHABLE_KEY,"Authorization":"Bearer "+token},body:JSON.stringify({action:"create-upload",type:mimeType.startsWith("video/")?"file":"image",size:blob.size,mimeType,conversationId:targetId})});
     const signed=await uploadResponse.json().catch(()=>({}));if(!uploadResponse.ok||!signed.path||!signed.token)throw new Error(signed.error||"No se pudo preparar la copia del archivo.");
     const {error}=await getSupabaseClient().storage.from("Chat-media").uploadToSignedUrl(signed.path,signed.token,blob,{contentType:mimeType});if(error)throw error;
-    const sent=await conversationRef.collection("messages").add({type:"image",storagePath:signed.path,conversationId:targetId,mimeType,fileName:x.data.fileName||"archivo compartido",size:blob.size,email:auth.currentUser.email||"",displayName:(peopleCache.get(auth.currentUser.uid)||{}).displayName||(auth.currentUser.email||"Miembro").split("@")[0],uid:auth.currentUser.uid,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+    const sent=await conversationRef.collection("messages").add({type:mimeType.startsWith("video/")?"file":"image",storagePath:signed.path,conversationId:targetId,mimeType,fileName:x.data.fileName||"archivo compartido",size:blob.size,email:auth.currentUser.email||"",displayName:(peopleCache.get(auth.currentUser.uid)||{}).displayName||(auth.currentUser.email||"Miembro").split("@")[0],uid:auth.currentUser.uid,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
     void sendKlkPushForMessage(targetId,sent.id);
    }
    status.textContent="Archivo(s) reenviado(s) a "+(target[1].displayName||"tu contacto")+".";
