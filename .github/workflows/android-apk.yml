@@ -1,6 +1,8 @@
 name: Construir APK de klk
 
 on:
+  pull_request:
+    branches: ["main"]
   push:
     branches: ["main", "market-readiness", "integrar-supabase-storage", "features/notificaciones-ajustes", "build/klk-ajustes-apk", "feature/complete-interface-settings", "feature/invitation-only-registration", "fix/integral-klk-reliability"]
   workflow_dispatch:
