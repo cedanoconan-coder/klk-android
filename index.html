@@ -336,10 +336,10 @@ body:has(#chat.room-open) main{padding:0!important;margin:0!important;max-width:
 @media(max-width:420px){#chat.room-open .chatHeading .roomAvatar{flex-basis:42px!important;width:42px!important;height:42px!important;min-width:42px!important}}
 
 
-/* Chat limpio: retirar el pie de sesión de la conversación sin borrar su región de estado */
-/* Ocultar por completo el pie duplicado de sesión durante el uso del chat. */
-#chat .chatFoot{display:none!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;border:0!important;overflow:hidden!important}
-#chat .chatFoot #chatStatus,#chat .chatFoot #logout{display:none!important}
+/* Mantener visible el estado para mostrar errores reales de mensajes y archivos. */
+#chat .chatFoot{display:block!important;height:auto!important;min-height:0!important;margin:8px 0 0!important;padding:0!important;border:0!important;overflow:visible!important}
+#chat .chatFoot #chatStatus{display:block!important;visibility:visible!important}
+#chat .chatFoot #logout{display:none!important}
 
 
 /* Ajustes visuales solicitados: portada de chats y navegación compacta */
