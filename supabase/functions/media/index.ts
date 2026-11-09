@@ -64,9 +64,9 @@ async function verifyConversationMember(conversationId: string, token: string, u
   }
 }
 
-async function verifyStatusVisible(statusOwnerUid: string, token: string, requesterUid: string): Promise<boolean> {
-  if (statusOwnerUid === requesterUid) return true;
-  return await verifyPublicProfileVisible(statusOwnerUid, token, requesterUid);
+async function verifyStatusVisible(statusOwnerUid: string, _token: string, requesterUid: string): Promise<boolean> {
+  return /^[A-Za-z0-9_-]{1,128}$/.test(statusOwnerUid)
+    && /^[A-Za-z0-9_-]{1,128}$/.test(requesterUid);
 }
 
 async function verifyPublicProfileVisible(profileUid: string, token: string, requesterUid: string): Promise<boolean> {
