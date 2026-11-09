@@ -236,6 +236,23 @@ service cloud.firestore {
           && request.resource.data.viewedAt == request.time;
         allow delete: if false;
       }
+
+      // Cada usuario puede registrar o quitar su propio me gusta en un estado.
+      match /likes/{likerUid} {
+        allow read: if signedIn();
+        allow create: if signedIn()
+          && likerUid == request.auth.uid
+          && exists(/databases/$(database)/documents/statuses/$(statusId))
+          && get(/databases/$(database)/documents/statuses/$(statusId)).data.expiresAt > request.time
+          && request.resource.data.keys().hasOnly(['uid','displayName','likedAt'])
+          && request.resource.data.keys().hasAll(['uid','displayName','likedAt'])
+          && request.resource.data.uid == request.auth.uid
+          && request.resource.data.displayName is string
+          && request.resource.data.displayName.size() <= 100
+          && request.resource.data.likedAt == request.time;
+        allow delete: if signedIn() && likerUid == request.auth.uid;
+        allow update: if false;
+      }
     }
 
     match /calls/{callId} {
