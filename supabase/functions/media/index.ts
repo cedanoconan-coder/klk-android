@@ -64,6 +64,24 @@ async function verifyConversationMember(conversationId: string, token: string, u
   }
 }
 
+async function verifyStatusVisible(statusOwnerUid: string, token: string, requesterUid: string): Promise<boolean> {
+  if (statusOwnerUid === requesterUid) return true;
+  if (!/^[A-Za-z0-9_-]{1,128}$/.test(statusOwnerUid) || !/^[A-Za-z0-9_-]{1,128}$/.test(requesterUid)) return false;
+  const requestIds = [`${requesterUid}__${statusOwnerUid}`, `${statusOwnerUid}__${requesterUid}`];
+  for (const requestId of requestIds) {
+    const url = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents/contactRequests/${encodeURIComponent(requestId)}`;
+    try {
+      const response = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+      if (!response.ok) continue;
+      const document = await response.json();
+      if (document?.fields?.status?.stringValue === "accepted") return true;
+    } catch {
+      // A missing or unreadable request does not grant access.
+    }
+  }
+  return false;
+}
+
 async function verifyPublicProfileVisible(profileUid: string, token: string, requesterUid: string): Promise<boolean> {
   if (profileUid === requesterUid) return true;
   if (!/^[A-Za-z0-9_-]{1,128}$/.test(profileUid)) return false;
@@ -171,7 +189,11 @@ Deno.serve(async (request) => {
         return reply(403, { error: "Este perfil no está visible para otros miembros." });
       }
     } else if (path.startsWith("statuses/")) {
-      if (!/^statuses\/[A-Za-z0-9_-]{1,128}\/[A-Za-z0-9-]{16,64}\.[a-z0-9]{1,8}$/i.test(path)) return reply(403, { error: "Ruta de estado no válida." });
+      const statusMatch = path.match(/^statuses\/([A-Za-z0-9_-]{1,128})\/[A-Za-z0-9-]{16,64}\.[a-z0-9]{1,8}$/i);
+      if (!statusMatch) return reply(403, { error: "Ruta de estado no válida." });
+      if (!(await verifyStatusVisible(statusMatch[1], firebaseToken, uid))) {
+        return reply(403, { error: "Este estado solo está disponible para los contactos del usuario." });
+      }
     } else if (!/^[^/]{1,128}\/[A-Za-z0-9-]{16,64}\.[a-z0-9]{1,8}$/i.test(path)) {
       return reply(403, { error: "Ruta de archivo no válida o sin permiso." });
     }
