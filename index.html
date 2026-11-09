@@ -435,13 +435,11 @@ body:has(#chat.room-open) main{padding:0!important;margin:0!important;max-width:
 <section id="homeProfilePanel" aria-label="Mi perfil y configuración"><div style="display:flex;align-items:center;gap:10px;margin-bottom:12px"><button id="profileClose" class="secondary" type="button" style="width:auto;margin:0">‹ Volver</button><h2 style="margin:0;font-size:20px">Mi perfil</h2></div><div id="myProfileCover" class="profileCover" aria-label="Foto de portada"><button id="profileChangeCover" type="button">Cambiar portada</button></div><div class="profileHero"><img id="profilePanelPhoto" alt="Foto de perfil"><div><strong id="profilePanelName">Mi perfil</strong><small id="profilePanelEmail">Cuenta klk</small><button id="profileChangePhoto" class="secondary" type="button" style="width:auto;margin:8px 0 0;padding:8px 12px">Cambiar foto</button></div></div><div class="profileMood"><span class="moodEmoji" id="myMoodEmoji">😊</span><div style="min-width:0;flex:1"><strong>Mi estado de ánimo</strong><small id="myMoodLabel">Comparte cómo te sientes</small></div><select id="profileMoodSelect" aria-label="Elige tu estado de ánimo"><option value="😊 Feliz">😊 Feliz</option><option value="😌 Tranquilo">😌 Tranquilo</option><option value="❤️ Agradecido">❤️ Agradecido</option><option value="💪 Motivado">💪 Motivado</option><option value="😴 Cansado">😴 Cansado</option><option value="🤔 Pensativo">🤔 Pensativo</option><option value="😔 No muy bien">😔 No muy bien</option><option value="🎉 Emocionado">🎉 Emocionado</option></select></div><div class="profileSection"><h3>Información personal</h3><label class="profileField"><span>Nombre</span><input id="profileNameInput" maxlength="60" autocomplete="name" placeholder="Tu nombre"></label><label class="profileField"><span>Info. / Acerca de ti</span><textarea id="profileAboutInput" maxlength="139" placeholder="¡Hola! Estoy usando klk."></textarea></label><div class="profileButtons"><button id="profileSave" type="button">Guardar cambios</button></div><p id="profileStatus" class="hint" role="status" aria-live="polite"></p></div><div class="profileSection"><h3>Cuenta y seguridad</h3><button id="profilePassword" class="profileAction" type="button"><span>🔐 Cambiar contraseña<small>Recibirás un enlace seguro en tu correo</small></span><b>›</b></button><button id="profileEmail" class="profileAction" type="button"><span>✉️ Correo de la cuenta<small id="profileEmailValue">—</small></span><b>›</b></button></div><div class="profileSection"><h3>Privacidad y notificaciones</h3><button id="profilePrivacyInfo" class="profileAction" type="button"><span>🛡️ Privacidad<small>Información sobre los controles disponibles</small></span><b>›</b></button><button id="profileOpenSettings" class="profileAction" type="button"><span>🔔 Notificaciones y apariencia<small>Sonidos, vibración, tema, tamaño y fondo</small></span><b>›</b></button><p id="profilePrivacyStatus" class="hint" hidden>Los controles avanzados de privacidad todavía no están activos en klk; no mostraremos opciones que no se apliquen realmente.</p></div><div class="profileSection"><h3>Sesión</h3><button id="profileLogout" class="profileAction" type="button"><span>↪️ Cerrar sesión<small>Salir de esta cuenta en este teléfono</small></span><b>›</b></button></div></section>
 <div class="homeSearch"><input id="chatSearch" type="search" placeholder="Buscar..." aria-label="Buscar conversaciones"></div>
  <p id="homeStatus" class="hint" role="status" aria-live="polite" style="padding:0 20px;min-height:18px"></p>
- <div class="homeFilters" role="group" aria-label="Contactos y solicitudes">
-  <button type="button" data-filter="requests">Solicitudes</button><button type="button" class="active" data-filter="people">Personas</button>
- </div>
+
  <button id="homeGroup" class="homeGroup" type="button" hidden><span class="homeAvatar">👥</span><span class="homeGroupText"><strong>Chats privados</strong><small>klk permite conversaciones entre contactos aceptados</small></span></button>
  <section id="chatsPanel" style="padding:4px 0 12px"><div id="chatsList" aria-label="Conversaciones recientes" class="hint" style="padding:12px 20px">Cargando conversaciones...</div></section>
- <section id="requestsPanel" style="padding:8px 20px"><h3 style="font-size:16px;margin:8px 0">Solicitudes recibidas</h3><div id="requestsList" class="hint">Cargando solicitudes...</div></section>
- <div id="peopleList" aria-label="Personas registradas">Cargando personas...</div>
+ <section id="requestsPanel" hidden style="display:none;padding:8px 20px"><h3 style="font-size:16px;margin:8px 0">Solicitudes recibidas</h3><div id="requestsList" class="hint">Cargando solicitudes...</div></section>
+ <div id="peopleList" hidden style="display:none" aria-label="Personas registradas">Cargando personas...</div>
 <section id="contactProfilePanel" class="contactProfilePanel" aria-label="Perfil del contacto" hidden>
 <div class="contactProfileTop"><button id="contactProfileBack" class="secondary" type="button" aria-label="Volver">‹</button><strong>Info. del contacto</strong></div>
 <div id="contactProfileCover" class="contactCover" role="img" aria-label="Foto de portada"></div><div class="contactProfileHero"><img id="contactProfilePhoto" alt="Foto del contacto"><h2 id="contactProfileName">Contacto</h2><p id="contactProfileEmail"></p><div id="contactProfileMood" class="contactProfileMood" hidden></div><p id="contactProfileAbout">Miembro de klk</p></div>
@@ -461,10 +459,9 @@ body:has(#chat.room-open) main{padding:0!important;margin:0!important;max-width:
  <h3 class="statusSectionTitle">Estados recientes</h3><div id="statusesFeed" aria-live="polite" class="statusesFeed"><p class="hint">Cargando estados...</p></div>
 </section>
  <section id="toolsPanel" class="homeUtilityPanel" aria-label="Herramientas" hidden>
-  <h2>Herramientas</h2><p class="hint">Accesos rápidos para moverte por klk.</p>
+  <h2>Herramientas</h2><p class="hint">Accesos rápidos para moverte por klk. Usa «Invitar» para agregar personas y comenzar a conversar.</p>
   <div class="toolGrid">
    <button type="button" data-go-tab="chats"><span>💬</span>Mis chats</button><button type="button" data-go-tab="calls"><span>☎️</span>Llamadas</button><button type="button" data-tool-action="assistant"><span>🤖</span>Asistente IA</button>
-   <button type="button" data-go-filter="people"><span>👥</span>Personas</button><button type="button" data-go-filter="requests"><span>✉️</span>Solicitudes</button>
    <button type="button" data-tool-action="settings"><span>⚙️</span>Ajustes</button><button type="button" data-tool-action="invite"><span>＋</span>Invitar</button>
    <button type="button" data-tool-action="profile"><span>🖼️</span>Mi perfil</button><button type="button" data-tool-action="top"><span>⬆️</span>Ir arriba</button>
   </div>
@@ -1869,7 +1866,7 @@ function setHomeTab(tab){
  const isContacts=tab==="contacts";
  $("homeSearch").style.display=(isChats||isContacts)?"block":"none";
  $("homeStatus").style.display=isChats?"block":"none";
- document.querySelector(".homeFilters").style.display=isContacts?"flex":"none";
+ document.querySelectorAll(".homeFilters").forEach(el=>el.style.display="none");
  if(isChats){
   $("chatsPanel").style.display="block";$("requestsPanel").style.display="none";$("peopleList").style.display="none";
  }else if(isContacts){
@@ -1884,7 +1881,7 @@ function setHomeTab(tab){
   b.classList.toggle("active",active);
   if(active)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current");
  });
- if(tab!=="chats"&&tab!=="contacts") window.scrollTo({top:0,behavior:"smooth"});
+ if(tab!=="chats") window.scrollTo({top:0,behavior:"smooth"});
 }
 document.querySelectorAll(".homeBottom button").forEach(button=>button.addEventListener("click",()=>setHomeTab(button.dataset.tab)));
 document.querySelectorAll("[data-go-tab]").forEach(button=>button.addEventListener("click",()=>setHomeTab(button.dataset.goTab)));
