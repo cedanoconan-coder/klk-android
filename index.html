@@ -1182,7 +1182,7 @@ function renderConversations() {
  const list=$("chatsList"); if(!list)return;
  list.innerHTML="";
  const rows=[...conversationCache.values()].sort((a,b)=>(b.sortTime||0)-(a.sortTime||0));
- if(!rows.length){list.textContent="Todavía no tienes chats. Entra en Personas y envía una invitación para comenzar a escribir.";return;}
+ if(!rows.length){list.textContent="Todavía no tienes chats. Pulsa + para encontrar miembros y comenzar a conversar.";return;}
  for(const item of rows){
   const row=document.createElement("button");row.type="button";row.className="chatRow";
   const avatar=document.createElement("img");avatar.className="personAvatar";avatar.alt="Foto de "+item.name;avatar.src=item.photoUrl||"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='32' fill='%23edf2ef'/%3E%3Ctext x='32' y='43' text-anchor='middle' font-size='32'%3E%F0%9F%91%A4%3C/text%3E%3C/svg%3E";
