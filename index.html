@@ -344,7 +344,28 @@ body:has(#chat.room-open) main{padding:0!important;margin:0!important;max-width:
 .voiceTimer[hidden]{display:none!important}
 #recordAudio.recording{background:#d93025!important;color:#fff!important;animation:klkMicPulse 1.1s ease-in-out infinite}
 @keyframes klkMicPulse{0%,100%{box-shadow:0 0 0 0 #d9302530}50%{box-shadow:0 0 0 7px #d9302520}}
-\n/* Icono de envío nítido y botón accesible */\n#send{display:grid;place-items:center;transition:opacity .15s ease,transform .15s ease}\n#send .sendGlyph{width:22px;height:22px;display:block}\n#send:disabled{opacity:.42;cursor:not-allowed}\n#chat.room-open .composer #send .sendGlyph{width:21px;height:21px}\n#chat.room-open .composer #send:active:not(:disabled){transform:scale(.94)}\n</style>
+\n/* Icono de envío nítido y botón accesible */\n#send{display:grid;place-items:center;transition:opacity .15s ease,transform .15s ease}\n#send .sendGlyph{width:22px;height:22px;display:block}\n#send:disabled{opacity:.42;cursor:not-allowed}\n#chat.room-open .composer #send .sendGlyph{width:21px;height:21px}\n#chat.room-open .composer #send:active:not(:disabled){transform:scale(.94)}\n
+/* Configuración compacta y agrupada */
+#settingsPanel{padding:14px 14px 24px!important;bottom:calc(76px + env(safe-area-inset-bottom))!important;background:var(--klk-surface,#fff)!important}
+.settingsHeader{position:sticky;top:-14px;z-index:3;display:flex;align-items:center;justify-content:space-between;gap:12px;margin:-14px -14px 12px;padding:calc(12px + env(safe-area-inset-top)) 14px 12px;background:var(--klk-surface,#fff);border-bottom:1px solid #e8eeeb}
+.settingsHeader h2{font-size:20px;margin:0 0 3px}.settingsHeader p{font-size:12px;color:var(--klk-muted,#68736f);margin:0}
+#settingsPanel .settingsClose{flex:0 0 38px;width:38px;height:38px;margin:0;padding:0;border-radius:50%;background:#f0f3f2;color:#34423d;font-size:25px}
+.settingsGroup{margin:9px 0;border:1px solid #e8eeeb;border-radius:14px;background:var(--klk-surface,#fff);overflow:hidden}
+.settingsGroup summary{display:flex;align-items:center;gap:11px;min-height:62px;padding:10px 12px;cursor:pointer;list-style:none}
+.settingsGroup summary::-webkit-details-marker{display:none}
+.settingsGroup summary>span:nth-child(2){display:flex;flex:1;min-width:0;flex-direction:column;gap:3px}
+.settingsGroup summary strong{font-size:14px;color:var(--klk-text,#17211e)}
+.settingsGroup summary small{font-size:11px;font-weight:400;color:var(--klk-muted,#68736f)}
+.settingsGroup summary>b{font-size:20px;color:var(--klk-muted,#68736f);transition:transform .18s}
+.settingsGroup[open] summary>b{transform:rotate(180deg)}
+.settingsGroupIcon{display:grid;place-items:center;width:36px;height:36px;flex:0 0 36px;border-radius:11px;background:#eaf4f0;font-size:18px}
+.settingsGroupBody{padding:0 12px 10px;border-top:1px solid #edf0ef}
+.settingsGroupBody .settingRow{min-height:48px;padding:9px 0;font-size:13px}
+.settingsGroupBody .hint{font-size:12px}
+.settingsStatus{margin:14px 3px 8px}
+#settingsPanel #resetSettings{margin:4px 0 8px;font-size:13px}
+
+</style>
 </head>
 <body>
 <header>klk <small>Tu familia, siempre conectada ❤️</small></header>
@@ -466,15 +487,15 @@ body:has(#chat.room-open) main{padding:0!important;margin:0!important;max-width:
 <input id="cameraInput" type="file" accept="image/*" capture="environment" hidden><input id="documentInput" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip" hidden>
 <p id="recordStatus" class="hint" role="status" aria-live="polite"></p>
 <section id="settingsPanel" aria-label="Configuración de klk">
- <h3>⚙️ Configuración de klk</h3>
- <div class="settingRow"><span>Tamaño del texto</span><select id="settingTextSize"><option value="14">Pequeño</option><option value="15">Normal</option><option value="17">Grande</option><option value="19">Muy grande</option><option value="21">Extra grande</option></select></div>
+ <div class="settingsHeader"><div><h2>Configuración</h2><p>Todo organizado para que encuentres rápido lo que necesitas.</p></div><button id="closeSettings" class="settingsClose" type="button" aria-label="Cerrar ajustes">×</button></div>
+ <details class="settingsGroup"><summary><span class="settingsGroupIcon">🎨</span><span><strong>Apariencia</strong><small>Tema, colores, texto y fondos</small></span><b>⌄</b></summary><div class="settingsGroupBody"><div class="settingRow"><span>Tamaño del texto</span><select id="settingTextSize"><option value="14">Pequeño</option><option value="15">Normal</option><option value="17">Grande</option><option value="19">Muy grande</option><option value="21">Extra grande</option></select></div>
  <div class="settingRow"><span>Tema de la aplicación</span><select id="settingTheme"><option value="light">Claro</option><option value="dark">Oscuro</option><option value="system">Automático del teléfono</option></select></div>
  <div class="settingRow"><span>Color principal</span><select id="settingAccent"><option value="teal">Verde</option><option value="blue">Azul</option><option value="purple">Morado</option><option value="rose">Rosa</option><option value="orange">Naranja</option></select></div>
  <div class="settingRow"><span>Espaciado</span><select id="settingDensity"><option value="comfortable">Cómodo</option><option value="compact">Compacto</option></select></div>
  <div class="settingRow"><span>Fondo de conversaciones</span><select id="settingWallpaper"><option value="pattern">Puntos suaves</option><option value="plain">Liso</option><option value="gradient">Degradado verde</option><option value="blue">Azul cielo</option><option value="sunset">Atardecer</option><option value="hearts">Corazones</option><option value="nature">Naturaleza</option><option value="night">Noche</option></select></div>
  <div class="settingRow"><span>Estilo de burbujas</span><select id="settingBubbleStyle"><option value="classic">Clásico</option><option value="rounded">Redondeado</option><option value="square">Cuadrado</option></select></div>
  <div class="settingRow"><span>Color de mis mensajes</span><select id="settingOutgoingColor"><option value="green">Verde</option><option value="blue">Azul</option><option value="purple">Morado</option><option value="pink">Rosa</option><option value="gray">Gris</option></select></div>
- <div class="settingRow"><span>Vista previa de mensajes</span><input id="settingPreview" type="checkbox" checked></div>
+ </div></details><details class="settingsGroup"><summary><span class="settingsGroupIcon">🔔</span><span><strong>Notificaciones y sonidos</strong><small>Vibración, tonos y avisos</small></span><b>⌄</b></summary><div class="settingsGroupBody"><div class="settingRow"><span>Vista previa de mensajes</span><input id="settingPreview" type="checkbox" checked></div>
  <div class="settingRow"><span>Vibración</span><input id="settingVibration" type="checkbox" checked></div>
  <div class="settingRow"><span>Sonidos de mensajes y llamadas</span><input id="settingSound" type="checkbox" checked></div>
  <div class="settingRow"><span>Tono de mensajes</span><select id="settingMessageTone"><option value="classic">Clásico</option><option value="bell">Campanita</option><option value="digital">Digital</option><option value="soft">Suave</option><option value="urgent">Alerta</option><option value="chime">Campanas</option><option value="pop">Pop</option><option value="marimba">Marimba</option><option value="pulse">Pulso</option></select></div>
@@ -488,26 +509,26 @@ body:has(#chat.room-open) main{padding:0!important;margin:0!important;max-width:
  <div class="settingRow"><span>Probar sonido de mensaje</span><button id="testNotificationSound" type="button" style="width:auto;margin:0;padding:9px 12px">▶ Probar</button></div>
  <div class="settingRow"><span>Probar sonido de llamada</span><button id="testCallSound" type="button" style="width:auto;margin:0;padding:9px 12px">▶ Probar</button></div>
  <div class="settingRow"><span>Notificaciones del teléfono</span><button id="enableNotifications" type="button" style="width:auto;margin:0;padding:9px 12px">Activar</button></div>
- <h3>🔐 Seguridad de la cuenta</h3>
+ </div></details><details class="settingsGroup"><summary><span class="settingsGroupIcon">🔐</span><span><strong>Seguridad y cuenta</strong><small>Bloqueo del teléfono y sesión</small></span><b>⌄</b></summary><div class="settingsGroupBody"><h3>🔐 Seguridad de la cuenta</h3>
  <div class="settingRow"><span>Huella digital / bloqueo del teléfono</span><button id="enableBiometric" type="button" style="width:auto;margin:0;padding:9px 12px">Activar</button></div>
  <p id="biometricStatus" class="hint" role="status" aria-live="polite">Usa la autenticación segura del dispositivo para bloquear el acceso local a Klk.</p>
  <div class="settingRow"><span>Cerrar sesión</span><button id="settingsLogout" class="secondary" type="button" style="width:auto;margin:0;padding:9px 12px">Salir de Klk</button></div>
- <h3>🔒 Privacidad y datos</h3>
+ </div></details><details class="settingsGroup"><summary><span class="settingsGroupIcon">🛡️</span><span><strong>Privacidad y datos</strong><small>Preferencias de conexión y mensajes</small></span><b>⌄</b></summary><div class="settingsGroupBody"><h3>🔒 Privacidad y datos</h3>
  <p class="hint">Estas opciones se guardan en este teléfono. Todavía no modifican la privacidad visible para otros usuarios ni la sincronización de Firebase.</p>
  <div class="settingRow"><span>Mostrar última conexión (preferencia)</span><input id="settingLastSeen" type="checkbox" checked></div>
  <div class="settingRow"><span>Confirmaciones de lectura (preferencia)</span><input id="settingReadReceipts" type="checkbox" checked></div>
  <div class="settingRow"><span>Descarga automática de archivos (preferencia)</span><input id="settingAutoDownload" type="checkbox"></div>
- <h3>♿ Accesibilidad</h3>
+ </div></details><details class="settingsGroup"><summary><span class="settingsGroupIcon">♿</span><span><strong>Accesibilidad</strong><small>Contraste y movimiento</small></span><b>⌄</b></summary><div class="settingsGroupBody"><h3>♿ Accesibilidad</h3>
  <div class="settingRow"><span>Contraste alto</span><input id="settingHighContrast" type="checkbox"></div>
  <div class="settingRow"><span>Reducir animaciones</span><input id="settingReduceMotion" type="checkbox"></div>
- <h3>💾 Copia de ajustes</h3>
+ </div></details><details class="settingsGroup"><summary><span class="settingsGroupIcon">💾</span><span><strong>Copia de ajustes</strong><small>Guardar o restaurar preferencias</small></span><b>⌄</b></summary><div class="settingsGroupBody"><h3>💾 Copia de ajustes</h3>
  <p class="hint">Puedes exportar o restaurar la apariencia y las preferencias de este dispositivo. Esto no incluye mensajes, fotos ni archivos de tus conversaciones.</p>
  <div class="settingRow"><span>Exportar ajustes</span><button id="exportSettings" type="button" style="width:auto;margin:0;padding:9px 12px">Guardar copia</button></div>
  <div class="settingRow"><span>Importar ajustes</span><button id="importSettings" type="button" style="width:auto;margin:0;padding:9px 12px">Restaurar copia</button></div>
  <input id="settingsBackupFile" type="file" accept="application/json,.json" hidden>
- <p id="settingsStatus" class="hint" role="status" aria-live="polite">Los cambios se guardan automáticamente en este teléfono.</p>
+ </div></details><p id="settingsStatus" class="hint" role="status" aria-live="polite">Los cambios se guardan automáticamente en este teléfono.</p>
  <button id="resetSettings" class="secondary" type="button">Restablecer ajustes</button>
- <button id="closeSettings" class="secondary" type="button">Cerrar ajustes</button>
+ 
 </section>
 <div class="chatFoot"><p id="chatStatus" class="hint" role="status" aria-live="polite"></p><button id="logout" class="secondary" type="button">Cerrar sesión</button></div>
 </section>
