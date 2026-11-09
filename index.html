@@ -142,6 +142,9 @@ button.secondary{background:var(--klk-soft)!important;color:var(--klk-accent)!im
 #messages{background-color:var(--klk-message-bg)!important;background-image:var(--klk-wallpaper)!important}
 .msg{background:var(--klk-surface);color:var(--klk-text)}
 .msg.mine{background:var(--klk-soft);color:var(--klk-text)}
+.msg.mine{background:var(--klk-outgoing-bg,#d9fdd3)}
+html[data-bubbles="rounded"] .msg{border-radius:20px!important}html[data-bubbles="rounded"] .msg.mine{border-radius:20px!important}html[data-bubbles="square"] .msg,html[data-bubbles="square"] .msg.mine{border-radius:5px!important}
+html[data-bubbles="classic"] .msg{border-radius:3px 12px 12px 12px}html[data-bubbles="classic"] .msg.mine{border-radius:12px 3px 12px 12px}
 .msg b{color:var(--klk-accent)}
 input,select{color:var(--klk-text)}
 .settingRow{border-color:var(--klk-line)}
@@ -428,6 +431,8 @@ body:has(#chat.room-open) main{padding:0!important;margin:0!important;max-width:
  <div class="settingRow"><span>Color principal</span><select id="settingAccent"><option value="teal">Verde</option><option value="blue">Azul</option><option value="purple">Morado</option><option value="rose">Rosa</option><option value="orange">Naranja</option></select></div>
  <div class="settingRow"><span>Espaciado</span><select id="settingDensity"><option value="comfortable">Cómodo</option><option value="compact">Compacto</option></select></div>
  <div class="settingRow"><span>Fondo de conversaciones</span><select id="settingWallpaper"><option value="pattern">Patrón suave</option><option value="plain">Liso</option><option value="gradient">Degradado</option></select></div>
+ <div class="settingRow"><span>Estilo de burbujas</span><select id="settingBubbleStyle"><option value="classic">Clásico</option><option value="rounded">Redondeado</option><option value="square">Cuadrado</option></select></div>
+ <div class="settingRow"><span>Color de mis mensajes</span><select id="settingOutgoingColor"><option value="green">Verde</option><option value="blue">Azul</option><option value="purple">Morado</option><option value="pink">Rosa</option><option value="gray">Gris</option></select></div>
  <div class="settingRow"><span>Vista previa de mensajes</span><input id="settingPreview" type="checkbox" checked></div>
  <div class="settingRow"><span>Vibración</span><input id="settingVibration" type="checkbox" checked></div>
  <div class="settingRow"><span>Sonidos de mensajes y llamadas</span><input id="settingSound" type="checkbox" checked></div>
@@ -1178,7 +1183,7 @@ if (window.matchMedia("(display-mode: standalone)").matches || window.navigator.
 <script>
 (function(){
  const $=id=>document.getElementById(id);
- const defaults={sound:true,vibration:true,preview:true,messageTone:"classic",callTone:"bell",textSize:"15",theme:"light",accent:"teal",density:"comfortable",wallpaper:"pattern",lastSeen:true,readReceipts:true,autoDownload:false,highContrast:false,reduceMotion:false};
+ const defaults={sound:true,vibration:true,preview:true,messageTone:"classic",callTone:"bell",textSize:"15",theme:"light",accent:"teal",density:"comfortable",wallpaper:"pattern",bubbleStyle:"classic",outgoingColor:"green",lastSeen:true,readReceipts:true,autoDownload:false,highContrast:false,reduceMotion:false};
  let prefs={...defaults};
  try{prefs={...defaults,...JSON.parse(localStorage.getItem("klk-settings")||"{}")};}catch(e){}
  const accents={teal:["#075e54","#e3f2ed"],blue:["#1769aa","#e4f1fc"],purple:["#7046a8","#efe7fa"],rose:["#b33b65","#fae8ef"],orange:["#b45b16","#fff0df"]};
@@ -1190,10 +1195,13 @@ if (window.matchMedia("(display-mode: standalone)").matches || window.navigator.
   const wallpapers={pattern:"radial-gradient(#c9d2d0 0.7px,transparent 0.7px)",plain:"none",gradient:"linear-gradient(135deg,rgba(7,94,84,.07),rgba(120,150,180,.08))"};
   root.style.setProperty("--klk-wallpaper",prefs.wallpaper==="pattern"?"radial-gradient(#c9d2d0 0.7px,transparent 0.7px)":prefs.wallpaper==="gradient"?"linear-gradient(135deg,rgba(7,94,84,.07),rgba(120,150,180,.08))":"none");
   root.style.setProperty("--klk-message-bg",dark?"#142127":(prefs.wallpaper==="gradient"?"#f1f5f4":prefs.wallpaper==="plain"?"#f6f7f7":"#f6f7f7"));
+  const outgoingColors={green:dark?"#245c4b":"#d9fdd3",blue:dark?"#244c70":"#dcecff",purple:dark?"#4a3b68":"#eee3ff",pink:dark?"#663d50":"#ffe3ed",gray:dark?"#3b484e":"#e8ecee"};
+  root.style.setProperty("--klk-outgoing-bg",outgoingColors[prefs.outgoingColor]||outgoingColors.green);
+  root.dataset.bubbles=["classic","rounded","square"].includes(prefs.bubbleStyle)?prefs.bubbleStyle:"classic";
   document.querySelectorAll(".msg p").forEach(el=>el.style.fontSize=prefs.textSize+"px");
   $("settingSound").checked=!!prefs.sound;$("settingVibration").checked=!!prefs.vibration;$("settingPreview").checked=!!prefs.preview;
   $("settingMessageTone").value=prefs.messageTone||"classic";$("settingCallTone").value=prefs.callTone||"bell";
-  $("settingTextSize").value=prefs.textSize;$("settingTheme").value=prefs.theme;$("settingAccent").value=prefs.accent;$("settingDensity").value=prefs.density;$("settingWallpaper").value=prefs.wallpaper;
+  $("settingTextSize").value=prefs.textSize;$("settingTheme").value=prefs.theme;$("settingAccent").value=prefs.accent;$("settingDensity").value=prefs.density;$("settingWallpaper").value=prefs.wallpaper;$("settingBubbleStyle").value=prefs.bubbleStyle||"classic";$("settingOutgoingColor").value=prefs.outgoingColor||"green";
   $("settingLastSeen").checked=!!prefs.lastSeen;$("settingReadReceipts").checked=!!prefs.readReceipts;$("settingAutoDownload").checked=!!prefs.autoDownload;
   $("settingHighContrast").checked=!!prefs.highContrast;$("settingReduceMotion").checked=!!prefs.reduceMotion;
   root.dataset.contrast=prefs.highContrast?"high":"normal";
@@ -1205,7 +1213,7 @@ if (window.matchMedia("(display-mode: standalone)").matches || window.navigator.
  }
  function save(){try{localStorage.setItem("klk-settings",JSON.stringify(prefs));}catch(e){$("settingsStatus").textContent="No se pudieron guardar los cambios en este teléfono.";}apply();$("settingsStatus").textContent="Ajustes guardados automáticamente en este teléfono.";}
  [["settingSound","sound"],["settingVibration","vibration"],["settingPreview","preview"],["settingLastSeen","lastSeen"],["settingReadReceipts","readReceipts"],["settingAutoDownload","autoDownload"],["settingHighContrast","highContrast"],["settingReduceMotion","reduceMotion"]].forEach(([id,key])=>$(id).addEventListener("change",()=>{prefs[key]=$(id).checked;save();}));
- [["settingTextSize","textSize"],["settingTheme","theme"],["settingAccent","accent"],["settingDensity","density"],["settingWallpaper","wallpaper"],["settingMessageTone","messageTone"],["settingCallTone","callTone"]].forEach(([id,key])=>$(id).addEventListener("change",e=>{prefs[key]=e.target.value;save();}));
+ [["settingTextSize","textSize"],["settingTheme","theme"],["settingAccent","accent"],["settingDensity","density"],["settingWallpaper","wallpaper"],["settingBubbleStyle","bubbleStyle"],["settingOutgoingColor","outgoingColor"],["settingMessageTone","messageTone"],["settingCallTone","callTone"]].forEach(([id,key])=>$(id).addEventListener("change",e=>{prefs[key]=e.target.value;save();}));
  $("settingsToggle").addEventListener("click",()=>{const panel=$("settingsPanel");panel.style.display=panel.style.display==="block"?"none":"block";if(panel.style.display==="block")panel.scrollTop=0;});
  $("closeSettings").addEventListener("click",()=>{$("settingsPanel").style.display="none";});
  $("resetSettings").addEventListener("click",()=>{prefs={...defaults};save();$("settingsStatus").textContent="Se restauró la apariencia original de klk.";});
