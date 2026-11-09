@@ -372,6 +372,8 @@ body:has(#chat.room-open) main{padding:0!important;margin:0!important;max-width:
   <strong>Invitar a klk</strong>
   <p class="hint">Crea un código de un solo uso, válido durante 7 días. Compártelo solo con la persona que deseas agregar.</p>
   <p id="inviteCodeDisplay" style="font-size:22px;font-weight:700;letter-spacing:2px;text-align:center"></p>
+  <div id="inviteQr" aria-label="Código QR de invitación" style="display:none;margin:12px auto;width:200px;min-height:200px;padding:10px;background:#fff;border-radius:12px"></div>
+  <p id="inviteQrHint" class="hint" style="text-align:center">Escanea este QR para abrir la invitación.</p>
   <button id="createInvite" type="button">Crear invitación</button>
   <button id="shareInvite" class="secondary" type="button" hidden>Compartir invitación</button>
   <p id="inviteStatus" class="hint" role="status" aria-live="polite"></p>
@@ -486,6 +488,10 @@ body:has(#chat.room-open) main{padding:0!important;margin:0!important;max-width:
  <div class="settingRow"><span>Probar sonido de mensaje</span><button id="testNotificationSound" type="button" style="width:auto;margin:0;padding:9px 12px">▶ Probar</button></div>
  <div class="settingRow"><span>Probar sonido de llamada</span><button id="testCallSound" type="button" style="width:auto;margin:0;padding:9px 12px">▶ Probar</button></div>
  <div class="settingRow"><span>Notificaciones del teléfono</span><button id="enableNotifications" type="button" style="width:auto;margin:0;padding:9px 12px">Activar</button></div>
+ <h3>🔐 Seguridad de la cuenta</h3>
+ <div class="settingRow"><span>Huella digital / bloqueo del teléfono</span><button id="enableBiometric" type="button" style="width:auto;margin:0;padding:9px 12px">Activar</button></div>
+ <p id="biometricStatus" class="hint" role="status" aria-live="polite">Usa la autenticación segura del dispositivo para bloquear el acceso local a Klk.</p>
+ <div class="settingRow"><span>Cerrar sesión</span><button id="settingsLogout" class="secondary" type="button" style="width:auto;margin:0;padding:9px 12px">Salir de Klk</button></div>
  <h3>🔒 Privacidad y datos</h3>
  <p class="hint">Estas opciones se guardan en este teléfono. Todavía no modifican la privacidad visible para otros usuarios ni la sincronización de Firebase.</p>
  <div class="settingRow"><span>Mostrar última conexión (preferencia)</span><input id="settingLastSeen" type="checkbox" checked></div>
@@ -506,6 +512,7 @@ body:has(#chat.room-open) main{padding:0!important;margin:0!important;max-width:
 <div class="chatFoot"><p id="chatStatus" class="hint" role="status" aria-live="polite"></p><button id="logout" class="secondary" type="button">Cerrar sesión</button></div>
 </section>
 </main>
+<div id="biometricLock" role="dialog" aria-modal="true" aria-label="Desbloquear Klk" style="display:none;position:fixed;z-index:1000;inset:0;background:#f7faf8;color:#15211d;align-items:center;justify-content:center;padding:24px;text-align:center"><div style="width:min(100%,360px);padding:26px;background:#fff;border-radius:22px;box-shadow:0 12px 40px #0002"><div style="font-size:48px">🔐</div><h2>Klk está bloqueado</h2><p class="hint">Confirma tu identidad con la huella, rostro o método seguro configurado en tu teléfono.</p><button id="unlockBiometric" type="button">Desbloquear Klk</button><p id="biometricLockStatus" class="hint" role="status" aria-live="polite"></p></div></div>
 <div id="statusViewer" class="statusViewer" role="dialog" aria-modal="true" aria-label="Ver estado"><div id="statusViewerMeta"></div><div id="statusViewerContent"></div><button id="closeStatusViewer" type="button">Cerrar</button></div>
 <script src="./navigation.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -513,6 +520,7 @@ body:has(#chat.room-open) main{padding:0!important;margin:0!important;max-width:
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
 const firebaseConfig = {
  apiKey: "AIzaSyAgMkDOS77y-jHnzCEteQW1UgC90gShjuU",
@@ -724,11 +732,49 @@ async function performKlkLogout() {
 }
 $("logout").onclick = performKlkLogout;
 $("quickLogout").addEventListener("click", performKlkLogout);
+$("settingsLogout").addEventListener("click", performKlkLogout);
+
+// Bloqueo biométrico local mediante WebAuthn del dispositivo. La credencial privada
+// permanece en el autenticador; Klk solo conserva el identificador público local.
+const KLK_BIOMETRIC_KEY="klk-biometric-credential-v1";
+const klkRandomBytes=n=>{const b=new Uint8Array(n);crypto.getRandomValues(b);return b;};
+const klkB64url=b=>btoa(String.fromCharCode(...new Uint8Array(b))).replace(/\\+/g,"-").replace(/\\//g,"_").replace(/=+$/,"");
+const klkFromB64url=s=>Uint8Array.from(atob(s.replace(/-/g,"+").replace(/_/g,"/")+"===".slice((s.length+3)%4)),c=>c.charCodeAt(0));
+function showKlkBiometricLock(){const el=$("biometricLock");if(el)el.style.display="flex";}
+function hideKlkBiometricLock(){const el=$("biometricLock");if(el)el.style.display="none";}
+async function enableKlkBiometric(){
+ const status=$("biometricStatus");
+ try{
+  if(!window.isSecureContext||!window.PublicKeyCredential||!navigator.credentials)throw new Error("Este navegador no admite autenticación biométrica segura. Abre Klk desde Chrome actualizado.");
+  if(!auth||!auth.currentUser)throw new Error("Inicia sesión antes de activar esta protección.");
+  status.textContent="Solicitando la autenticación segura del teléfono...";
+  const user=auth.currentUser,challenge=klkRandomBytes(32),userId=klkRandomBytes(16);
+  const credential=await navigator.credentials.create({publicKey:{challenge,rp:{name:"Klk",id:location.hostname},user:{id:userId,name:user.email||user.uid,displayName:user.displayName||"Usuario de Klk"},pubKeyCredParams:[{type:"public-key",alg:-7},{type:"public-key",alg:-257}],authenticatorSelection:{authenticatorAttachment:"platform",residentKey:"discouraged",userVerification:"required"},timeout:60000,attestation:"none"}});
+  if(!credential)throw new Error("No se pudo registrar la autenticación del teléfono.");
+  localStorage.setItem(KLK_BIOMETRIC_KEY,JSON.stringify({id:klkB64url(credential.rawId),uid:user.uid,createdAt:Date.now()}));
+  status.textContent="Protección activada. La próxima vez que abras Klk, el teléfono te pedirá verificar tu identidad.";
+  $("enableBiometric").textContent="Activada";
+ }catch(error){status.textContent=error.message||"No se pudo activar la protección biométrica.";}
+}
+async function unlockKlkBiometric(){
+ const status=$("biometricLockStatus"),saved=(()=>{try{return JSON.parse(localStorage.getItem(KLK_BIOMETRIC_KEY)||"null");}catch(e){return null;}})();
+ try{
+  if(!saved||!navigator.credentials)throw new Error("No se encontró la credencial biométrica de este teléfono.");
+  status.textContent="Esperando confirmación del teléfono...";
+  const assertion=await navigator.credentials.get({publicKey:{challenge:klkRandomBytes(32),allowCredentials:[{type:"public-key",id:klkFromB64url(saved.id)}],userVerification:"required",timeout:60000}});
+  if(!assertion)throw new Error("No se pudo verificar tu identidad.");
+  hideKlkBiometricLock();status.textContent="";
+ }catch(error){status.textContent=error.message||"No se pudo desbloquear Klk. Inténtalo otra vez."}
+}
+$("enableBiometric").addEventListener("click",enableKlkBiometric);
+$("unlockBiometric").addEventListener("click",unlockKlkBiometric);
+try{const savedBiometric=JSON.parse(localStorage.getItem(KLK_BIOMETRIC_KEY)||"null");if(savedBiometric)$("enableBiometric").textContent="Activada";}catch(e){}
 auth && auth.onAuthStateChanged(async user => {
  if (user && invitationActivationInProgress) { $("login").style.display="none"; $("chat").style.display="none"; return; }
  $("login").style.display = user ? "none" : "block";
  $("chat").style.display = user ? "block" : "none";
  if (user) {
+  try{const biometric=JSON.parse(localStorage.getItem(KLK_BIOMETRIC_KEY)||"null");if(biometric&&biometric.uid===user.uid)showKlkBiometricLock();else hideKlkBiometricLock();}catch(e){hideKlkBiometricLock();}
   if ("Notification" in window && Notification.permission === "granted") registerKlkWebPush(user,false).catch(error=>console.warn("Registro push:",error));
   window.klkSetCurrentUid && window.klkSetCurrentUid(user.uid);
   $("who").textContent = "Conectado: " + (user.email || "usuario");
@@ -753,6 +799,7 @@ auth && auth.onAuthStateChanged(async user => {
    showError("chatStatus",error);
   }
  } else {
+  hideKlkBiometricLock();
   window.klkSetCurrentUid && window.klkSetCurrentUid(null);
   if (unsubscribe) unsubscribe(); unsubscribe = null;
   if (peopleUnsubscribe) peopleUnsubscribe(); peopleUnsubscribe = null;
@@ -1588,6 +1635,9 @@ $("createInvite").addEventListener("click",async()=>{
   const expiresAt=firebase.firestore.Timestamp.fromDate(new Date(Date.now()+7*24*60*60*1000));
   await db.collection("invitations").doc(latestInviteCode).set({createdBy:user.uid,createdAt:firebase.firestore.FieldValue.serverTimestamp(),expiresAt,redeemedBy:null,redeemedAt:null});
   $("inviteCodeDisplay").textContent=latestInviteCode;
+  const inviteUrl="https://cedanoconan-coder.github.io/klk-android/?invite="+encodeURIComponent(latestInviteCode);
+  const qrBox=$("inviteQr");qrBox.replaceChildren();qrBox.style.display="block";
+  if(window.QRCode){new QRCode(qrBox,{text:inviteUrl,width:180,height:180,colorDark:"#10201c",colorLight:"#ffffff",correctLevel:QRCode.CorrectLevel.M});$("inviteQrHint").textContent="Escanea el QR con la cámara del teléfono para abrir Klk y usar este código.";}else{$("inviteQrHint").textContent="No se pudo cargar el generador QR. Comparte el código manualmente."}
   $("shareInvite").hidden=false;
   $("inviteStatus").textContent="Código creado. Solo puede utilizarse una vez y caduca en 7 días.";
  }catch(error){showError("inviteStatus",error);}
