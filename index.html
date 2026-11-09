@@ -33,6 +33,7 @@ button{background:#075e54;color:white;border:0;font-weight:700;cursor:pointer}bu
 .iconBtn{width:44px;height:44px;flex:0 0 44px;margin:0;padding:0;border-radius:50%;font-size:20px;background:#fff;color:#54656f}
 #send{width:46px;height:46px;flex:0 0 46px;margin:0;padding:0;border-radius:50%;font-size:18px}
 #attachmentPanel{display:none;padding:12px;background:#f0f2f5;border-top:1px solid #dce4e1}#attachmentPanel.open{display:block}.attachmentPanelHead{font-size:13px;font-weight:700;color:#53615d;margin:0 0 10px}.attachmentGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}.attachmentGrid button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;min-width:0;min-height:76px;margin:0;padding:10px 5px;border-radius:14px;background:#fff;color:#26332f;font-size:12px}.attachmentGrid button span{font-size:25px}.attachmentGrid button:active{transform:scale(.97)}
+.filePickerInput{position:fixed!important;left:-10000px!important;top:0!important;width:1px!important;height:1px!important;opacity:0!important;pointer-events:none!important;margin:0!important;padding:0!important}
 #recordStatus{padding:0 12px;margin:0;background:#f0f2f5;min-height:18px}.chatFoot{padding:4px 12px 10px;background:#f0f2f5}
 .muted{color:#68736f;font-size:12px}#status{color:#a12b2b;overflow-wrap:anywhere;min-height:18px}.hint{font-size:13px;color:#68736f;line-height:1.45}button[hidden]{display:none!important}#installApp{margin-top:0}
 @media(max-width:420px){main{padding:8px 0}.card{border-radius:0;margin-top:8px}#chat{margin-top:0}#messages{height:calc(100dvh - 220px);max-height:none}}
@@ -714,10 +715,10 @@ body:has(#chat.room-open) main{padding:0!important;margin:0!important;max-width:
  </div>
  <button id="sendAudio" type="button" disabled>Enviar audio</button>
 </section>
-<input id="galleryInput" type="file" accept="image/*" hidden>
-<input id="cameraInput" type="file" accept="image/*" capture="environment" hidden>
-<input id="documentInput" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip" hidden>
-<input id="musicInput" type="file" accept="audio/*,.mp3,.m4a,.wav,.ogg" hidden>
+<input id="galleryInput" class="filePickerInput" type="file" accept="image/*" aria-label="Seleccionar fotos o videos">
+<input id="cameraInput" class="filePickerInput" type="file" accept="image/*" capture="environment" aria-label="Tomar una foto">
+<input id="documentInput" class="filePickerInput" type="file" aria-label="Seleccionar cualquier archivo">
+<input id="musicInput" class="filePickerInput" type="file" accept="audio/*,.mp3,.m4a,.wav,.ogg" aria-label="Seleccionar audio">
 <p id="recordStatus" class="hint" role="status" aria-live="polite"></p>
 <section id="settingsPanel" aria-label="Configuración de klk">
  <div class="settingsHeader"><div><h2>Configuración</h2><p>Todo organizado para que encuentres rápido lo que necesitas.</p></div><button id="closeSettings" class="settingsClose" type="button" aria-label="Cerrar ajustes">×</button></div>
@@ -1603,8 +1604,8 @@ async function uploadMedia(file, type, durationSeconds = null) {
  try {
   const uploadFile = type === "image" ? await compressImage(file) : file;
   const maxBytes = type === "image" ? 10 * 1024 * 1024 : 20 * 1024 * 1024;
-  if (uploadFile.size > maxBytes) throw new Error(type === "image" ? "La foto pesa más de 10 MB incluso después de optimizarla." : "La nota de voz debe pesar menos de 20 MB.");
-  const mimeType = uploadFile.type || (type === "image" ? "image/jpeg" : "audio/webm");
+  if (uploadFile.size > maxBytes) throw new Error(type === "image" ? "La foto pesa más de 10 MB incluso después de optimizarla." : type === "file" ? "El archivo no puede superar 20 MB." : "El audio no puede superar 20 MB.");
+  const mimeType = uploadFile.type || (type === "image" ? "image/jpeg" : type === "file" ? "application/octet-stream" : "audio/webm");
   const idToken = await user.getIdToken();
   const response = await fetch(SUPABASE_URL + "/functions/v1/media", {
    method: "POST",
@@ -1634,11 +1635,22 @@ $("pickPhoto").onclick = () => { const panel=$("attachmentPanel"); const opening
 
 $("galleryInput").addEventListener("change", async event => { const file = event.target.files && event.target.files[0]; if (file) await uploadMedia(file,"image"); event.target.value = ""; });
 $("cameraInput").addEventListener("change", async event => { const file = event.target.files && event.target.files[0]; if (file) await uploadMedia(file,"image"); event.target.value = ""; });
-$("shareDocument").addEventListener("click",()=>{closeAttachmentPanel();$("documentInput").click();});$("documentInput").addEventListener("change",async event=>{const file=event.target.files&&event.target.files[0];if(file)await uploadMedia(file,"file");event.target.value="";});
+function openAttachmentFilePicker(inputId){
+ const input=$(inputId);
+ if(!input){$("chatStatus").textContent="No se encontró el selector de archivos. Actualiza klk e inténtalo otra vez.";return;}
+ // Vaciar antes de abrir permite volver a elegir el mismo archivo y disparar change.
+ input.value="";
+ try{
+  if(typeof input.showPicker==="function"){input.showPicker();return;}
+ }catch(error){console.debug("showPicker no disponible; usando click tradicional:",error);}
+ try{input.click();}
+ catch(error){$("chatStatus").textContent="No se pudo abrir el explorador de archivos. Prueba desde Chrome.";console.error("No se pudo abrir el selector:",error);}
+}
+$("shareDocument").addEventListener("click",()=>{closeAttachmentPanel();openAttachmentFilePicker("documentInput");});$("documentInput").addEventListener("change",async event=>{const file=event.target.files&&event.target.files[0];if(file)await uploadMedia(file,"file");event.target.value="";});
 
-$("shareGallery").addEventListener("click",()=>{closeAttachmentPanel();$("galleryInput").click();});
-$("shareCamera").addEventListener("click",()=>{closeAttachmentPanel();$("cameraInput").click();});
-$("shareMusic").addEventListener("click",()=>{closeAttachmentPanel();$("musicInput").click();});
+$("shareGallery").addEventListener("click",()=>{closeAttachmentPanel();openAttachmentFilePicker("galleryInput");});
+$("shareCamera").addEventListener("click",()=>{closeAttachmentPanel();openAttachmentFilePicker("cameraInput");});
+$("shareMusic").addEventListener("click",()=>{closeAttachmentPanel();openAttachmentFilePicker("musicInput");});
 $("musicInput").addEventListener("change",async event=>{const file=event.target.files&&event.target.files[0];if(file)await uploadMedia(file,"audio");event.target.value="";});
 function closeAttachmentPanel(){const panel=$("attachmentPanel");if(panel){panel.classList.remove("open");panel.setAttribute("aria-hidden","true");}if($("pickPhoto"))$("pickPhoto").setAttribute("aria-expanded","false");}
 
