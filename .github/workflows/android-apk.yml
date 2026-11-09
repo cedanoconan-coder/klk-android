@@ -78,6 +78,31 @@ jobs:
       - name: Generar proyecto Android
         run: npx cap add android
 
+      - name: Configurar Firebase y Google Services para Android
+        run: |
+          set -e
+          test -s google-services.json
+          cp google-services.json android/app/google-services.json
+          python3 - <<'PY'
+          from pathlib import Path
+          root = Path("android/build.gradle")
+          app = Path("android/app/build.gradle")
+          if not root.exists() or not app.exists():
+              raise SystemExit("No se encontraron los archivos Gradle generados por Capacitor.")
+          root_text = root.read_text()
+          classpath = "classpath 'com.google.gms:google-services:4.4.2'"
+          if classpath not in root_text:
+              anchor = "dependencies {"
+              if anchor not in root_text:
+                  raise SystemExit("No se encontró dependencies en android/build.gradle.")
+              root_text = root_text.replace(anchor, anchor + "\\n        " + classpath, 1)
+              root.write_text(root_text)
+          app_text = app.read_text()
+          plugin = "apply plugin: 'com.google.gms.google-services'"
+          if plugin not in app_text:
+              app.write_text(app_text.rstrip() + "\\n\\n" + plugin + "\\n")
+          PY
+
       - name: Instalar herramienta para iconos Android
         run: sudo apt-get update && sudo apt-get install -y librsvg2-bin
 
