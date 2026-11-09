@@ -738,8 +738,8 @@ $("settingsLogout").addEventListener("click", performKlkLogout);
 // permanece en el autenticador; Klk solo conserva el identificador público local.
 const KLK_BIOMETRIC_KEY="klk-biometric-credential-v1";
 const klkRandomBytes=n=>{const b=new Uint8Array(n);crypto.getRandomValues(b);return b;};
-const klkB64url=b=>btoa(String.fromCharCode(...new Uint8Array(b))).replace(/\\+/g,"-").replace(/\\//g,"_").replace(/=+$/,"");
-const klkFromB64url=s=>Uint8Array.from(atob(s.replace(/-/g,"+").replace(/_/g,"/")+"===".slice((s.length+3)%4)),c=>c.charCodeAt(0));
+const klkB64url=b=>btoa(String.fromCharCode(...new Uint8Array(b))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+const klkFromB64url=s=>Uint8Array.from(atob(s.replace(/-/g,"+").replace(/_/g,"/")+"===".slice((4-(s.length%4))%4)),c=>c.charCodeAt(0));
 function showKlkBiometricLock(){const el=$("biometricLock");if(el)el.style.display="flex";}
 function hideKlkBiometricLock(){const el=$("biometricLock");if(el)el.style.display="none";}
 async function enableKlkBiometric(){
