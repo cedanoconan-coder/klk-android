@@ -119,6 +119,28 @@ test("permite iniciar una conversación directamente con un perfil visible", asy
   }));
 });
 
+test("un miembro también puede iniciar el chat cuando su UID queda en la segunda posición", async () => {
+  await seedPublicProfile("member-1", true);
+  const db = testEnv.authenticatedContext("member-2").firestore();
+  await assertSucceeds(setDoc(doc(db, "conversations/member-1__member-2"), {
+    members:["member-1","member-2"], createdAt:serverTimestamp()
+  }));
+});
+
+test("cada miembro puede listar sus propias conversaciones", async () => {
+  await seedConversation();
+  const member = testEnv.authenticatedContext("member-1").firestore();
+  const outsider = testEnv.authenticatedContext("outsider").firestore();
+  const own = await assertSucceeds(getDocs(query(
+    collection(member,"conversations"),where("members","array-contains","member-1")
+  )));
+  assert.equal(own.size,1);
+  const none = await assertSucceeds(getDocs(query(
+    collection(outsider,"conversations"),where("members","array-contains","outsider")
+  )));
+  assert.equal(none.size,0);
+});
+
 test("rechaza iniciar conversaciones con perfiles ocultos", async () => {
   await seedPublicProfile("member-2", false);
   const db = testEnv.authenticatedContext("member-1").firestore();
@@ -180,6 +202,10 @@ test("los estados se pueden consultar por cualquier miembro autenticado", async 
   await assertSucceeds(getDoc(doc(owner,"statuses/status-visible")));
   await assertSucceeds(getDoc(doc(member,"statuses/status-visible")));
   await assertSucceeds(getDoc(doc(outsider,"statuses/status-visible")));
+  await assertSucceeds(getDocs(query(
+    collection(outsider,"statuses"),
+    where("expiresAt",">",Timestamp.fromMillis(Date.now()))
+  )));
   const anonymous = testEnv.unauthenticatedContext().firestore();
   await assertFails(getDoc(doc(anonymous,"statuses/status-visible")));
 });
