@@ -93,6 +93,15 @@ header small{display:none}
 #chat.room-open .composer,#chat.room-open #mediaActions,#chat.room-open .chatFoot{background:#f3f4f4}
 @media(max-width:420px){main{padding:0}.card{border-radius:0;margin-top:0}#chat{margin-top:0}.homeTitle h1{font-size:29px}}
 
+
+/* Portada del perfil klk */
+#profileCoverCard{margin:4px 16px 18px;border-radius:18px;overflow:hidden;background:#f2f5f4;box-shadow:0 2px 10px #00000012}
+#profileCoverImage{height:148px;background:linear-gradient(135deg,#d8eee8,#edf3f1);background-size:cover;background-position:center;display:flex;align-items:flex-end;justify-content:flex-end;padding:12px}
+#profileCoverImage.has-cover{color:white}
+#profileCoverImage button{width:auto;margin:0;padding:9px 14px;background:#ffffffed;color:#075e54;font-size:13px;border-radius:20px}
+#profileCoverCaption{padding:10px 14px;color:#52615d;font-size:13px}
+#profileCoverInput{display:none}
+
 </style>
 </head>
 <body>
@@ -115,7 +124,13 @@ header small{display:none}
 
 <div id="homeView" class="homeView">
  <div class="homeTitle"><h1>klk</h1><div class="homeActions"><button type="button" id="homeCamera" aria-label="Cámara">▣</button><button type="button" id="homeMenu" aria-label="Ajustes">⋮</button></div></div>
- <div class="homeSearch"><input id="chatSearch" type="search" placeholder="Buscar..." aria-label="Buscar conversaciones"></div>
+ 
+ <section id="profileCoverCard" aria-label="Portada de tu perfil">
+  <div id="profileCoverImage"><button id="changeCover" type="button">📷 Cambiar portada</button></div>
+  <div id="profileCoverCaption">Tu portada será visible para las demás personas en klk.</div>
+  <input id="profileCoverInput" type="file" accept="image/*">
+ </section>
+\n <div class="homeSearch"><input id="chatSearch" type="search" placeholder="Buscar..." aria-label="Buscar conversaciones"></div>
  <div class="homeFilters" role="group" aria-label="Filtros de conversaciones">
   <button type="button" class="active" data-filter="all">Todos</button><button type="button" data-filter="requests">Solicitudes</button><button type="button" data-filter="people">Personas</button>
  </div>
@@ -265,7 +280,7 @@ auth && auth.onAuthStateChanged(async user => {
   $("chatTitle").textContent = "👨‍👩‍👧‍👦 Familia klk"; $("dmPanel").style.display = "none"; $("messages").style.display = "block";
   try {
    await db.collection("users").doc(user.uid).set({uid:user.uid,email:user.email || "",displayName:user.displayName || (user.email || "Miembro").split("@")[0],updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
-   loadPeople(); loadContactRequests();
+   loadPeople(); loadContactRequests(); window.klkLoadProfileCover && window.klkLoadProfileCover(user);
   } catch(error) { showError("chatStatus",error); }
  } else {
   window.klkSetCurrentUid && window.klkSetCurrentUid(null);
@@ -625,5 +640,63 @@ document.querySelectorAll(".homeBottom button").forEach(button=>button.addEventL
  $("chatStatus").textContent=tab==="calls"?"Las llamadas estarán disponibles en una próxima actualización.":tab==="updates"?"Los estados y novedades estarán disponibles en una próxima actualización.":"Abre Ajustes para configurar klk.";
  if(tab==="tools") $("settingsToggle").click();
 }));
+
+
+/* Portada de perfil: carga segura en Supabase y referencia persistente en Firestore */
+(function(){
+ const coverInput=document.getElementById("profileCoverInput");
+ const coverImage=document.getElementById("profileCoverImage");
+ const changeButton=document.getElementById("changeCover");
+ if(!coverInput||!coverImage||!changeButton)return;
+ let coverUid=null;
+ async function getCoverUrl(path){
+  const user=auth&&auth.currentUser;if(!user||!path)return "";
+  const token=await user.getIdToken();
+  const response=await fetch(SUPABASE_URL+"/functions/v1/media",{
+   method:"POST",headers:{"Content-Type":"application/json","apikey":SUPABASE_PUBLISHABLE_KEY,"Authorization":"Bearer "+token},
+   body:JSON.stringify({action:"create-download-url",path})
+  });
+  const result=await response.json().catch(()=>({}));
+  if(!response.ok||!result.signedUrl)throw new Error(result.error||"No se pudo mostrar la portada.");
+  return result.signedUrl;
+ }
+ async function showCover(path){
+  if(!path){coverImage.style.backgroundImage="";coverImage.classList.remove("has-cover");return;}
+  const url=await getCoverUrl(path);
+  coverImage.style.backgroundImage='url("'+url.replace(/["\\]/g,"")+'")';
+  coverImage.classList.add("has-cover");
+ }
+ window.klkLoadProfileCover=async function(user){
+  if(!user)return;coverUid=user.uid;
+  try{const snap=await db.collection("users").doc(user.uid).get();if(coverUid===user.uid)await showCover(snap.exists?snap.data().coverPath:null);}
+  catch(error){console.warn("No se pudo cargar la portada:",error);}
+ };
+ changeButton.addEventListener("click",()=>coverInput.click());
+ coverInput.addEventListener("change",async event=>{
+  const file=event.target.files&&event.target.files[0];event.target.value="";
+  const user=auth&&auth.currentUser;if(!file||!user)return;
+  if(!file.type.startsWith("image/")){$("chatStatus").textContent="Selecciona una imagen válida.";return;}
+  if(file.size>5*1024*1024){$("chatStatus").textContent="La portada debe pesar 5 MB o menos.";return;}
+  changeButton.disabled=true;changeButton.textContent="Guardando...";
+  $("chatStatus").textContent="Preparando tu portada...";
+  try{
+   const token=await user.getIdToken();
+   const response=await fetch(SUPABASE_URL+"/functions/v1/media",{
+    method:"POST",headers:{"Content-Type":"application/json","apikey":SUPABASE_PUBLISHABLE_KEY,"Authorization":"Bearer "+token},
+    body:JSON.stringify({action:"create-upload",type:"cover",size:file.size,mimeType:file.type})
+   });
+   const signed=await response.json().catch(()=>({}));
+   if(!response.ok||!signed.path||!signed.token)throw new Error(signed.error||"No se pudo preparar la carga de la portada.");
+   const {error}=await getSupabaseClient().storage.from("Chat-media").uploadToSignedUrl(signed.path,signed.token,file,{contentType:file.type});
+   if(error)throw error;
+   await db.collection("users").doc(user.uid).set({coverPath:signed.path,coverUpdatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
+   await showCover(signed.path);
+   $("chatStatus").textContent="¡Portada actualizada correctamente!";
+  }catch(error){
+   console.error("Error al cambiar portada:",error);
+   $("chatStatus").textContent="No se pudo cambiar la portada: "+(error.message||"Error desconocido");
+  }finally{changeButton.disabled=false;changeButton.textContent="📷 Cambiar portada";}
+ });
+})();
 
 </script></body></html>
