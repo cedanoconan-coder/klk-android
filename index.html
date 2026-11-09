@@ -1395,7 +1395,19 @@ function loadMessages() {
    if(data.uid!==auth.currentUser.uid&&(!Array.isArray(data.readBy)||!data.readBy.includes(auth.currentUser.uid))){doc.ref.update({readBy:firebase.firestore.FieldValue.arrayUnion(auth.currentUser.uid)}).catch(error=>console.warn("No se pudo guardar la confirmación de lectura:",error));}
   }
   $("messages").scrollTop = $("messages").scrollHeight;
- }, error => showError("chatStatus", error));
+ }, error => {
+  const messages = $("messages");
+  messages.innerHTML = "";
+  const notice = document.createElement("p");
+  notice.className = "muted";
+  notice.textContent = "No se pudieron cargar los mensajes: " + (error && error.message ? error.message : "Error de conexión o permisos.");
+  const retry = document.createElement("button");
+  retry.type = "button";
+  retry.textContent = "Reintentar";
+  retry.addEventListener("click", loadMessages);
+  messages.append(notice, retry);
+  showError("chatStatus", error);
+ });
 }
 $("shareLocation").addEventListener("click",()=>{
  closeAttachmentPanel();
