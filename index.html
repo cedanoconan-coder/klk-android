@@ -324,6 +324,12 @@ body:has(#chat.room-open) main{padding:0!important;margin:0!important;max-width:
 #recordAudio.recording{background:#d93025;transform:scale(1.06);box-shadow:0 0 0 6px #d9302522}
 #sendAudio{background:#128c7e;color:#fff}
 @media(max-width:520px){main{padding-left:0;padding-right:0}#login{margin:18px 14px;padding:24px 20px}#chat{border-radius:0}}
+
+/* Contador de duración de notas de voz, estilo WhatsApp */
+.voiceTimer{flex:0 0 auto;min-width:48px;padding:0 5px;color:#d93025;font-size:14px;font-weight:700;font-variant-numeric:tabular-nums;text-align:center;white-space:nowrap}
+.voiceTimer[hidden]{display:none!important}
+#recordAudio.recording{background:#d93025!important;color:#fff!important;animation:klkMicPulse 1.1s ease-in-out infinite}
+@keyframes klkMicPulse{0%,100%{box-shadow:0 0 0 0 #d9302530}50%{box-shadow:0 0 0 7px #d9302520}}
 </style>
 </head>
 <body>
@@ -429,7 +435,8 @@ body:has(#chat.room-open) main{padding:0!important;margin:0!important;max-width:
  <input id="message" maxlength="2000" placeholder="Mensaje" autocomplete="off" aria-label="Escribe un mensaje">
  <button id="takePhoto" type="button" aria-label="Cámara" title="Cámara">📷</button>
  <button id="send" type="button" aria-label="Enviar mensaje" title="Enviar">➤</button>
- <button id="recordAudio" type="button" aria-label="Grabar audio" title="Grabar audio">🎙</button>
+ <span id="voiceTimer" class="voiceTimer" aria-live="off" hidden>00:00</span>
+ <button id="recordAudio" type="button" aria-label="Mantén presionado para grabar una nota de voz" title="Mantén presionado para grabar">🎙</button>
 </div>
 <div id="mediaActions">
  <button id="shareDocument" type="button">📄 Documento</button>
@@ -1114,6 +1121,20 @@ $("cameraInput").addEventListener("change", async event => { const file = event.
 $("shareDocument").addEventListener("click",()=>$("documentInput").click());$("documentInput").addEventListener("change",async event=>{const file=event.target.files&&event.target.files[0];if(file)await uploadMedia(file,"file");event.target.value="";});
 let voiceHoldActive = false;
 let voiceStartPending = false;
+let voiceTimerInterval = null;
+function formatVoiceTime(totalSeconds) {
+ const safe = Math.max(0,Math.floor(totalSeconds));
+ return String(Math.floor(safe/60)).padStart(2,"0")+":"+String(safe%60).padStart(2,"0");
+}
+function updateVoiceTimer() {
+ const timer=$("voiceTimer");
+ if(timer) timer.textContent=formatVoiceTime((Date.now()-audioStartedAt)/1000);
+}
+function stopVoiceTimer() {
+ if(voiceTimerInterval){clearInterval(voiceTimerInterval);voiceTimerInterval=null;}
+ const timer=$("voiceTimer");
+ if(timer) timer.hidden=true;
+}
 async function startVoiceHold() {
  if (mediaRecorder || voiceStartPending) return;
  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.MediaRecorder) {
@@ -1136,7 +1157,7 @@ async function startVoiceHold() {
    $("recordAudio").textContent = "🎙";
    const seconds = Math.max(1,Math.round((Date.now()-audioStartedAt)/1000));
    if (audioStream) audioStream.getTracks().forEach(track=>track.stop());
-   audioStream = null; mediaRecorder = null; $("recordAudio").disabled = false;
+   stopVoiceTimer(); audioStream = null; mediaRecorder = null; $("recordAudio").disabled = false;
    if (!audioBlob.size) { $("recordStatus").textContent = "Grabación cancelada."; return; }
    const ext = type.includes("mp4") ? "m4a" : "webm";
    const voiceFile = new File([audioBlob],"nota-de-voz." + ext,{type});
@@ -1147,7 +1168,10 @@ async function startVoiceHold() {
   audioStartedAt = Date.now();
   recorder.start();
   $("recordAudio").classList.add("recording");
-  $("recordStatus").textContent = "🔴 Grabando… suelta el botón para terminar.";
+  $("voiceTimer").hidden = false;
+  updateVoiceTimer();
+  voiceTimerInterval = setInterval(updateVoiceTimer,250);
+  $("recordStatus").textContent = "🔴 Grabando… " + $("voiceTimer").textContent + " · Suelta para enviar.";
   if (!voiceHoldActive && recorder.state === "recording") recorder.stop();
  } catch(error) {
   $("recordStatus").textContent = error.name === "NotAllowedError" ? "Permite el acceso al micrófono para grabar notas de voz." : "No se pudo iniciar la grabación: " + error.message;
@@ -1158,6 +1182,7 @@ async function startVoiceHold() {
 function stopVoiceHold() {
  voiceHoldActive = false;
  $("recordAudio").classList.remove("recording");
+ stopVoiceTimer();
  if (mediaRecorder && mediaRecorder.state === "recording") mediaRecorder.stop();
 }
 $("recordAudio").addEventListener("pointerdown", event => {
