@@ -64,6 +64,20 @@ async function verifyConversationMember(conversationId: string, token: string, u
   }
 }
 
+async function verifyPublicProfileVisible(profileUid: string, token: string, requesterUid: string): Promise<boolean> {
+  if (profileUid === requesterUid) return true;
+  if (!/^[A-Za-z0-9_-]{1,128}$/.test(profileUid)) return false;
+  const url = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents/publicProfiles/${encodeURIComponent(profileUid)}`;
+  try {
+    const response = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+    if (!response.ok) return false;
+    const document = await response.json();
+    return document?.fields?.directoryVisible?.booleanValue === true;
+  } catch {
+    return false;
+  }
+}
+
 Deno.serve(async (request) => {
   if (request.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -147,8 +161,15 @@ Deno.serve(async (request) => {
           !/^[A-Za-z0-9-]{16,64}\.[a-z0-9]{1,8}$/i.test(avatarParts[2])) {
         return reply(403, { error: "Ruta de foto de perfil no válida." });
       }
+      if (!(await verifyPublicProfileVisible(avatarParts[1], firebaseToken, uid))) {
+        return reply(403, { error: "Este perfil no está visible para otros miembros." });
+      }
     } else if (path.startsWith("covers/")) {
-      if (!/^covers\/[A-Za-z0-9_-]{1,128}\/[A-Za-z0-9-]{16,64}\.[a-z0-9]{1,8}$/i.test(path)) return reply(403, { error: "Ruta de foto de portada no válida." });
+      const coverMatch = path.match(/^covers\/([A-Za-z0-9_-]{1,128})\/[A-Za-z0-9-]{16,64}\.[a-z0-9]{1,8}$/i);
+      if (!coverMatch) return reply(403, { error: "Ruta de foto de portada no válida." });
+      if (!(await verifyPublicProfileVisible(coverMatch[1], firebaseToken, uid))) {
+        return reply(403, { error: "Este perfil no está visible para otros miembros." });
+      }
     } else if (path.startsWith("statuses/")) {
       if (!/^statuses\/[A-Za-z0-9_-]{1,128}\/[A-Za-z0-9-]{16,64}\.[a-z0-9]{1,8}$/i.test(path)) return reply(403, { error: "Ruta de estado no válida." });
     } else if (!/^[^/]{1,128}\/[A-Za-z0-9-]{16,64}\.[a-z0-9]{1,8}$/i.test(path)) {
