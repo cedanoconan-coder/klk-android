@@ -1,13 +1,16 @@
 {
   "id": "./",
-  "name": "Klk manin - Mensajes privados",
-  "short_name": "Klk manin",
+  "name": "klk - Mensajería",
+  "short_name": "klk",
   "description": "Mensajería privada uno a uno.",
   "lang": "es",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "display_override": ["standalone", "minimal-ui"],
+  "display_override": [
+    "standalone",
+    "minimal-ui"
+  ],
   "orientation": "portrait",
   "background_color": "#e9f5ef",
   "theme_color": "#075e54",
