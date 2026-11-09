@@ -270,6 +270,30 @@ html[data-density="comfortable"] .chatRow,html[data-density="comfortable"] #peop
  #chat.room-open .composer #recordAudio{width:44px;min-width:44px;height:44px}
 }
 
+
+/* Corrección estricta: al abrir un chat solo debe verse la conversación */
+body:has(#chat.room-open) > header{display:none!important}
+body:has(#chat.room-open) main{padding:0!important;margin:0!important;max-width:none!important}
+#chat.room-open{display:flex!important;flex-direction:column;width:100%;height:100dvh;min-height:100dvh;max-height:100dvh;margin:0!important;padding:0!important;overflow:hidden!important;border-radius:0!important;background:#efeae2!important}
+#chat.room-open > .homeView{display:none!important}
+#chat.room-open .chatTop{display:block!important;flex:0 0 auto;padding:8px 12px!important;background:#fff!important;color:#111b21!important;border-bottom:1px solid #e8eceb!important}
+#chat.room-open .chatHeading{display:flex!important;align-items:center!important;gap:8px!important;min-height:48px}
+#chat.room-open .chatBack{display:inline-flex!important;align-items:center;justify-content:center;width:38px!important;height:38px!important;min-width:38px!important;flex:0 0 38px!important;margin:0!important;padding:0!important;background:transparent!important;color:#111b21!important;font-size:27px!important}
+#chat.room-open .roomIdentity{flex:1 1 auto!important;min-width:0!important}
+#chat.room-open .roomIdentity h2{margin:0!important;color:#111b21!important;font-size:18px!important;font-weight:600!important}
+#chat.room-open .roomIdentity #who{margin:2px 0 0!important;color:#66736f!important;font-size:11px!important}
+#chat.room-open .roomActions{display:flex!important;align-items:center!important;gap:2px!important}
+#chat.room-open .roomActions button,#chat.room-open .settingsToggle{display:inline-flex!important;align-items:center!important;justify-content:center!important;width:38px!important;min-width:38px!important;height:38px!important;min-height:38px!important;margin:0!important;padding:0!important;border:0!important;border-radius:50%!important;background:transparent!important;color:#202c31!important;font-size:20px!important;box-shadow:none!important}
+#chat.room-open #chatNav,#chat.room-open #dmPanel{display:none!important}
+#chat.room-open #messages{display:flex!important;flex:1 1 auto!important;flex-direction:column;min-height:0!important;height:auto!important;max-height:none!important;overflow-y:auto!important;padding:12px!important;background-color:#efeae2!important;background-image:radial-gradient(#ddd5c9 .7px,transparent .7px)!important;background-size:19px 19px!important}
+#chat.room-open .composer{display:flex!important;flex:0 0 auto!important;align-items:center!important;gap:6px!important;padding:8px!important;background:#f0f2f5!important;border:0!important}
+#chat.room-open .composer input{flex:1 1 auto!important;min-width:0!important;height:46px!important;margin:0!important;padding:0 16px!important;border:0!important;border-radius:25px!important;background:#fff!important;color:#202c31!important;font-size:16px!important;box-shadow:none!important}
+#chat.room-open .composer button{display:inline-flex!important;align-items:center!important;justify-content:center!important;flex:0 0 40px!important;width:40px!important;min-width:40px!important;height:40px!important;min-height:40px!important;margin:0!important;padding:0!important;border:0!important;border-radius:50%!important;background:transparent!important;color:#546168!important;font-size:20px!important;box-shadow:none!important}
+#chat.room-open .composer #recordAudio{flex-basis:46px!important;width:46px!important;min-width:46px!important;height:46px!important;background:#111!important;color:#fff!important}
+#chat.room-open #mediaActions{display:none!important}
+#chat.room-open #recordStatus{display:none!important}
+@media(max-width:420px){#chat.room-open .chatTop{padding:7px 9px!important}#chat.room-open .roomActions button,#chat.room-open .settingsToggle{width:34px!important;min-width:34px!important;height:34px!important}#chat.room-open .composer{gap:4px!important;padding:6px!important}#chat.room-open .composer button{flex-basis:34px!important;width:34px!important;min-width:34px!important;height:38px!important}#chat.room-open .composer #recordAudio{flex-basis:42px!important;width:42px!important;min-width:42px!important;height:42px!important}}
+
 </style>
 </head>
 <body>
