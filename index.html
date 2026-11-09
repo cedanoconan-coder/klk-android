@@ -1297,14 +1297,15 @@ function loadMessages() {
 $("shareLocation").addEventListener("click",()=>{
  const user=auth&&auth.currentUser;
  if(!user||!activeConversationId){$("chatStatus").textContent="Abre una conversación antes de compartir tu ubicación.";return;}
+ const locationConversationId=activeConversationId;
  if(!navigator.geolocation){$("chatStatus").textContent="Este dispositivo no permite obtener la ubicación desde el navegador.";return;}
  if(!window.confirm("¿Deseas compartir tu ubicación actual una sola vez con este contacto?"))return;
  const button=$("shareLocation");button.disabled=true;$("chatStatus").textContent="Obteniendo tu ubicación actual...";
  navigator.geolocation.getCurrentPosition(async position=>{
   try{
    const latitude=position.coords.latitude,longitude=position.coords.longitude;
-   const sent=await messagesCollection().add({type:"location",latitude,longitude,email:user.email||"",displayName:(peopleCache.get(user.uid)||{}).displayName||(user.email||"Miembro").split("@")[0],uid:user.uid,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
-   void sendKlkPushForMessage(activeConversationId,sent.id);$("chatStatus").textContent="Ubicación compartida una sola vez.";
+   const sent=await db.collection("conversations").doc(locationConversationId).collection("messages").add({type:"location",latitude,longitude,email:user.email||"",displayName:(peopleCache.get(user.uid)||{}).displayName||(user.email||"Miembro").split("@")[0],uid:user.uid,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+   void sendKlkPushForMessage(locationConversationId,sent.id);$("chatStatus").textContent="Ubicación compartida una sola vez.";
   }catch(error){showError("chatStatus",error);}
   finally{button.disabled=false;}
  },error=>{
