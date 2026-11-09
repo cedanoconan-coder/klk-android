@@ -13,11 +13,13 @@ Rama: `market-readiness`
 - La función multimedia comprueba la visibilidad pública antes de emitir URL firmada de avatar o portada; el propietario conserva acceso a sus propios archivos.
 - Pendiente: probar con dos cuentas reales y verificar el servicio Supabase desplegado. Los cambios de Edge Function siguen solo en GitHub.
 
-### 2. Estados — mitigación parcial aplicada en la rama
-- Los estados siguen siendo legibles por cualquier usuario autenticado; la audiencia todavía no está configurada.
-- Los nuevos estados ya no incluyen `email` y las reglas rechazan ese campo.
-- Los estados antiguos pueden conservar el correo hasta que expiren (aproximadamente 24 horas desde su publicación).
-- Pendiente: decidir si los estados se muestran a todos los miembros o solo a contactos; después aplicar la misma audiencia a consultas, lecturas, visualizaciones, likes y URL de fotos.
+### 2. Estados — audiencia de contactos aplicada en `market-readiness`
+- Decisión del producto: cada estado se comparte solamente con los contactos aceptados del propietario; el propio propietario siempre puede verlo.
+- La pantalla obtiene los estados del usuario y de los UID presentes en sus solicitudes entrantes/salientes con estado `accepted`; las invitaciones pendientes y los desconocidos quedan fuera.
+- Las reglas de Firestore limitan lectura, likes y creación de visualizaciones a propietario/contactos aceptados. Los likes ya no son legibles para desconocidos.
+- La función multimedia comprueba el vínculo aceptado antes de emitir URL firmada de una foto de estado; las cargas nuevas siguen bajo el UID autenticado.
+- Los nuevos estados no incluyen `email`; los estados antiguos pueden conservar datos históricos hasta que expiren (aproximadamente 24 horas).
+- Pendiente: ejecutar y aprobar las nuevas pruebas, y verificar la función Edge desplegada en Supabase antes de producción.
 
 ### 3. Registro
 - La interfaz y las reglas exigen un código de invitación válido para crear el perfil.
