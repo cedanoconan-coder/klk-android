@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "184754934059",
+    "project_id": "klk-familia",
+    "storage_bucket": "klk-familia.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:184754934059:android:eb6f583e16974fa099b56e",
+        "android_client_info": {
+          "package_name": "com.klk.familia"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "184754934059-bg3b1e2mk78f8083uom2fago655b6ppu.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAKSmn-ushkK31d5V27INFT1chcfpSdyhI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "184754934059-bg3b1e2mk78f8083uom2fago655b6ppu.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
