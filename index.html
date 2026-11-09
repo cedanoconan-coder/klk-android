@@ -301,10 +301,9 @@ body:has(#chat.room-open) main{padding:0!important;margin:0!important;max-width:
 
 
 /* Chat limpio: retirar el pie de sesión de la conversación sin borrar su región de estado */
-/* El pie inferior desaparece completamente al abrir una conversación privada. */
-#chat.room-open > .chatFoot{display:none!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;border:0!important}
-#chat.room-open > .chatFoot #chatStatus,
-#chat.room-open > .chatFoot #logout{display:none!important}
+/* Ocultar por completo el pie duplicado de sesión durante el uso del chat. */
+#chat .chatFoot{display:none!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;border:0!important;overflow:hidden!important}
+#chat .chatFoot #chatStatus,#chat .chatFoot #logout{display:none!important}
 
 </style>
 </head>
@@ -902,7 +901,7 @@ async function openPrivateConversation(otherUid, otherName) {
   const ref = db.collection("conversations").doc(conversationId), existing = await ref.get();
   if (!existing.exists) await ref.set({members,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
   activeConversationId = conversationId; activeConversationName = otherName; activeConversationPeerUid = otherUid;
-  $("chat").classList.add("room-open"); const chatFooter=$("chat").querySelector(".chatFoot"); if(chatFooter) chatFooter.style.display="none"; $("chatTitle").textContent = otherName; updateRoomAvatar(otherUid);
+  $("chat").classList.add("room-open"); const chatFooter=$("chat").querySelector(".chatFoot"); if(chatFooter){chatFooter.hidden=true;chatFooter.style.setProperty("display","none","important");} $("chatTitle").textContent = otherName; updateRoomAvatar(otherUid);
   $("dmPanel").style.display = "none"; $("messages").style.display = "block";
   document.querySelector(".composer").style.display = "flex"; $("mediaActions").style.display = "flex"; $("recordStatus").style.display = "block";
   $("chatStatus").textContent = "Conversación privada con " + otherName; loadMessages();
