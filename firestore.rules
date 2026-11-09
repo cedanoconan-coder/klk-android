@@ -9,6 +9,13 @@ service cloud.firestore {
     function acceptedContacts(a, b) {
       return acceptedRequest(a, b) || acceptedRequest(b, a);
     }
+    function invitedRequest(a, b) {
+      return exists(/databases/$(database)/documents/contactRequests/$(a + '__' + b))
+        && get(/databases/$(database)/documents/contactRequests/$(a + '__' + b)).data.status in ['pending', 'accepted'];
+    }
+    function invitedContacts(a, b) {
+      return invitedRequest(a, b) || invitedRequest(b, a);
+    }
     function isConversationMember(conversationId) {
       return signedIn()
         && exists(/databases/$(database)/documents/conversations/$(conversationId))
@@ -124,7 +131,7 @@ service cloud.firestore {
         && request.resource.data.members[0] != request.resource.data.members[1]
         && request.resource.data.createdAt == request.time
         && conversationId == request.resource.data.members[0] + '__' + request.resource.data.members[1]
-        && acceptedContacts(request.resource.data.members[0], request.resource.data.members[1]);
+        && invitedContacts(request.resource.data.members[0], request.resource.data.members[1]);
       allow update, delete: if false;
       match /messages/{messageId} {
         allow read: if isConversationMember(conversationId);
