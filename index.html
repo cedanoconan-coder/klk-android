@@ -435,6 +435,19 @@ body:has(#chat.room-open) main{padding:0!important;margin:0!important;max-width:
  <div class="settingRow"><span>Probar sonido de mensaje</span><button id="testNotificationSound" type="button" style="width:auto;margin:0;padding:9px 12px">▶ Probar</button></div>
  <div class="settingRow"><span>Probar sonido de llamada</span><button id="testCallSound" type="button" style="width:auto;margin:0;padding:9px 12px">▶ Probar</button></div>
  <div class="settingRow"><span>Notificaciones del teléfono</span><button id="enableNotifications" type="button" style="width:auto;margin:0;padding:9px 12px">Activar</button></div>
+ <h3>🔒 Privacidad y datos</h3>
+ <p class="hint">Estas opciones se guardan en este teléfono. Todavía no modifican la privacidad visible para otros usuarios ni la sincronización de Firebase.</p>
+ <div class="settingRow"><span>Mostrar última conexión (preferencia)</span><input id="settingLastSeen" type="checkbox" checked></div>
+ <div class="settingRow"><span>Confirmaciones de lectura (preferencia)</span><input id="settingReadReceipts" type="checkbox" checked></div>
+ <div class="settingRow"><span>Descarga automática de archivos (preferencia)</span><input id="settingAutoDownload" type="checkbox"></div>
+ <h3>♿ Accesibilidad</h3>
+ <div class="settingRow"><span>Contraste alto</span><input id="settingHighContrast" type="checkbox"></div>
+ <div class="settingRow"><span>Reducir animaciones</span><input id="settingReduceMotion" type="checkbox"></div>
+ <h3>💾 Copia de ajustes</h3>
+ <p class="hint">Puedes exportar o restaurar la apariencia y las preferencias de este dispositivo. Esto no incluye mensajes, fotos ni archivos de tus conversaciones.</p>
+ <div class="settingRow"><span>Exportar ajustes</span><button id="exportSettings" type="button" style="width:auto;margin:0;padding:9px 12px">Guardar copia</button></div>
+ <div class="settingRow"><span>Importar ajustes</span><button id="importSettings" type="button" style="width:auto;margin:0;padding:9px 12px">Restaurar copia</button></div>
+ <input id="settingsBackupFile" type="file" accept="application/json,.json" hidden>
  <p id="settingsStatus" class="hint" role="status" aria-live="polite">Los cambios se guardan automáticamente en este teléfono.</p>
  <button id="resetSettings" class="secondary" type="button">Restablecer ajustes</button>
  <button id="closeSettings" class="secondary" type="button">Cerrar ajustes</button>
@@ -1147,7 +1160,7 @@ if (window.matchMedia("(display-mode: standalone)").matches || window.navigator.
 <script>
 (function(){
  const $=id=>document.getElementById(id);
- const defaults={sound:true,vibration:true,preview:true,messageTone:"classic",callTone:"bell",textSize:"15",theme:"light",accent:"teal",density:"comfortable",wallpaper:"pattern"};
+ const defaults={sound:true,vibration:true,preview:true,messageTone:"classic",callTone:"bell",textSize:"15",theme:"light",accent:"teal",density:"comfortable",wallpaper:"pattern",lastSeen:true,readReceipts:true,autoDownload:false,highContrast:false,reduceMotion:false};
  let prefs={...defaults};
  try{prefs={...defaults,...JSON.parse(localStorage.getItem("klk-settings")||"{}")};}catch(e){}
  const accents={teal:["#075e54","#e3f2ed"],blue:["#1769aa","#e4f1fc"],purple:["#7046a8","#efe7fa"],rose:["#b33b65","#fae8ef"],orange:["#b45b16","#fff0df"]};
@@ -1163,14 +1176,40 @@ if (window.matchMedia("(display-mode: standalone)").matches || window.navigator.
   $("settingSound").checked=!!prefs.sound;$("settingVibration").checked=!!prefs.vibration;$("settingPreview").checked=!!prefs.preview;
   $("settingMessageTone").value=prefs.messageTone||"classic";$("settingCallTone").value=prefs.callTone||"bell";
   $("settingTextSize").value=prefs.textSize;$("settingTheme").value=prefs.theme;$("settingAccent").value=prefs.accent;$("settingDensity").value=prefs.density;$("settingWallpaper").value=prefs.wallpaper;
+  $("settingLastSeen").checked=!!prefs.lastSeen;$("settingReadReceipts").checked=!!prefs.readReceipts;$("settingAutoDownload").checked=!!prefs.autoDownload;
+  $("settingHighContrast").checked=!!prefs.highContrast;$("settingReduceMotion").checked=!!prefs.reduceMotion;
+  root.dataset.contrast=prefs.highContrast?"high":"normal";
+  let motionStyle=$("klkReduceMotionStyle");
+  if(!motionStyle){motionStyle=document.createElement("style");motionStyle.id="klkReduceMotionStyle";document.head.appendChild(motionStyle);}
+  motionStyle.textContent=prefs.reduceMotion?"*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}":"";
+  root.style.setProperty("--klk-border",prefs.highContrast?"#52615d":"#e2e8e5");
   document.body.style.fontSize=prefs.textSize+"px";
  }
  function save(){try{localStorage.setItem("klk-settings",JSON.stringify(prefs));}catch(e){$("settingsStatus").textContent="No se pudieron guardar los cambios en este teléfono.";}apply();$("settingsStatus").textContent="Ajustes guardados automáticamente en este teléfono.";}
- [["settingSound","sound"],["settingVibration","vibration"],["settingPreview","preview"]].forEach(([id,key])=>$(id).addEventListener("change",()=>{prefs[key]=$(id).checked;save();}));
+ [["settingSound","sound"],["settingVibration","vibration"],["settingPreview","preview"],["settingLastSeen","lastSeen"],["settingReadReceipts","readReceipts"],["settingAutoDownload","autoDownload"],["settingHighContrast","highContrast"],["settingReduceMotion","reduceMotion"]].forEach(([id,key])=>$(id).addEventListener("change",()=>{prefs[key]=$(id).checked;save();}));
  [["settingTextSize","textSize"],["settingTheme","theme"],["settingAccent","accent"],["settingDensity","density"],["settingWallpaper","wallpaper"],["settingMessageTone","messageTone"],["settingCallTone","callTone"]].forEach(([id,key])=>$(id).addEventListener("change",e=>{prefs[key]=e.target.value;save();}));
  $("settingsToggle").addEventListener("click",()=>{const panel=$("settingsPanel");panel.style.display=panel.style.display==="block"?"none":"block";if(panel.style.display==="block")panel.scrollTop=0;});
  $("closeSettings").addEventListener("click",()=>{$("settingsPanel").style.display="none";});
  $("resetSettings").addEventListener("click",()=>{prefs={...defaults};save();$("settingsStatus").textContent="Se restauró la apariencia original de klk.";});
+ $("exportSettings").addEventListener("click",()=>{
+  try{
+   const payload={app:"klk",type:"settings-backup",version:1,createdAt:new Date().toISOString(),settings:prefs};
+   const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
+   const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="klk-ajustes-backup.json";document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
+   $("settingsStatus").textContent="Copia de ajustes descargada. Guárdala en un lugar seguro.";
+  }catch(error){$("settingsStatus").textContent="No se pudo crear la copia de ajustes.";}
+ });
+ $("importSettings").addEventListener("click",()=>$("settingsBackupFile").click());
+ $("settingsBackupFile").addEventListener("change",async event=>{
+  const file=event.target.files&&event.target.files[0];if(!file)return;
+  try{
+   const data=JSON.parse(await file.text());
+   if(data.app!=="klk"||data.type!=="settings-backup"||!data.settings||typeof data.settings!=="object")throw new Error("Archivo no válido");
+   prefs={...defaults,...data.settings};save();
+   $("settingsStatus").textContent="Ajustes restaurados en este teléfono.";
+  }catch(error){$("settingsStatus").textContent="No se pudo restaurar: el archivo no es una copia válida de klk.";}
+  event.target.value="";
+ });
  function permissionButton(){ $("enableNotifications").textContent=("Notification" in window && Notification.permission==="granted")?"Activadas":"Activar";}
  $("enableNotifications").addEventListener("click",async()=>{if(!("Notification" in window)){$("settingsStatus").textContent="Este dispositivo no admite notificaciones web.";return;}try{const p=await Notification.requestPermission();$("settingsStatus").textContent=p==="granted"?"Permiso concedido. Para avisos con la app cerrada falta activar el envío push de Firebase.":"Permiso no concedido; puedes cambiarlo en los ajustes del teléfono.";permissionButton();}catch(e){$("settingsStatus").textContent="No se pudo solicitar el permiso."; }});
  if(window.matchMedia){const media=window.matchMedia("(prefers-color-scheme: dark)");if(media.addEventListener)media.addEventListener("change",()=>{if(prefs.theme==="system")apply();});}
