@@ -236,7 +236,7 @@ service cloud.firestore {
         return signedIn() && (resource.data.callerUid == request.auth.uid || resource.data.calleeUid == request.auth.uid);
       }
       allow get: if callParticipant();
-      allow list: if signedIn() && resource.data.calleeUid == request.auth.uid;
+      allow list: if signedIn() && (resource.data.calleeUid == request.auth.uid || resource.data.callerUid == request.auth.uid);
       allow create: if signedIn()
         && request.resource.data.keys().hasOnly(['callerUid','calleeUid','conversationId','mode','status','offer','createdAt','updatedAt'])
         && request.resource.data.keys().hasAll(['callerUid','calleeUid','conversationId','mode','status','offer','createdAt','updatedAt'])
@@ -267,7 +267,7 @@ service cloud.firestore {
             && request.resource.data.answer is map
             && request.resource.data.answer.type == 'answer'
             && request.resource.data.answer.sdp is string
-            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['answer','status','updatedAt']))
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['answer','status','connectedAt','updatedAt']))
           ||
           (request.auth.uid == resource.data.calleeUid
             && resource.data.status == 'ringing'
@@ -276,7 +276,7 @@ service cloud.firestore {
           ||
           (request.resource.data.status == 'ended'
             && resource.data.status in ['ringing','active']
-            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','updatedAt']))
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','updatedAt','endedAt']))
         )
         && request.resource.data.updatedAt == request.time;
       allow delete: if false;
