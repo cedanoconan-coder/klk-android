@@ -722,7 +722,7 @@ auth && auth.onAuthStateChanged(async user => {
  $("login").style.display = user ? "none" : "block";
  $("chat").style.display = user ? "block" : "none";
  if (user) {
-  if (Notification.permission === "granted") registerKlkWebPush(user,false).catch(error=>console.warn("Registro push:",error));
+  if ("Notification" in window && Notification.permission === "granted") registerKlkWebPush(user,false).catch(error=>console.warn("Registro push:",error));
   window.klkSetCurrentUid && window.klkSetCurrentUid(user.uid);
   $("who").textContent = "Conectado: " + (user.email || "usuario");
   activeConversationId = null; activeConversationName = null;
