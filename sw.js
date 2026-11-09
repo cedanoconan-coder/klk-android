@@ -33,10 +33,11 @@ messaging.onBackgroundMessage(payload => {
     badge: "./icon.svg",
     tag: "klk-" + (data.conversationId || "message"),
     data: { url: "./" },
-    renotify: true
+    renotify: true,
+    vibrate: [180, 80, 180]
   });
 });
-const CACHE_NAME = "klk-shell-v28";
+const CACHE_NAME = "klk-shell-v29";
 const APP_SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon.svg", "./calls.js", "./navigation.js"];
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_SHELL)));
