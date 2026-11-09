@@ -23,6 +23,7 @@ const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 const MAX_AUDIO_BYTES = 20 * 1024 * 1024;
 const MAX_FILE_BYTES = 20 * 1024 * 1024;
 const MAX_AVATAR_BYTES = 5 * 1024 * 1024;
+const MAX_COVER_BYTES = 5 * 1024 * 1024;
 const firebaseKeys = createRemoteJWKSet(
   new URL("https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com"),
 );
@@ -96,11 +97,12 @@ Deno.serve(async (request) => {
     const isAudio = type === "audio" && mimeType.startsWith("audio/");
     const isFile = type === "file" && mimeType.length > 0 && mimeType.length <= 128;
     const isAvatar = type === "avatar" && mimeType.startsWith("image/");
+    const isCover = type === "cover" && mimeType.startsWith("image/");
     const isStatus = type === "status" && mimeType.startsWith("image/");
-    if ((!isImage && !isAudio && !isAvatar && !isStatus && !isFile) || !Number.isSafeInteger(size) || size <= 0) {
+    if ((!isImage && !isAudio && !isAvatar && !isCover && !isStatus && !isFile) || !Number.isSafeInteger(size) || size <= 0) {
       return reply(400, { error: "Tipo o tamaño de archivo no válido." });
     }
-    if ((isImage && size > MAX_IMAGE_BYTES) || (isAudio && size > MAX_AUDIO_BYTES) || (isAvatar && size > MAX_AVATAR_BYTES) || (isStatus && size > MAX_IMAGE_BYTES) || (isFile && size > MAX_FILE_BYTES)) {
+    if ((isImage && size > MAX_IMAGE_BYTES) || (isAudio && size > MAX_AUDIO_BYTES) || (isAvatar && size > MAX_AVATAR_BYTES) || (isCover && size > MAX_COVER_BYTES) || (isStatus && size > MAX_IMAGE_BYTES) || (isFile && size > MAX_FILE_BYTES)) {
       return reply(413, { error: "El archivo supera el límite permitido." });
     }
 
@@ -111,6 +113,8 @@ Deno.serve(async (request) => {
     let path: string;
     if (isAvatar) {
       path = `avatars/${uid}/${crypto.randomUUID()}.${extension}`;
+    } else if (isCover) {
+      path = `covers/${uid}/${crypto.randomUUID()}.${extension}`;
     } else if (isStatus) {
       path = `statuses/${uid}/${crypto.randomUUID()}.${extension}`;
     } else if (body.conversationId) {
@@ -143,6 +147,8 @@ Deno.serve(async (request) => {
           !/^[A-Za-z0-9-]{16,64}\.[a-z0-9]{1,8}$/i.test(avatarParts[2])) {
         return reply(403, { error: "Ruta de foto de perfil no válida." });
       }
+    } else if (path.startsWith("covers/")) {
+      if (!/^covers\/[A-Za-z0-9_-]{1,128}\/[A-Za-z0-9-]{16,64}\.[a-z0-9]{1,8}$/i.test(path)) return reply(403, { error: "Ruta de foto de portada no válida." });
     } else if (path.startsWith("statuses/")) {
       if (!/^statuses\/[A-Za-z0-9_-]{1,128}\/[A-Za-z0-9-]{16,64}\.[a-z0-9]{1,8}$/i.test(path)) return reply(403, { error: "Ruta de estado no válida." });
     } else if (!/^[^/]{1,128}\/[A-Za-z0-9-]{16,64}\.[a-z0-9]{1,8}$/i.test(path)) {
