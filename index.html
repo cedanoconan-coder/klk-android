@@ -1672,12 +1672,9 @@ $("message").addEventListener("keydown", event => { if (event.key === "Enter") $
  $("closeStatusViewer").addEventListener("click",()=>{if(statusAdvanceTimer)clearTimeout(statusAdvanceTimer);statusAdvanceTimer=null;$("statusViewer").classList.remove("visible");});
  $("statusViewer").addEventListener("click",e=>{if(e.target===$("statusViewer"))$("closeStatusViewer").click();});
  async function refresh(){const user=auth&&auth.currentUser,feed=$("statusesFeed");if(!user||!feed)return;feed.innerHTML='<p class="hint">Cargando estados...</p>';try{
-  const visibleUids=new Set([user.uid]);
-  incomingRequests.forEach((request,uid)=>{if(request.status==="accepted")visibleUids.add(uid);});
-  outgoingRequests.forEach((request,uid)=>{if(request.status==="accepted")visibleUids.add(uid);});
-  const statusSnapshots=await Promise.all([...visibleUids].map(uid=>db.collection("statuses").where("uid","==",uid).get()));
   const now=Date.now();
-  const items=statusSnapshots.flatMap(snapshot=>snapshot.docs.map(d=>({id:d.id,...d.data()}))).filter(x=>x.expiresAt&&x.expiresAt.toMillis()>now).sort((a,b)=>(b.createdAt?.toMillis?.()||0)-(a.createdAt?.toMillis?.()||0));
+  const statusSnapshot=await db.collection("statuses").where("expiresAt",">",firebase.firestore.Timestamp.fromMillis(now)).get();
+  const items=statusSnapshot.docs.map(d=>({id:d.id,...d.data()})).filter(x=>x.expiresAt&&x.expiresAt.toMillis()>now).sort((a,b)=>(b.createdAt?.toMillis?.()||0)-(a.createdAt?.toMillis?.()||0));
   const statusGroups=new Map();items.forEach(status=>{if(!statusGroups.has(status.uid))statusGroups.set(status.uid,[]);statusGroups.get(status.uid).push(status);});
   currentStatuses=[...statusGroups.values()].sort((a,b)=>(b[b.length-1].createdAt?.toMillis?.()||0)-(a[a.length-1].createdAt?.toMillis?.()||0)).flatMap(group=>group.sort((a,b)=>(a.createdAt?.toMillis?.()||0)-(b.createdAt?.toMillis?.()||0)));
   feed.replaceChildren();if(!items.length){const p=document.createElement("p");p.className="hint";p.textContent="Todavía no hay estados. ¡Sé el primero en compartir uno!";feed.appendChild(p);return;}
