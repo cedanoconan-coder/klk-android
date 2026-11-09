@@ -1342,7 +1342,8 @@ if (window.matchMedia("(display-mode: standalone)").matches || window.navigator.
    ["settingMessageTone","settingCallTone"].forEach(id=>{
     const select=$(id);Array.from(select.options).filter(o=>o.value.startsWith("custom:")).forEach(o=>o.remove());
     customSoundRecords.forEach(item=>{const option=document.createElement("option");option.value="custom:"+item.id;option.textContent="🎵 "+item.name;select.appendChild(option);});
-    if(select.value.startsWith("custom:")&&!customSoundRecords.some(x=>"custom:"+x.id===select.value))select.value=id==="settingMessageTone"?"classic":"bell";
+    const wanted=id==="settingMessageTone"?prefs.messageTone:prefs.callTone;
+    select.value=customSoundRecords.some(x=>"custom:"+x.id===wanted)?wanted:(id==="settingMessageTone"?"classic":"bell");
    });
    const library=$("customSoundLibrary"),selected=library.value;library.innerHTML='<option value="">Selecciona un sonido</option>';
    customSoundRecords.forEach(item=>{const option=document.createElement("option");option.value=item.id;option.textContent=item.name;library.appendChild(option);});
