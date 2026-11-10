@@ -21,6 +21,8 @@ jobs:
           java-version: 21
       - name: Instalar dependencias del proyecto
         run: npm install --no-audit --no-fund
+      - name: Instalar dependencias de Cloud Functions
+        run: npm install --prefix functions --no-audit --no-fund
       - name: Probar guard de revocación
         run: npm test --prefix functions
       - name: Probar reglas Firestore
