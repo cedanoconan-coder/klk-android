@@ -12,3 +12,13 @@ export function isOwnedLegacyMediaPath(path, uid) {
   const match = path.match(/^([^/]{1,128})\/([A-Za-z0-9-]{16,64})\.([a-z0-9]{1,8})$/i);
   return Boolean(match && match[1] === uid);
 }
+
+/**
+ * Solo acepta imágenes de estados bajo el UID declarado en el estado.
+ */
+export function isStatusMediaPathForOwner(path, ownerUid) {
+  if (typeof path !== "string" || typeof ownerUid !== "string" ||
+      !/^[A-Za-z0-9_-]{1,128}$/.test(ownerUid)) return false;
+  return new RegExp("^statuses/" + ownerUid.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\\\$&") +
+    "/[A-Za-z0-9-]{16,64}\\\\.[a-z0-9]{1,8}$", "i").test(path);
+}
