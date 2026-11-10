@@ -27,13 +27,20 @@ service cloud.firestore {
     function canStartConversation(members) {
       let otherUid = members[0] == request.auth.uid ? members[1] : members[0];
       return exists(/databases/$(database)/documents/publicProfiles/$(otherUid))
-        && get(/databases/$(database)/documents/publicProfiles/$(otherUid)).data.directoryVisible == true;
+        && get(/databases/$(database)/documents/publicProfiles/$(otherUid)).data.directoryVisible == true
+        && !exists(/databases/$(database)/documents/userBlocks/$(request.auth.uid)/blocked/$(otherUid))
+        && !exists(/databases/$(database)/documents/userBlocks/$(otherUid)/blocked/$(request.auth.uid));
     }
     function isConversationMember(conversationId) {
+      let members = get(/databases/$(database)/documents/conversations/$(conversationId)).data.members;
+      let otherUid = members[0] == request.auth.uid ? members[1] : members[0];
       return signedIn()
         && exists(/databases/$(database)/documents/conversations/$(conversationId))
-        && get(/databases/$(database)/documents/conversations/$(conversationId)).data.members is list
-        && request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.members;
+        && members is list
+        && members.size() == 2
+        && request.auth.uid in members
+        && !exists(/databases/$(database)/documents/userBlocks/$(request.auth.uid)/blocked/$(otherUid))
+        && !exists(/databases/$(database)/documents/userBlocks/$(otherUid)/blocked/$(request.auth.uid));
     }
     function validUserProfile(userId) {
       return signedIn()
@@ -162,11 +169,25 @@ service cloud.firestore {
     match /contactRequests/{requestId} {
       allow read, write: if false;
     }
+    // Lista de bloqueos privada: solo el propietario puede consultar y administrar sus bloqueos.
+    match /userBlocks/{userId}/blocked/{blockedUid} {
+      allow get, list: if signedIn() && request.auth.uid == userId;
+      allow create: if signedIn()
+        && request.auth.uid == userId
+        && blockedUid != userId
+        && request.resource.data.keys().hasOnly(['blockedUid','createdAt'])
+        && request.resource.data.keys().hasAll(['blockedUid','createdAt'])
+        && request.resource.data.blockedUid == blockedUid
+        && request.resource.data.createdAt == request.time;
+      allow delete: if signedIn() && request.auth.uid == userId;
+      allow update: if false;
+    }
+
     match /conversations/{conversationId} {
       // Permite comprobar si todavía no existe una conversación, sin revelar documentos existentes.
       allow get: if isConversationMember(conversationId)
         || (signedIn() && !exists(/databases/$(database)/documents/conversations/$(conversationId)));
-      allow list: if signedIn() && resource.data.members.hasAny([request.auth.uid]);
+      allow list: if isConversationMember(conversationId);
       allow create: if signedIn()
         && request.resource.data.keys().hasOnly(['members','createdAt'])
         && request.resource.data.keys().hasAll(['members','createdAt'])
