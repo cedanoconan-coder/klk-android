@@ -233,6 +233,8 @@ html[data-density="comfortable"] .chatRow,html[data-density="comfortable"] #peop
 .contactInfoText small{display:block;color:var(--klk-muted);font-size:12px;margin-bottom:5px}
 .contactInfoText strong{display:block;font-size:15px;font-weight:500;overflow-wrap:anywhere}
 #contactSafetySection button{width:100%;text-align:left}
+.contactMediaGalleryButton{width:100%;margin:0 0 12px;padding:11px 13px;border:1px solid var(--klk-line);border-radius:12px;background:var(--klk-soft);color:var(--klk-text);font-weight:600;text-align:left}
+#roomMediaToggle[hidden]{display:none!important}
 #contactBlockButton{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;margin:0;padding:13px 4px;border:0;background:transparent;color:#b42318}
 #contactBlockButton small{display:block;margin-top:4px;color:var(--klk-muted);font-size:12px}
 #contactBlockStatus{margin:8px 0 0}
@@ -908,7 +910,7 @@ html[data-theme="dark"] #chat.room-open .attachmentGrid button:nth-child(5) .att
 #disappearingStatus{margin:7px 0 0;color:var(--klk-muted,#68736f);font-size:12px}
 .disappearingNotice{padding:9px 12px;text-align:center;background:#fff8df;color:#75602a;font-size:12px;border-bottom:1px solid #eee3bd}
 #chat.room-open .roomActions{position:relative;display:flex;align-items:center;gap:5px}
-#chat.room-open #roomMediaToggle,#chat.room-open #roomContactInfo{display:none!important}
+#chat.room-open .roomActions #roomMediaToggle,#chat.room-open .roomActions #roomContactInfo{display:none!important}
 #chat.room-open .roomCallWrap{position:relative;display:flex;align-items:center}
 #chat.room-open #roomCallMenu{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;margin:0;padding:0;border:0;border-radius:50%;background:transparent;color:#202c31;font-size:22px}
 #chat.room-open .roomCallOptions{position:absolute;top:46px;right:-42px;z-index:30;min-width:190px;padding:7px;border:1px solid #e3e8e6;border-radius:14px;background:#fff;box-shadow:0 8px 26px #0002}
@@ -1000,7 +1002,7 @@ html[data-theme="dark"] #chat.room-open .attachmentGrid button:nth-child(5) .att
 <button id="contactProfileShare" type="button"><span>↗️</span><span>Compartir</span></button>
 </div>
 <div class="contactProfileSection" id="contactSafetySection"><h3>Privacidad y seguridad</h3><button id="contactBlockButton" class="profileAction" type="button"><span><strong>🚫 Bloquear contacto</strong><small>Esta persona no podrá enviarte mensajes ni llamarte.</small></span><span>›</span></button><p id="contactBlockStatus" class="hint" role="status" aria-live="polite"></p></div>
-<div class="contactProfileSection"><h3>Archivos, enlaces y contenido multimedia</h3><div class="contactMediaTabs"><button type="button" data-media-tab="image" class="active">Fotos</button><button type="button" data-media-tab="file">Documentos</button><button type="button" data-media-tab="all">Todo</button></div><div id="contactSharedMedia" class="contactSharedMedia">Selecciona una conversación.</div></div>
+<div class="contactProfileSection"><h3>Archivos, enlaces y contenido multimedia</h3><button id="roomMediaToggle" class="contactMediaGalleryButton" type="button" hidden>▧ Abrir galería de fotos y videos</button><div class="contactMediaTabs"><button type="button" data-media-tab="image" class="active">Fotos</button><button type="button" data-media-tab="file">Documentos</button><button type="button" data-media-tab="all">Todo</button></div><div id="contactSharedMedia" class="contactSharedMedia">Selecciona una conversación.</div></div>
 <div class="contactProfileSection"><h3>Información</h3><div class="contactInfoRow"><span class="contactInfoIcon">ℹ</span><div class="contactInfoText"><small>Info. / Acerca de</small><strong id="contactProfileAboutDetail">Miembro de klk</strong></div></div></div>
 <p class="contactProfileInfo">Este es el perfil de contacto de klk. Aquí puedes iniciar una conversación, llamar y consultar el contenido compartido.</p><p id="contactProfileStatus" class="hint" role="status" aria-live="polite"></p></section>
  <section id="callsPanel" aria-label="Historial de llamadas"><h3>Historial de llamadas</h3><p class="hint">Tus llamadas de voz y videollamadas, recibidas, realizadas y perdidas.</p><div id="callContacts" class="hint">Cargando historial...</div><p id="callsStatus" class="hint" role="status" aria-live="polite"></p></section>
@@ -1596,7 +1598,7 @@ $("profilePhotoInput").addEventListener("change", async event => {
 let activeContactProfileUid=null,contactProfileReturnTo="people";
 function closeContactProfile(){ $("contactProfilePanel").hidden=true; $("contactProfilePanel").style.display="none"; if(contactProfileReturnTo==="chat"&&activeConversationId){$("chat").classList.add("room-open");$("peopleList").style.display="none";}else{$("chat").classList.remove("room-open");$("peopleList").style.display="";document.querySelectorAll(".homeFilters").forEach(el=>el.style.display="");} }
 async function openContactProfile(uid,person,returnTo="people"){
- klkPushView("contact-profile");activeContactProfileUid=uid;contactProfileReturnTo=returnTo;
+ klkPushView("contact-profile");activeContactProfileUid=uid;contactProfileReturnTo=returnTo;const galleryShortcut=$("roomMediaToggle");if(galleryShortcut)galleryShortcut.hidden=!(returnTo==="chat"&&!!activeConversationId);
  $("homeProfilePanel").style.display="none";$("peopleList").style.display="none";
  document.querySelectorAll(".homeFilters").forEach(el=>el.style.display="none");
  $("contactProfilePanel").hidden=false;$("contactProfilePanel").style.display="block";
@@ -2947,7 +2949,7 @@ $("assistantQuestion").addEventListener("keydown",event=>{
    status.textContent="Archivo(s) reenviado(s) a "+(target[1].displayName||"tu contacto")+".";
   }catch(error){status.textContent="No se pudo completar el reenvío: "+(error.message||"error");}
  }
- $id("roomMediaToggle").addEventListener("click",open);$id("closeRoomMedia").addEventListener("click",close);
+ const openButton=$id("roomMediaToggle");if(openButton)openButton.addEventListener("click",open);$id("closeRoomMedia").addEventListener("click",close);
  $id("roomMediaDownload").addEventListener("click",downloadSelected);$id("roomMediaDelete").addEventListener("click",deleteSelected);$id("roomMediaForward").addEventListener("click",forwardSelected);
  gallery.addEventListener("click",event=>{if(event.target===gallery)close();});
 })();
