@@ -1164,6 +1164,34 @@ html[data-theme="dark"] #chat.room-open .attachmentGrid button:nth-child(5) .att
 <div id="biometricLock" role="dialog" aria-modal="true" aria-label="Desbloquear Klk" style="display:none;position:fixed;z-index:1000;inset:0;background:#f7faf8;color:#15211d;align-items:center;justify-content:center;padding:24px;text-align:center"><div style="width:min(100%,360px);padding:26px;background:#fff;border-radius:22px;box-shadow:0 12px 40px #0002"><div style="font-size:48px">🔐</div><h2>Klk está bloqueado</h2><p class="hint">Confirma tu identidad con la huella, rostro o método seguro configurado en tu teléfono.</p><button id="unlockBiometric" type="button">Desbloquear Klk</button><p id="biometricLockStatus" class="hint" role="status" aria-live="polite"></p></div></div>
 <div id="statusViewer" class="statusViewer" role="dialog" aria-modal="true" aria-label="Ver estado"><div id="statusViewerMeta"></div><div id="statusViewerContent"></div><button id="closeStatusViewer" type="button">Cerrar</button></div>
 <script src="./navigation.js"></script>
+<script>
+/* Diagnóstico temporal visible: identifica errores que detienen los controles de KLK. */
+(function(){
+  function report(message){
+    let panel=document.getElementById("klkRuntimeError");
+    if(!panel){
+      panel=document.createElement("div");
+      panel.id="klkRuntimeError";
+      panel.setAttribute("role","alert");
+      panel.style.cssText="position:fixed;z-index:20000;left:10px;right:10px;top:10px;max-height:45vh;overflow:auto;padding:14px;border:2px solid #b42318;border-radius:12px;background:#fff;color:#7f1d1d;box-shadow:0 8px 30px #0004;font:14px/1.4 Arial,sans-serif;white-space:pre-wrap";
+      document.body.appendChild(panel);
+    }
+    panel.textContent="KLK detectó un error que puede impedir el funcionamiento:\n"+String(message||"Error desconocido").slice(0,1800);
+    const close=document.createElement("button");
+    close.type="button";close.textContent="Cerrar aviso";close.style.cssText="display:block;margin:10px 0 0;padding:9px 14px;background:#7f1d1d;color:#fff;border:0;border-radius:8px";
+    close.addEventListener("click",()=>panel.remove());
+    panel.appendChild(close);
+  }
+  window.addEventListener("error",function(event){
+    const detail=event.message||(event.target&&event.target.src?"No se pudo cargar: "+event.target.src:"Error al ejecutar un archivo de KLK");
+    report(detail+(event.filename?"\n"+event.filename+":"+event.lineno+":"+event.colno:""));
+  },true);
+  window.addEventListener("unhandledrejection",function(event){
+    const reason=event.reason;
+    report("Promesa rechazada: "+(reason&&(reason.stack||reason.message)||reason||"sin detalle"));
+  });
+})();
+</script>
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore-compat.js"></script>
