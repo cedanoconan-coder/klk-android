@@ -771,6 +771,13 @@ main,#chat,.homeView{overscroll-behavior-y:contain}
  #chat.room-open .stickerChoice{font-size:42px}
 }
 
+
+@media(max-width:760px){
+ #chat.room-open .stickerNoResults{margin:26px 12px;text-align:center;color:#667781;font-size:13px}
+ #chat.room-open .stickerNoResults[hidden]{display:none}
+ #chat.room-open .stickerContentArea [hidden]{display:none!important}
+}
+
 </style>
 <style>
 /* Perfil compacto y selector de foto mediante cámara */
@@ -2215,6 +2222,31 @@ $("message").addEventListener("keydown",event=>{
 });
 
 const stickersToggle=$("stickersToggle"),stickersPanel=$("stickersPanel");
+const stickerSearch=$("stickerSearch"),stickerModeTabs=[...stickersPanel.querySelectorAll("[data-sticker-mode]")],stickerCategoryButtons=[...stickersPanel.querySelectorAll("[data-sticker-category]")],stickerEmojiGrid=stickersPanel.querySelector(".emojiGrid"),stickerItemsGrid=stickersPanel.querySelector(".stickersGrid"),stickerGifEmpty=stickersPanel.querySelector(".stickerGifEmpty"),stickerCategoryBar=stickersPanel.querySelector(".stickerCategoryBar");
+let activeStickerMode="emoji",activeStickerCategory="recent";
+function classifySticker(value){if(["❤️","💔","💕","💞","💓","💗","💖","💘","💝"].includes(value))return"hearts";if(["👍","👎","👏","🙏","🤝","👋","🙌"].includes(value))return"gestures";if(["🔥","💯","🎉"].includes(value))return"other";return"faces";}
+function updateStickerPicker(){
+ const query=(stickerSearch?.value||"").trim().toLocaleLowerCase();
+ stickerModeTabs.forEach(tab=>{const active=tab.dataset.stickerMode===activeStickerMode;tab.classList.toggle("active",active);tab.setAttribute("aria-selected",String(active));});
+ stickerEmojiGrid.hidden=activeStickerMode!=="emoji";
+ stickerItemsGrid.hidden=activeStickerMode!=="sticker";
+ stickerCategoryBar.hidden=activeStickerMode!=="sticker";
+ stickerGifEmpty.hidden=activeStickerMode!=="gif";
+ stickerCategoryButtons.forEach(button=>button.classList.toggle("active",button.dataset.stickerCategory===activeStickerCategory));
+ stickerEmojiGrid.querySelectorAll("[data-emoji]").forEach(button=>{button.hidden=activeStickerMode!=="emoji"||!!query&&!button.dataset.emoji.toLocaleLowerCase().includes(query);});
+ let shown=0;
+ stickerItemsGrid.querySelectorAll("[data-sticker]").forEach(button=>{const value=button.dataset.sticker;const matchesCategory=activeStickerCategory==="recent"||activeStickerCategory==="favorites"||classifySticker(value)===activeStickerCategory;const matchesQuery=!query||value.toLocaleLowerCase().includes(query);button.hidden=activeStickerMode!=="sticker"||!matchesCategory||!matchesQuery;if(!button.hidden)shown++;});
+ let empty=stickersPanel.querySelector(".stickerNoResults");
+ if(!empty){empty=document.createElement("p");empty.className="stickerNoResults";empty.textContent="No hay stickers en esta categoría.";stickerItemsGrid.after(empty);}
+ empty.hidden=activeStickerMode!=="sticker"||shown>0;
+ if(activeStickerCategory==="favorites"&&!query)empty.textContent="Todavía no tienes stickers favoritos.";
+ else empty.textContent="No se encontraron stickers.";
+}
+stickerModeTabs.forEach(tab=>tab.addEventListener("click",()=>{activeStickerMode=tab.dataset.stickerMode;updateStickerPicker();}));
+stickerCategoryButtons.forEach(button=>button.addEventListener("click",()=>{activeStickerCategory=button.dataset.stickerCategory;updateStickerPicker();}));
+stickerSearch?.addEventListener("input",updateStickerPicker);
+updateStickerPicker();
+
 function closeStickersPanel(){if(!stickersPanel||!stickersToggle)return;stickersPanel.classList.remove("open");stickersPanel.setAttribute("aria-hidden","true");stickersToggle.setAttribute("aria-expanded","false");}
 stickersToggle.addEventListener("click",()=>{closeAttachmentPanel();const opening=!stickersPanel.classList.contains("open");if(opening){stickersPanel.classList.add("open");stickersPanel.setAttribute("aria-hidden","false");stickersToggle.setAttribute("aria-expanded","true");$("message").blur();}else closeStickersPanel();});
 stickersPanel.addEventListener("click",async event=>{const emoji=event.target.closest("[data-emoji]");if(emoji){const input=$("message"),value=emoji.dataset.emoji,start=input.selectionStart??input.value.length,end=input.selectionEnd??input.value.length;input.value=input.value.slice(0,start)+value+input.value.slice(end);const cursor=start+value.length;input.setSelectionRange(cursor,cursor);input.dispatchEvent(new Event("input",{bubbles:true}));closeStickersPanel();input.focus({preventScroll:true});return;}const choice=event.target.closest("[data-sticker]");if(!choice)return;const sticker=choice.dataset.sticker,user=auth&&auth.currentUser;if(!user||!activeConversationId){$("chatStatus").textContent="Abre una conversación para enviar stickers.";return;}if(sending)return;const conversationId=activeConversationId;sending=true;stickersPanel.querySelectorAll("button").forEach(button=>button.disabled=true);$("chatStatus").textContent="Enviando sticker...";try{const sent=await messagesCollection().add({type:"sticker",text:sticker,email:user.email||"",displayName:(peopleCache.get(user.uid)||{}).displayName||(user.email||"Miembro").split("@")[0],uid:user.uid,createdAt:firebase.firestore.FieldValue.serverTimestamp()});void sendKlkPushForMessage(conversationId,sent.id);$("chatStatus").textContent="Sticker enviado.";closeStickersPanel();}catch(error){showError("chatStatus",error);}finally{sending=false;stickersPanel.querySelectorAll("button").forEach(button=>button.disabled=false);syncComposerMode();}});
