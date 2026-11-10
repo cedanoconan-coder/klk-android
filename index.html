@@ -2235,7 +2235,7 @@ function updateStickerPicker(){
  stickerCategoryButtons.forEach(button=>button.classList.toggle("active",button.dataset.stickerCategory===activeStickerCategory));
  stickerEmojiGrid.querySelectorAll("[data-emoji]").forEach(button=>{button.hidden=activeStickerMode!=="emoji"||!!query&&!button.dataset.emoji.toLocaleLowerCase().includes(query);});
  let shown=0;
- stickerItemsGrid.querySelectorAll("[data-sticker]").forEach(button=>{const value=button.dataset.sticker;const matchesCategory=activeStickerCategory==="recent"||activeStickerCategory==="favorites"||classifySticker(value)===activeStickerCategory;const matchesQuery=!query||value.toLocaleLowerCase().includes(query);button.hidden=activeStickerMode!=="sticker"||!matchesCategory||!matchesQuery;if(!button.hidden)shown++;});
+ stickerItemsGrid.querySelectorAll("[data-sticker]").forEach(button=>{const value=button.dataset.sticker;const matchesCategory=activeStickerCategory==="recent"||classifySticker(value)===activeStickerCategory;const matchesQuery=!query||value.toLocaleLowerCase().includes(query);button.hidden=activeStickerMode!=="sticker"||!matchesCategory||!matchesQuery;if(!button.hidden)shown++;});
  let empty=stickersPanel.querySelector(".stickerNoResults");
  if(!empty){empty=document.createElement("p");empty.className="stickerNoResults";empty.textContent="No hay stickers en esta categoría.";stickerItemsGrid.after(empty);}
  empty.hidden=activeStickerMode!=="sticker"||shown>0;
