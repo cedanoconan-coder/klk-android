@@ -185,7 +185,7 @@ html[data-density="comfortable"] .chatRow,html[data-density="comfortable"] #peop
 #remoteAudio{display:none}
 #callAvatar{width:120px;height:120px;border-radius:60px;background:#263f3c;display:grid;place-items:center;font-size:54px;margin:30px auto}
 #callControls{display:flex;justify-content:center;gap:18px;flex-wrap:wrap;padding:18px 0}
-#callControls button{width:auto;min-width:76px;margin:0;padding:14px 18px;border-radius:30px}
+#callControls button{width:auto;min-width:76px;min-height:48px;margin:0;padding:12px 16px;border-radius:30px;touch-action:manipulation}
 #answerCall{background:#16834b!important}#rejectCall,#endCall{background:#c83232!important}
 #muteCall.muted{background:#59656b!important}
 @media(max-width:420px){#callVideoStage{max-height:55vh}#callPeerName{font-size:21px}}
@@ -1048,7 +1048,7 @@ html[data-theme="dark"] #chat.room-open .attachmentGrid button:nth-child(5) .att
 <button type="button" id="openUsersFab" aria-label="Ver todos mis contactos" title="Contactos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></button>
 </div>
 
-<section id="callOverlay" aria-label="Llamada"><div><p id="callStatus">Preparando llamada...</p><h2 id="callPeerName">Contacto</h2></div><div id="callVideoStage"><div id="callAvatar">☎️</div><video id="remoteVideo" autoplay playsinline></video><video id="localVideo" autoplay muted playsinline></video><audio id="remoteAudio" autoplay></audio></div><div id="callControls"><button id="answerCall" type="button" hidden>Responder</button><button id="rejectCall" type="button" hidden>Rechazar</button><button id="muteCall" type="button" hidden>Silenciar</button><button id="cameraCall" type="button" hidden>Apagar cámara</button><button id="endCall" type="button" hidden>Finalizar</button></div></section>
+<section id="callOverlay" aria-label="Llamada"><div><p id="callStatus">Preparando llamada...</p><h2 id="callPeerName">Contacto</h2></div><div id="callVideoStage"><div id="callAvatar">☎️</div><video id="remoteVideo" autoplay playsinline></video><video id="localVideo" autoplay muted playsinline></video><audio id="remoteAudio" autoplay></audio></div><div id="callControls"><button id="answerCall" type="button" hidden>Responder</button><button id="rejectCall" type="button" hidden>Rechazar</button><button id="muteCall" type="button" hidden>Silenciar</button><button id="cameraCall" type="button" hidden>Apagar cámara</button><button id="switchCameraCall" type="button" hidden>Cambiar cámara</button><button id="endCall" type="button" hidden>Finalizar</button></div></section>
 
 <div class="chatTop"><div class="chatHeading"><button id="backToChats" class="chatBack" type="button" aria-label="Volver a chats" title="Volver">‹</button><img id="roomAvatar" class="roomAvatar" alt="Foto de perfil del contacto" src="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Crect width=%2764%27 height=%2764%27 rx=%2732%27 fill=%27%23e8efec%27/%3E%3Ctext x=%2732%27 y=%2743%27 text-anchor=%27middle%27 font-size=%2732%27%3E%F0%9F%91%A4%3C/text%3E%3C/svg%3E"><div class="roomIdentity"><h2 id="chatTitle" role="button" tabindex="0" aria-label="Ver perfil del contacto">Familia klk</h2><p id="who" class="muted">Conversación privada</p></div><div class="roomActions"><button id="roomWallpaperToggle" type="button" aria-label="Cambiar fondo del chat" title="Fondo del chat">🎨</button><div class="roomCallWrap"><button id="roomCallMenu" type="button" aria-label="Opciones de llamada" aria-expanded="false" title="Llamar">☎</button><div id="roomCallOptions" class="roomCallOptions" hidden><button id="roomVoiceCall" type="button" aria-label="Llamada de voz">☎ <span>Llamada de voz</span></button><button id="roomVideoCall" type="button" aria-label="Videollamada">▣ <span>Videollamada</span></button></div></div><button id="settingsToggle" class="settingsToggle" type="button" aria-label="Más opciones" title="Más opciones">⋮</button></div></div></div>
 <section id="disappearingPanel" class="disappearingPanel" hidden aria-label="Mensajes temporales">
@@ -1855,8 +1855,9 @@ $("showGroup").onclick = () => { $("chatStatus").textContent = "klk permite conv
 function openActiveContactProfile(){if(!activeConversationPeerUid)return;const person=peopleCache.get(activeConversationPeerUid)||{displayName:activeConversationName||"Contacto"};openContactProfile(activeConversationPeerUid,person,"chat");}
 $("roomContactInfo").addEventListener("click",openActiveContactProfile);$("roomAvatar").addEventListener("click",openActiveContactProfile);$("roomCallMenu").addEventListener("click",()=>{const panel=$("roomCallOptions"),open=panel.hidden;panel.hidden=!open;$("roomCallMenu").setAttribute("aria-expanded",String(open));});document.addEventListener("click",e=>{const wrap=$("roomCallOptions")?.parentElement;if(wrap&&!wrap.contains(e.target)){ $("roomCallOptions").hidden=true;$("roomCallMenu").setAttribute("aria-expanded","false");}});
 $("chatTitle").addEventListener("click",openActiveContactProfile);
-$("roomVoiceCall").addEventListener("click",()=>{if(!activeConversationPeerUid){$("chatStatus").textContent="Abre primero una conversación privada.";return;}if(window.klkStartCall)window.klkStartCall(activeConversationPeerUid,activeConversationName||"Contacto","audio");else $("chatStatus").textContent="El servicio de llamadas todavía se está iniciando." ;});
-$("roomVideoCall").addEventListener("click",()=>{if(!activeConversationPeerUid){$("chatStatus").textContent="Abre primero una conversación privada.";return;}if(window.klkStartCall)window.klkStartCall(activeConversationPeerUid,activeConversationName||"Contacto","video");else $("chatStatus").textContent="El servicio de llamadas todavía se está iniciando.";});
+function closeRoomCallOptions(){const panel=$("roomCallOptions");if(panel)panel.hidden=true;$("roomCallMenu").setAttribute("aria-expanded","false");}
+$("roomVoiceCall").addEventListener("click",()=>{closeRoomCallOptions();if(!activeConversationPeerUid){$("chatStatus").textContent="Abre primero una conversación privada.";return;}if(window.klkStartCall)window.klkStartCall(activeConversationPeerUid,activeConversationName||"Contacto","audio");else $("chatStatus").textContent="El servicio de llamadas todavía se está iniciando." ;});
+$("roomVideoCall").addEventListener("click",()=>{closeRoomCallOptions();if(!activeConversationPeerUid){$("chatStatus").textContent="Abre primero una conversación privada.";return;}if(window.klkStartCall)window.klkStartCall(activeConversationPeerUid,activeConversationName||"Contacto","video");else $("chatStatus").textContent="El servicio de llamadas todavía se está iniciando.";});
 $("showPeople").onclick = () => { $("chat").classList.remove("room-open"); $("chatSearch").focus(); $("chatStatus").textContent = "Selecciona un miembro para conversar en privado."; };
 async function getMediaUrl(path, conversationId = null) {
  if (!path) return "";
@@ -2118,19 +2119,28 @@ async function compressImage(file) {
   if (objectUrl) URL.revokeObjectURL(objectUrl);
  }
 }
+function getMediaMimeType(file){
+ if(!file)return "application/octet-stream";
+ const declared=(file.type||"").toLowerCase();
+ const extension=(file.name||"").split(".").pop().toLowerCase();
+ const byExtension={jpg:"image/jpeg",jpeg:"image/jpeg",png:"image/png",gif:"image/gif",webp:"image/webp",heic:"image/heic",heif:"image/heif",mp4:"video/mp4",m4v:"video/x-m4v",mov:"video/quicktime",webm:"video/webm",3gp:"video/3gpp",mp3:"audio/mpeg",m4a:"audio/mp4",aac:"audio/aac",wav:"audio/wav",ogg:"audio/ogg",opus:"audio/ogg",pdf:"application/pdf",txt:"text/plain",csv:"text/csv",doc:"application/msword",docx:"application/vnd.openxmlformats-officedocument.wordprocessingml.document",xls:"application/vnd.ms-excel",xlsx:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",ppt:"application/vnd.ms-powerpoint",pptx:"application/vnd.openxmlformats-officedocument.presentationml.presentation",zip:"application/zip"};
+ return (!declared||declared==="application/octet-stream")?(byExtension[extension]||declared||"application/octet-stream"):declared;
+}
 async function uploadMedia(file, type, durationSeconds = null) {
  const user = auth && auth.currentUser;
  if (!user || !activeConversationId) { $("chatStatus").textContent = "Abre una conversación privada antes de compartir archivos."; return; }
  if (!file || sending) return;
- const isVideo = type === "file" && file.type.startsWith("video/");
- if (type === "image" && !file.type.startsWith("image/")) { $("chatStatus").textContent = "Selecciona un archivo de imagen."; return; }
- if (type === "audio" && !file.type.startsWith("audio/")) { $("chatStatus").textContent = "No se pudo reconocer el formato del audio."; return; }
+ const detectedMime=getMediaMimeType(file);
+ const normalizedFile=file.type===detectedMime?file:new File([file],file.name||"archivo",{type:detectedMime,lastModified:file.lastModified||Date.now()});
+ const isVideo = type === "file" && detectedMime.startsWith("video/");
+ if (type === "image" && !detectedMime.startsWith("image/")) { $("chatStatus").textContent = "Selecciona un archivo de imagen."; return; }
+ if (type === "audio" && !detectedMime.startsWith("audio/")) { $("chatStatus").textContent = "No se pudo reconocer el formato del audio."; return; }
  if(type==="file" && file.size>20*1024*1024){$("chatStatus").textContent="El documento no puede superar 20 MB.";return;}
  sending = true;
  $("chatStatus").textContent = type === "image" ? "Optimizando foto..." : type==="audio"?"Preparando audio...":isVideo?"Preparando video...":"Preparando documento...";
  $("send").disabled = true; $("pickPhoto").disabled = true; $("takePhoto").disabled = true; $("recordAudio").disabled = true; $("sendAudio").disabled = true;
  try {
-  const uploadFile = type === "image" ? await compressImage(file) : file;
+  const uploadFile = type === "image" ? await compressImage(normalizedFile) : normalizedFile;
   const maxBytes = type === "image" ? 10 * 1024 * 1024 : 20 * 1024 * 1024;
   if (uploadFile.size > maxBytes) throw new Error(type === "image" ? "La foto pesa más de 10 MB incluso después de optimizarla." : type === "file" ? (isVideo?"El video no puede superar 20 MB.":"El archivo no puede superar 20 MB.") : "El audio no puede superar 20 MB.");
   const mimeType = uploadFile.type || (type === "image" ? "image/jpeg" : type === "file" ? "application/octet-stream" : "audio/webm");
@@ -2162,8 +2172,8 @@ async function uploadMedia(file, type, durationSeconds = null) {
 $("pickPhoto").onclick = () => { const panel=$("attachmentPanel"); const opening=!panel.classList.contains("open"); panel.classList.toggle("open",opening); panel.setAttribute("aria-hidden",String(!opening)); $("pickPhoto").setAttribute("aria-expanded",String(opening)); closeStickersPanel(); };
 $("takePhoto").addEventListener("click",()=>{closeStickersPanel();closeAttachmentPanel();openAttachmentFilePicker("cameraInput");});
 
-$("galleryInput").addEventListener("change", async event => { const file = event.target.files && event.target.files[0]; if (file) await uploadMedia(file,file.type&&file.type.startsWith("video/")?"file":"image"); event.target.value = ""; });
-$("cameraInput").addEventListener("change", async event => { const file = event.target.files && event.target.files[0]; if (file) await uploadMedia(file,file.type&&file.type.startsWith("video/")?"file":"image"); event.target.value = ""; });
+$("galleryInput").addEventListener("change", async event => { const file = event.target.files && event.target.files[0]; if (file) await uploadMedia(file,getMediaMimeType(file).startsWith("video/")?"file":"image"); event.target.value = ""; });
+$("cameraInput").addEventListener("change", async event => { const file = event.target.files && event.target.files[0]; if (file) await uploadMedia(file,getMediaMimeType(file).startsWith("video/")?"file":"image"); event.target.value = ""; });
 function openAttachmentFilePicker(inputId){
  const input=$(inputId);
  if(!input){$("chatStatus").textContent="No se encontró el selector de archivos. Actualiza klk e inténtalo otra vez.";return;}
