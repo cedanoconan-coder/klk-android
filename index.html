@@ -688,6 +688,43 @@ main,#chat,.homeView{overscroll-behavior-y:contain}
  .msg .voicePlayButton{width:28px;height:28px;min-width:28px}
  .msg .voiceSpeedButton{width:33px;min-width:33px}
 }
+
+/* Burbujas compactas inspiradas en WhatsApp */
+#chat.room-open #messages{padding:10px 9px}
+#chat.room-open .msg{
+ width:fit-content!important;
+ max-width:80%!important;
+ padding:5px 8px!important;
+ margin:2px 0!important;
+ border-radius:8px 8px 8px 2px!important;
+ box-shadow:0 1px 1px #00000010!important;
+}
+#chat.room-open .msg.mine{margin-left:auto!important;border-radius:8px 8px 2px 8px!important}
+#chat.room-open .msg p{margin:2px 0 0!important;font-size:14px!important;line-height:1.28!important}
+#chat.room-open .msg b{font-size:11px!important}
+#chat.room-open .msg .messageMeta{margin-top:2px!important;font-size:10px!important}
+#chat.room-open .msg:has(.voiceMessageLayout){
+ width:min(270px,84%)!important;
+ max-width:84%!important;
+ padding:5px 7px!important;
+}
+#chat.room-open .msg .voiceMessageLayout{width:100%;gap:6px;margin:0}
+#chat.room-open .msg .voiceMessageAvatar{width:29px;height:29px;flex-basis:29px}
+#chat.room-open .msg .voicePlayer{grid-template-columns:27px minmax(0,1fr) 32px;min-height:40px;gap:5px;padding:4px 5px;border-radius:12px}
+#chat.room-open .msg .voicePlayButton{width:26px;height:26px;min-width:26px;font-size:13px}
+#chat.room-open .msg .voicePlayerMain{gap:2px}
+#chat.room-open .msg .voiceWaveform{height:19px;min-height:19px;gap:1px}
+#chat.room-open .msg .voiceWaveBar{max-width:2.5px;min-width:1px}
+#chat.room-open .msg .voicePlayerMeta{font-size:9px}
+#chat.room-open .msg .voiceSpeedButton{width:31px;height:24px;min-width:31px;font-size:10px}
+@media(max-width:380px){
+ #chat.room-open .msg{max-width:86%!important}
+ #chat.room-open .msg:has(.voiceMessageLayout){width:min(250px,88%)!important;max-width:88%!important}
+ #chat.room-open .msg .voiceMessageAvatar{width:26px;height:26px;flex-basis:26px}
+ #chat.room-open .msg .voicePlayer{grid-template-columns:25px minmax(0,1fr) 30px;gap:4px;padding:4px}
+ #chat.room-open .msg .voicePlayButton{width:24px;height:24px;min-width:24px}
+ #chat.room-open .msg .voiceSpeedButton{width:29px;min-width:29px}
+}
 </style></head>
 <body>
 <header class="brandHeader"><img src="./icon.svg" alt="Logo de klk: pulgar arriba" class="brandMark"><div class="brandWords"><span>klk</span><small>Tu familia, siempre conectada ❤️</small></div></header>
