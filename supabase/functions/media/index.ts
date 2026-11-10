@@ -1,5 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { createRemoteJWKSet, jwtVerify } from "npm:jose@5";
+import { isOwnedLegacyMediaPath } from "./ownership.mjs";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -181,8 +182,8 @@ Deno.serve(async (request) => {
       if (!(await verifyStatusVisible(statusMatch[1], firebaseToken, uid))) {
         return reply(403, { error: "Este estado solo está disponible para los contactos del usuario." });
       }
-    } else if (!/^[^/]{1,128}\/[A-Za-z0-9-]{16,64}\.[a-z0-9]{1,8}$/i.test(path)) {
-      return reply(403, { error: "Ruta de archivo no válida o sin permiso." });
+    } else if (!isOwnedLegacyMediaPath(path, uid)) {
+      return reply(403, { error: "No tienes permiso para acceder a este archivo privado." });
     }
     const { data, error } = await admin.storage.from(BUCKET).createSignedUrl(path, 60 * 60);
     if (error || !data?.signedUrl) {
