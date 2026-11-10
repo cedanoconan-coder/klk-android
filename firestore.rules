@@ -31,14 +31,17 @@ service cloud.firestore {
         && !exists(/databases/$(database)/documents/userBlocks/$(request.auth.uid)/blocked/$(otherUid))
         && !exists(/databases/$(database)/documents/userBlocks/$(otherUid)/blocked/$(request.auth.uid));
     }
-    function isConversationMember(conversationId) {
+    function isConversationMemberData(members) {
       return signedIn()
-        && exists(/databases/$(database)/documents/conversations/$(conversationId))
-        && get(/databases/$(database)/documents/conversations/$(conversationId)).data.members is list
-        && get(/databases/$(database)/documents/conversations/$(conversationId)).data.members.size() == 2
-        && request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.members
-        && !exists(/databases/$(database)/documents/userBlocks/$(request.auth.uid)/blocked/$(get(/databases/$(database)/documents/conversations/$(conversationId)).data.members[0] == request.auth.uid ? get(/databases/$(database)/documents/conversations/$(conversationId)).data.members[1] : get(/databases/$(database)/documents/conversations/$(conversationId)).data.members[0]))
-        && !exists(/databases/$(database)/documents/userBlocks/$(get(/databases/$(database)/documents/conversations/$(conversationId)).data.members[0] == request.auth.uid ? get(/databases/$(database)/documents/conversations/$(conversationId)).data.members[1] : get(/databases/$(database)/documents/conversations/$(conversationId)).data.members[0])/blocked/$(request.auth.uid));
+        && members is list
+        && members.size() == 2
+        && request.auth.uid in members
+        && !exists(/databases/$(database)/documents/userBlocks/$(request.auth.uid)/blocked/$(members[0] == request.auth.uid ? members[1] : members[0]))
+        && !exists(/databases/$(database)/documents/userBlocks/$(members[0] == request.auth.uid ? members[1] : members[0])/blocked/$(request.auth.uid));
+    }
+    function isConversationMember(conversationId) {
+      return exists(/databases/$(database)/documents/conversations/$(conversationId))
+        && isConversationMemberData(get(/databases/$(database)/documents/conversations/$(conversationId)).data.members);
     }
     function validUserProfile(userId) {
       return signedIn()
@@ -185,7 +188,9 @@ service cloud.firestore {
       // Permite comprobar si todavía no existe una conversación, sin revelar documentos existentes.
       allow get: if isConversationMember(conversationId)
         || (signedIn() && !exists(/databases/$(database)/documents/conversations/$(conversationId)));
-      allow list: if isConversationMember(conversationId);
+      // La consulta debe incluir array-contains con el UID autenticado.
+      // Así Firestore puede demostrar que cada documento devuelto pertenece al usuario.
+      allow list: if isConversationMemberData(resource.data.members);
       allow create: if signedIn()
         && request.resource.data.keys().hasOnly(['members','createdAt'])
         && request.resource.data.keys().hasAll(['members','createdAt'])
