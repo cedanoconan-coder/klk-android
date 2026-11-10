@@ -2734,3 +2734,11 @@ $("assistantQuestion").addEventListener("keydown",event=>{
 </script>
 
 </body></html>
+
+/* Todas las fotos de perfil se muestran completas, sin recortar rostros ni partes de la imagen */
+#myProfilePhoto,#profilePanelPhoto,#contactProfilePhoto,#roomAvatar,
+.personAvatar,.profileButton img,.contactProfileHero img,.voiceMessageAvatar,
+.statusAvatar img,.statusViewerMiniAvatar img{
+ object-fit:contain!important;
+ background-color:var(--klk-message-bg,#f4f1fb)!important;
+}
