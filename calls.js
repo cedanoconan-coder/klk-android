@@ -102,6 +102,7 @@
  function showActiveControls(){
   $("answerCall").hidden=true;$("rejectCall").hidden=true;$("endCall").hidden=false;$("muteCall").hidden=false;
   $("cameraCall").hidden=callMode!=="video";$("switchCameraCall").hidden=callMode!=="video";
+  $("cameraCall").textContent="Apagar cámara";
   $("muteCall").textContent="Silenciar";$("muteCall").classList.remove("muted");
   $("callAvatar").style.display=callMode==="video"?"none":"grid";
   $("remoteVideo").style.display=callMode==="video"?"block":"none";
