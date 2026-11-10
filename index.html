@@ -661,6 +661,33 @@ main,#chat,.homeView{overscroll-behavior-y:contain}
 .msg.klk-selected{outline:2px solid #8b5cf6;outline-offset:1px}
 .msg.klk-selectable{cursor:pointer}
 @media(max-width:380px){.klkMessageSelectionBar{gap:4px;padding:8px 6px}.klkMessageSelectionBar button{padding:8px 7px;font-size:11px}}
+
+/* Ajuste visual compacto: burbujas y notas de voz */
+#messages{padding:12px 10px}
+.msg{padding:7px 9px;margin:4px 0;border-radius:4px 11px 11px 11px;max-width:84%;box-shadow:0 1px 1px #0000000d}
+.msg.mine{border-radius:11px 4px 11px 11px}
+.msg p{margin:3px 0 0;font-size:14px;line-height:1.32}
+.msg .messageMeta{margin-top:3px}
+.msg:has(.voiceMessageLayout){width:min(390px,88%);max-width:88%;padding:6px 8px}
+.msg .voiceMessageLayout{width:100%;gap:7px;margin-top:2px}
+.msg .voiceMessageAvatar{width:36px;height:36px;flex-basis:36px}
+.msg .voicePlayer{min-height:0;gap:7px;padding:6px 8px;border-radius:14px}
+.msg .voicePlayButton{width:30px;height:30px;min-width:30px;font-size:15px}
+.msg .voicePlayerMain{gap:3px}
+.msg .voiceWaveform{height:23px;min-height:23px;gap:1.5px}
+.msg .voiceWaveBar{max-width:3px;min-width:1.5px}
+.msg .voicePlayerMeta{font-size:10px}
+.msg .voiceSpeedButton{width:36px;height:27px;min-width:36px;font-size:11px}
+@media(max-width:380px){
+ #messages{padding:10px 8px}
+ .msg{max-width:88%}
+ .msg:has(.voiceMessageLayout){width:min(340px,92%);max-width:92%}
+ .msg .voiceMessageLayout{gap:6px}
+ .msg .voiceMessageAvatar{width:32px;height:32px;flex-basis:32px}
+ .msg .voicePlayer{grid-template-columns:29px minmax(0,1fr) 34px;gap:5px;padding:5px 6px}
+ .msg .voicePlayButton{width:28px;height:28px;min-width:28px}
+ .msg .voiceSpeedButton{width:33px;min-width:33px}
+}
 </style></head>
 <body>
 <header class="brandHeader"><img src="./icon.svg" alt="Logo de klk: pulgar arriba" class="brandMark"><div class="brandWords"><span>klk</span><small>Tu familia, siempre conectada ❤️</small></div></header>
