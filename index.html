@@ -2379,6 +2379,7 @@ $("sendAudio").onclick = async () => {
 })();
 </script>
 
+<script src="./chat-camera.js"></script>
 <script src="./calls.js"></script>
 <script>
 if ("serviceWorker" in navigator) window.addEventListener("load", async () => { try { const registration = await navigator.serviceWorker.register("./sw.js", {updateViaCache:"none"}); await registration.update(); } catch(error) { console.error("Service worker:", error); } });
