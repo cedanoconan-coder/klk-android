@@ -1087,6 +1087,15 @@ html[data-theme="dark"] #chat.room-open .attachmentGrid button:nth-child(5) .att
 #homeView #toolsPanel:not([hidden]){padding-bottom:155px!important}
 #homeView #chatsPanel button,#homeView #callsPanel button,#homeView #toolsPanel button,#homeView #updatesPanel button{touch-action:manipulation}
 @media(max-height:700px){#homeView #chatsPanel:not([hidden]),#homeView #callsPanel:not([hidden]),#homeView #toolsPanel:not([hidden]),#homeView #updatesPanel:not([hidden]){height:calc(100dvh - 175px);max-height:calc(100dvh - 145px)}}
+</style><style>
+/* KLK scroll repair: scroll the entire active home screen, not just a short tab panel. */
+#chat:not(.room-open) #homeView{height:calc(100dvh - 72px)!important;max-height:calc(100dvh - 72px)!important;min-height:0!important;overflow-y:auto!important;overflow-x:hidden!important;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;box-sizing:border-box;padding-bottom:calc(170px + env(safe-area-inset-bottom))!important}
+#chat:not(.room-open) #homeView #chatsPanel,
+#chat:not(.room-open) #homeView #callsPanel,
+#chat:not(.room-open) #homeView #updatesPanel,
+#chat:not(.room-open) #homeView #toolsPanel{height:auto!important;max-height:none!important;min-height:0!important;overflow:visible!important;touch-action:pan-y!important;padding-bottom:24px!important}
+#chat:not(.room-open) #homeView .homeBottom{position:fixed!important;bottom:calc(8px + env(safe-area-inset-bottom))!important}
+#chat:not(.room-open) #homeView textarea,#chat:not(.room-open) #homeView input{touch-action:auto!important}
 </style></head>
 <body>
 <header class="brandHeader"><img src="./icon.svg" alt="Logo de klk: pulgar arriba" class="brandMark"><div class="brandWords"><span>klk</span><small>Tu familia, siempre conectada ❤️</small></div></header>
