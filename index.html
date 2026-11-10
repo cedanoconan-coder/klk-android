@@ -636,6 +636,22 @@ main,#chat,.homeView{overscroll-behavior-y:contain}
 #chat.room-open .attachmentGrid button:active .attachmentIcon{transform:scale(.94);background:var(--klk-soft,#e3f2ed)}
 @media(max-width:360px){#chat.room-open .attachmentGrid{gap:10px 6px}#chat.room-open .attachmentGrid button .attachmentIcon{width:44px;height:44px}}
 
+
+/* Directorio desde búsqueda: tarjeta compacta que despliega los datos al tocar */
+#usersOverlay #peopleList .contactDirectoryCard{display:block!important;padding:0!important;margin:0 12px 9px!important;border:1px solid var(--klk-line)!important;border-radius:17px!important;background:var(--klk-surface)!important;overflow:hidden;box-shadow:0 3px 12px #10201c08}
+#usersOverlay .contactDirectoryHead{display:flex;align-items:center;gap:14px;width:100%;min-height:76px;margin:0;padding:10px 15px;border:0;border-radius:0;background:transparent!important;color:var(--klk-text)!important;text-align:left;touch-action:manipulation}
+#usersOverlay .contactDirectoryHead .personAvatar{width:54px;height:54px;flex:0 0 54px}
+#usersOverlay .contactDirectoryName{flex:1;min-width:0}
+#usersOverlay .contactDirectoryName strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:16px;font-weight:650}
+#usersOverlay .contactDirectoryHead:after{content:"⌄";margin-left:auto;color:var(--klk-muted);font-size:20px;transition:transform .18s ease}
+#usersOverlay .contactDirectoryCard.expanded .contactDirectoryHead:after{transform:rotate(180deg)}
+#usersOverlay .contactDirectoryDetails{padding:0 16px 16px 83px;color:var(--klk-text);animation:directoryReveal .18s ease}
+#usersOverlay .contactDirectoryDetails[hidden]{display:none}
+#usersOverlay .contactDirectoryAbout{margin:0 0 9px;color:var(--klk-muted);font-size:14px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere}
+#usersOverlay .contactDirectoryMood{margin:0 0 10px;color:var(--klk-accent);font-size:13px}
+#usersOverlay .contactDirectoryMessage{width:auto;margin:4px 0 0;padding:9px 14px;border:0;border-radius:20px;background:var(--klk-accent);color:#fff;font-size:13px;font-weight:650}
+@keyframes directoryReveal{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:420px){#usersOverlay .contactDirectoryDetails{padding-left:82px}}
 </style>
 <style>
 /* Perfil compacto y selector de foto mediante cámara */
@@ -1381,21 +1397,23 @@ function renderPeople() {
   list.append(empty,refresh); syncConversationListeners(); return;
  }
  for (const [uid, person] of people) {
-  const row = document.createElement("div"); row.className = "memberBtn";
+  const row = document.createElement("div"); row.className = "memberBtn contactDirectoryCard";
+  const head = document.createElement("button"); head.type = "button"; head.className = "contactDirectoryHead";
   const avatar = document.createElement("img"); avatar.className = "personAvatar"; avatar.alt = "Foto de " + (person.displayName || "miembro"); avatar.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='32' fill='%23edf2ef'/%3E%3Ctext x='32' y='43' text-anchor='middle' font-size='32'%3E%F0%9F%91%A4%3C/text%3E%3C/svg%3E";
-  row.append(avatar);
-  if (person.photoPath) getMediaUrl(person.photoPath).then(url => { if (url && avatar.isConnected) avatar.src = url; }).catch(error => console.warn("Foto de contacto no disponible:", error));
-  const info = document.createElement("span"); info.style.flex = "1";
+  const info = document.createElement("span"); info.className = "contactDirectoryName";
   const name = document.createElement("strong"); name.textContent = person.displayName || person.email || "Miembro";
-  const about = document.createElement("small"); about.textContent = person.about || "Perfil público de klk";
-  info.append(name,about); row.append(info);
-  const view=document.createElement("button");view.type="button";view.className="secondary";view.style.cssText="width:auto;min-width:76px;margin:0 5px 0 0;padding:9px 8px;font-size:12px";view.textContent="Perfil";view.onclick=()=>openContactProfile(uid,person);row.append(view);
-  const action = document.createElement("button");
-  action.type = "button";
-  action.style.cssText = "width:auto;min-width:92px;margin:0;padding:9px 12px;font-size:13px";
-  action.textContent = "Escribir";
-  action.onclick = () => openPrivateConversation(uid, person.displayName || person.email || "Conversación");
-  row.append(action); list.append(row);  row.append(action); list.append(row);
+  info.append(name); head.append(avatar,info);
+  if (person.photoPath) getMediaUrl(person.photoPath).then(url => { if (url && avatar.isConnected) avatar.src = url; }).catch(error => console.warn("Foto de contacto no disponible:", error));
+  const details = document.createElement("div"); details.className = "contactDirectoryDetails"; details.hidden = true;
+  const about = document.createElement("p"); about.className = "contactDirectoryAbout"; about.textContent = person.about || "Este miembro todavía no ha añadido información personal.";
+  details.append(about);
+  if(person.mood){const mood=document.createElement("p");mood.className="contactDirectoryMood";mood.textContent="Estado de ánimo: "+person.mood;details.append(mood);}
+  const action=document.createElement("button");action.type="button";action.className="contactDirectoryMessage";action.textContent="Enviar mensaje";
+  action.addEventListener("click",()=>openPrivateConversation(uid,person.displayName||person.email||"Conversación"));
+  details.append(action);
+  head.setAttribute("aria-expanded","false");
+  head.addEventListener("click",()=>{const expanded=!details.hidden;details.hidden=expanded;head.setAttribute("aria-expanded",String(!expanded));row.classList.toggle("expanded",!expanded);});
+  row.append(head,details); list.append(row);
  }
  syncConversationListeners();
  if(window.klkRefreshCallContacts)window.klkRefreshCallContacts();
