@@ -2742,3 +2742,41 @@ $("assistantQuestion").addEventListener("keydown",event=>{
  object-fit:contain!important;
  background-color:var(--klk-message-bg,#f4f1fb)!important;
 }
+
+
+/* Dar espacio real a la foto dentro de la tarjeta de perfil */
+.profileIdentityCard{
+ overflow:visible!important;
+ padding:28px 20px 26px!important;
+}
+.profileIdentityCard .profileHero{
+ width:100%;
+ min-width:0;
+ gap:14px!important;
+ padding:4px 0 2px!important;
+}
+.profileIdentityCard .profileHero img#profilePanelPhoto{
+ box-sizing:border-box!important;
+ width:min(148px,48vw)!important;
+ height:min(148px,48vw)!important;
+ min-width:118px;
+ min-height:118px;
+ flex:0 0 min(148px,48vw)!important;
+ object-fit:contain!important;
+ object-position:center!important;
+ padding:5px!important;
+ background:#f4f1fb!important;
+ border:4px solid #f5e5b4!important;
+ border-radius:50%!important;
+}
+.profileIdentityCard .profileNameWrap{
+ width:100%;
+ min-width:0;
+ overflow:visible;
+}
+@media(max-width:420px){
+ .profileIdentityCard{padding:24px 16px 23px!important}
+ .profileIdentityCard .profileHero img#profilePanelPhoto{
+  width:136px!important;height:136px!important;flex-basis:136px!important;
+ }
+}
