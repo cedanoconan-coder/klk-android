@@ -1051,7 +1051,20 @@ html[data-theme="dark"] #chat.room-open .attachmentGrid button:nth-child(5) .att
 #chat.room-open #chatTitle{cursor:pointer}
 @media(max-width:420px){#chat.room-open #roomCallMenu{width:34px;height:34px}}
 </style>
-</head>
+<style>
+/* KLK Novedades: visual refresh 2026-11-10 */
+.klkUpdates .myStatusRow{margin:8px 14px 14px;width:calc(100% - 28px);padding:16px 18px;border-radius:22px;background:linear-gradient(120deg,#087d68,#00564d);color:#fff;box-shadow:0 5px 14px #075e541c;min-height:112px;gap:16px}
+.klkUpdates .myStatusAvatar{width:76px;height:76px;flex-basis:76px;border:3px solid #fff;background:#e9efed}
+.klkUpdates .myStatusPhoto{overflow:hidden;background:#e9efed}
+.klkUpdates .myStatusPhoto img{display:block;width:100%;height:100%;object-fit:cover;border-radius:50%}
+.klkUpdates .myStatusCopy strong{color:#fff;font-size:20px;font-weight:750}
+.klkUpdates .myStatusCopy small{color:#e0f3ed;font-size:13px;line-height:1.4}
+.klkUpdates .myStatusAvatar i{right:-8px;bottom:-6px;background:#12b76a}
+.klkUpdates .statusFab{position:fixed!important;z-index:30!important;right:18px!important}
+.klkUpdates .statusTextFab{bottom:calc(192px + env(safe-area-inset-bottom))!important;width:54px;height:54px;border-radius:18px;background:#006458;color:white}
+.klkUpdates .statusPhotoFab{bottom:calc(116px + env(safe-area-inset-bottom))!important;width:62px;height:62px;border-radius:20px;background:#006458;color:white}
+@media(max-height:650px){.klkUpdates .statusTextFab{bottom:calc(172px + env(safe-area-inset-bottom))!important}.klkUpdates .statusPhotoFab{bottom:calc(104px + env(safe-area-inset-bottom))!important}}
+</style>\n</head>
 <body>
 <header class="brandHeader"><img src="./icon.svg" alt="Logo de klk: pulgar arriba" class="brandMark"><div class="brandWords"><span>klk</span><small>Tu familia, siempre conectada ❤️</small></div></header>
 <main>
@@ -3384,6 +3397,23 @@ window.$("assistantQuestion").addEventListener("keydown",event=>{
  document.addEventListener("gesturestart",stopZoomGesture,{passive:false});
  document.addEventListener("gesturechange",stopZoomGesture,{passive:false});
  document.addEventListener("gestureend",stopZoomGesture,{passive:false});
+})();
+</script>
+
+<script>
+/* Sync the real signed-in profile picture into Add status, without a placeholder photo. */
+(function(){
+ const sync=()=>{
+  const target=document.querySelector('.klkUpdates .myStatusPhoto');
+  if(!target)return;
+  const candidates=['#myProfilePhoto','#profilePanelPhoto'];
+  const photo=candidates.map(sel=>document.querySelector(sel)).find(el=>el && (el.currentSrc||el.getAttribute('src')) && !/^(data:image\/svg|about:blank)/i.test(el.currentSrc||el.getAttribute('src')));
+  if(!photo)return;
+  const url=photo.currentSrc||photo.getAttribute('src');
+  let img=target.querySelector('img');if(!img){target.textContent='';img=document.createElement('img');img.alt='Mi foto de perfil';target.appendChild(img)}
+  if(img.getAttribute('src')!==url)img.src=url;
+ };
+ document.addEventListener('DOMContentLoaded',()=>{sync();const observer=new MutationObserver(sync);['#myProfilePhoto','#profilePanelPhoto'].forEach(sel=>{const el=document.querySelector(sel);if(el)observer.observe(el,{attributes:true,attributeFilter:['src']})});document.addEventListener('visibilitychange',sync);setTimeout(sync,1200)});
 })();
 </script>
 </body></html>
