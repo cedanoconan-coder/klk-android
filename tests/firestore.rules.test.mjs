@@ -274,3 +274,54 @@ test("permite crear una llamada solo dentro de una conversación privada", async
     createdAt:serverTimestamp(),updatedAt:serverTimestamp()
   }));
 });
+
+
+test("la configuración de mensajes temporales solo la pueden cambiar los miembros del chat", async () => {
+  await seedConversation();
+  const member = testEnv.authenticatedContext("member-1").firestore();
+  const outsider = testEnv.authenticatedContext("outsider").firestore();
+  const settings = doc(member, "conversations/member-1__member-2/settings/disappearingMessages");
+  await assertSucceeds(setDoc(settings, {
+    durationHours: 24, updatedAt: serverTimestamp(), updatedBy: "member-1"
+  }));
+  await assertFails(getDoc(doc(outsider, "conversations/member-1__member-2/settings/disappearingMessages")));
+  await assertFails(setDoc(doc(outsider, "conversations/member-1__member-2/settings/disappearingMessages"), {
+    durationHours: 0, updatedAt: serverTimestamp(), updatedBy: "outsider"
+  }));
+});
+
+test("rechaza duraciones temporales no permitidas", async () => {
+  await seedConversation();
+  const member = testEnv.authenticatedContext("member-1").firestore();
+  await assertFails(setDoc(doc(member, "conversations/member-1__member-2/settings/disappearingMessages"), {
+    durationHours: 48, updatedAt: serverTimestamp(), updatedBy: "member-1"
+  }));
+});
+
+test("cuando los mensajes temporales están activos, no acepta mensajes sin fecha de expiración", async () => {
+  await seedConversation();
+  await testEnv.withSecurityRulesDisabled(async context => {
+    await setDoc(doc(context.firestore(), "conversations/member-1__member-2/settings/disappearingMessages"), {
+      durationHours: 24, updatedAt: Timestamp.now(), updatedBy: "member-1"
+    });
+  });
+  const db = testEnv.authenticatedContext("member-1", {email:"member1@example.com"}).firestore();
+  await assertFails(setDoc(doc(db, "conversations/member-1__member-2/messages/without-expiry"), {
+    type:"text", text:"Este mensaje debe tener expiración", uid:"member-1",
+    email:"member1@example.com", displayName:"Miembro Uno", createdAt:serverTimestamp()
+  }));
+});
+
+test("permite mensajes normales sin expiración cuando la función está desactivada", async () => {
+  await seedConversation();
+  await testEnv.withSecurityRulesDisabled(async context => {
+    await setDoc(doc(context.firestore(), "conversations/member-1__member-2/settings/disappearingMessages"), {
+      durationHours: 0, updatedAt: Timestamp.now(), updatedBy: "member-1"
+    });
+  });
+  const db = testEnv.authenticatedContext("member-1", {email:"member1@example.com"}).firestore();
+  await assertSucceeds(setDoc(doc(db, "conversations/member-1__member-2/messages/normal"), {
+    type:"text", text:"Mensaje normal", uid:"member-1",
+    email:"member1@example.com", displayName:"Miembro Uno", createdAt:serverTimestamp()
+  }));
+});
