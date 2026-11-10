@@ -2829,12 +2829,12 @@ if (window.matchMedia("(display-mode: standalone)").matches || window.navigator.
 
 // Publica el selector para los scripts independientes que siguen a este bloque.
 window.$ = id => document.getElementById(id);
-$("inviteMember").addEventListener("click",()=>{ $("invitePanel").style.display=$("invitePanel").style.display==="block"?"none":"block"; $("inviteStatus").textContent=""; });
+window.$("inviteMember").addEventListener("click",()=>{ window.$("invitePanel").style.display=window.$("invitePanel").style.display==="block"?"none":"block"; window.$("inviteStatus").textContent=""; });
 let latestInviteCode = "";
-$("createInvite").addEventListener("click",async()=>{
+window.$("createInvite").addEventListener("click",async()=>{
  const user=auth&&auth.currentUser;
- if(!user){$("inviteStatus").textContent="Inicia sesión para crear invitaciones.";return;}
- $("createInvite").disabled=true;$("inviteStatus").textContent="Creando código seguro...";
+ if(!user){window.$("inviteStatus").textContent="Inicia sesión para crear invitaciones.";return;}
+ window.$("createInvite").disabled=true;window.$("inviteStatus").textContent="Creando código seguro...";
  try{
   const alphabet="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   if(!window.crypto || typeof window.crypto.getRandomValues!=="function") throw new Error("Este dispositivo no permite generar códigos seguros. Abre klk desde Chrome actualizado e inténtalo de nuevo.");
@@ -2843,99 +2843,99 @@ $("createInvite").addEventListener("click",async()=>{
   latestInviteCode=Array.from(bytes,b=>alphabet[b%alphabet.length]).join("");
   const expiresAt=firebase.firestore.Timestamp.fromDate(new Date(Date.now()+7*24*60*60*1000));
   await db.collection("invitations").doc(latestInviteCode).set({createdBy:user.uid,createdAt:firebase.firestore.FieldValue.serverTimestamp(),expiresAt,redeemedBy:null,redeemedAt:null});
-  $("inviteCodeDisplay").textContent=latestInviteCode;
+  window.$("inviteCodeDisplay").textContent=latestInviteCode;
   const inviteUrl="https://cedanoconan-coder.github.io/klk-android/?invite="+encodeURIComponent(latestInviteCode);
-  const qrBox=$("inviteQr");qrBox.replaceChildren();qrBox.style.display="block";
-  if(window.QRCode){new QRCode(qrBox,{text:inviteUrl,width:180,height:180,colorDark:"#10201c",colorLight:"#ffffff",correctLevel:QRCode.CorrectLevel.M});$("inviteQrHint").textContent="Escanea el QR con la cámara del teléfono para abrir Klk y usar este código.";}else{$("inviteQrHint").textContent="No se pudo cargar el generador QR. Comparte el código manualmente."}
-  $("shareInvite").hidden=false;
-  $("inviteStatus").textContent="Código creado. Solo puede utilizarse una vez y caduca en 7 días.";
+  const qrBox=window.$("inviteQr");qrBox.replaceChildren();qrBox.style.display="block";
+  if(window.QRCode){new QRCode(qrBox,{text:inviteUrl,width:180,height:180,colorDark:"#10201c",colorLight:"#ffffff",correctLevel:QRCode.CorrectLevel.M});window.$("inviteQrHint").textContent="Escanea el QR con la cámara del teléfono para abrir Klk y usar este código.";}else{window.$("inviteQrHint").textContent="No se pudo cargar el generador QR. Comparte el código manualmente."}
+  window.$("shareInvite").hidden=false;
+  window.$("inviteStatus").textContent="Código creado. Solo puede utilizarse una vez y caduca en 7 días.";
  }catch(error){showError("inviteStatus",error);}
- finally{$("createInvite").disabled=false;}
+ finally{window.$("createInvite").disabled=false;}
 });
-$("shareInvite").addEventListener("click",async()=>{
+window.$("shareInvite").addEventListener("click",async()=>{
  if(!latestInviteCode)return;
  // Compartir siempre la URL pública, incluso cuando klk está instalada como app Capacitor.
  const inviteBase="https://cedanoconan-coder.github.io/klk-android/";
  const link=inviteBase+"?invite="+encodeURIComponent(latestInviteCode);
  const message="Te invito a unirte a klk. Abre este enlace y crea tu cuenta: "+link+"\nCódigo: "+latestInviteCode;
- $("shareInvite").disabled=true;
+ window.$("shareInvite").disabled=true;
  try{
   if(typeof navigator.share==="function"){
    await navigator.share({title:"Invitación a klk",text:message});
-   $("inviteStatus").textContent="Invitación compartida.";
+   window.$("inviteStatus").textContent="Invitación compartida.";
    return;
   }
   // En navegadores o instalaciones que no ofrecen el menú nativo, abrir WhatsApp.
   window.location.href="https://wa.me/?text="+encodeURIComponent(message);
-  $("inviteStatus").textContent="Abriendo WhatsApp para compartir tu invitación.";
+  window.$("inviteStatus").textContent="Abriendo WhatsApp para compartir tu invitación.";
  }catch(error){
   if(error && error.name==="AbortError"){
-   $("inviteStatus").textContent="Compartir cancelado.";
+   window.$("inviteStatus").textContent="Compartir cancelado.";
   }else{
    // Fallback directo a WhatsApp cuando el menú nativo falla.
    window.location.href="https://wa.me/?text="+encodeURIComponent(message);
-   $("inviteStatus").textContent="Abriendo WhatsApp. Si no se abre, copia el código y compártelo manualmente: "+latestInviteCode;
+   window.$("inviteStatus").textContent="Abriendo WhatsApp. Si no se abre, copia el código y compártelo manualmente: "+latestInviteCode;
   }
  }finally{
-  $("shareInvite").disabled=false;
+  window.$("shareInvite").disabled=false;
  }
 });
-$("homeGroup").addEventListener("click",()=>{ $("chatStatus").textContent="klk funciona con conversaciones privadas entre miembros."; });
+window.$("homeGroup").addEventListener("click",()=>{ window.$("chatStatus").textContent="klk funciona con conversaciones privadas entre miembros."; });
 function klkPushView(view){try{history.pushState({klkView:view},"",location.href);}catch(error){console.warn("No se pudo registrar la navegación:",error);}}
-function toggleKlkSettings(){const panel=$("settingsPanel");const opening=panel.style.display!=="block";panel.style.display=opening?"block":"none";if(opening){panel.scrollTop=0;klkPushView("settings");}}
+function toggleKlkSettings(){const panel=window.$("settingsPanel");const opening=panel.style.display!=="block";panel.style.display=opening?"block":"none";if(opening){panel.scrollTop=0;klkPushView("settings");}}
 window.addEventListener("popstate",()=>{
- const settings=$("settingsPanel"),contact=$("contactProfilePanel"),profile=$("homeProfilePanel");
+ const settings=window.$("settingsPanel"),contact=window.$("contactProfilePanel"),profile=window.$("homeProfilePanel");
  if(settings&&settings.style.display==="block"){settings.style.display="none";return;}
  if(contact&&!contact.hidden&&contact.style.display!=="none"){closeContactProfile();return;}
  if(profile&&profile.style.display==="block"){closeKlkProfilePanel();return;}
- if($("chat")&&$("chat").classList.contains("room-open")){$("backToChats").click();return;}
+ if(window.$("chat")&&window.$("chat").classList.contains("room-open")){window.$("backToChats").click();return;}
 });
 
-$("homeMenu").addEventListener("click",toggleKlkSettings);
-$("backToChats").addEventListener("click",()=>{
+window.$("homeMenu").addEventListener("click",toggleKlkSettings);
+window.$("backToChats").addEventListener("click",()=>{
  if(unsubscribe){unsubscribe();unsubscribe=null;}
  if(disappearingSettingsUnsubscribe){disappearingSettingsUnsubscribe();disappearingSettingsUnsubscribe=null;} activeConversationId=null;activeConversationName=null;
- $("chat").classList.remove("room-open");
- const chatFooter=$("chat").querySelector(".chatFoot"); if(chatFooter) chatFooter.style.display="";
- $("messages").innerHTML="";
+ window.$("chat").classList.remove("room-open");
+ const chatFooter=window.$("chat").querySelector(".chatFoot"); if(chatFooter) chatFooter.style.display="";
+ window.$("messages").innerHTML="";
  setHomeTab("chats");
- $("chatSearch").value="";
- $("homeStatus").textContent="";
+ window.$("chatSearch").value="";
+ window.$("homeStatus").textContent="";
 });
 
-$("chatSearch").addEventListener("input",event=>{
+window.$("chatSearch").addEventListener("input",event=>{
  const q=event.target.value.trim().toLocaleLowerCase();
- $("homeGroup").style.display="none";
+ window.$("homeGroup").style.display="none";
  document.querySelectorAll("#peopleList .memberBtn").forEach(row=>{row.style.display=row.textContent.toLocaleLowerCase().includes(q)?"flex":"none";});
  document.querySelectorAll("#chatsList .chatRow").forEach(row=>{row.style.display=row.textContent.toLocaleLowerCase().includes(q)?"flex":"none";});
 });
 document.querySelectorAll(".homeFilters button").forEach(button=>button.addEventListener("click",()=>{
  document.querySelectorAll(".homeFilters button").forEach(b=>b.classList.toggle("active",b===button));
  activeHomeFilter=button.dataset.filter;
- $("homeGroup").style.display="none";
- $("chatsPanel").style.display=activeHomeFilter==="chats"?"block":"none";
- $("requestsPanel").style.display=activeHomeFilter==="requests"?"block":"none";
- $("peopleList").style.display=activeHomeFilter==="people"?"block":"none";
- $("chatStatus").textContent="";
+ window.$("homeGroup").style.display="none";
+ window.$("chatsPanel").style.display=activeHomeFilter==="chats"?"block":"none";
+ window.$("requestsPanel").style.display=activeHomeFilter==="requests"?"block":"none";
+ window.$("peopleList").style.display=activeHomeFilter==="people"?"block":"none";
+ window.$("chatStatus").textContent="";
 }));
-$("chatsPanel").style.display="block";$("requestsPanel").style.display="none";$("peopleList").style.display="none";
+window.$("chatsPanel").style.display="block";window.$("requestsPanel").style.display="none";window.$("peopleList").style.display="none";
 function setHomeTab(tab){
  const validTabs=["chats","contacts","calls","updates","tools"];
  if(!validTabs.includes(tab)) return;
  const panelIds=["chatsPanel","requestsPanel","peopleList","callsPanel","updatesPanel","toolsPanel","assistantPanel"];
- panelIds.forEach(id=>{const el=$(id);if(el){el.hidden=false;el.style.display="none";}});
+ panelIds.forEach(id=>{const el=window.$(id);if(el){el.hidden=false;el.style.display="none";}});
  const isChats=tab==="chats";
  const isContacts=tab==="contacts";
  const homeSearch=document.querySelector(".homeSearch"); if(homeSearch) homeSearch.style.display=(isChats||isContacts)?"block":"none";
- $("homeStatus").style.display=isChats?"block":"none";
+ window.$("homeStatus").style.display=isChats?"block":"none";
  document.querySelectorAll(".homeFilters").forEach(el=>el.style.display="none");
  if(isChats){
-  $("chatsPanel").style.display="block";$("requestsPanel").style.display="none";$("peopleList").style.display="none";
+  window.$("chatsPanel").style.display="block";window.$("requestsPanel").style.display="none";window.$("peopleList").style.display="none";
  }else if(isContacts){
-  $("requestsPanel").style.display="none";$("peopleList").style.display="block";
+  window.$("requestsPanel").style.display="none";window.$("peopleList").style.display="block";
   const filter=document.querySelector('.homeFilters button[data-filter="people"]');if(filter)filter.click();
  }else{
-  const panel=$(tab==="calls"?"callsPanel":tab==="updates"?"updatesPanel":"toolsPanel");
+  const panel=window.$(tab==="calls"?"callsPanel":tab==="updates"?"updatesPanel":"toolsPanel");
   if(panel){panel.hidden=false;panel.style.display="block";}
  }
  document.querySelectorAll(".homeBottom button").forEach(b=>{
@@ -2949,7 +2949,7 @@ document.querySelectorAll(".homeBottom button").forEach(button=>button.addEventL
 
 // Botón flotante de contactos: abre siempre el directorio completo y permite filtrar.
 (function setupUsersOverlay(){
- const overlay=$("usersOverlay"), mount=$("usersOverlayPeopleMount"), people=$("peopleList"), fab=$("openUsersFab"), search=$("usersOverlaySearch");
+ const overlay=window.$("usersOverlay"), mount=window.$("usersOverlayPeopleMount"), people=window.$("peopleList"), fab=window.$("openUsersFab"), search=window.$("usersOverlaySearch");
  if(!overlay||!mount||!people||!fab||!search)return;
  mount.appendChild(people);
  const resetRows=()=>people.querySelectorAll(".memberBtn").forEach(row=>row.style.display="");
@@ -2960,7 +2960,7 @@ document.querySelectorAll(".homeBottom button").forEach(button=>button.addEventL
   overlay.classList.add("open");overlay.setAttribute("aria-hidden","false");
   search.focus();
  });
- $("closeUsersOverlay").addEventListener("click",close);
+ window.$("closeUsersOverlay").addEventListener("click",close);
  search.addEventListener("input",event=>{
   const q=event.target.value.trim().toLocaleLowerCase();
   people.querySelectorAll(".memberBtn").forEach(row=>row.style.display=(!q||row.textContent.toLocaleLowerCase().includes(q))?"":"none");
@@ -2977,11 +2977,11 @@ document.querySelectorAll("[data-go-filter]").forEach(button=>button.addEventLis
 }));
 document.querySelectorAll("[data-tool-action]").forEach(button=>button.addEventListener("click",()=>{
  const action=button.dataset.toolAction;
- if(action==="settings")$("homeMenu").click();
- if(action==="assistant"){setHomeTab("tools");$("toolsPanel").style.display="none";$("assistantPanel").hidden=false;$("assistantPanel").style.display="block";$("assistantPanel").scrollIntoView({behavior:"smooth",block:"start"});}
- if(action==="back-tools"){setHomeTab("tools");$("toolsPanel").scrollIntoView({behavior:"smooth",block:"start"});}
- if(action==="invite"){$("inviteMember").click();window.scrollTo({top:0,behavior:"smooth"});}
- if(action==="profile")$("profileButton").click();
+ if(action==="settings")window.$("homeMenu").click();
+ if(action==="assistant"){setHomeTab("tools");window.$("toolsPanel").style.display="none";window.$("assistantPanel").hidden=false;window.$("assistantPanel").style.display="block";window.$("assistantPanel").scrollIntoView({behavior:"smooth",block:"start"});}
+ if(action==="back-tools"){setHomeTab("tools");window.$("toolsPanel").scrollIntoView({behavior:"smooth",block:"start"});}
+ if(action==="invite"){window.$("inviteMember").click();window.scrollTo({top:0,behavior:"smooth"});}
+ if(action==="profile")window.$("profileButton").click();
  if(action==="top")window.scrollTo({top:0,behavior:"smooth"});
 }));
 
@@ -2992,7 +2992,7 @@ const KLK_ASSISTANT_URL = window.KLK_SUPABASE_URL + "/functions/v1/klk-assistant
 let klkAiHistory = [];
 let klkLastDiagnostics = null;
 function klkAssistantBubble(role, content) {
- const box=$("assistantMessages");
+ const box=window.$("assistantMessages");
  if(!box)return;
  const item=document.createElement("div");
  item.className="aiBubble "+(role==="user"?"user":"assistant");
@@ -3046,22 +3046,22 @@ async function klkRunSafeDiagnostics() {
  klkLastDiagnostics={checks,repairs,checkedAt:new Date().toISOString()};
  return klkLastDiagnostics;
 }
-$("assistantCheck").addEventListener("click",async()=>{
- $("assistantCheck").disabled=true;
- $("assistantStatus").textContent="Comprobando el servicio seguro...";
+window.$("assistantCheck").addEventListener("click",async()=>{
+ window.$("assistantCheck").disabled=true;
+ window.$("assistantStatus").textContent="Comprobando el servicio seguro...";
  try {
   const result=await klkAssistantRequest({action:"health"});
-  $("assistantStatus").textContent=result.aiConfigured
+  window.$("assistantStatus").textContent=result.aiConfigured
    ?"IA conectada mediante "+(result.provider||"el proveedor configurado")+". Modelo: "+result.model
    :(result.message||"Falta configurar la clave del proveedor de IA en los secretos de Supabase.");
  } catch(error) {
-  $("assistantStatus").textContent=error.message;
- } finally {$("assistantCheck").disabled=false;}
+  window.$("assistantStatus").textContent=error.message;
+ } finally {window.$("assistantCheck").disabled=false;}
 });
-$("assistantDiagnose").addEventListener("click",async()=>{
- const button=$("assistantDiagnose");
+window.$("assistantDiagnose").addEventListener("click",async()=>{
+ const button=window.$("assistantDiagnose");
  button.disabled=true;
- $("assistantStatus").textContent="Revisando conexión, sesión y actualización de klk...";
+ window.$("assistantStatus").textContent="Revisando conexión, sesión y actualización de klk...";
  try {
   klkLastDiagnostics=await klkRunSafeDiagnostics();
   const result=await klkAssistantRequest({action:"health"});
@@ -3076,39 +3076,39 @@ $("assistantDiagnose").addEventListener("click",async()=>{
   ].join("\n");
   klkAssistantBubble("assistant","Resultado de la revisión:\n"+summary);
   if(result.aiConfigured) {
-   $("assistantStatus").textContent="Revisión terminada. Consultando a la IA...";
+   window.$("assistantStatus").textContent="Revisión terminada. Consultando a la IA...";
    const ai=await klkAssistantRequest({action:"chat",message:"Analiza este diagnóstico y dime qué problemas encontraste y qué puedo hacer ahora.",diagnostics:klkLastDiagnostics});
    klkAssistantBubble("assistant",ai.answer);
-   $("assistantStatus").textContent="Revisión terminada.";
+   window.$("assistantStatus").textContent="Revisión terminada.";
   } else {
-   $("assistantStatus").textContent="Revisión terminada. Para activar las respuestas de IA falta configurar OPENAI_API_KEY en Supabase.";
+   window.$("assistantStatus").textContent="Revisión terminada. Para activar las respuestas de IA falta configurar OPENAI_API_KEY en Supabase.";
   }
  } catch(error) {
-  $("assistantStatus").textContent=error.message;
+  window.$("assistantStatus").textContent=error.message;
  } finally {button.disabled=false;}
 });
-$("assistantSend").addEventListener("click",async()=>{
- const question=$("assistantQuestion").value.trim();
+window.$("assistantSend").addEventListener("click",async()=>{
+ const question=window.$("assistantQuestion").value.trim();
  if(!question)return;
- const button=$("assistantSend");
+ const button=window.$("assistantSend");
  button.disabled=true;
- $("assistantQuestion").disabled=true;
+ window.$("assistantQuestion").disabled=true;
  klkAssistantBubble("user",question);
- $("assistantQuestion").value="";
- $("assistantStatus").textContent="El asistente está preparando la respuesta...";
+ window.$("assistantQuestion").value="";
+ window.$("assistantStatus").textContent="El asistente está preparando la respuesta...";
  try {
   const result=await klkAssistantRequest({action:"chat",message:question,history:klkAiHistory,diagnostics:klkLastDiagnostics});
   klkAiHistory.push({role:"user",content:question},{role:"assistant",content:result.answer});
   klkAiHistory=klkAiHistory.slice(-8);
   klkAssistantBubble("assistant",result.answer);
-  $("assistantStatus").textContent="Respuesta recibida.";
+  window.$("assistantStatus").textContent="Respuesta recibida.";
  } catch(error) {
   klkAssistantBubble("assistant",error.message);
-  $("assistantStatus").textContent=error.code==="AI_NOT_CONFIGURED"?"Falta configurar la clave segura de OpenAI en Supabase.":error.message;
- } finally {button.disabled=false;$("assistantQuestion").disabled=false;$("assistantQuestion").focus();}
+  window.$("assistantStatus").textContent=error.code==="AI_NOT_CONFIGURED"?"Falta configurar la clave segura de OpenAI en Supabase.":error.message;
+ } finally {button.disabled=false;window.$("assistantQuestion").disabled=false;window.$("assistantQuestion").focus();}
 });
-$("assistantQuestion").addEventListener("keydown",event=>{
- if(event.key==="Enter"&&!event.shiftKey){event.preventDefault();$("assistantSend").click();}
+window.$("assistantQuestion").addEventListener("keydown",event=>{
+ if(event.key==="Enter"&&!event.shiftKey){event.preventDefault();window.$("assistantSend").click();}
 });
 
 
@@ -3152,7 +3152,7 @@ $("assistantQuestion").addEventListener("keydown",event=>{
  function syncActions(){const n=selected.size;["roomMediaForward","roomMediaDownload","roomMediaDelete"].forEach(id=>$id(id).disabled=!n);}
  function close(){gallery.hidden=true;selected.clear();syncActions();}
  async function open(){
-  if(!activeConversationId||!auth||!auth.currentUser){$("chatStatus").textContent="Abre una conversación para ver sus archivos.";return;}
+  if(!activeConversationId||!auth||!auth.currentUser){window.$("chatStatus").textContent="Abre una conversación para ver sus archivos.";return;}
   gallery.hidden=false;grid.textContent="Cargando fotos y videos...";status.textContent="";selected.clear();syncActions();loading=true;
   try{
    const snap=await db.collection("conversations").doc(activeConversationId).collection("messages").orderBy("createdAt","desc").limit(200).get();
