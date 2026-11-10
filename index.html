@@ -1113,6 +1113,7 @@ html[data-theme="dark"] #chat.room-open .attachmentGrid button:nth-child(5) .att
 <p id="recordStatus" class="hint" role="status" aria-live="polite"></p>
 <section id="settingsPanel" aria-label="Configuración de klk">
  <div class="settingsHeader"><div><h2>Configuración</h2><p>Todo organizado para que encuentres rápido lo que necesitas.</p></div><button id="closeSettings" class="settingsClose" type="button" aria-label="Cerrar ajustes">×</button></div>
+ <button id="settingsDisappearingToggle" type="button" class="secondary" style="width:100%;margin:8px 0 14px">◷ Configurar mensajes temporales de este chat</button>
  <details class="settingsGroup"><summary><span class="settingsGroupIcon">🎨</span><span><strong>Apariencia</strong><small>Tema, colores, texto y fondos</small></span><b>⌄</b></summary><div class="settingsGroupBody"><div class="settingRow"><span>Tamaño del texto</span><select id="settingTextSize"><option value="14">Pequeño</option><option value="15">Normal</option><option value="17">Grande</option><option value="19">Muy grande</option><option value="21">Extra grande</option></select></div>
  <div class="settingRow"><span>Tema de la aplicación</span><select id="settingTheme"><option value="light">Claro</option><option value="dark">Oscuro</option><option value="system">Automático del teléfono</option></select></div>
  <div class="settingRow"><span>Color principal</span><select id="settingAccent"><option value="teal">Verde</option><option value="blue">Azul</option><option value="purple">Morado</option><option value="rose">Rosa</option><option value="orange">Naranja</option></select></div>
@@ -2467,6 +2468,7 @@ if (window.matchMedia("(display-mode: standalone)").matches || window.navigator.
  [["settingSound","sound"],["settingVibration","vibration"],["settingPreview","preview"],["settingLastSeen","lastSeen"],["settingReadReceipts","readReceipts"],["settingAutoDownload","autoDownload"],["settingHighContrast","highContrast"],["settingReduceMotion","reduceMotion"]].forEach(([id,key])=>$(id).addEventListener("change",()=>{prefs[key]=$(id).checked;save();}));
  [["settingTextSize","textSize"],["settingTheme","theme"],["settingAccent","accent"],["settingDensity","density"],["settingWallpaper","wallpaper"],["settingBubbleStyle","bubbleStyle"],["settingOutgoingColor","outgoingColor"],["settingMessageTone","messageTone"],["settingCallTone","callTone"]].forEach(([id,key])=>$(id).addEventListener("change",e=>{prefs[key]=e.target.value;save();}));
   $("closeSettings").addEventListener("click",()=>{$("settingsPanel").style.display="none";});
+  $("settingsDisappearingToggle").addEventListener("click",()=>{if(!activeConversationId){$("settingsStatus").textContent="Abre primero una conversación para configurar mensajes temporales.";return;} $("settingsPanel").style.display="none";const panel=$("disappearingPanel");panel.hidden=false;watchDisappearingSettings();});
  $("resetSettings").addEventListener("click",()=>{prefs={...defaults};save();$("settingsStatus").textContent="Se restauró la apariencia original de klk.";});
  $("exportSettings").addEventListener("click",()=>{
   try{
