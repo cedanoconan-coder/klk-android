@@ -1,7 +1,11 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    function signedIn() { return request.auth != null; }
+    function signedIn() {
+      return request.auth != null
+        && (!exists(/databases/$(database)/documents/sessionRevocations/$(request.auth.uid))
+          || request.auth.token.auth_time > get(/databases/$(database)/documents/sessionRevocations/$(request.auth.uid)).data.revokedAt);
+    }
     function canStartConversation(members) {
       let otherUid = members[0] == request.auth.uid ? members[1] : members[0];
       return exists(/databases/$(database)/documents/publicProfiles/$(otherUid))
@@ -349,6 +353,13 @@ service cloud.firestore {
           && request.resource.data.candidate.size() <= 2048;
         allow update, delete: if false;
       }
+    }
+
+    // El propietario puede consultar su marca de revocación para que los servicios
+    // que validan tokens de Firebase puedan rechazar sesiones antiguas. Nadie puede escribirla.
+    match /sessionRevocations/{userId} {
+      allow get: if request.auth != null && request.auth.uid == userId;
+      allow list, create, update, delete: if false;
     }
 
     // The legacy global /messages collection is intentionally inaccessible.

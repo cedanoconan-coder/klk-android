@@ -13,8 +13,13 @@
       "storage.rules",
       ".firebaserc",
       "**/.*",
-      "**/node_modules/**"
+      "**/node_modules/**",
+      "functions/**"
     ],
     "cleanUrls": false
+  },
+  "functions": {
+    "source": "functions",
+    "codebase": "default"
   }
 }

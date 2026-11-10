@@ -938,7 +938,7 @@ html[data-theme="dark"] #chat.room-open .attachmentGrid button:nth-child(5) .att
   </div></details>
 
 
-  <details class="profileSubmenu"><summary><span>🔐 Seguridad</span><b>⌄</b></summary><div class="profileSubmenuBody"><p class="profileSubmenuHint">Confirma tu correo y protege el acceso. La autenticación multifactor y el cierre remoto de sesiones aún requieren configuración segura del servidor.</p><button id="profileVerifyEmail" class="profileAction" type="button"><span>Verificar correo electrónico<small id="profileVerifyHint">Confirma que controlas el correo de esta cuenta</small></span><b>›</b></button><p id="profileVerifyStatus" class="hint" role="status" aria-live="polite"></p><button id="profilePassword" class="profileAction" type="button"><span>Cambiar contraseña<small>Recibirás un enlace seguro en tu correo</small></span><b>›</b></button></div></details>
+  <details class="profileSubmenu"><summary><span>🔐 Seguridad</span><b>⌄</b></summary><div class="profileSubmenuBody"><p class="profileSubmenuHint">Confirma tu correo, activa el código TOTP de una app autenticadora y administra el cierre de sesiones.</p><button id="profileVerifyEmail" class="profileAction" type="button"><span>Verificar correo electrónico<small id="profileVerifyHint">Confirma que controlas el correo de esta cuenta</small></span><b>›</b></button><p id="profileVerifyStatus" class="hint" role="status" aria-live="polite"></p><button id="profilePassword" class="profileAction" type="button"><span>Cambiar contraseña<small>Recibirás un enlace seguro en tu correo</small></span><b>›</b></button><button id="profileMfaToggle" class="profileAction" type="button"><span>Verificación en dos pasos (TOTP)<small id="profileMfaHint">Configura una app autenticadora</small></span><b>›</b></button><p id="profileMfaStatus" class="hint" role="status" aria-live="polite"></p><div id="mfaEnrollmentPanel" hidden><p>Escanea este código QR con Google Authenticator, Microsoft Authenticator o una app compatible. Si no puedes escanearlo, copia la clave secreta.</p><div id="mfaQrCode"></div><p>Clave manual: <code id="mfaSecret"></code></p><label for="mfaOtp">Código de 6 dígitos</label><input id="mfaOtp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000"><button id="mfaConfirmEnrollment" class="secondary" type="button">Confirmar y activar</button><button id="mfaCancelEnrollment" class="secondary" type="button">Cancelar</button></div><button id="profileRevokeSessions" class="profileAction" type="button"><span>Cerrar todas las sesiones<small>Desconecta todos los dispositivos, incluido este</small></span><b>›</b></button><p id="profileSessionStatus" class="hint" role="status" aria-live="polite"></p></div></details>
   <details class="profileSubmenu"><summary><span>🛡️ Privacidad</span><b>⌄</b></summary><div class="profileSubmenuBody"><button id="profilePrivacyInfo" class="profileAction" type="button"><span>Ver información de privacidad<small>Consulta los controles disponibles</small></span><b>›</b></button><p id="profilePrivacyStatus" class="hint" hidden>Los controles avanzados de privacidad todavía no están activos en klk; no mostraremos opciones que no se apliquen realmente.</p></div></details>
   <details class="profileSubmenu"><summary><span>🔔 Notificaciones y apariencia</span><b>⌄</b></summary><div class="profileSubmenuBody"><p class="profileSubmenuHint">Personaliza sonidos, vibración, tema, tamaño y fondo.</p><button id="profileOpenSettings" class="profileAction" type="button"><span>Abrir preferencias<small>Ver y modificar los ajustes de klk</small></span><b>›</b></button></div></details>
   <details class="profileSubmenu"><summary><span>↪️ Sesión</span><b>⌄</b></summary><div class="profileSubmenuBody"><button id="profileLogout" class="profileAction" type="button"><span>Cerrar sesión<small>Salir de esta cuenta en este teléfono</small></span><b>›</b></button></div></details>
@@ -1225,7 +1225,7 @@ $("authForm").addEventListener("submit", async event => {
  event.preventDefault(); $("status").textContent = "";
  if (!auth) { $("status").textContent = "Firebase no está disponible. " + (firebaseInitError && firebaseInitError.message ? firebaseInitError.message : "Comprueba tu conexión a Internet y vuelve a abrir klk."); return; }
  setBusy(true);
- try { await authPersistenceReady; await auth.signInWithEmailAndPassword($("email").value.trim(), $("password").value); }
+ try { await authPersistenceReady; if (typeof window.klkSignInWithMfa !== "function") throw new Error("El módulo de inicio seguro todavía está cargando. Espera un momento y vuelve a intentarlo."); await window.klkSignInWithMfa($("email").value.trim(), $("password").value); }
  catch(error) { showError("status", error); }
  finally { setBusy(false); }
 });
@@ -2944,4 +2944,106 @@ $("assistantQuestion").addEventListener("keydown",event=>{
  document.addEventListener("gestureend",stopZoomGesture,{passive:false});
 })();
 </script>
+
+<script type="module">
+import { getApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+import {
+  getAuth, signInWithEmailAndPassword, getMultiFactorResolver,
+  TotpMultiFactorGenerator, multiFactor, EmailAuthProvider,
+  reauthenticateWithCredential
+} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+
+const mfaAuth = getAuth(getApp());
+const mfaEl = id => document.getElementById(id);
+const mfaStatus = message => { const el=mfaEl("profileMfaStatus"); if(el) el.textContent=message; };
+
+window.klkSignInWithMfa = async (email, password) => {
+  try { return await signInWithEmailAndPassword(mfaAuth, email, password); }
+  catch (error) {
+    if (error?.code !== "auth/multi-factor-auth-required") throw error;
+    const resolver = getMultiFactorResolver(mfaAuth, error);
+    const hint = resolver.hints.find(item => item.factorId === TotpMultiFactorGenerator.FACTOR_ID);
+    if (!hint) throw new Error("Esta cuenta requiere un segundo factor que esta versión de klk no admite. Contacta con soporte.");
+    const code = window.prompt("Abre tu app autenticadora e introduce el código de 6 dígitos:");
+    if (!code || !/^\d{6}$/.test(code.trim())) throw new Error("Código de verificación cancelado o no válido.");
+    return await resolver.resolveSignIn(TotpMultiFactorGenerator.assertionForSignIn(hint.uid, code.trim()));
+  }
+};
+
+async function refreshMfaUi(user) {
+  const button=mfaEl("profileMfaToggle"), hint=mfaEl("profileMfaHint");
+  if(!button || !hint) return;
+  if(!user) { button.disabled=true; hint.textContent="Inicia sesión para configurar"; return; }
+  button.disabled=false;
+  try {
+    await user.reload();
+    const factor=multiFactor(mfaAuth.currentUser || user).enrolledFactors.find(item=>item.factorId===TotpMultiFactorGenerator.FACTOR_ID);
+    hint.textContent=factor ? "Activa · toca para administrar" : "Configura una app autenticadora";
+    button.querySelector("span").firstChild.textContent=factor ? "Administrar verificación en dos pasos (TOTP)" : "Verificación en dos pasos (TOTP)";
+  } catch(error) { hint.textContent="No se pudo consultar el estado de MFA."; }
+}
+
+mfaEl("profileMfaToggle")?.addEventListener("click", async () => {
+  const user=mfaAuth.currentUser;
+  if(!user) { mfaStatus("Inicia sesión para configurar la verificación en dos pasos."); return; }
+  const button=mfaEl("profileMfaToggle"); button.disabled=true;
+  try {
+    await user.reload();
+    if(!user.emailVerified) throw new Error("Primero verifica tu correo electrónico. Firebase exige un correo verificado para activar TOTP.");
+    const password=window.prompt("Por seguridad, vuelve a escribir tu contraseña para continuar:");
+    if(!password) return;
+    await reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email,password));
+    const factor=multiFactor(user).enrolledFactors.find(item=>item.factorId===TotpMultiFactorGenerator.FACTOR_ID);
+    if(factor) {
+      if(!window.confirm("¿Quieres desactivar la verificación en dos pasos de esta cuenta?")) return;
+      await multiFactor(user).unenroll(factor.uid);
+      mfaStatus("Verificación en dos pasos desactivada.");
+      await refreshMfaUi(user); return;
+    }
+    const session=await multiFactor(user).getSession();
+    const secret=await TotpMultiFactorGenerator.generateSecret(session);
+    const panel=mfaEl("mfaEnrollmentPanel"), qr=mfaEl("mfaQrCode");
+    panel.hidden=false; qr.replaceChildren();
+    mfaEl("mfaSecret").textContent=secret.secretKey;
+    if(typeof window.QRCode==="function") new window.QRCode(qr,{text:secret.generateQrCodeUrl(user.email,"klk"),width:190,height:190});
+    else qr.textContent="No se pudo cargar el generador de QR. Usa la clave manual.";
+    mfaStatus("Añade klk a tu app autenticadora y escribe el código que aparece.");
+    mfaEl("mfaOtp").focus();
+    mfaEl("mfaConfirmEnrollment").onclick=async()=>{
+      const code=mfaEl("mfaOtp").value.trim();
+      if(!/^\d{6}$/.test(code)) { mfaStatus("Escribe el código actual de 6 dígitos."); return; }
+      const confirmButton=mfaEl("mfaConfirmEnrollment"); confirmButton.disabled=true;
+      try {
+        await multiFactor(mfaAuth.currentUser).enroll(TotpMultiFactorGenerator.assertionForEnrollment(secret,code),"klk · app autenticadora");
+        panel.hidden=true; mfaEl("mfaOtp").value="";
+        mfaStatus("Verificación en dos pasos activada correctamente.");
+        await refreshMfaUi(mfaAuth.currentUser);
+      } catch(error) { mfaStatus(error?.code==="auth/invalid-verification-code" ? "El código no es correcto. Comprueba la hora de tu teléfono e inténtalo otra vez." : (error.message || "No se pudo activar TOTP.")); }
+      finally { confirmButton.disabled=false; }
+    };
+  } catch(error) { mfaStatus(error.message || "No se pudo cambiar la configuración de MFA."); }
+  finally { button.disabled=false; }
+});
+mfaEl("mfaCancelEnrollment")?.addEventListener("click",()=>{mfaEl("mfaEnrollmentPanel").hidden=true;mfaEl("mfaOtp").value="";mfaStatus("Configuración cancelada.");});
+
+mfaEl("profileRevokeSessions")?.addEventListener("click",async()=>{
+  const user=mfaAuth.currentUser, status=mfaEl("profileSessionStatus");
+  if(!user) { status.textContent="Inicia sesión para cerrar tus sesiones."; return; }
+  if(!window.confirm("Se cerrarán todas las sesiones de esta cuenta en todos los dispositivos, incluido este teléfono. Tendrás que iniciar sesión otra vez. ¿Continuar?")) return;
+  const button=mfaEl("profileRevokeSessions"); button.disabled=true; status.textContent="Cerrando las sesiones de todos los dispositivos...";
+  try {
+    const idToken=await user.getIdToken(true);
+    const response=await fetch("https://us-central1-klk-familia.cloudfunctions.net/revokeAllSessions",{
+      method:"POST",headers:{"Authorization":"Bearer "+idToken,"Content-Type":"application/json"},body:"{}"
+    });
+    const result=await response.json().catch(()=>({}));
+    if(!response.ok) throw new Error(result.error || "El servidor no pudo revocar las sesiones.");
+    status.textContent="Sesiones revocadas. Volviendo al inicio de sesión...";
+    await mfaAuth.signOut();
+  } catch(error) { status.textContent=error.message || "No se pudieron cerrar las sesiones."; }
+  finally { button.disabled=false; }
+});
+mfaAuth.onAuthStateChanged(user=>{refreshMfaUi(user);});
+</script>
+
 </body></html>

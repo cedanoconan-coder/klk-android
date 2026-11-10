@@ -274,3 +274,30 @@ test("permite crear una llamada solo dentro de una conversación privada", async
     createdAt:serverTimestamp(),updatedAt:serverTimestamp()
   }));
 });
+
+
+test("una sesión anterior a la revocación no puede leer datos privados", async () => {
+  await testEnv.withSecurityRulesDisabled(async context => {
+    await setDoc(doc(context.firestore(), "users/member-1"), {
+      uid:"member-1", email:"member@example.com", displayName:"Miembro"
+    });
+    await setDoc(doc(context.firestore(), "sessionRevocations/member-1"), {revokedAt:200});
+  });
+  const stale = testEnv.authenticatedContext("member-1", {auth_time:199}).firestore();
+  const sameSecond = testEnv.authenticatedContext("member-1", {auth_time:200}).firestore();
+  const fresh = testEnv.authenticatedContext("member-1", {auth_time:201}).firestore();
+  await assertFails(getDoc(doc(stale, "users/member-1")));
+  await assertFails(getDoc(doc(sameSecond, "users/member-1")));
+  await assertSucceeds(getDoc(doc(fresh, "users/member-1")));
+});
+
+test("el propietario puede leer su marca de revocación, pero no modificarla", async () => {
+  await testEnv.withSecurityRulesDisabled(async context => {
+    await setDoc(doc(context.firestore(), "sessionRevocations/member-1"), {revokedAt:200});
+  });
+  const owner=testEnv.authenticatedContext("member-1",{auth_time:201}).firestore();
+  const outsider=testEnv.authenticatedContext("member-2",{auth_time:201}).firestore();
+  await assertSucceeds(getDoc(doc(owner,"sessionRevocations/member-1")));
+  await assertFails(getDoc(doc(outsider,"sessionRevocations/member-1")));
+  await assertFails(setDoc(doc(owner,"sessionRevocations/member-1"),{revokedAt:1}));
+});

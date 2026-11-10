@@ -1,0 +1,72 @@
+name: Validar seguridad de klk
+on:
+  push:
+    branches: ["security/mfa-session-controls"]
+  pull_request:
+    branches: ["**"]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  security-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Instalar dependencias del proyecto
+        run: npm install --no-audit --no-fund
+      - name: Instalar dependencias de Cloud Functions
+        run: npm install --prefix functions --no-audit --no-fund
+      - name: Probar guard de revocación
+        run: npm test --prefix functions
+      - name: Probar reglas Firestore
+        run: npm run test:rules
+      - name: Comprobar sintaxis de scripts y funciones
+        run: |
+          node --check functions/index.js
+          node --check functions/session-guard.js
+          node --check functions/scripts/enable-totp.js
+          node --check functions/test/session-guard.test.js
+          python3 - <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+
+          class Scripts(HTMLParser):
+              def __init__(self):
+                  super().__init__()
+                  self.active = False
+                  self.module = False
+                  self.parts = []
+                  self.items = []
+
+              def handle_starttag(self, tag, attrs):
+                  if tag == "script" and not any(k.lower() == "src" for k, _ in attrs):
+                      self.active = True
+                      self.module = any(k.lower() == "type" and v == "module" for k, v in attrs)
+                      self.parts = []
+
+              def handle_data(self, data):
+                  if self.active:
+                      self.parts.append(data)
+
+              def handle_endtag(self, tag):
+                  if tag == "script" and self.active:
+                      self.items.append(("".join(self.parts), self.module))
+                      self.active = False
+
+          parser = Scripts()
+          parser.feed(Path("index.html").read_text(encoding="utf-8"))
+          for number, (source, module) in enumerate(parser.items, 1):
+              suffix = "mjs" if module else "js"
+              Path(f"/tmp/klk-{number}.{suffix}").write_text(source, encoding="utf-8")
+          print(f"Scripts inline comprobables: {len(parser.items)}")
+          PY
+          for script in /tmp/klk-*.js /tmp/klk-*.mjs; do
+            [ -f "$script" ] && node --check "$script"
+          done
