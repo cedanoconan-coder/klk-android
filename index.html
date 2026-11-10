@@ -1528,6 +1528,9 @@ try {
   return false;
  });
 } catch (error) { firebaseInitError = error; $("status").textContent = "No se pudo iniciar Firebase. Comprueba la conexión a Internet y vuelve a abrir klk. Detalle: " + error.message; }
+// Compartir Firebase con los módulos externos de KLK.
+window.auth = auth || null;
+window.db = db || null;
 $("authForm").addEventListener("submit", async event => {
  event.preventDefault(); $("status").textContent = "";
  if (!auth) { $("status").textContent = "Firebase no está disponible. " + (firebaseInitError && firebaseInitError.message ? firebaseInitError.message : "Comprueba tu conexión a Internet y vuelve a abrir klk."); return; }
