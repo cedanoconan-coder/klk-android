@@ -19,6 +19,5 @@ export function isOwnedLegacyMediaPath(path, uid) {
 export function isStatusMediaPathForOwner(path, ownerUid) {
   if (typeof path !== "string" || typeof ownerUid !== "string" ||
       !/^[A-Za-z0-9_-]{1,128}$/.test(ownerUid)) return false;
-  return new RegExp("^statuses/" + ownerUid.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\\\$&") +
-    "/[A-Za-z0-9-]{16,64}\\\\.[a-z0-9]{1,8}$", "i").test(path);
+  return new RegExp("^statuses/" + ownerUid + "/[A-Za-z0-9-]{16,64}\\.[a-z0-9]{1,8}$", "i").test(path);
 }
