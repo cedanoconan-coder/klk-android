@@ -2426,7 +2426,7 @@ let voiceHoldActive = false;
 let voiceStartPending = false;
 let voiceTimerInterval = null;
 let voiceFeedbackAudioContext=null;
-async async function playVoiceFeedbackSound(kind){
+async function playVoiceFeedbackSound(kind){
  try{
   const AudioContextClass=window.AudioContext||window.webkitAudioContext;
   if(!AudioContextClass)return;
@@ -2613,7 +2613,7 @@ $("sendAudio").onclick = async () => {
 </script>
 
 <script src="./chat-camera.js"></script>
-<script src="./calls.js?v=86"></script>
+<script src="./calls.js?v=87"></script>
 <script>
 // Configuración compartida explícitamente entre scripts independientes.
 window.KLK_SUPABASE_URL = "https://nrnqzzhhvjramxkahkqs.supabase.co";
