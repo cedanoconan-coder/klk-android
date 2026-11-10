@@ -1,5 +1,7 @@
 name: Validar seguridad de klk
 on:
+  push:
+    branches: ["security/mfa-session-controls"]
   pull_request:
     branches: ["**"]
   workflow_dispatch:
