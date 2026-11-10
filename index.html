@@ -1241,6 +1241,8 @@ async function sendKlkPushForMessage(conversationId, messageId) {
 }
 let auth, db, firebaseInitError = null, unsubscribe = null, sending = false, mediaRecorder = null, audioStream = null, audioBlob = null, audioStartedAt = 0;
 let authPersistenceReady = Promise.resolve(), firestorePersistenceReady = Promise.resolve(true);
+// Inicializar antes de cualquier apertura de chat que pueda llamar loadMessages().
+let messagesLoadingTimeout = null, disappearingExpiryTimer = null;
 let activeConversationId = null, activeConversationName = null, activeConversationPeerUid = null, peopleUnsubscribe = null, incomingRequestsUnsubscribe = null, outgoingRequestsUnsubscribe = null, conversationListUnsubscribe = null;
 const incomingRequests = new Map(), outgoingRequests = new Map(), peopleCache = new Map(), conversationSubscriptions = new Map(), conversationCache = new Map();
 const blockedUsers = new Set();
@@ -1879,7 +1881,6 @@ function formatMessageTime(value) {
  if (Number.isNaN(date.getTime())) return "";
  return new Intl.DateTimeFormat("es-DO",{hour:"2-digit",minute:"2-digit"}).format(date);
 }
-let messagesLoadingTimeout = null, disappearingExpiryTimer = null;
 function loadMessages() {
  if (messagesLoadingTimeout) clearTimeout(messagesLoadingTimeout);
  window.klkNotificationsReady = false;
