@@ -2615,6 +2615,7 @@ window.KLK_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_mV8KjGyjKOd6rDLTtNUBnQ_dvU
 if ("serviceWorker" in navigator) window.addEventListener("load", async () => { try { const registration = await navigator.serviceWorker.register("./sw.js", {updateViaCache:"none"}); await registration.update(); } catch(error) { console.error("Service worker:", error); } });
 </script>
 <script>
+const $ = id => document.getElementById(id);
 let pendingInstall = null;
 window.addEventListener("beforeinstallprompt", event => {
  event.preventDefault();
