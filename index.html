@@ -679,6 +679,9 @@ main,#chat,.homeView{overscroll-behavior-y:contain}
 #chat.room-open .messageInputShell #takePhoto svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 #chat.room-open .messageInputShell #takePhoto:active{background:#e6f3ee;color:#087e70}
 #chat.room-open .messageInputShell #takePhoto:disabled{opacity:.45}
+#chat.room-open .messageInputShell #pickPhoto{display:grid;place-items:center;flex:0 0 34px;width:34px;min-width:34px;height:36px;margin:0;padding:0;border:0;border-radius:50%;background:transparent!important;color:#66736f!important;font-size:20px}
+#chat.room-open .messageInputShell #pickPhoto:active{background:#e6f3ee!important;color:#087e70!important}
+#chat.room-open .messageInputShell #pickPhoto[aria-expanded="true"]{color:#087e70!important}
 </style>
 <style>
 /* Perfil compacto y selector de foto mediante cámara */
@@ -1044,11 +1047,11 @@ html[data-theme="dark"] #chat.room-open .attachmentGrid button:nth-child(5) .att
  <button id="stickersToggle" class="stickersToggle" type="button" aria-label="Abrir emojis y stickers" aria-expanded="false" title="Emojis y stickers">😊</button>
  <div class="messageInputShell">
   <input id="message" maxlength="2000" placeholder="Mensaje" autocomplete="off" aria-label="Escribe un mensaje">
+  <button id="pickPhoto" class="iconBtn" type="button" aria-label="Abrir opciones para adjuntar" aria-expanded="false" title="Adjuntar">📎</button>
   <button id="takePhoto" type="button" aria-label="Abrir cámara para tomar una foto o grabar un video" title="Cámara">
    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 7.5h3l1.7-2.3h6.6L17 7.5h3a1.5 1.5 0 0 1 1.5 1.5v9A1.5 1.5 0 0 1 20 19.5H4A1.5 1.5 0 0 1 2.5 18V9A1.5 1.5 0 0 1 4 7.5Z"/><circle cx="12" cy="13.2" r="3.4"/></svg>
   </button>
  </div>
- <button id="pickPhoto" class="iconBtn" type="button" aria-label="Abrir opciones para adjuntar" aria-expanded="false" title="Adjuntar">📎</button>
  <button id="send" type="button" aria-label="Enviar mensaje" title="Enviar"><svg class="sendGlyph" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3.4 20.1 21 12 3.4 3.9l.1 6.3 11.1 1.8-11.1 1.8-.1 6.3Z" fill="currentColor" stroke="currentColor" stroke-linejoin="round" stroke-width="1.1"/></svg></button>
  <span id="voiceTimer" class="voiceTimer" aria-live="off" hidden>00:00</span>
  <button id="recordAudio" type="button" aria-label="Mantén presionado para grabar una nota de voz" title="Mantén presionado para grabar">🎙</button>
