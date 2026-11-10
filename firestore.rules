@@ -31,11 +31,16 @@ service cloud.firestore {
         && !exists(/databases/$(database)/documents/userBlocks/$(request.auth.uid)/blocked/$(otherUid))
         && !exists(/databases/$(database)/documents/userBlocks/$(otherUid)/blocked/$(request.auth.uid));
     }
-    function isConversationMemberData(members) {
+    // Para listar el índice de chats solo se comprueba pertenencia. Esta consulta
+    // devuelve metadatos mínimos; los bloqueos se aplican al abrir el chat y leer mensajes.
+    function isConversationParticipantData(members) {
       return signedIn()
         && members is list
         && members.size() == 2
-        && request.auth.uid in members
+        && request.auth.uid in members;
+    }
+    function isConversationMemberData(members) {
+      return isConversationParticipantData(members)
         && !exists(/databases/$(database)/documents/userBlocks/$(request.auth.uid)/blocked/$(members[0] == request.auth.uid ? members[1] : members[0]))
         && !exists(/databases/$(database)/documents/userBlocks/$(members[0] == request.auth.uid ? members[1] : members[0])/blocked/$(request.auth.uid));
     }
@@ -190,7 +195,7 @@ service cloud.firestore {
         || (signedIn() && !exists(/databases/$(database)/documents/conversations/$(conversationId)));
       // La consulta debe incluir array-contains con el UID autenticado.
       // Así Firestore puede demostrar que cada documento devuelto pertenece al usuario.
-      allow list: if isConversationMemberData(resource.data.members);
+      allow list: if isConversationParticipantData(resource.data.members);
       allow create: if signedIn()
         && request.resource.data.keys().hasOnly(['members','createdAt'])
         && request.resource.data.keys().hasAll(['members','createdAt'])
