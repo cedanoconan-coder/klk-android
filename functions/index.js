@@ -14,7 +14,7 @@ const allowedOrigins = [
 exports.revokeAllSessions = onRequest({region:"us-central1",cors:allowedOrigins,maxInstances:10,timeoutSeconds:30},async(req,res)=>{
   res.set("Cache-Control","no-store");
   if(req.method!=="POST"){res.status(405).json({error:"Método no permitido."});return;}
-  const match=(req.get("authorization")||"").match(/^Bearer\\s+(.+)$/i);
+  const match=(req.get("authorization")||"").match(/^Bearer\s+(.+)$/i);
   if(!match){res.status(401).json({error:"Inicia sesión para continuar."});return;}
   try{
     const auth=getAuth(), decoded=await auth.verifyIdToken(match[1]);
