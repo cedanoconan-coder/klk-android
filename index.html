@@ -2652,7 +2652,7 @@ $("assistantQuestion").addEventListener("keydown",event=>{
  const bar=document.createElement("div");
  bar.className="klkMessageSelectionBar";
  bar.hidden=true;
- bar.innerHTML='<span class="klkMessageSelectionCount" aria-live="polite">0 seleccionados</span><button type="button" data-action="copy">Copiar</button><button type="button" data-action="forward">Enviar</button><button type="button" data-action="delete">Eliminar</button><button type="button" class="klkSelectionCancel" data-action="cancel">Cancelar</button>';
+ bar.innerHTML='<span class="klkMessageSelectionCount" aria-live="polite">0 seleccionados</span><button type="button" data-action="copy">Copiar</button><button type="button" data-action="forward">Reenviar</button><button type="button" data-action="delete">Eliminar</button><button type="button" class="klkSelectionCancel" data-action="cancel">Cancelar</button>';
  box.parentNode.insertBefore(bar,box);
  const count=bar.querySelector(".klkMessageSelectionCount");
  const selected=new Set();
