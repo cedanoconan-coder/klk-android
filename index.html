@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#075e54">
 <meta name="description" content="Chat privado para mantener a la familia conectada.">
 <meta name="mobile-web-app-capable" content="yes">
@@ -2733,6 +2733,15 @@ $("assistantQuestion").addEventListener("keydown",event=>{
 })();
 </script>
 
+<script>
+/* Evitar que los gestos de pellizco amplíen la interfaz de klk en navegadores móviles */
+(function(){
+ const stopZoomGesture=function(event){if(event.cancelable)event.preventDefault();};
+ document.addEventListener("gesturestart",stopZoomGesture,{passive:false});
+ document.addEventListener("gesturechange",stopZoomGesture,{passive:false});
+ document.addEventListener("gestureend",stopZoomGesture,{passive:false});
+})();
+</script>
 </body></html>
 
 /* Todas las fotos de perfil se muestran completas, sin recortar rostros ni partes de la imagen */
