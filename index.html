@@ -2513,6 +2513,15 @@ $("sendAudio").onclick = async () => {
 </script>
 <script>
 (()=>{const $=id=>document.getElementById(id);const expiryMs=86400000;
+ const composer=$("statusComposer"),searchWrap=$("statusSearchWrap"),searchInput=$("statusSearchInput");
+ function openStatusComposer(focusText=false){if(composer)composer.hidden=false;if(focusText)setTimeout(()=>$("statusText")?.focus(),60);composer?.scrollIntoView({behavior:"smooth",block:"nearest"});}
+ $("addStatusButton")?.addEventListener("click",()=>openStatusComposer(true));
+ $("statusTextFab")?.addEventListener("click",()=>openStatusComposer(true));
+ $("statusPhotoFab")?.addEventListener("click",()=>{openStatusComposer(false);$("statusPhoto")?.click();});
+ $("statusSearchToggle")?.addEventListener("click",()=>{if(!searchWrap)return;searchWrap.hidden=!searchWrap.hidden;if(!searchWrap.hidden)searchInput?.focus();else if(searchInput){searchInput.value="";searchInput.dispatchEvent(new Event("input"));}});
+ searchInput?.addEventListener("input",()=>{const query=searchInput.value.trim().toLocaleLowerCase();$("statusesFeed")?.querySelectorAll(".statusCard").forEach(card=>{card.hidden=!!query&&!card.textContent.toLocaleLowerCase().includes(query);});});
+ $("statusPhoto")?.addEventListener("change",()=>{if($("statusPhoto").files?.[0])openStatusComposer(false);});
+
  const age=v=>{const d=v&&v.toDate?v.toDate():new Date(v||Date.now()),m=Math.max(0,Math.floor((Date.now()-d.getTime())/60000));return m<1?"Ahora":m<60?m+" min":Math.floor(m/60)+" h";};
  let currentStatuses=[];
  async function renderViewerAt(index){
