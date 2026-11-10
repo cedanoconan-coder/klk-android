@@ -1119,6 +1119,34 @@ html[data-theme="dark"] #chat.room-open .attachmentGrid button:nth-child(5) .att
 #homeView:has(.homeBottom [data-tab="tools"].active) #updatesPanel{display:none!important}
 #homeView:has(.homeBottom [data-tab="chats"].active) .updatesHeading,
 #homeView:has(.homeBottom [data-tab="chats"].active) .statusFab{display:none!important}
+</style><style>
+/* KLK Manin — purple and lime visual identity, preserving functionality */
+:root{--klk-accent:#6500aa;--klk-soft:#f2e6ff;--klk-line:#e5d4f3;--klk-message-bg:#f8f2ff}
+html{background:#290044}body{background:#fff;color:#1a1024}
+header{background:linear-gradient(115deg,#290044,#6500a8 65%,#35005c)!important;color:#fff!important;border-bottom:2px solid #b52eff!important}
+header small{color:#e8cfff!important}
+#chat:not(.room-open) .homeTitle{background:linear-gradient(120deg,#32004e,#6900a6)!important;color:#fff!important;border-radius:0 0 22px 22px;padding-top:16px;padding-bottom:18px}
+#chat:not(.room-open) .homeTitle h1{color:#fff!important}
+#chat:not(.room-open) .homeActions button{color:#fff!important}
+#homeView{background:#fff!important}
+#homeView .homeBottom{background:linear-gradient(110deg,#3d0065,#6500a8)!important;border:1px solid #ad50f2!important;box-shadow:0 7px 20px #39005a35!important}
+#homeView .homeBottom button{color:#fff!important}
+#homeView .homeBottom button.active{background:linear-gradient(160deg,#6cff12,#009d39)!important;color:#fff!important;border-radius:17px!important}
+#homeView .homeBottom .navIcon,#homeView .homeBottom .navLabel{color:inherit!important}
+#homeView .homeSearch input,#chatSearch{background:#f7f0fc!important;border:1px solid #e9d8f4!important}
+#homeView #chatsList{background:#fff!important}
+#homeView #chatsList .chatRow,#homeView #chatsList .conversationRow{border-bottom:1px solid #eee3f5}
+#openUsersFab{background:linear-gradient(145deg,#a600e9,#57009b)!important;color:#fff!important;border:2px solid #e4afff!important}
+#updatesPanel.klkUpdates .myStatusRow{background:linear-gradient(120deg,#6200aa,#32005d)!important;border:1px solid #b84cff!important}
+#updatesPanel.klkUpdates .statusFab{background:linear-gradient(140deg,#8e00d4,#480075)!important;color:#fff!important}
+#chat.room-open .chatTop{background:linear-gradient(115deg,#310052,#6000a2)!important;color:#fff!important;border-bottom:2px solid #a92dff!important}
+#chat.room-open .chatTop *,#chat.room-open .chatHeading *{color:inherit}
+#chat.room-open #messages{background-color:#faf2ff!important;background-image:radial-gradient(#d6b3ec 0.7px,transparent 0.7px)!important;background-size:24px 24px}
+#chat.room-open .msg.mine{background:#e4ffc9!important;color:#1b2520!important}
+#chat.room-open .composer{background:#f5eafb!important}
+#chat.room-open .composer button:last-child{background:linear-gradient(140deg,#9400d9,#420078)!important;color:#fff!important}
+#homeView #callsPanel,#homeView #toolsPanel{background:#fff!important}
+#homeView #toolsPanel .toolGrid button{border-color:#e5c6f6!important}
 </style></head>
 <body>
 <header class="brandHeader"><img src="./icon.svg" alt="Logo de klk: pulgar arriba" class="brandMark"><div class="brandWords"><span>klk</span><small>Tu familia, siempre conectada ❤️</small></div></header>
