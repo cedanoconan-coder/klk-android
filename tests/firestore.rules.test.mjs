@@ -14,6 +14,7 @@ import {
   getDoc,
   getDocs,
   setDoc,
+  deleteDoc,
   Timestamp,
   serverTimestamp
 } from "firebase/firestore";
@@ -272,5 +273,84 @@ test("permite crear una llamada solo dentro de una conversación privada", async
     callerUid:"member-1",calleeUid:"member-2",conversationId:"member-1__member-2",
     mode:"audio",status:"ringing",offer:{type:"offer",sdp:"offer-sdp"},
     createdAt:serverTimestamp(),updatedAt:serverTimestamp()
+  }));
+});
+
+
+test("cada usuario administra su propia lista de bloqueos y no puede leer la de otros", async () => {
+  const owner = testEnv.authenticatedContext("member-1").firestore();
+  const other = testEnv.authenticatedContext("member-2").firestore();
+  const blockRef = doc(owner, "userBlocks/member-1/blocked/member-2");
+  await assertSucceeds(setDoc(blockRef, {blockedUid:"member-2",createdAt:serverTimestamp()}));
+  await assertSucceeds(getDoc(blockRef));
+  await assertFails(getDoc(doc(other, "userBlocks/member-1/blocked/member-2")));
+  await assertFails(setDoc(doc(owner, "userBlocks/member-1/blocked/member-1"), {
+    blockedUid:"member-1",createdAt:serverTimestamp()
+  }));
+  await assertSucceeds(deleteDoc(blockRef));
+});
+
+test("un bloqueo impide abrir y leer la conversación para ambos participantes", async () => {
+  await seedConversation();
+  await testEnv.withSecurityRulesDisabled(async context => {
+    await setDoc(doc(context.firestore(), "userBlocks/member-1/blocked/member-2"), {
+      blockedUid:"member-2",createdAt:Timestamp.now()
+    });
+  });
+  const first = testEnv.authenticatedContext("member-1").firestore();
+  const second = testEnv.authenticatedContext("member-2").firestore();
+  await assertFails(getDoc(doc(first, "conversations/member-1__member-2")));
+  await assertFails(getDoc(doc(second, "conversations/member-1__member-2")));
+  await assertFails(getDocs(collection(first, "conversations/member-1__member-2/messages")));
+  await assertFails(getDocs(collection(second, "conversations/member-1__member-2/messages")));
+});
+
+test("la configuración de mensajes temporales solo la pueden cambiar los miembros del chat", async () => {
+  await seedConversation();
+  const member = testEnv.authenticatedContext("member-1").firestore();
+  const outsider = testEnv.authenticatedContext("outsider").firestore();
+  const settings = doc(member, "conversations/member-1__member-2/settings/disappearingMessages");
+  await assertSucceeds(setDoc(settings, {
+    durationHours: 24, updatedAt: serverTimestamp(), updatedBy: "member-1"
+  }));
+  await assertFails(getDoc(doc(outsider, "conversations/member-1__member-2/settings/disappearingMessages")));
+  await assertFails(setDoc(doc(outsider, "conversations/member-1__member-2/settings/disappearingMessages"), {
+    durationHours: 0, updatedAt: serverTimestamp(), updatedBy: "outsider"
+  }));
+});
+
+test("rechaza duraciones temporales no permitidas", async () => {
+  await seedConversation();
+  const member = testEnv.authenticatedContext("member-1").firestore();
+  await assertFails(setDoc(doc(member, "conversations/member-1__member-2/settings/disappearingMessages"), {
+    durationHours: 48, updatedAt: serverTimestamp(), updatedBy: "member-1"
+  }));
+});
+
+test("cuando los mensajes temporales están activos, no acepta mensajes sin fecha de expiración", async () => {
+  await seedConversation();
+  await testEnv.withSecurityRulesDisabled(async context => {
+    await setDoc(doc(context.firestore(), "conversations/member-1__member-2/settings/disappearingMessages"), {
+      durationHours: 24, updatedAt: Timestamp.now(), updatedBy: "member-1"
+    });
+  });
+  const db = testEnv.authenticatedContext("member-1", {email:"member1@example.com"}).firestore();
+  await assertFails(setDoc(doc(db, "conversations/member-1__member-2/messages/without-expiry"), {
+    type:"text", text:"Este mensaje debe tener expiración", uid:"member-1",
+    email:"member1@example.com", displayName:"Miembro Uno", createdAt:serverTimestamp()
+  }));
+});
+
+test("permite mensajes normales sin expiración cuando la función está desactivada", async () => {
+  await seedConversation();
+  await testEnv.withSecurityRulesDisabled(async context => {
+    await setDoc(doc(context.firestore(), "conversations/member-1__member-2/settings/disappearingMessages"), {
+      durationHours: 0, updatedAt: Timestamp.now(), updatedBy: "member-1"
+    });
+  });
+  const db = testEnv.authenticatedContext("member-1", {email:"member1@example.com"}).firestore();
+  await assertSucceeds(setDoc(doc(db, "conversations/member-1__member-2/messages/normal"), {
+    type:"text", text:"Mensaje normal", uid:"member-1",
+    email:"member1@example.com", displayName:"Miembro Uno", createdAt:serverTimestamp()
   }));
 });

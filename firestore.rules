@@ -2,16 +2,43 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     function signedIn() { return request.auth != null; }
+    function validMessageExpiry(conversationId) {
+      let settingsPath = /databases/$(database)/documents/conversations/$(conversationId)/settings/disappearingMessages;
+      return (!exists(settingsPath) && !request.resource.data.keys().hasAny(['expiresAt']))
+        || (exists(settingsPath)
+          && get(settingsPath).data.durationHours == 0
+          && !request.resource.data.keys().hasAny(['expiresAt']))
+        || (exists(settingsPath)
+          && get(settingsPath).data.durationHours == 24
+          && request.resource.data.keys().hasAny(['expiresAt'])
+          && request.resource.data.expiresAt >= request.time + duration.value(24, 'h') - duration.value(2, 'm')
+          && request.resource.data.expiresAt <= request.time + duration.value(24, 'h') + duration.value(2, 'm'))
+        || (exists(settingsPath)
+          && get(settingsPath).data.durationHours == 168
+          && request.resource.data.keys().hasAny(['expiresAt'])
+          && request.resource.data.expiresAt >= request.time + duration.value(168, 'h') - duration.value(2, 'm')
+          && request.resource.data.expiresAt <= request.time + duration.value(168, 'h') + duration.value(2, 'm'))
+        || (exists(settingsPath)
+          && get(settingsPath).data.durationHours == 2160
+          && request.resource.data.keys().hasAny(['expiresAt'])
+          && request.resource.data.expiresAt >= request.time + duration.value(2160, 'h') - duration.value(2, 'm')
+          && request.resource.data.expiresAt <= request.time + duration.value(2160, 'h') + duration.value(2, 'm'));
+    }
     function canStartConversation(members) {
       let otherUid = members[0] == request.auth.uid ? members[1] : members[0];
       return exists(/databases/$(database)/documents/publicProfiles/$(otherUid))
-        && get(/databases/$(database)/documents/publicProfiles/$(otherUid)).data.directoryVisible == true;
+        && get(/databases/$(database)/documents/publicProfiles/$(otherUid)).data.directoryVisible == true
+        && !exists(/databases/$(database)/documents/userBlocks/$(request.auth.uid)/blocked/$(otherUid))
+        && !exists(/databases/$(database)/documents/userBlocks/$(otherUid)/blocked/$(request.auth.uid));
     }
     function isConversationMember(conversationId) {
       return signedIn()
         && exists(/databases/$(database)/documents/conversations/$(conversationId))
         && get(/databases/$(database)/documents/conversations/$(conversationId)).data.members is list
-        && request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.members;
+        && get(/databases/$(database)/documents/conversations/$(conversationId)).data.members.size() == 2
+        && request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.members
+        && !exists(/databases/$(database)/documents/userBlocks/$(request.auth.uid)/blocked/$(get(/databases/$(database)/documents/conversations/$(conversationId)).data.members[0] == request.auth.uid ? get(/databases/$(database)/documents/conversations/$(conversationId)).data.members[1] : get(/databases/$(database)/documents/conversations/$(conversationId)).data.members[0]))
+        && !exists(/databases/$(database)/documents/userBlocks/$(get(/databases/$(database)/documents/conversations/$(conversationId)).data.members[0] == request.auth.uid ? get(/databases/$(database)/documents/conversations/$(conversationId)).data.members[1] : get(/databases/$(database)/documents/conversations/$(conversationId)).data.members[0])/blocked/$(request.auth.uid));
     }
     function validUserProfile(userId) {
       return signedIn()
@@ -140,11 +167,25 @@ service cloud.firestore {
     match /contactRequests/{requestId} {
       allow read, write: if false;
     }
+    // Lista de bloqueos privada: solo el propietario puede consultar y administrar sus bloqueos.
+    match /userBlocks/{userId}/blocked/{blockedUid} {
+      allow get, list: if signedIn() && request.auth.uid == userId;
+      allow create: if signedIn()
+        && request.auth.uid == userId
+        && blockedUid != userId
+        && request.resource.data.keys().hasOnly(['blockedUid','createdAt'])
+        && request.resource.data.keys().hasAll(['blockedUid','createdAt'])
+        && request.resource.data.blockedUid == blockedUid
+        && request.resource.data.createdAt == request.time;
+      allow delete: if signedIn() && request.auth.uid == userId;
+      allow update: if false;
+    }
+
     match /conversations/{conversationId} {
       // Permite comprobar si todavía no existe una conversación, sin revelar documentos existentes.
       allow get: if isConversationMember(conversationId)
         || (signedIn() && !exists(/databases/$(database)/documents/conversations/$(conversationId)));
-      allow list: if signedIn() && resource.data.members.hasAny([request.auth.uid]);
+      allow list: if isConversationMember(conversationId);
       allow create: if signedIn()
         && request.resource.data.keys().hasOnly(['members','createdAt'])
         && request.resource.data.keys().hasAll(['members','createdAt'])
@@ -157,12 +198,26 @@ service cloud.firestore {
         && conversationId == request.resource.data.members[0] + '__' + request.resource.data.members[1]
         && canStartConversation(request.resource.data.members);
       allow update, delete: if false;
+      match /settings/{settingId} {
+        // Configuración compartida del chat: solo sus dos participantes pueden verla o cambiarla.
+        allow read: if isConversationMember(conversationId);
+        allow create, update: if isConversationMember(conversationId)
+          && settingId == 'disappearingMessages'
+          && request.resource.data.keys().hasOnly(['durationHours','updatedAt','updatedBy'])
+          && request.resource.data.keys().hasAll(['durationHours','updatedAt','updatedBy'])
+          && request.resource.data.durationHours is int
+          && request.resource.data.durationHours in [0, 24, 168, 2160]
+          && request.resource.data.updatedAt == request.time
+          && request.resource.data.updatedBy == request.auth.uid;
+        allow delete: if false;
+      }
       match /messages/{messageId} {
         allow read: if isConversationMember(conversationId);
         allow create: if isConversationMember(conversationId)
+          && validMessageExpiry(conversationId)
           && request.resource.data.keys().hasOnly([
             'type','text','storagePath','conversationId','mimeType','fileName',
-            'size','duration','latitude','longitude','email','uid','displayName','createdAt'
+            'size','duration','latitude','longitude','email','uid','displayName','createdAt','expiresAt'
           ])
           && request.resource.data.keys().hasAll(['type','uid','createdAt'])
           && request.resource.data.uid == request.auth.uid
