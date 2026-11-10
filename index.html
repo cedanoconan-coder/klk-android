@@ -1364,6 +1364,11 @@ html[data-theme="dark"] #chat.room-open .attachmentGrid button:nth-child(5) .att
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
+// Selector global disponible antes de ejecutar cualquier módulo clásico de KLK.
+window.$ = function(id) { return document.getElementById(id); };
+</script>
+
+<script>
 const firebaseConfig = {
  apiKey: "AIzaSyAgMkDOS77y-jHnzCEteQW1UgC90gShjuU",
  authDomain: "klk-familia.firebaseapp.com",
