@@ -1096,6 +1096,12 @@ html[data-theme="dark"] #chat.room-open .attachmentGrid button:nth-child(5) .att
 #chat:not(.room-open) #homeView #toolsPanel{height:auto!important;max-height:none!important;min-height:0!important;overflow:visible!important;touch-action:pan-y!important;padding-bottom:24px!important}
 #chat:not(.room-open) #homeView .homeBottom{position:fixed!important;bottom:calc(8px + env(safe-area-inset-bottom))!important}
 #chat:not(.room-open) #homeView textarea,#chat:not(.room-open) #homeView input{touch-action:auto!important}
+</style><style>
+/* Dedicated scroll surface for Novedades: explicit viewport, independent of the home wrapper. */
+#chat:not(.room-open) #homeView:has(#updatesPanel:not([hidden])){overflow-y:hidden!important;padding-bottom:0!important}
+#chat:not(.room-open) #homeView #updatesPanel:not([hidden]){display:block!important;height:calc(100dvh - 260px)!important;max-height:calc(100dvh - 260px)!important;min-height:220px!important;overflow-y:scroll!important;overflow-x:hidden!important;overscroll-behavior-y:contain!important;-webkit-overflow-scrolling:touch!important;touch-action:pan-y!important;box-sizing:border-box!important;padding-bottom:220px!important;position:relative!important}
+#chat:not(.room-open) #homeView #updatesPanel:not([hidden]) .statusFab{position:fixed!important;pointer-events:auto}
+@media(max-height:680px){#chat:not(.room-open) #homeView #updatesPanel:not([hidden]){height:calc(100dvh - 215px)!important;max-height:calc(100dvh - 215px)!important}}
 </style></head>
 <body>
 <header class="brandHeader"><img src="./icon.svg" alt="Logo de klk: pulgar arriba" class="brandMark"><div class="brandWords"><span>klk</span><small>Tu familia, siempre conectada ❤️</small></div></header>
