@@ -102,6 +102,7 @@
  function showActiveControls(){
   $("answerCall").hidden=true;$("rejectCall").hidden=true;$("endCall").hidden=false;$("muteCall").hidden=false;
   $("cameraCall").hidden=callMode!=="video";$("switchCameraCall").hidden=callMode!=="video";
+  $("cameraCall").textContent="Apagar cámara";
   $("muteCall").textContent="Silenciar";$("muteCall").classList.remove("muted");
   $("callAvatar").style.display=callMode==="video"?"none":"grid";
   $("remoteVideo").style.display=callMode==="video"?"block":"none";
@@ -277,8 +278,9 @@
   if(!oldTrack){$("callStatus").textContent="No hay una cámara activa para cambiar.";return;}
   cameraSwitchBusy=true;$("switchCameraCall").disabled=true;$("callStatus").textContent="Cambiando cámara...";
   const nextFacing=cameraFacingMode==="user"?"environment":"user";
+  let cameraStream=null;
   try{
-   const cameraStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:nextFacing},width:{ideal:640},height:{ideal:480}},audio:false});
+   cameraStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:nextFacing},width:{ideal:640},height:{ideal:480}},audio:false});
    const nextTrack=cameraStream.getVideoTracks()[0];
    if(!nextTrack)throw new Error("No se encontró la otra cámara del teléfono.");
    const sender=peer.getSenders().find(item=>item.track&&item.track.kind==="video");
@@ -287,7 +289,7 @@
    localStream.removeTrack(oldTrack);localStream.addTrack(nextTrack);oldTrack.stop();
    cameraFacingMode=nextFacing;$("localVideo").srcObject=localStream;
    $("callStatus").textContent=nextFacing==="environment"?"Cámara trasera activa":"Cámara frontal activa";
-  }catch(error){console.warn("No se pudo cambiar la cámara:",error);$("callStatus").textContent=error&&error.name==="NotAllowedError"?"Permite el acceso a la cámara para cambiarla.":(error.message||"No se pudo cambiar la cámara.");}
+  }catch(error){if(cameraStream)cameraStream.getTracks().forEach(track=>track.stop());console.warn("No se pudo cambiar la cámara:",error);$("callStatus").textContent=error&&error.name==="NotAllowedError"?"Permite el acceso a la cámara para cambiarla.":(error.message||"No se pudo cambiar la cámara.");}
   finally{cameraSwitchBusy=false;$("switchCameraCall").disabled=false;}
  });
  document.querySelectorAll('.homeBottom button').forEach(button=>{
