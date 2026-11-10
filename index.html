@@ -832,6 +832,20 @@ main,#chat,.homeView{overscroll-behavior-y:contain}
 #chat.profile-open .klkProfilePhotoWrap img#profilePanelPhoto{width:132px!important;height:132px!important}
 #chat.profile-open .profilePhotoAction.profilePhotoActionBelow{position:static!important;display:grid!important;place-items:center;width:34px!important;height:34px!important;min-width:34px!important;flex:0 0 34px;margin:7px auto 0!important;padding:0!important;border:1px solid #ffffff85!important;border-radius:50%!important;background:#ffffff20!important;color:#fff!important;font-size:17px!important;box-shadow:none!important;transform:none}
 #chat.profile-open .profilePhotoAction.profilePhotoActionBelow:active{background:#ffffff40!important;transform:scale(.96)}
+
+/* Herramientas: accesos rápidos en tarjetas modernas */
+#chat #toolsPanel{padding:22px 16px 110px}
+#chat #toolsPanel>h2{margin:4px 0 6px;font-size:25px;font-weight:800;letter-spacing:-.45px;color:var(--klk-text,#17211e)}
+#chat #toolsPanel>.hint{margin:0;max-width:38em;line-height:1.5;color:var(--klk-muted,#68736f);font-size:13px}
+#chat #toolsPanel .toolGrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;margin-top:22px}
+#chat #toolsPanel .toolGrid button{position:relative;isolation:isolate;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:13px;min-height:126px;margin:0;padding:17px 15px;border:1px solid var(--klk-line,#e3e9e6);border-radius:22px;background:linear-gradient(145deg,var(--klk-surface,#fff),var(--klk-message-bg,#f4f7f5));color:var(--klk-text,#17211e);text-align:left;font-size:14px;font-weight:700;letter-spacing:.05px;box-shadow:0 5px 16px #14251b0b;transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}
+#chat #toolsPanel .toolGrid button span{display:grid;place-items:center;width:48px;height:48px;flex:0 0 48px;border:1px solid #128c7e20;border-radius:17px;background:linear-gradient(145deg,#e3f5ef,#d4eee5);font-size:25px;line-height:1;box-shadow:inset 0 1px 0 #ffffffb8}
+#chat #toolsPanel .toolGrid button::after{content:"›";position:absolute;right:15px;bottom:15px;color:var(--klk-muted,#87928d);font-size:22px;font-weight:400;opacity:.7}
+#chat #toolsPanel .toolGrid button:active{transform:scale(.965);border-color:#128c7e88;box-shadow:0 2px 7px #14251b12}
+#chat #toolsPanel .toolGrid button:focus-visible{outline:3px solid #128c7e66;outline-offset:3px}
+html[data-theme="dark"] #chat #toolsPanel .toolGrid button{background:linear-gradient(145deg,#202d2a,#192421);border-color:#ffffff17;box-shadow:0 7px 18px #0003}
+html[data-theme="dark"] #chat #toolsPanel .toolGrid button span{background:linear-gradient(145deg,#21483e,#193b33);border-color:#ffffff12;box-shadow:inset 0 1px 0 #ffffff16}
+@media(max-width:360px){#chat #toolsPanel{padding-left:12px;padding-right:12px}#chat #toolsPanel .toolGrid{gap:10px}#chat #toolsPanel .toolGrid button{min-height:116px;padding:14px 12px;border-radius:19px}}
 </style>
 </head>
 <body>
