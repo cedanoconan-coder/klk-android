@@ -16,5 +16,9 @@
       "**/node_modules/**"
     ],
     "cleanUrls": false
+  },
+  "functions": {
+    "source": "functions",
+    "codebase": "default"
   }
 }
