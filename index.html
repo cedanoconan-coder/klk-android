@@ -629,6 +629,8 @@ main,#chat,.homeView{overscroll-behavior-y:contain}
 .profileIdentityCard .profileOnlineStatus{min-height:17px!important;font-size:11px!important}
 .profileIdentityCard .profilePhotoAction{position:absolute!important;z-index:3;top:43px;left:calc(50% + 13px);display:grid!important;place-items:center;width:30px!important;height:30px!important;min-width:30px!important;margin:0!important;padding:0!important;border:2px solid #fff!important;border-radius:50%!important;background:#f4d58b!important;color:#173b35!important;font-size:15px!important;line-height:1!important;box-shadow:0 3px 9px #001a1745!important}
 .profileIdentityCard .profilePhotoAction:active{transform:scale(.94)}
+/* Mostrar la foto completa dentro del círculo del perfil, sin recortarla */
+.profileIdentityCard .profileHero img#profilePanelPhoto{object-fit:contain!important;background:#f4f1fb!important;padding:2px!important;}
 #profilePanelPhoto:focus-visible,#myProfilePhoto:focus-visible,#contactProfilePhoto:focus-visible,#roomAvatar:focus-visible,.personAvatar:focus-visible{outline:3px solid #c8b5ff;outline-offset:3px}
 
 /* Notas de voz amplias y velocidades configurables */
