@@ -2822,6 +2822,8 @@ if (window.matchMedia("(display-mode: standalone)").matches || window.navigator.
  window.klkSetCurrentUid=uid=>{window.klkCurrentUid=uid||null;};apply();permissionButton();refreshCustomSounds();
 })();
 
+// Helper local para los controles que siguen fuera del módulo de ajustes.
+const $ = id => document.getElementById(id);
 $("inviteMember").addEventListener("click",()=>{ $("invitePanel").style.display=$("invitePanel").style.display==="block"?"none":"block"; $("inviteStatus").textContent=""; });
 let latestInviteCode = "";
 $("createInvite").addEventListener("click",async()=>{
