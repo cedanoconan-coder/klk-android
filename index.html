@@ -725,6 +725,13 @@ main,#chat,.homeView{overscroll-behavior-y:contain}
  #chat.room-open .msg .voicePlayButton{width:24px;height:24px;min-width:24px}
  #chat.room-open .msg .voiceSpeedButton{width:29px;min-width:29px}
 }
+
+/* Ocultar nombres y ajustar las burbujas al alto real del texto */
+#chat.room-open .msg>b{display:none!important}
+#chat.room-open .msg{padding:3px 7px!important;margin:2px 0!important}
+#chat.room-open .msg p{margin:0!important;font-size:14px!important;line-height:1.2!important}
+#chat.room-open .msg .messageMeta{margin-top:1px!important;font-size:9px!important;min-height:11px}
+#chat.room-open .msg:has(.voiceMessageLayout){padding:4px 6px!important}
 </style></head>
 <body>
 <header class="brandHeader"><img src="./icon.svg" alt="Logo de klk: pulgar arriba" class="brandMark"><div class="brandWords"><span>klk</span><small>Tu familia, siempre conectada ❤️</small></div></header>
@@ -1572,11 +1579,7 @@ function loadMessages() {
    item.className = "msg" + (auth.currentUser && data.uid === auth.currentUser.uid ? " mine" : "");
    item.dataset.messageId=doc.id;
    window.klkMessageRecords.set(doc.id,{ref:doc.ref,data,conversationId:activeConversationId});
-   const sender = document.createElement("b");
    const senderProfile = data.uid ? peopleCache.get(data.uid) : null;
-   const senderName = (senderProfile && senderProfile.displayName) || data.displayName || (auth.currentUser && data.uid === auth.currentUser.uid ? (peopleCache.get(auth.currentUser.uid) || {}).displayName : "") || (data.email || "").split("@")[0] || "Familia";
-   sender.textContent = senderName;
-   item.appendChild(sender);
    if ((data.type === "image" || data.type === "audio" || data.type === "file") && (data.storagePath || data.mediaUrl)) {
     const placeholder = document.createElement("p"); placeholder.textContent = "Cargando archivo..."; item.appendChild(placeholder); $("messages").appendChild(item);
     try {
@@ -1589,7 +1592,7 @@ function loadMessages() {
      else if(data.type==="file"&&(data.mimeType||"").startsWith("video/")){const video=document.createElement("video");video.src=url;video.controls=true;video.preload="metadata";video.playsInline=true;item.appendChild(video);} else if(data.type==="file"){const link=document.createElement("a");link.href=url;link.target="_blank";link.rel="noopener";link.textContent="📄 "+(data.fileName||"Abrir documento");item.appendChild(link);}
      else {
       const layout=document.createElement("div");layout.className="voiceMessageLayout";
-      const avatar=document.createElement("img");avatar.className="voiceMessageAvatar";avatar.alt="Foto de "+senderName;
+      const avatar=document.createElement("img");avatar.className="voiceMessageAvatar";avatar.alt="Foto de perfil del remitente";
       avatar.src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='32' fill='%23e7eeeb'/%3E%3Ctext x='32' y='44' text-anchor='middle' font-size='34'%3E%F0%9F%91%A4%3C/text%3E%3C/svg%3E";
       if(senderProfile&&senderProfile.photoPath){try{const avatarUrl=await getMediaUrl(senderProfile.photoPath);if(avatarUrl)avatar.src=avatarUrl;}catch(e){console.warn("No se pudo cargar el avatar de la nota de voz:",e);}}
       const player=document.createElement("div");player.className="voicePlayer";
