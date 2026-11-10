@@ -405,30 +405,21 @@ body:has(#chat.room-open) main{padding:0!important;margin:0!important;max-width:
 #contactProfilePanel .contactProfileMood{display:inline-flex;align-items:center;gap:7px;margin-top:10px;padding:8px 13px;border-radius:20px;background:var(--klk-soft);color:var(--klk-text);font-size:13px}
 @media(max-width:420px){.profileCover{height:185px}#contactProfilePanel .contactCover{height:205px}.profileHero img{width:94px;height:94px;flex-basis:94px}}
 
-/* Acceso flotante a usuarios, estilo mensajería */
+/* Acceso flotante al directorio: icono de varios contactos */
 #openUsersFab{
  position:fixed;z-index:70;right:20px;bottom:calc(88px + env(safe-area-inset-bottom));
  display:grid;place-items:center;width:60px;height:60px;margin:0;padding:0;
- border:1px solid #ffffff70;border-radius:22px;
+ border:1px solid #ffffff70;border-radius:21px;
  background:linear-gradient(145deg,#128c7e 0%,#075e54 58%,#064b45 100%);
- color:#fff;font-size:0;line-height:1;
- box-shadow:0 10px 26px #063f3a40, inset 0 1px 0 #ffffff55;
+ color:#fff;box-shadow:0 10px 26px #063f3a40,inset 0 1px 0 #ffffff55;
  -webkit-tap-highlight-color:transparent;touch-action:manipulation;
  transition:transform .18s ease,box-shadow .18s ease,filter .18s ease;
 }
-#openUsersFab:before{
- content:"";display:block;width:19px;height:19px;border:2.5px solid currentColor;
- border-radius:50%;transform:translate(-2px,-2px);
-}
-#openUsersFab:after{
- content:"";position:absolute;width:9px;height:2.5px;border-radius:3px;
- background:currentColor;transform:translate(9px,9px) rotate(45deg);
- box-shadow:0 0 0 1px #075e5420;
-}
+#openUsersFab svg{display:block;width:31px;height:31px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 #openUsersFab:active{transform:scale(.94);box-shadow:0 5px 14px #063f3a35,inset 0 1px 0 #ffffff55;filter:brightness(1.06)}
 #openUsersFab:focus-visible{outline:3px solid #8bc9ad;outline-offset:4px}
 html[data-theme="dark"] #openUsersFab{background:linear-gradient(145deg,#21a391,#087568 60%,#075e54);box-shadow:0 10px 28px #0008,inset 0 1px 0 #ffffff55}
-@media(max-width:420px){#openUsersFab{right:16px;width:58px;height:58px;border-radius:21px}}
+@media(max-width:420px){#openUsersFab{right:16px;width:58px;height:58px;border-radius:20px}}
 #usersOverlay{position:fixed;inset:0;z-index:90;background:var(--klk-surface,#fff);display:none;overflow:auto;padding:env(safe-area-inset-top) 0 calc(24px + env(safe-area-inset-bottom))}
 #usersOverlay.open{display:block}
 .usersOverlayHead{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:14px;padding:16px 18px;background:var(--klk-surface,#fff);border-bottom:1px solid var(--klk-line,#e7ebea)}
@@ -853,8 +844,8 @@ main,#chat,.homeView{overscroll-behavior-y:contain}
   <button type="button" data-tab="tools"><span class="navIcon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></svg></span><span class="navLabel">Herramientas</span></button>
  </nav>
 
-<div id="usersOverlay" aria-label="Otros usuarios" aria-hidden="true"><div class="usersOverlayHead"><button type="button" id="closeUsersOverlay" class="secondary" aria-label="Cerrar">‹</button><strong>Nuevo chat</strong></div><input id="usersOverlaySearch" type="search" placeholder="Buscar usuarios..." aria-label="Buscar usuarios"><div id="usersOverlayPeopleMount"></div></div>
-<button type="button" id="openUsersFab" aria-label="Nuevo chat: ver usuarios" title="Nuevo chat">＋</button>
+<div id="usersOverlay" aria-label="Contactos" aria-hidden="true"><div class="usersOverlayHead"><button type="button" id="closeUsersOverlay" class="secondary" aria-label="Cerrar">‹</button><strong>Todos mis contactos</strong></div><input id="usersOverlaySearch" type="search" placeholder="Buscar contacto..." aria-label="Buscar contacto"><div id="usersOverlayPeopleMount"></div></div>
+<button type="button" id="openUsersFab" aria-label="Ver todos mis contactos" title="Contactos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></button>
 </div>
 
 <section id="callOverlay" aria-label="Llamada"><div><p id="callStatus">Preparando llamada...</p><h2 id="callPeerName">Contacto</h2></div><div id="callVideoStage"><div id="callAvatar">☎️</div><video id="remoteVideo" autoplay playsinline></video><video id="localVideo" autoplay muted playsinline></video><audio id="remoteAudio" autoplay></audio></div><div id="callControls"><button id="answerCall" type="button" hidden>Responder</button><button id="rejectCall" type="button" hidden>Rechazar</button><button id="muteCall" type="button" hidden>Silenciar</button><button id="cameraCall" type="button" hidden>Apagar cámara</button><button id="endCall" type="button" hidden>Finalizar</button></div></section>
@@ -2360,15 +2351,24 @@ function setHomeTab(tab){
 }
 document.querySelectorAll(".homeBottom button").forEach(button=>button.addEventListener("click",()=>setHomeTab(button.dataset.tab)));
 
-// Botón flotante de nuevo chat: muestra el directorio de usuarios sin mezclarlo con las conversaciones.
+// Botón flotante de contactos: abre siempre el directorio completo y permite filtrar.
 (function setupUsersOverlay(){
- const overlay=$("usersOverlay"), mount=$("usersOverlayPeopleMount"), people=$("peopleList"), fab=$("openUsersFab");
- if(!overlay||!mount||!people||!fab)return;
+ const overlay=$("usersOverlay"), mount=$("usersOverlayPeopleMount"), people=$("peopleList"), fab=$("openUsersFab"), search=$("usersOverlaySearch");
+ if(!overlay||!mount||!people||!fab||!search)return;
  mount.appendChild(people);
- const close=()=>{overlay.classList.remove("open");overlay.setAttribute("aria-hidden","true");$("usersOverlaySearch").value="";people.querySelectorAll(".memberBtn").forEach(row=>row.style.display="flex");};
- fab.addEventListener("click",()=>{overlay.classList.add("open");overlay.setAttribute("aria-hidden","false");if(!people.children.length)renderPeople();$("usersOverlaySearch").focus();});
+ const resetRows=()=>people.querySelectorAll(".memberBtn").forEach(row=>row.style.display="");
+ const close=()=>{overlay.classList.remove("open");overlay.setAttribute("aria-hidden","true");search.value="";resetRows();};
+ fab.addEventListener("click",()=>{
+  renderPeople();
+  search.value="";resetRows();
+  overlay.classList.add("open");overlay.setAttribute("aria-hidden","false");
+  search.focus();
+ });
  $("closeUsersOverlay").addEventListener("click",close);
- $("usersOverlaySearch").addEventListener("input",event=>{const q=event.target.value.trim().toLocaleLowerCase();people.querySelectorAll(".memberBtn").forEach(row=>row.style.display=row.textContent.toLocaleLowerCase().includes(q)?"flex":"none");});
+ search.addEventListener("input",event=>{
+  const q=event.target.value.trim().toLocaleLowerCase();
+  people.querySelectorAll(".memberBtn").forEach(row=>row.style.display=(!q||row.textContent.toLocaleLowerCase().includes(q))?"":"none");
+ });
  overlay.addEventListener("click",event=>{if(event.target===overlay)close();});
  window.addEventListener("keydown",event=>{if(event.key==="Escape"&&overlay.classList.contains("open"))close();});
 })();
