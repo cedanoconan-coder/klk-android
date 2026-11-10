@@ -748,7 +748,53 @@ main,#chat,.homeView{overscroll-behavior-y:contain}
 #chat.room-open .msg p{margin:0!important;font-size:14px!important;line-height:1.2!important}
 #chat.room-open .msg .messageMeta{margin-top:1px!important;font-size:9px!important;min-height:11px}
 #chat.room-open .msg:has(.voiceMessageLayout){padding:4px 6px!important}
-</style></head>
+</style><style>
+/* Perfil de klk inspirado en la ficha limpia de WhatsApp */
+#chat.profile-open #homeProfilePanel{padding:0 16px calc(34px + env(safe-area-inset-bottom))!important;background:var(--klk-bg,#f0f2f5)!important;color:var(--klk-text)!important}
+#chat.profile-open .klkProfileTopbar{position:sticky;top:0;z-index:8;display:flex;align-items:center;gap:18px;margin:0 -16px 18px;padding:calc(12px + env(safe-area-inset-top)) 16px 13px;background:var(--klk-accent,#075e54);color:#fff;box-shadow:0 2px 5px #00000012}
+#chat.profile-open .klkProfileTopbar button{width:40px!important;height:40px!important;flex:0 0 40px;margin:0!important;padding:0!important;border:0!important;border-radius:50%;background:#ffffff1c!important;color:#fff!important;font-size:27px!important}
+#chat.profile-open .klkProfileTopbar h2{margin:0;font-size:20px;font-weight:650;letter-spacing:0}
+#chat.profile-open .profileIdentityCard{overflow:visible!important;margin:0 0 14px!important;padding:25px 16px 20px!important;border:0!important;border-radius:18px!important;background:var(--klk-surface)!important;color:var(--klk-text)!important;box-shadow:0 1px 2px #10201c12!important}
+#chat.profile-open .profileIdentityCard:before,#chat.profile-open .profileIdentityCard:after{display:none!important}
+#chat.profile-open .profileHero{display:flex!important;flex-direction:column!important;align-items:center!important;gap:13px!important;margin:0!important;padding:0!important;text-align:center}
+#chat.profile-open .klkProfilePhotoWrap{position:relative;width:132px;height:132px;flex:0 0 132px}
+#chat.profile-open .klkProfilePhotoWrap img#profilePanelPhoto{display:block;width:132px!important;height:132px!important;min-width:132px;min-height:132px;object-fit:cover!important;object-position:center;border:0!important;border-radius:50%!important;background:var(--klk-soft);box-shadow:none!important;cursor:zoom-in}
+#chat.profile-open .klkProfilePhotoWrap .profilePhotoAction{position:absolute;right:2px;bottom:3px;display:grid;place-items:center;width:39px!important;height:39px!important;min-width:39px;margin:0!important;padding:0!important;border:3px solid var(--klk-surface)!important;border-radius:50%!important;background:var(--klk-accent)!important;color:#fff!important;font-size:17px!important;box-shadow:0 2px 6px #0002}
+#chat.profile-open .profileNameWrap{display:flex!important;align-items:center!important;gap:4px!important;width:100%;min-width:0}
+#chat.profile-open .profileIdentityCard .profileHero .profileUserName{max-width:100%;padding:0!important;color:var(--klk-text)!important;font-size:23px!important;font-weight:650!important;letter-spacing:-.35px;text-shadow:none!important}
+#chat.profile-open .profileIdentityCard .profileHero .profileUserName:after{display:none!important}
+#chat.profile-open .profileOnlineStatus{min-height:20px;color:var(--klk-muted)!important;font-size:12px!important;font-weight:500!important}
+#chat.profile-open .profileOnlineStatus:before{width:7px;height:7px;flex-basis:7px}
+#chat.profile-open .klkProfileInfoCard{margin:0 0 14px;padding:17px 16px 14px;border-radius:16px;background:var(--klk-surface);box-shadow:0 1px 2px #10201c10}
+#chat.profile-open .klkProfileSectionTitle{margin:0 0 9px;color:var(--klk-accent);font-size:12px;font-weight:700;letter-spacing:.5px}
+#chat.profile-open .klkProfileField{position:relative;display:block;padding:10px 34px 12px 0;border-bottom:1px solid var(--klk-line)}
+#chat.profile-open .klkProfileField label{display:block;margin:0 0 5px;color:var(--klk-accent);font-size:13px;font-weight:500}
+#chat.profile-open .klkProfileField input,#chat.profile-open .klkProfileField textarea{display:block;width:100%;min-height:30px;margin:0;padding:2px 0!important;border:0!important;border-radius:0!important;outline:none;background:transparent!important;color:var(--klk-text)!important;font:inherit;font-size:15px!important;box-shadow:none!important;resize:vertical}
+#chat.profile-open .klkProfileField textarea{min-height:44px}
+#chat.profile-open .klkProfileEditIcon{position:absolute;right:3px;top:27px;color:var(--klk-muted);font-size:20px}
+#chat.profile-open .klkProfileVisibility{display:flex;align-items:center;gap:10px;padding:14px 0 8px;color:var(--klk-muted);font-size:12px;line-height:1.4}
+#chat.profile-open .klkProfileVisibility input{width:19px;height:19px;flex:0 0 19px;margin:0;accent-color:var(--klk-accent)}
+#chat.profile-open .klkProfileSave{min-height:43px;margin:10px 0 0;border:0;border-radius:22px;background:var(--klk-accent);color:#fff;font-size:14px;font-weight:650}
+#chat.profile-open #profileStatus{margin:8px 0 0}
+#chat.profile-open .klkProfileMood{display:flex;align-items:center;gap:12px;margin:0 0 14px;padding:15px 16px;border:0;border-radius:16px;background:var(--klk-surface);box-shadow:0 1px 2px #10201c10}
+#chat.profile-open .klkProfileMood .moodEmoji{display:grid;place-items:center;width:42px;height:42px;border-radius:50%;background:var(--klk-soft);font-size:22px}
+#chat.profile-open .klkProfileMood strong,#chat.profile-open .klkProfileMood small{display:block}
+#chat.profile-open .klkProfileMood strong{font-size:14px;color:var(--klk-text)}
+#chat.profile-open .klkProfileMood small{margin-top:3px;color:var(--klk-muted);font-size:12px}
+#chat.profile-open .klkProfileMood select{max-width:46%;padding:8px 7px;border:1px solid var(--klk-line);border-radius:12px;background:var(--klk-surface);color:var(--klk-text);font-size:12px}
+#chat.profile-open .profileSettingsAccordion{overflow:hidden;margin:0 0 15px;border:0;border-radius:16px;background:var(--klk-surface);box-shadow:0 1px 2px #10201c10}
+#chat.profile-open .profileSettingsAccordion>summary{display:flex;align-items:center;gap:12px;min-height:68px;padding:13px 16px;list-style:none;cursor:pointer}
+#chat.profile-open .profileSettingsAccordion>summary::-webkit-details-marker{display:none}
+#chat.profile-open .profileSettingsAccordion>summary>span:nth-child(2){display:flex;flex:1;flex-direction:column;gap:4px}
+#chat.profile-open .profileSettingsAccordion>summary strong{font-size:14px;color:var(--klk-text)}
+#chat.profile-open .profileSettingsAccordion>summary small{font-size:12px;color:var(--klk-muted)}
+#chat.profile-open .profileSettingsBody{padding:0 16px 12px}
+#chat.profile-open .profileSettingsBody .profileSection{margin:0!important;padding:13px 0!important;border-top:1px solid var(--klk-line);border-bottom:0!important}
+#chat.profile-open .profileSettingsBody .profileSection h3{margin:0 0 7px;font-size:11px!important;letter-spacing:.6px!important;color:var(--klk-muted)}
+#chat.profile-open .profileAction{padding:13px 2px!important;border-color:var(--klk-line)!important}
+@media(max-width:380px){#chat.profile-open .klkProfilePhotoWrap,#chat.profile-open .klkProfilePhotoWrap img#profilePanelPhoto{width:116px!important;height:116px!important;min-width:116px;min-height:116px}#chat.profile-open .klkProfilePhotoWrap{flex-basis:116px}}
+</style>
+</head>
 <body>
 <header class="brandHeader"><img src="./icon.svg" alt="Logo de klk: pulgar arriba" class="brandMark"><div class="brandWords"><span>klk</span><small>Tu familia, siempre conectada ❤️</small></div></header>
 <main>
@@ -783,7 +829,29 @@ main,#chat,.homeView{overscroll-behavior-y:contain}
   <p id="inviteStatus" class="hint" role="status" aria-live="polite"></p>
  </section>
  
-<section id="homeProfilePanel" aria-label="Mi perfil y configuración"><div style="display:flex;align-items:center;gap:10px;margin-bottom:12px"><button id="profileClose" class="secondary" type="button" style="width:auto;margin:0">‹ Volver</button><h2 style="margin:0;font-size:20px">Mi perfil</h2></div><div class="profileIdentityCard"><div class="profileHero"><img id="profilePanelPhoto" alt="Foto de perfil" role="button" tabindex="0" aria-label="Ampliar foto de perfil"><button id="profileChangePhoto" class="profilePhotoAction" type="button" aria-label="Seleccionar otra foto" title="Cambiar foto">📷</button><div class="profileNameWrap"><strong id="profilePanelName" class="profileUserName">Mi perfil</strong><span id="profileOnlineStatus" class="profileOnlineStatus" role="status" aria-live="polite">Desconectado</span></div></div></div><div class="profileMood"><span class="moodEmoji" id="myMoodEmoji">😊</span><div style="min-width:0;flex:1"><strong>Mi estado de ánimo</strong><small id="myMoodLabel">Comparte cómo te sientes</small></div><select id="profileMoodSelect" aria-label="Elige tu estado de ánimo"><option value="😊 Feliz">😊 Feliz</option><option value="😌 Tranquilo">😌 Tranquilo</option><option value="❤️ Agradecido">❤️ Agradecido</option><option value="💪 Motivado">💪 Motivado</option><option value="😴 Cansado">😴 Cansado</option><option value="🤔 Pensativo">🤔 Pensativo</option><option value="😔 No muy bien">😔 No muy bien</option><option value="🎉 Emocionado">🎉 Emocionado</option></select></div><details class="profileSettingsAccordion"><summary><span class="profileSettingsIcon">⚙️</span><span><strong>Cuenta y ajustes</strong><small>Privacidad, seguridad y preferencias</small></span><b class="profileSettingsChevron">⌄</b></summary><div class="profileSettingsBody"><div class="profileSection"><h3>Información personal</h3><label class="profileField"><span>Nombre</span><input id="profileNameInput" maxlength="60" autocomplete="name" placeholder="Tu nombre"></label><label class="profileField"><span>Info. / Acerca de ti</span><textarea id="profileAboutInput" maxlength="139" placeholder="¡Hola! Estoy usando klk."></textarea></label><label class="profileField" style="display:flex;align-items:center;gap:12px"><input id="profileDirectoryVisible" type="checkbox" checked style="width:22px;height:22px;flex:0 0 22px;margin:0;accent-color:#075e54"><span><strong>Mostrar mi perfil en el directorio mundial</strong><small style="display:block;color:var(--klk-muted)">Si lo activas, otros miembros podrán encontrarte. Tu correo nunca se muestra en el directorio.</small></span></label><div class="profileButtons"><button id="profileSave" type="button">Guardar cambios</button></div><p id="profileStatus" class="hint" role="status" aria-live="polite"></p></div><div class="profileSection"><h3>Cuenta y seguridad</h3><button id="profilePassword" class="profileAction" type="button"><span>🔐 Cambiar contraseña<small>Recibirás un enlace seguro en tu correo</small></span><b>›</b></button></div><div class="profileSection"><h3>Privacidad y notificaciones</h3><button id="profilePrivacyInfo" class="profileAction" type="button"><span>🛡️ Privacidad<small>Información sobre los controles disponibles</small></span><b>›</b></button><button id="profileOpenSettings" class="profileAction" type="button"><span>🔔 Notificaciones y apariencia<small>Sonidos, vibración, tema, tamaño y fondo</small></span><b>›</b></button><p id="profilePrivacyStatus" class="hint" hidden>Los controles avanzados de privacidad todavía no están activos en klk; no mostraremos opciones que no se apliquen realmente.</p></div><div class="profileSection"><h3>Sesión</h3><button id="profileLogout" class="profileAction" type="button"><span>↪️ Cerrar sesión<small>Salir de esta cuenta en este teléfono</small></span><b>›</b></button></div></div></details></section>
+<section id="homeProfilePanel" aria-label="Mi perfil y configuración">
+ <div class="klkProfileTopbar"><button id="profileClose" class="secondary" type="button" aria-label="Volver">‹</button><h2>Perfil</h2></div>
+ <div class="profileIdentityCard">
+  <div class="profileHero">
+   <div class="klkProfilePhotoWrap"><img id="profilePanelPhoto" alt="Foto de perfil" role="button" tabindex="0" aria-label="Ampliar foto de perfil"><button id="profileChangePhoto" class="profilePhotoAction" type="button" aria-label="Cambiar foto de perfil" title="Cambiar foto">📷</button></div>
+   <div class="profileNameWrap"><strong id="profilePanelName" class="profileUserName">Mi perfil</strong><span id="profileOnlineStatus" class="profileOnlineStatus" role="status" aria-live="polite">Desconectado</span></div>
+  </div>
+ </div>
+ <div class="klkProfileInfoCard">
+  <div class="klkProfileSectionTitle">INFORMACIÓN</div>
+  <div class="klkProfileField"><label for="profileNameInput">Nombre</label><input id="profileNameInput" maxlength="60" autocomplete="name" placeholder="Tu nombre"><span class="klkProfileEditIcon" aria-hidden="true">✎</span></div>
+  <div class="klkProfileField klkProfileAboutField"><label for="profileAboutInput">Info.</label><textarea id="profileAboutInput" maxlength="139" placeholder="¡Hola! Estoy usando klk."></textarea><span class="klkProfileEditIcon" aria-hidden="true">✎</span></div>
+  <div class="klkProfileVisibility"><input id="profileDirectoryVisible" type="checkbox" checked><label for="profileDirectoryVisible">Mostrar mi perfil en el directorio mundial</label></div>
+  <button id="profileSave" class="klkProfileSave" type="button">Guardar cambios</button>
+  <p id="profileStatus" class="hint" role="status" aria-live="polite"></p>
+ </div>
+ <div class="profileMood klkProfileMood"><span class="moodEmoji" id="myMoodEmoji">😊</span><div style="min-width:0;flex:1"><strong>Estado</strong><small id="myMoodLabel">Comparte cómo te sientes</small></div><select id="profileMoodSelect" aria-label="Elige tu estado de ánimo"><option value="😊 Feliz">😊 Feliz</option><option value="😌 Tranquilo">😌 Tranquilo</option><option value="❤️ Agradecido">❤️ Agradecido</option><option value="💪 Motivado">💪 Motivado</option><option value="😴 Cansado">😴 Cansado</option><option value="🤔 Pensativo">🤔 Pensativo</option><option value="😔 No muy bien">😔 No muy bien</option><option value="🎉 Emocionado">🎉 Emocionado</option></select></div>
+ <details class="profileSettingsAccordion"><summary><span class="profileSettingsIcon">⚙️</span><span><strong>Cuenta y ajustes</strong><small>Seguridad, privacidad y preferencias</small></span><b class="profileSettingsChevron">⌄</b></summary><div class="profileSettingsBody">
+  <div class="profileSection"><h3>Cuenta y seguridad</h3><button id="profilePassword" class="profileAction" type="button"><span>🔐 Cambiar contraseña<small>Recibirás un enlace seguro en tu correo</small></span><b>›</b></button></div>
+  <div class="profileSection"><h3>Privacidad y notificaciones</h3><button id="profilePrivacyInfo" class="profileAction" type="button"><span>🛡️ Privacidad<small>Información sobre los controles disponibles</small></span><b>›</b></button><button id="profileOpenSettings" class="profileAction" type="button"><span>🔔 Notificaciones y apariencia<small>Sonidos, vibración, tema, tamaño y fondo</small></span><b>›</b></button><p id="profilePrivacyStatus" class="hint" hidden>Los controles avanzados de privacidad todavía no están activos en klk; no mostraremos opciones que no se apliquen realmente.</p></div>
+  <div class="profileSection"><h3>Sesión</h3><button id="profileLogout" class="profileAction" type="button"><span>↪️ Cerrar sesión<small>Salir de esta cuenta en este teléfono</small></span><b>›</b></button></div>
+ </div></details>
+</section>
 <div class="homeSearch"><input id="chatSearch" type="search" placeholder="Buscar..." aria-label="Buscar conversaciones"></div>
  <p id="homeStatus" class="hint" role="status" aria-live="polite" style="padding:0 20px;min-height:18px"></p>
 
