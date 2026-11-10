@@ -2619,24 +2619,24 @@ let pendingInstall = null;
 window.addEventListener("beforeinstallprompt", event => {
  event.preventDefault();
  pendingInstall = event;
- $("installApp").hidden = false;
+ document.getElementById("installApp").hidden = false;
 });
-$("installApp").addEventListener("click", async () => {
+document.getElementById("installApp").addEventListener("click", async () => {
  if (!pendingInstall) {
-  $("status").textContent = "Para instalar: abre el menú ⋮ de Chrome y elige Instalar aplicación o Añadir a pantalla de inicio.";
+  document.getElementById("status").textContent = "Para instalar: abre el menú ⋮ de Chrome y elige Instalar aplicación o Añadir a pantalla de inicio.";
   return;
  }
  pendingInstall.prompt();
  const choice = await pendingInstall.userChoice;
- if (choice && choice.outcome === "accepted") $("installApp").hidden = true;
+ if (choice && choice.outcome === "accepted") document.getElementById("installApp").hidden = true;
  pendingInstall = null;
 });
 window.addEventListener("appinstalled", () => {
- $("installApp").hidden = true;
+ document.getElementById("installApp").hidden = true;
  pendingInstall = null;
 });
 if (window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone) {
- $("installApp").hidden = true;
+ document.getElementById("installApp").hidden = true;
 }
 </script>
 <script>
