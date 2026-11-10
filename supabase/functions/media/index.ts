@@ -1,6 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { createRemoteJWKSet, jwtVerify } from "npm:jose@5";
-import { isOwnedLegacyMediaPath } from "./ownership.mjs";
+import { isOwnedLegacyMediaPath, isStatusMediaPathForOwner } from "./ownership.mjs";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -65,9 +65,52 @@ async function verifyConversationMember(conversationId: string, token: string, u
   }
 }
 
-async function verifyStatusVisible(statusOwnerUid: string, _token: string, requesterUid: string): Promise<boolean> {
-  return /^[A-Za-z0-9_-]{1,128}$/.test(statusOwnerUid)
-    && /^[A-Za-z0-9_-]{1,128}$/.test(requesterUid);
+async function verifyStatusVisible(
+  statusOwnerUid: string,
+  path: string,
+  token: string,
+  requesterUid: string,
+): Promise<boolean> {
+  if (!/^[A-Za-z0-9_-]{1,128}$/.test(requesterUid) ||
+      !isStatusMediaPathForOwner(path, statusOwnerUid)) return false;
+
+  // La ruta por sí sola no concede acceso: debe existir un estado activo
+  // que publique exactamente ese archivo bajo el UID propietario.
+  const url = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents:runQuery`;
+  const now = new Date().toISOString();
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        structuredQuery: {
+          from: [{ collectionId: "statuses" }],
+          where: {
+            compositeFilter: {
+              op: "AND",
+              filters: [
+                { fieldFilter: { field: { fieldPath: "uid" }, op: "EQUAL", value: { stringValue: statusOwnerUid } } },
+                { fieldFilter: { field: { fieldPath: "storagePath" }, op: "EQUAL", value: { stringValue: path } } },
+                { fieldFilter: { field: { fieldPath: "expiresAt" }, op: "GREATER_THAN", value: { timestampValue: now } } },
+              ],
+            },
+          },
+          limit: 1,
+        },
+      }),
+    });
+    if (!response.ok) return false;
+    const results = await response.json();
+    return Array.isArray(results) && results.some((item: any) =>
+      item?.document?.fields?.uid?.stringValue === statusOwnerUid &&
+      item?.document?.fields?.storagePath?.stringValue === path
+    );
+  } catch {
+    return false;
+  }
 }
 
 async function verifyPublicProfileVisible(profileUid: string, token: string, requesterUid: string): Promise<boolean> {
@@ -179,7 +222,7 @@ Deno.serve(async (request) => {
     } else if (path.startsWith("statuses/")) {
       const statusMatch = path.match(/^statuses\/([A-Za-z0-9_-]{1,128})\/[A-Za-z0-9-]{16,64}\.[a-z0-9]{1,8}$/i);
       if (!statusMatch) return reply(403, { error: "Ruta de estado no válida." });
-      if (!(await verifyStatusVisible(statusMatch[1], firebaseToken, uid))) {
+      if (!(await verifyStatusVisible(statusMatch[1], path, firebaseToken, uid))) {
         return reply(403, { error: "Este estado solo está disponible para los contactos del usuario." });
       }
     } else if (!isOwnedLegacyMediaPath(path, uid)) {
