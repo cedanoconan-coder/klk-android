@@ -232,6 +232,10 @@ html[data-density="comfortable"] .chatRow,html[data-density="comfortable"] #peop
 .contactInfoText{min-width:0;flex:1}
 .contactInfoText small{display:block;color:var(--klk-muted);font-size:12px;margin-bottom:5px}
 .contactInfoText strong{display:block;font-size:15px;font-weight:500;overflow-wrap:anywhere}
+.contactSafetySection button{width:100%;text-align:left}
+#contactBlockButton{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;margin:0;padding:13px 4px;border:0;background:transparent;color:#b42318}
+#contactBlockButton small{display:block;margin-top:4px;color:var(--klk-muted);font-size:12px}
+#contactBlockStatus{margin:8px 0 0}
 .contactProfileInfo{margin:9px 0 0;padding:15px 18px;background:var(--klk-surface);color:var(--klk-muted);font-size:13px;line-height:1.5}
 #contactProfileStatus{padding:12px 18px!important;margin:0;background:var(--klk-surface)}
 #chat.room-open .chatTop #chatTitle{cursor:pointer}
@@ -995,6 +999,7 @@ html[data-theme="dark"] #chat.room-open .attachmentGrid button:nth-child(5) .att
 <button id="contactProfileVideo" type="button"><span>📹</span><span>Video</span></button>
 <button id="contactProfileShare" type="button"><span>↗️</span><span>Compartir</span></button>
 </div>
+<div class="contactProfileSection" id="contactSafetySection"><h3>Privacidad y seguridad</h3><button id="contactBlockButton" class="profileAction" type="button"><span><strong>🚫 Bloquear contacto</strong><small>Esta persona no podrá enviarte mensajes ni llamarte.</small></span><span>›</span></button><p id="contactBlockStatus" class="hint" role="status" aria-live="polite"></p></div>
 <div class="contactProfileSection"><h3>Archivos, enlaces y contenido multimedia</h3><div class="contactMediaTabs"><button type="button" data-media-tab="image" class="active">Fotos</button><button type="button" data-media-tab="file">Documentos</button><button type="button" data-media-tab="all">Todo</button></div><div id="contactSharedMedia" class="contactSharedMedia">Selecciona una conversación.</div></div>
 <div class="contactProfileSection"><h3>Información</h3><div class="contactInfoRow"><span class="contactInfoIcon">ℹ</span><div class="contactInfoText"><small>Info. / Acerca de</small><strong id="contactProfileAboutDetail">Miembro de klk</strong></div></div></div>
 <p class="contactProfileInfo">Este es el perfil de contacto de klk. Aquí puedes iniciar una conversación, llamar y consultar el contenido compartido.</p><p id="contactProfileStatus" class="hint" role="status" aria-live="polite"></p></section>
@@ -1237,6 +1242,61 @@ let auth, db, firebaseInitError = null, unsubscribe = null, sending = false, med
 let authPersistenceReady = Promise.resolve(), firestorePersistenceReady = Promise.resolve(true);
 let activeConversationId = null, activeConversationName = null, activeConversationPeerUid = null, peopleUnsubscribe = null, incomingRequestsUnsubscribe = null, outgoingRequestsUnsubscribe = null, conversationListUnsubscribe = null;
 const incomingRequests = new Map(), outgoingRequests = new Map(), peopleCache = new Map(), conversationSubscriptions = new Map(), conversationCache = new Map();
+const blockedUsers = new Set();
+let blockedUsersUnsubscribe = null;
+function blockedUsersRef(uid=(auth&&auth.currentUser&&auth.currentUser.uid)){return db.collection("userBlocks").doc(uid).collection("blocked");}
+async function loadBlockedUsers(){
+ if(blockedUsersUnsubscribe){blockedUsersUnsubscribe();blockedUsersUnsubscribe=null;}
+ const user=auth&&auth.currentUser;if(!user)return;
+ blockedUsersUnsubscribe=blockedUsersRef(user.uid).onSnapshot(snapshot=>{
+  blockedUsers.clear();snapshot.docs.forEach(doc=>blockedUsers.add(doc.id));
+  renderPeople();renderConversations();
+ },error=>showError("homeStatus",error));
+}
+async function isUserBlockedEitherWay(uid){
+ const user=auth&&auth.currentUser;if(!user||!uid)return false;
+ const [mine,theirs]=await Promise.all([
+  blockedUsersRef(user.uid).doc(uid).get(),
+  blockedUsersRef(uid).doc(user.uid).get()
+ ]);
+ return mine.exists||theirs.exists;
+}
+async function setContactBlocked(uid,shouldBlock){
+ const user=auth&&auth.currentUser;if(!user||!uid||uid===user.uid)return;
+ const button=$("contactBlockButton"),status=$("contactBlockStatus");
+ if(button)button.disabled=true;
+ try{
+  const ref=blockedUsersRef(user.uid).doc(uid);
+  if(shouldBlock)await ref.set({blockedUid:uid,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+  else await ref.delete();
+  if(status)status.textContent=shouldBlock?"Contacto bloqueado. Ya no podrá iniciar una conversación contigo.":"Contacto desbloqueado.";
+  await loadBlockedUsers();
+  if(shouldBlock&&activeConversationPeerUid===uid){
+   if(unsubscribe){unsubscribe();unsubscribe=null;}
+   if(disappearingSettingsUnsubscribe){disappearingSettingsUnsubscribe();disappearingSettingsUnsubscribe=null;}
+   activeConversationId=null;activeConversationPeerUid=null;
+   $("chat").classList.remove("room-open");
+   $("messages").innerHTML="";
+   $("contactProfileStatus").textContent="Has bloqueado a este contacto.";
+  }
+  if(activeContactProfileUid===uid)renderContactBlockButton(uid);
+ }catch(error){if(status)showError("contactBlockStatus",error);}
+ finally{if(button)button.disabled=false;}
+}
+async function renderContactBlockButton(uid){
+ const button=$("contactBlockButton");if(!button)return;
+ button.disabled=true;
+ try{
+  const mine=await blockedUsersRef().doc(uid).get();
+  const theirs=await blockedUsersRef(uid).doc(auth.currentUser.uid).get();
+  const isMine=mine.exists;
+  button.innerHTML=isMine?'<span><strong>✓ Desbloquear contacto</strong><small>Permitir nuevamente el contacto</small></span><span>›</span>':'<span><strong>🚫 Bloquear contacto</strong><small>Esta persona no podrá enviarte mensajes ni llamarte.</small></span><span>›</span>';
+  button.onclick=()=>setContactBlocked(uid,!isMine);
+  if(theirs.exists){$("contactBlockStatus").textContent="Este miembro te ha bloqueado. No podrás iniciar una conversación.";}
+ }catch(error){showError("contactBlockStatus",error);}
+ finally{button.disabled=false;}
+}
+
 let activeHomeFilter = "chats";
 function showError(target, error) {
  console.error("Error de klk/Firebase:", error);
@@ -1550,9 +1610,12 @@ async function openContactProfile(uid,person,returnTo="people"){
  $("contactProfilePhoto").src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ctext x='32' y='45' text-anchor='middle' font-size='44'%3E%F0%9F%91%A4%3C/text%3E%3C/svg%3E";
  if(person.photoPath)try{$("contactProfilePhoto").src=await getMediaUrl(person.photoPath);}catch(e){}
  const canWrite=isInvitedContact(uid), accepted=isAcceptedContact(uid);
- $("contactProfileMessage").disabled=!canWrite;
+ await renderContactBlockButton(uid);
+ const blockedEither=await isUserBlockedEitherWay(uid);
+
+ $("contactProfileMessage").disabled=!canWrite||blockedEither;
  ["contactProfileVoice","contactProfileVideo","contactProfileShare"].forEach(id=>$(id).disabled=!accepted);
- $("contactProfileStatus").textContent=canWrite?"Puedes iniciar una conversación y llamar a este miembro.":"Este perfil no está disponible para iniciar conversaciones.";
+ $("contactProfileStatus").textContent=blockedEither?"La comunicación con este contacto está bloqueada.":canWrite?"Puedes iniciar una conversación y llamar a este miembro.":"Este perfil no está disponible para iniciar conversaciones.";
  $("contactProfileMessage").onclick=()=>{closeContactProfile();openPrivateConversation(uid,displayName||"Conversación");};
  $("contactProfileVoice").onclick=()=>window.klkStartCall&&window.klkStartCall(uid,displayName,"audio");
  $("contactProfileVideo").onclick=()=>window.klkStartCall&&window.klkStartCall(uid,displayName,"video");
@@ -1575,7 +1638,7 @@ function renderPeople() {
  list.innerHTML = "";
  const currentUser = auth && auth.currentUser;
  if (!currentUser) { list.textContent = "Inicia sesión para ver a los miembros de klk."; return; }
- const people = [...peopleCache.entries()].filter(([uid]) => uid !== currentUser.uid);
+ const people = [...peopleCache.entries()].filter(([uid]) => uid !== currentUser.uid && !blockedUsers.has(uid));
  if (!people.length) {
   const empty = document.createElement("div"); empty.className = "hint";
   empty.style.cssText = "padding:14px 20px;line-height:1.5";
@@ -1625,7 +1688,7 @@ function formatConversationTime(value) {
 function renderConversations() {
  const list=$("chatsList"); if(!list)return;
  list.innerHTML="";
- const rows=[...conversationCache.values()].sort((a,b)=>(b.sortTime||0)-(a.sortTime||0));
+ const rows=[...conversationCache.values()].filter(item=>!blockedUsers.has(item.uid)).sort((a,b)=>(b.sortTime||0)-(a.sortTime||0));
  if(!rows.length){list.textContent="Todavía no tienes chats. Pulsa + para encontrar miembros y comenzar a conversar.";return;}
  for(const item of rows){
   const row=document.createElement("button");row.type="button";row.className="chatRow";
@@ -1688,6 +1751,7 @@ function loadContactRequests() {
  renderRequests();
 }
 function loadPeople() {
+ loadBlockedUsers();
  if (peopleUnsubscribe) peopleUnsubscribe();
  const user = auth && auth.currentUser;
  if (!user || !db) { $("peopleList").textContent = "Inicia sesión para cargar las personas."; return; }
@@ -1775,8 +1839,9 @@ async function openPrivateConversation(otherUid, otherName) {
  const user = auth.currentUser;
  if (!user || !otherUid || otherUid === user.uid) return;
  const members = [user.uid,otherUid].sort(), conversationId = members.join("__");
- $("chatStatus").textContent = "Abriendo conversación privada...";
+ $("chatStatus").textContent = "Comprobando privacidad...";
  try {
+  if(await isUserBlockedEitherWay(otherUid)){ $("chatStatus").textContent="No puedes abrir este chat porque uno de los dos miembros ha bloqueado al otro."; return; }
   const ref = db.collection("conversations").doc(conversationId), existing = await ref.get();
   if (!existing.exists) await ref.set({members,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
   activeConversationId = conversationId; activeConversationName = otherName; activeConversationPeerUid = otherUid; watchDisappearingSettings(); $("disappearingPanel").hidden=true;
