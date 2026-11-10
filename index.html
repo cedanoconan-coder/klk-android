@@ -1255,11 +1255,8 @@ async function loadBlockedUsers(){
 }
 async function isUserBlockedEitherWay(uid){
  const user=auth&&auth.currentUser;if(!user||!uid)return false;
- const [mine,theirs]=await Promise.all([
-  blockedUsersRef(user.uid).doc(uid).get(),
-  blockedUsersRef(uid).doc(user.uid).get()
- ]);
- return mine.exists||theirs.exists;
+ const mine=await blockedUsersRef(user.uid).doc(uid).get();
+ return mine.exists;
 }
 async function setContactBlocked(uid,shouldBlock){
  const user=auth&&auth.currentUser;if(!user||!uid||uid===user.uid)return;
@@ -1288,11 +1285,10 @@ async function renderContactBlockButton(uid){
  button.disabled=true;
  try{
   const mine=await blockedUsersRef().doc(uid).get();
-  const theirs=await blockedUsersRef(uid).doc(auth.currentUser.uid).get();
   const isMine=mine.exists;
   button.innerHTML=isMine?'<span><strong>✓ Desbloquear contacto</strong><small>Permitir nuevamente el contacto</small></span><span>›</span>':'<span><strong>🚫 Bloquear contacto</strong><small>Esta persona no podrá enviarte mensajes ni llamarte.</small></span><span>›</span>';
   button.onclick=()=>setContactBlocked(uid,!isMine);
-  if(theirs.exists){$("contactBlockStatus").textContent="Este miembro te ha bloqueado. No podrás iniciar una conversación.";}
+
  }catch(error){showError("contactBlockStatus",error);}
  finally{button.disabled=false;}
 }
