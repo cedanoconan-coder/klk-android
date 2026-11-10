@@ -95,7 +95,7 @@
   $("callPeerName").textContent=name||"Contacto";
   $("callStatus").textContent=status||"";
   overlay.classList.add("visible");
-  $("answerCall").hidden=true;$("rejectCall").hidden=true;$("muteCall").hidden=true;$("cameraCall").hidden=true;$("endCall").hidden=true;
+  $("answerCall").hidden=true;$("rejectCall").hidden=true;$("muteCall").hidden=true;$("cameraCall").hidden=true;$("switchCameraCall").hidden=true;$("endCall").hidden=true;
   $("callAvatar").style.display="grid";$("remoteVideo").style.display="none";$("localVideo").style.display="none";
   $("remoteAudio").srcObject=null;$("remoteVideo").srcObject=null;$("remoteVideo").muted=true;$("localVideo").srcObject=null;
  }
@@ -119,7 +119,7 @@
   if(localStream){localStream.getTracks().forEach(t=>t.stop());localStream=null;}
   $("remoteVideo").srcObject=null;$("localVideo").srcObject=null;$("remoteAudio").srcObject=null;
   callRef=null;callRole=null;callState=null;incomingCall=null;queuedCandidates=[];pendingLocalCandidates=[];muted=false;cameraOff=false;cameraFacingMode="user";cameraSwitchBusy=false;ending=false;
-  overlay.classList.remove("visible");
+  $("switchCameraCall").disabled=false;overlay.classList.remove("visible");
  }
  async function getLocalMedia(mode){
   if(!window.isSecureContext)throw new Error("Las llamadas requieren una conexión segura HTTPS. Abre klk desde su enlace oficial.");
