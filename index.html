@@ -1064,7 +1064,12 @@ html[data-theme="dark"] #chat.room-open .attachmentGrid button:nth-child(5) .att
 .klkUpdates .statusTextFab{bottom:calc(192px + env(safe-area-inset-bottom))!important;width:54px;height:54px;border-radius:18px;background:#006458;color:white}
 .klkUpdates .statusPhotoFab{bottom:calc(116px + env(safe-area-inset-bottom))!important;width:62px;height:62px;border-radius:20px;background:#006458;color:white}
 @media(max-height:650px){.klkUpdates .statusTextFab{bottom:calc(172px + env(safe-area-inset-bottom))!important}.klkUpdates .statusPhotoFab{bottom:calc(104px + env(safe-area-inset-bottom))!important}}
-</style>\n</head>
+</style>\n<style>
+/* Smooth vertical swipe in Novedades, with bottom controls unobstructed */
+#updatesPanel.klkUpdates:not([hidden]){height:calc(100dvh - 210px);min-height:320px;max-height:calc(100dvh - 160px);overflow-y:auto!important;overflow-x:hidden!important;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;padding-bottom:190px!important;scroll-behavior:smooth;box-sizing:border-box;scrollbar-width:thin;scrollbar-color:#c8dcd5 transparent}
+#updatesPanel.klkUpdates .statusFab{position:fixed!important}
+@media(max-height:700px){#updatesPanel.klkUpdates:not([hidden]){height:calc(100dvh - 175px);max-height:calc(100dvh - 145px)}}
+</style></head>
 <body>
 <header class="brandHeader"><img src="./icon.svg" alt="Logo de klk: pulgar arriba" class="brandMark"><div class="brandWords"><span>klk</span><small>Tu familia, siempre conectada ❤️</small></div></header>
 <main>
