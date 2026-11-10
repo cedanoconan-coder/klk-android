@@ -34,10 +34,9 @@ service cloud.firestore {
     // Para listar el índice de chats solo se comprueba pertenencia. Esta consulta
     // devuelve metadatos mínimos; los bloqueos se aplican al abrir el chat y leer mensajes.
     function isConversationParticipantData(members) {
-      return signedIn()
-        && members is list
-        && members.size() == 2
-        && request.auth.uid in members;
+      // La consulta array-contains demuestra pertenencia; no añadimos condiciones
+      // (como tamaño exacto) que Firestore no puede inferir del filtro de consulta.
+      return signedIn() && request.auth.uid in members;
     }
     function isConversationMemberData(members) {
       return isConversationParticipantData(members)
