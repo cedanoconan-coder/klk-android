@@ -1069,6 +1069,24 @@ html[data-theme="dark"] #chat.room-open .attachmentGrid button:nth-child(5) .att
 #updatesPanel.klkUpdates:not([hidden]){height:calc(100dvh - 210px);min-height:320px;max-height:calc(100dvh - 160px);overflow-y:auto!important;overflow-x:hidden!important;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;padding-bottom:190px!important;scroll-behavior:smooth;box-sizing:border-box;scrollbar-width:thin;scrollbar-color:#c8dcd5 transparent}
 #updatesPanel.klkUpdates .statusFab{position:fixed!important}
 @media(max-height:700px){#updatesPanel.klkUpdates:not([hidden]){height:calc(100dvh - 175px);max-height:calc(100dvh - 145px)}}
+</style><style>
+/* KLK unified swipe scrolling: all main tabs, without affecting chat message scrolling */
+#homeView #chatsPanel:not([hidden]),
+#homeView #callsPanel:not([hidden]),
+#homeView #toolsPanel:not([hidden]),
+#homeView #updatesPanel:not([hidden]){
+ height:calc(100dvh - 210px);max-height:calc(100dvh - 160px);min-height:260px;
+ overflow-y:auto!important;overflow-x:hidden!important;
+ overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;
+ touch-action:pan-y;scroll-behavior:smooth;box-sizing:border-box;
+ scrollbar-width:thin;scrollbar-color:#c8dcd5 transparent;
+ padding-bottom:180px!important;
+}
+#homeView #chatsPanel:not([hidden]){padding-bottom:155px!important}
+#homeView #callsPanel:not([hidden]){padding-bottom:155px!important}
+#homeView #toolsPanel:not([hidden]){padding-bottom:155px!important}
+#homeView #chatsPanel button,#homeView #callsPanel button,#homeView #toolsPanel button,#homeView #updatesPanel button{touch-action:manipulation}
+@media(max-height:700px){#homeView #chatsPanel:not([hidden]),#homeView #callsPanel:not([hidden]),#homeView #toolsPanel:not([hidden]),#homeView #updatesPanel:not([hidden]){height:calc(100dvh - 175px);max-height:calc(100dvh - 145px)}}
 </style></head>
 <body>
 <header class="brandHeader"><img src="./icon.svg" alt="Logo de klk: pulgar arriba" class="brandMark"><div class="brandWords"><span>klk</span><small>Tu familia, siempre conectada ❤️</small></div></header>
