@@ -1832,7 +1832,7 @@ $("send").onclick = async () => {
    createdAt:firebase.firestore.FieldValue.serverTimestamp()
   });
   void sendKlkPushForMessage(conversationId,sentMessage.id);
-  if(activeConversationId===conversationId)$("chatStatus").textContent="Mensaje enviado correctamente.";
+  if(activeConversationId===conversationId)$("chatStatus").textContent="";
  } catch(error) {
   // No perder el texto cuando Firestore rechaza o no puede completar el envío.
   if(activeConversationId===conversationId){
