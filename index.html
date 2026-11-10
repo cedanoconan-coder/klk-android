@@ -671,6 +671,14 @@ main,#chat,.homeView{overscroll-behavior-y:contain}
 #homeProfilePanel .profileSubmenu .klkProfileInfoCard{margin-top:8px;padding:8px 0 0;border:0;box-shadow:none}
 #homeProfilePanel .profileSubmenu .profileSection{padding:8px 0;border:0}
 #homeProfilePanel .profileSubmenu .profileAction{border-bottom:0;padding:12px 2px}
+
+/* Cámara integrada en la burbuja de escritura */
+#chat.room-open .messageInputShell{display:flex;align-items:center;flex:1;min-width:0;gap:2px;padding:0 5px 0 0;border-radius:28px;background:#fff}
+#chat.room-open .messageInputShell input{flex:1;min-width:0;background:transparent!important;box-shadow:none!important}
+#chat.room-open .messageInputShell #takePhoto{display:grid;place-items:center;flex:0 0 36px;width:36px;min-width:36px;height:36px;margin:0;padding:0;border:0;border-radius:50%;background:transparent;color:#66736f}
+#chat.room-open .messageInputShell #takePhoto svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+#chat.room-open .messageInputShell #takePhoto:active{background:#e6f3ee;color:#087e70}
+#chat.room-open .messageInputShell #takePhoto:disabled{opacity:.45}
 </style>
 <style>
 /* Perfil compacto y selector de foto mediante cámara */
@@ -1034,7 +1042,12 @@ html[data-theme="dark"] #chat.room-open .attachmentGrid button:nth-child(5) .att
 <div id="messages" aria-live="polite"><p class="muted">Cargando mensajes...</p></div>
 <div class="composer">
  <button id="stickersToggle" class="stickersToggle" type="button" aria-label="Abrir emojis y stickers" aria-expanded="false" title="Emojis y stickers">😊</button>
- <input id="message" maxlength="2000" placeholder="Mensaje" autocomplete="off" aria-label="Escribe un mensaje">
+ <div class="messageInputShell">
+  <input id="message" maxlength="2000" placeholder="Mensaje" autocomplete="off" aria-label="Escribe un mensaje">
+  <button id="takePhoto" type="button" aria-label="Abrir cámara para tomar una foto o grabar un video" title="Cámara">
+   <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 7.5h3l1.7-2.3h6.6L17 7.5h3a1.5 1.5 0 0 1 1.5 1.5v9A1.5 1.5 0 0 1 20 19.5H4A1.5 1.5 0 0 1 2.5 18V9A1.5 1.5 0 0 1 4 7.5Z"/><circle cx="12" cy="13.2" r="3.4"/></svg>
+  </button>
+ </div>
  <button id="pickPhoto" class="iconBtn" type="button" aria-label="Abrir opciones para adjuntar" aria-expanded="false" title="Adjuntar">📎</button>
  <button id="send" type="button" aria-label="Enviar mensaje" title="Enviar"><svg class="sendGlyph" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3.4 20.1 21 12 3.4 3.9l.1 6.3 11.1 1.8-11.1 1.8-.1 6.3Z" fill="currentColor" stroke="currentColor" stroke-linejoin="round" stroke-width="1.1"/></svg></button>
  <span id="voiceTimer" class="voiceTimer" aria-live="off" hidden>00:00</span>
@@ -1054,7 +1067,7 @@ html[data-theme="dark"] #chat.room-open .attachmentGrid button:nth-child(5) .att
  <button id="sendAudio" type="button" disabled>Enviar audio</button>
 </section>
 <input id="galleryInput" class="filePickerInput" type="file" accept="image/*,video/*" aria-label="Seleccionar fotos o videos">
-<input id="cameraInput" class="filePickerInput" type="file" accept="image/*" capture="environment" aria-label="Tomar una foto">
+<input id="cameraInput" class="filePickerInput" type="file" accept="image/*,video/*" capture="environment" aria-label="Tomar una foto o grabar un video">
 <input id="documentInput" class="filePickerInput" type="file" aria-label="Seleccionar cualquier archivo">
 <input id="musicInput" class="filePickerInput" type="file" accept="audio/*,.mp3,.m4a,.wav,.ogg" aria-label="Seleccionar audio">
 <p id="recordStatus" class="hint" role="status" aria-live="polite"></p>
@@ -1968,7 +1981,7 @@ async function uploadMedia(file, type, durationSeconds = null) {
  if(type==="file" && file.size>20*1024*1024){$("chatStatus").textContent="El documento no puede superar 20 MB.";return;}
  sending = true;
  $("chatStatus").textContent = type === "image" ? "Optimizando foto o video..." : type==="audio"?"Preparando audio...":"Preparando documento...";
- $("send").disabled = true; $("pickPhoto").disabled = true; $("recordAudio").disabled = true; $("sendAudio").disabled = true;
+ $("send").disabled = true; $("pickPhoto").disabled = true; $("takePhoto").disabled = true; $("recordAudio").disabled = true; $("sendAudio").disabled = true;
  try {
   const uploadFile = type === "image" ? await compressImage(file) : file;
   const maxBytes = type === "image" ? 10 * 1024 * 1024 : 20 * 1024 * 1024;
@@ -1996,13 +2009,14 @@ async function uploadMedia(file, type, durationSeconds = null) {
   console.error("Error al enviar archivo:", error);
   $("chatStatus").textContent = "No se pudo enviar el archivo: " + (error.message || "Error desconocido");
  } finally {
-  sending = false; $("send").disabled = false; $("pickPhoto").disabled = false; $("recordAudio").disabled = false; $("sendAudio").disabled = !audioBlob;
+  sending = false; $("send").disabled = false; $("pickPhoto").disabled = false; $("takePhoto").disabled = false; $("recordAudio").disabled = false; $("sendAudio").disabled = !audioBlob;
  }
 }
 $("pickPhoto").onclick = () => { const panel=$("attachmentPanel"); const opening=!panel.classList.contains("open"); panel.classList.toggle("open",opening); panel.setAttribute("aria-hidden",String(!opening)); $("pickPhoto").setAttribute("aria-expanded",String(opening)); closeStickersPanel(); };
+$("takePhoto").addEventListener("click",()=>{closeStickersPanel();closeAttachmentPanel();openAttachmentFilePicker("cameraInput");});
 
 $("galleryInput").addEventListener("change", async event => { const file = event.target.files && event.target.files[0]; if (file) await uploadMedia(file,file.type&&file.type.startsWith("video/")?"file":"image"); event.target.value = ""; });
-$("cameraInput").addEventListener("change", async event => { const file = event.target.files && event.target.files[0]; if (file) await uploadMedia(file,"image"); event.target.value = ""; });
+$("cameraInput").addEventListener("change", async event => { const file = event.target.files && event.target.files[0]; if (file) await uploadMedia(file,file.type&&file.type.startsWith("video/")?"file":"image"); event.target.value = ""; });
 function openAttachmentFilePicker(inputId){
  const input=$(inputId);
  if(!input){$("chatStatus").textContent="No se encontró el selector de archivos. Actualiza klk e inténtalo otra vez.";return;}
