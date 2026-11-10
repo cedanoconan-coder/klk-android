@@ -1102,6 +1102,23 @@ html[data-theme="dark"] #chat.room-open .attachmentGrid button:nth-child(5) .att
 #chat:not(.room-open) #homeView #updatesPanel:not([hidden]){display:block!important;height:calc(100dvh - 260px)!important;max-height:calc(100dvh - 260px)!important;min-height:220px!important;overflow-y:scroll!important;overflow-x:hidden!important;overscroll-behavior-y:contain!important;-webkit-overflow-scrolling:touch!important;touch-action:pan-y!important;box-sizing:border-box!important;padding-bottom:220px!important;position:relative!important}
 #chat:not(.room-open) #homeView #updatesPanel:not([hidden]) .statusFab{position:fixed!important;pointer-events:auto}
 @media(max-height:680px){#chat:not(.room-open) #homeView #updatesPanel:not([hidden]){height:calc(100dvh - 215px)!important;max-height:calc(100dvh - 215px)!important}}
+</style><style>
+/* Strict tab isolation: prevent Chats from leaking Novedades, calls or tools. */
+#homeView #updatesPanel[hidden],#homeView #toolsPanel[hidden],#homeView #callsPanel[hidden],#homeView #chatsPanel[hidden]{display:none!important}
+#homeView:has(.homeBottom [data-tab="chats"].active) #updatesPanel,
+#homeView:has(.homeBottom [data-tab="chats"].active) #callsPanel,
+#homeView:has(.homeBottom [data-tab="chats"].active) #toolsPanel{display:none!important}
+#homeView:has(.homeBottom [data-tab="calls"].active) #chatsPanel,
+#homeView:has(.homeBottom [data-tab="calls"].active) #updatesPanel,
+#homeView:has(.homeBottom [data-tab="calls"].active) #toolsPanel{display:none!important}
+#homeView:has(.homeBottom [data-tab="updates"].active) #chatsPanel,
+#homeView:has(.homeBottom [data-tab="updates"].active) #callsPanel,
+#homeView:has(.homeBottom [data-tab="updates"].active) #toolsPanel{display:none!important}
+#homeView:has(.homeBottom [data-tab="tools"].active) #chatsPanel,
+#homeView:has(.homeBottom [data-tab="tools"].active) #callsPanel,
+#homeView:has(.homeBottom [data-tab="tools"].active) #updatesPanel{display:none!important}
+#homeView:has(.homeBottom [data-tab="chats"].active) .updatesHeading,
+#homeView:has(.homeBottom [data-tab="chats"].active) .statusFab{display:none!important}
 </style></head>
 <body>
 <header class="brandHeader"><img src="./icon.svg" alt="Logo de klk: pulgar arriba" class="brandMark"><div class="brandWords"><span>klk</span><small>Tu familia, siempre conectada ❤️</small></div></header>
