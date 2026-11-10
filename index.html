@@ -822,6 +822,17 @@ main,#chat,.homeView{overscroll-behavior-y:contain}
 #chat.profile-open .profileAction{padding:13px 2px!important;border-color:var(--klk-line)!important}
 @media(max-width:380px){#chat.profile-open .klkProfilePhotoWrap,#chat.profile-open .klkProfilePhotoWrap img#profilePanelPhoto{width:116px!important;height:116px!important;min-width:116px;min-height:116px}#chat.profile-open .klkProfilePhotoWrap{flex-basis:116px}}
 </style>
+<style>
+/* Perfil: acceso a ajustes inmediatamente debajo de la identidad */
+#chat.profile-open .profileSettingsAccordion{order:initial;margin:8px 0 14px!important;position:relative;z-index:2}
+#chat.profile-open .profileMood{margin-top:0!important}
+#chat.profile-open .profileIdentityCard{margin-bottom:8px!important;padding-bottom:12px!important}
+#chat.profile-open .profileHero{gap:7px!important}
+#chat.profile-open .klkProfilePhotoWrap{position:relative;display:flex;align-items:center;justify-content:center;width:132px;height:132px;margin:0 auto}
+#chat.profile-open .klkProfilePhotoWrap img#profilePanelPhoto{width:132px!important;height:132px!important}
+#chat.profile-open .profilePhotoAction.profilePhotoActionBelow{position:static!important;display:grid!important;place-items:center;width:34px!important;height:34px!important;min-width:34px!important;flex:0 0 34px;margin:7px auto 0!important;padding:0!important;border:1px solid #ffffff85!important;border-radius:50%!important;background:#ffffff20!important;color:#fff!important;font-size:17px!important;box-shadow:none!important;transform:none}
+#chat.profile-open .profilePhotoAction.profilePhotoActionBelow:active{background:#ffffff40!important;transform:scale(.96)}
+</style>
 </head>
 <body>
 <header class="brandHeader"><img src="./icon.svg" alt="Logo de klk: pulgar arriba" class="brandMark"><div class="brandWords"><span>klk</span><small>Tu familia, siempre conectada ❤️</small></div></header>
@@ -861,11 +872,10 @@ main,#chat,.homeView{overscroll-behavior-y:contain}
  <div class="klkProfileTopbar"><button id="profileClose" class="secondary" type="button" aria-label="Volver">‹</button><h2>Perfil</h2></div>
  <div class="profileIdentityCard">
   <div class="profileHero">
-   <div class="klkProfilePhotoWrap"><img id="profilePanelPhoto" alt="Foto de perfil" role="button" tabindex="0" aria-label="Ampliar foto de perfil"><button id="profileChangePhoto" class="profilePhotoAction" type="button" aria-label="Cambiar foto de perfil" title="Cambiar foto">📷</button></div>
+   <div class="klkProfilePhotoWrap"><img id="profilePanelPhoto" alt="Foto de perfil" role="button" tabindex="0" aria-label="Ampliar foto de perfil"></div><button id="profileChangePhoto" class="profilePhotoAction profilePhotoActionBelow" type="button" aria-label="Cambiar foto de perfil" title="Cambiar foto">📷</button>
    <div class="profileNameWrap"><strong id="profilePanelName" class="profileUserName">Mi perfil</strong><span id="profileOnlineStatus" class="profileOnlineStatus" role="status" aria-live="polite">Desconectado</span></div>
   </div>
  </div>
- <div class="profileMood klkProfileMood"><span class="moodEmoji" id="myMoodEmoji">😊</span><div style="min-width:0;flex:1"><strong>Estado</strong><small id="myMoodLabel">Comparte cómo te sientes</small></div><select id="profileMoodSelect" aria-label="Elige tu estado de ánimo"><option value="😊 Feliz">😊 Feliz</option><option value="😌 Tranquilo">😌 Tranquilo</option><option value="❤️ Agradecido">❤️ Agradecido</option><option value="💪 Motivado">💪 Motivado</option><option value="😴 Cansado">😴 Cansado</option><option value="🤔 Pensativo">🤔 Pensativo</option><option value="😔 No muy bien">😔 No muy bien</option><option value="🎉 Emocionado">🎉 Emocionado</option></select></div>
  <details class="profileSettingsAccordion"><summary><span class="profileSettingsIcon">⚙️</span><span><strong>Cuenta y ajustes</strong><small>Consulta y modifica tu información</small></span><b class="profileSettingsChevron">⌄</b></summary><div class="profileSettingsBody">
   <details class="profileSubmenu" open><summary><span>👤 Información de la cuenta</span><b>⌄</b></summary><div class="profileSubmenuBody">
    <div class="profileAccountEmail"><small>Correo de la cuenta</small><strong id="profileAccountEmail">Cargando...</strong></div>
@@ -878,6 +888,8 @@ main,#chat,.homeView{overscroll-behavior-y:contain}
     <p id="profileStatus" class="hint" role="status" aria-live="polite"></p>
    </div>
   </div></details>
+ <div class="profileMood klkProfileMood"><span class="moodEmoji" id="myMoodEmoji">😊</span><div style="min-width:0;flex:1"><strong>Estado</strong><small id="myMoodLabel">Comparte cómo te sientes</small></div><select id="profileMoodSelect" aria-label="Elige tu estado de ánimo"><option value="😊 Feliz">😊 Feliz</option><option value="😌 Tranquilo">😌 Tranquilo</option><option value="❤️ Agradecido">❤️ Agradecido</option><option value="💪 Motivado">💪 Motivado</option><option value="😴 Cansado">😴 Cansado</option><option value="🤔 Pensativo">🤔 Pensativo</option><option value="😔 No muy bien">😔 No muy bien</option><option value="🎉 Emocionado">🎉 Emocionado</option></select></div>
+
   <details class="profileSubmenu"><summary><span>🔐 Seguridad</span><b>⌄</b></summary><div class="profileSubmenuBody"><p class="profileSubmenuHint">Protege el acceso a tu cuenta.</p><button id="profilePassword" class="profileAction" type="button"><span>Cambiar contraseña<small>Recibirás un enlace seguro en tu correo</small></span><b>›</b></button></div></details>
   <details class="profileSubmenu"><summary><span>🛡️ Privacidad</span><b>⌄</b></summary><div class="profileSubmenuBody"><button id="profilePrivacyInfo" class="profileAction" type="button"><span>Ver información de privacidad<small>Consulta los controles disponibles</small></span><b>›</b></button><p id="profilePrivacyStatus" class="hint" hidden>Los controles avanzados de privacidad todavía no están activos en klk; no mostraremos opciones que no se apliquen realmente.</p></div></details>
   <details class="profileSubmenu"><summary><span>🔔 Notificaciones y apariencia</span><b>⌄</b></summary><div class="profileSubmenuBody"><p class="profileSubmenuHint">Personaliza sonidos, vibración, tema, tamaño y fondo.</p><button id="profileOpenSettings" class="profileAction" type="button"><span>Abrir preferencias<small>Ver y modificar los ajustes de klk</small></span><b>›</b></button></div></details>
