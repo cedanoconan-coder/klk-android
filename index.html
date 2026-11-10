@@ -1816,7 +1816,7 @@ function formatMessageTime(value) {
  if (Number.isNaN(date.getTime())) return "";
  return new Intl.DateTimeFormat("es-DO",{hour:"2-digit",minute:"2-digit"}).format(date);
 }
-let messagesLoadingTimeout = null;
+let messagesLoadingTimeout = null, disappearingExpiryTimer = null;
 function loadMessages() {
  if (messagesLoadingTimeout) clearTimeout(messagesLoadingTimeout);
  window.klkNotificationsReady = false;
@@ -1842,10 +1842,14 @@ function loadMessages() {
   if (window.klkNotificationsReady) changes.filter(change => change.type === "added").forEach(change => window.klkNotifyIncoming && window.klkNotifyIncoming(change.doc.data(), change.doc.id));
   else window.klkNotificationsReady = true;
   $("messages").innerHTML = "";
+  if(disappearingExpiryTimer)clearTimeout(disappearingExpiryTimer);
+  const nextExpiry=snapshot.docs.map(doc=>doc.data().expiresAt).filter(value=>value&&typeof value.toDate==="function").map(value=>value.toDate().getTime()).filter(time=>time>Date.now()).sort((a,b)=>a-b)[0];
+  if(nextExpiry)disappearingExpiryTimer=setTimeout(()=>{if(activeConversationId)loadMessages();},Math.min(nextExpiry-Date.now()+250,2147483000));
   window.klkMessageRecords = new Map();
   if (snapshot.empty) { $("messages").textContent = "Todavía no hay mensajes. ¡Envía el primero!"; return; }
   for (const doc of snapshot.docs.slice().reverse()) {
    const data = doc.data(), item = document.createElement("div");
+   if (data.expiresAt && typeof data.expiresAt.toDate === "function" && data.expiresAt.toDate().getTime() <= Date.now()) continue;
    if (Array.isArray(data.deletedFor) && auth.currentUser && data.deletedFor.includes(auth.currentUser.uid)) continue;
    item.className = "msg" + (auth.currentUser && data.uid === auth.currentUser.uid ? " mine" : "");
    item.dataset.messageId=doc.id;
