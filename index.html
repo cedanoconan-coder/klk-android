@@ -2380,6 +2380,7 @@ async function uploadMedia(file, type, durationSeconds = null) {
    size: uploadFile.size, ...(durationSeconds === null ? {} : {duration:durationSeconds}),
    email:user.email || "", displayName:(peopleCache.get(user.uid) || {}).displayName || (user.email || "Miembro").split("@")[0], uid:user.uid, createdAt:firebase.firestore.FieldValue.serverTimestamp()
   });
+  if(type==="audio")void playVoiceFeedbackSound("sent");
   await sendKlkPushForMessage(activeConversationId,sentMessage.id);
   $("chatStatus").textContent = type === "image" ? "Foto enviada." : type==="file"?(isVideo?"Video enviado.":"Documento enviado."):"Audio enviado.";
  } catch(error) {
@@ -2416,6 +2417,29 @@ function closeAttachmentPanel(){const panel=$("attachmentPanel");if(panel){panel
 let voiceHoldActive = false;
 let voiceStartPending = false;
 let voiceTimerInterval = null;
+let voiceFeedbackAudioContext=null;
+async function playVoiceFeedbackSound(kind){
+ try{
+  const AudioContextClass=window.AudioContext||window.webkitAudioContext;
+  if(!AudioContextClass)return;
+  if(!voiceFeedbackAudioContext)voiceFeedbackAudioContext=new AudioContextClass();
+  const context=voiceFeedbackAudioContext;
+  if(context.state==="suspended")await context.resume();
+  const patterns={
+   press:[{frequency:520,at:0,duration:.055}],
+   release:[{frequency:660,at:0,duration:.065}],
+   sent:[{frequency:740,at:0,duration:.065},{frequency:980,at:.085,duration:.075}]
+  };
+  (patterns[kind]||[]).forEach(tone=>{
+   const oscillator=context.createOscillator(),gain=context.createGain();
+   const start=context.currentTime+tone.at,end=start+tone.duration;
+   oscillator.type="sine";oscillator.frequency.setValueAtTime(tone.frequency,start);
+   gain.gain.setValueAtTime(.0001,start);gain.gain.exponentialRampToValueAtTime(kind==="sent"?.075:.055,start+.012);gain.gain.exponentialRampToValueAtTime(.0001,end);
+   oscillator.connect(gain);gain.connect(context.destination);
+   oscillator.start(start);oscillator.stop(end+.015);
+  });
+ }catch(error){console.debug("Sonido de nota de voz no disponible:",error);}
+}
 function formatVoiceTime(totalSeconds) {
  const safe=Math.max(0,Math.floor(totalSeconds));
  return String(Math.floor(safe/60)).padStart(2,"0")+":"+String(safe%60).padStart(2,"0");
@@ -2476,6 +2500,7 @@ function beginVoiceHold(event){
  if(event.button!==undefined&&event.button!==0)return;
  if(voiceHoldActive)return;
  voiceHoldActive=true;audioStartedAt=Date.now();
+ void playVoiceFeedbackSound("press");
  $("voiceTimer").hidden=false;updateVoiceTimer();
  voiceTimerInterval=setInterval(updateVoiceTimer,250);
  $("recordStatus").textContent="Solicitando micrófono… mantén presionado.";
@@ -2484,7 +2509,7 @@ function beginVoiceHold(event){
 function stopVoiceHold(event){
  if(event?.cancelable)event.preventDefault();
  if(!voiceHoldActive&&!voiceStartPending)return;
- voiceHoldActive=false;$("recordAudio").classList.remove("recording");
+ voiceHoldActive=false;void playVoiceFeedbackSound("release");$("recordAudio").classList.remove("recording");
  if(mediaRecorder&&mediaRecorder.state==="recording")mediaRecorder.stop();
  else if(!voiceStartPending)stopVoiceTimer();
 }
