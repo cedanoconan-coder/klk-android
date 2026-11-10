@@ -7,7 +7,7 @@
  let callPeople=new Map(), callDirectoryPeople=new Map(), callConversationPeople=new Map();
  let callPeopleUnsub=null, callConversationUnsub=null;
  let callRole=null, callMode="audio", callState=null, callStarting=false, remoteCandidatesUnsub=null, localCandidatesUnsub=null, queuedCandidates=[];
- let incomingCall=null, incomingDocUnsub=null, ringTimeout=null, muted=false, cameraOff=false, ending=false, pendingLocalCandidates=[];
+ let incomingCall=null, incomingDocUnsub=null, ringTimeout=null, muted=false, cameraOff=false, cameraFacingMode="user", ending=false, pendingLocalCandidates=[];
  const overlay=$("callOverlay");
  const setStatus=(message)=>{if($("callsStatus"))$("callsStatus").textContent=message||"";};
  function isCallContactAccepted(uid){return callPeople.has(uid);}
@@ -95,13 +95,13 @@
   $("callPeerName").textContent=name||"Contacto";
   $("callStatus").textContent=status||"";
   overlay.classList.add("visible");
-  $("answerCall").hidden=true;$("rejectCall").hidden=true;$("muteCall").hidden=true;$("cameraCall").hidden=true;$("endCall").hidden=true;
+  $("answerCall").hidden=true;$("rejectCall").hidden=true;$("muteCall").hidden=true;$("cameraCall").hidden=true;$("switchCameraCall").hidden=true;$("endCall").hidden=true;
   $("callAvatar").style.display="grid";$("remoteVideo").style.display="none";$("localVideo").style.display="none";
   $("remoteAudio").srcObject=null;$("remoteVideo").srcObject=null;$("remoteVideo").muted=true;$("localVideo").srcObject=null;
  }
  function showActiveControls(){
   $("answerCall").hidden=true;$("rejectCall").hidden=true;$("endCall").hidden=false;$("muteCall").hidden=false;
-  $("cameraCall").hidden=callMode!=="video";
+  $("cameraCall").hidden=callMode!=="video";$("switchCameraCall").hidden=callMode!=="video";
   $("muteCall").textContent="Silenciar";$("muteCall").classList.remove("muted");
   $("callAvatar").style.display=callMode==="video"?"none":"grid";
   $("remoteVideo").style.display=callMode==="video"?"block":"none";
@@ -118,13 +118,14 @@
   if(peer){try{peer.ontrack=null;peer.onicecandidate=null;peer.close();}catch(e){}peer=null;}
   if(localStream){localStream.getTracks().forEach(t=>t.stop());localStream=null;}
   $("remoteVideo").srcObject=null;$("localVideo").srcObject=null;$("remoteAudio").srcObject=null;
-  callRef=null;callRole=null;callState=null;incomingCall=null;queuedCandidates=[];pendingLocalCandidates=[];muted=false;cameraOff=false;ending=false;
+  callRef=null;callRole=null;callState=null;incomingCall=null;queuedCandidates=[];pendingLocalCandidates=[];muted=false;cameraOff=false;cameraFacingMode="user";ending=false;
   overlay.classList.remove("visible");
  }
  async function getLocalMedia(mode){
   if(!window.isSecureContext)throw new Error("Las llamadas requieren una conexión segura HTTPS. Abre klk desde su enlace oficial.");
   if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia||!window.RTCPeerConnection)throw new Error("Este navegador no admite llamadas WebRTC. Actualiza Chrome y vuelve a intentarlo.");
-  return navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true},video:mode==="video"?{facingMode:"user",width:{ideal:640},height:{ideal:480}}:false});
+  cameraFacingMode="user";
+   return navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true},video:mode==="video"?{facingMode:{ideal:cameraFacingMode},width:{ideal:640},height:{ideal:480}}:false});
  }
  function createPeer(){
   peer=new RTCPeerConnection(ICE_CONFIG);
@@ -270,6 +271,29 @@
  $("cameraCall").addEventListener("click",()=>{
   if(!localStream)return;cameraOff=!cameraOff;localStream.getVideoTracks().forEach(t=>t.enabled=!cameraOff);
   $("cameraCall").textContent=cameraOff?"Activar cámara":"Apagar cámara";
+ });
+ $("switchCameraCall").addEventListener("click",async()=>{
+  if(!localStream||!peer||callMode!=="video"||!navigator.mediaDevices?.getUserMedia)return;
+  const nextFacing=cameraFacingMode==="user"?"environment":"user";
+  let replacementStream=null;
+  try{
+   $("switchCameraCall").disabled=true;
+   replacementStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:nextFacing},width:{ideal:640},height:{ideal:480}},audio:false});
+   const nextTrack=replacementStream.getVideoTracks()[0];
+   const sender=peer.getSenders().find(item=>item.track&&item.track.kind==="video");
+   if(!nextTrack||!sender)throw new Error("No se pudo encontrar la cámara activa.");
+   await sender.replaceTrack(nextTrack);
+   const previousTracks=localStream.getVideoTracks();
+   previousTracks.forEach(track=>localStream.removeTrack(track));
+   localStream.addTrack(nextTrack);nextTrack.enabled=!cameraOff;
+   $("localVideo").srcObject=localStream;
+   previousTracks.forEach(track=>track.stop());
+   cameraFacingMode=nextFacing;
+   $("callStatus").textContent=nextFacing==="environment"?"Cámara trasera activa":"Cámara frontal activa";
+  }catch(error){
+   if(replacementStream)replacementStream.getTracks().forEach(track=>track.stop());
+   $("callStatus").textContent="No se pudo cambiar de cámara: "+(error.message||"dispositivo no disponible");
+  }finally{$("switchCameraCall").disabled=false;}
  });
  document.querySelectorAll('.homeBottom button').forEach(button=>{
   if(button.dataset.tab!=="calls"){button.addEventListener("click",()=>{if($("callsPanel"))$("callsPanel").style.display="none";});return;}
