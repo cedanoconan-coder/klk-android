@@ -89,13 +89,10 @@ async function verifyStatusVisible(
         structuredQuery: {
           from: [{ collectionId: "statuses" }],
           where: {
-            compositeFilter: {
-              op: "AND",
-              filters: [
-                { fieldFilter: { field: { fieldPath: "uid" }, op: "EQUAL", value: { stringValue: statusOwnerUid } } },
-                { fieldFilter: { field: { fieldPath: "storagePath" }, op: "EQUAL", value: { stringValue: path } } },
-                { fieldFilter: { field: { fieldPath: "expiresAt" }, op: "GREATER_THAN", value: { timestampValue: now } } },
-              ],
+            fieldFilter: {
+              field: { fieldPath: "storagePath" },
+              op: "EQUAL",
+              value: { stringValue: path },
             },
           },
           limit: 1,
@@ -104,10 +101,14 @@ async function verifyStatusVisible(
     });
     if (!response.ok) return false;
     const results = await response.json();
-    return Array.isArray(results) && results.some((item: any) =>
-      item?.document?.fields?.uid?.stringValue === statusOwnerUid &&
-      item?.document?.fields?.storagePath?.stringValue === path
-    );
+    return Array.isArray(results) && results.some((item: any) => {
+      const fields = item?.document?.fields;
+      const expiresAt = fields?.expiresAt?.timestampValue;
+      return fields?.uid?.stringValue === statusOwnerUid &&
+        fields?.storagePath?.stringValue === path &&
+        typeof expiresAt === "string" &&
+        Date.parse(expiresAt) > Date.now();
+    });
   } catch {
     return false;
   }
@@ -228,12 +229,14 @@ Deno.serve(async (request) => {
     } else if (!isOwnedLegacyMediaPath(path, uid)) {
       return reply(403, { error: "No tienes permiso para acceder a este archivo privado." });
     }
-    const { data, error } = await admin.storage.from(BUCKET).createSignedUrl(path, 60 * 60);
+    // Los enlaces de estados duran menos para reducir el acceso residual tras expirar.
+    const expiresIn = path.startsWith("statuses/") ? 5 * 60 : 60 * 60;
+    const { data, error } = await admin.storage.from(BUCKET).createSignedUrl(path, expiresIn);
     if (error || !data?.signedUrl) {
       console.error("No se pudo crear la URL de lectura:", error);
       return reply(404, { error: "No se encontró el archivo solicitado." });
     }
-    return reply(200, { signedUrl: data.signedUrl, expiresIn: 3600 });
+    return reply(200, { signedUrl: data.signedUrl, expiresIn });
   }
 
   return reply(400, { error: "Acción no reconocida." });
