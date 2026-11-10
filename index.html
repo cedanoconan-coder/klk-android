@@ -2418,7 +2418,7 @@ let voiceHoldActive = false;
 let voiceStartPending = false;
 let voiceTimerInterval = null;
 let voiceFeedbackAudioContext=null;
-async function playVoiceFeedbackSound(kind){
+async async function playVoiceFeedbackSound(kind){
  try{
   const AudioContextClass=window.AudioContext||window.webkitAudioContext;
   if(!AudioContextClass)return;
