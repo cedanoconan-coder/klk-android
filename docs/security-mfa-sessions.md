@@ -10,7 +10,7 @@
 ## Requisitos previos en Firebase
 1. El proyecto `klk-familia` debe estar actualizado a **Firebase Authentication with Identity Platform** y tener habilitado correo/contraseña.
 2. La cuenta administradora necesita el rol IAM `roles/identitytoolkit.admin`.
-3. Desde `functions`, instala dependencias con `npm install`.
+3. El backend usa Node.js 22, runtime compatible de Cloud Functions. Desde `functions`, instala dependencias con `npm install`.
 4. Autentícate con Google Application Default Credentials para el proyecto correcto.
 5. Ejecuta `npm run enable:totp`. El script conserva factores multifactor existentes y añade TOTP; no contiene claves ni credenciales.
 6. Verifica los dominios autorizados y prueba inscripción, desafío TOTP y recuperación de acceso.
