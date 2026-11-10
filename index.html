@@ -2822,7 +2822,8 @@ if (window.matchMedia("(display-mode: standalone)").matches || window.navigator.
  window.klkSetCurrentUid=uid=>{window.klkCurrentUid=uid||null;};apply();permissionButton();refreshCustomSounds();
 })();
 
-// Usa el selector global definido en el script principal.
+// Este script es independiente: declara aquí su propio selector DOM.
+const $ = id => document.getElementById(id);
 $("inviteMember").addEventListener("click",()=>{ $("invitePanel").style.display=$("invitePanel").style.display==="block"?"none":"block"; $("inviteStatus").textContent=""; });
 let latestInviteCode = "";
 $("createInvite").addEventListener("click",async()=>{
