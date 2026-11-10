@@ -406,7 +406,29 @@ body:has(#chat.room-open) main{padding:0!important;margin:0!important;max-width:
 @media(max-width:420px){.profileCover{height:185px}#contactProfilePanel .contactCover{height:205px}.profileHero img{width:94px;height:94px;flex-basis:94px}}
 
 /* Acceso flotante a usuarios, estilo mensajería */
-#openUsersFab{position:fixed;z-index:70;right:20px;bottom:calc(88px + env(safe-area-inset-bottom));width:58px;height:58px;border:0;border-radius:20px;background:var(--klk-accent,#075e54);color:#fff;box-shadow:0 6px 18px #0003;font-size:27px;display:grid;place-items:center}
+#openUsersFab{
+ position:fixed;z-index:70;right:20px;bottom:calc(88px + env(safe-area-inset-bottom));
+ display:grid;place-items:center;width:60px;height:60px;margin:0;padding:0;
+ border:1px solid #ffffff70;border-radius:22px;
+ background:linear-gradient(145deg,#128c7e 0%,#075e54 58%,#064b45 100%);
+ color:#fff;font-size:0;line-height:1;
+ box-shadow:0 10px 26px #063f3a40, inset 0 1px 0 #ffffff55;
+ -webkit-tap-highlight-color:transparent;touch-action:manipulation;
+ transition:transform .18s ease,box-shadow .18s ease,filter .18s ease;
+}
+#openUsersFab:before{
+ content:"";display:block;width:19px;height:19px;border:2.5px solid currentColor;
+ border-radius:50%;transform:translate(-2px,-2px);
+}
+#openUsersFab:after{
+ content:"";position:absolute;width:9px;height:2.5px;border-radius:3px;
+ background:currentColor;transform:translate(9px,9px) rotate(45deg);
+ box-shadow:0 0 0 1px #075e5420;
+}
+#openUsersFab:active{transform:scale(.94);box-shadow:0 5px 14px #063f3a35,inset 0 1px 0 #ffffff55;filter:brightness(1.06)}
+#openUsersFab:focus-visible{outline:3px solid #8bc9ad;outline-offset:4px}
+html[data-theme="dark"] #openUsersFab{background:linear-gradient(145deg,#21a391,#087568 60%,#075e54);box-shadow:0 10px 28px #0008,inset 0 1px 0 #ffffff55}
+@media(max-width:420px){#openUsersFab{right:16px;width:58px;height:58px;border-radius:21px}}
 #usersOverlay{position:fixed;inset:0;z-index:90;background:var(--klk-surface,#fff);display:none;overflow:auto;padding:env(safe-area-inset-top) 0 calc(24px + env(safe-area-inset-bottom))}
 #usersOverlay.open{display:block}
 .usersOverlayHead{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:14px;padding:16px 18px;background:var(--klk-surface,#fff);border-bottom:1px solid var(--klk-line,#e7ebea)}
