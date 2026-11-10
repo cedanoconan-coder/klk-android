@@ -893,6 +893,16 @@ html[data-theme="dark"] #chat.room-open .attachmentGrid button:nth-child(5) .att
 
 
 /* Cabecera compacta: perfil, fondos, menú de llamadas y más opciones */
+.disappearingPanel{position:relative;z-index:20;padding:16px;background:var(--klk-surface,#fff);border-bottom:1px solid #e5e9e7;box-shadow:0 5px 18px #00000012}
+.disappearingPanel[hidden],.disappearingNotice[hidden]{display:none!important}
+.disappearingHead{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px;color:var(--klk-text,#17211e)}
+.disappearingHead strong,.disappearingHead small{display:block}.disappearingHead small{margin-top:4px;color:var(--klk-muted,#68736f);font-size:12px;line-height:1.4}
+.disappearingHead button{width:34px;height:34px;margin:0;padding:0;background:transparent;color:inherit;font-size:24px}
+.disappearingOption{display:flex;align-items:center;gap:12px;padding:12px 4px;border-top:1px solid #edf0ef;color:var(--klk-text,#17211e);cursor:pointer}
+.disappearingOption input{width:20px;height:20px;margin:0;accent-color:#075e54}
+.disappearingOption b,.disappearingOption small{display:block}.disappearingOption b{font-size:14px}.disappearingOption small{margin-top:3px;color:var(--klk-muted,#68736f);font-size:12px}
+#disappearingStatus{margin:7px 0 0;color:var(--klk-muted,#68736f);font-size:12px}
+.disappearingNotice{padding:9px 12px;text-align:center;background:#fff8df;color:#75602a;font-size:12px;border-bottom:1px solid #eee3bd}
 #chat.room-open .roomActions{position:relative;display:flex;align-items:center;gap:5px}
 #chat.room-open #roomMediaToggle,#chat.room-open #roomContactInfo{display:none!important}
 #chat.room-open .roomCallWrap{position:relative;display:flex;align-items:center}
@@ -1036,6 +1046,15 @@ html[data-theme="dark"] #chat.room-open .attachmentGrid button:nth-child(5) .att
 <section id="callOverlay" aria-label="Llamada"><div><p id="callStatus">Preparando llamada...</p><h2 id="callPeerName">Contacto</h2></div><div id="callVideoStage"><div id="callAvatar">☎️</div><video id="remoteVideo" autoplay playsinline></video><video id="localVideo" autoplay muted playsinline></video><audio id="remoteAudio" autoplay></audio></div><div id="callControls"><button id="answerCall" type="button" hidden>Responder</button><button id="rejectCall" type="button" hidden>Rechazar</button><button id="muteCall" type="button" hidden>Silenciar</button><button id="cameraCall" type="button" hidden>Apagar cámara</button><button id="endCall" type="button" hidden>Finalizar</button></div></section>
 
 <div class="chatTop"><div class="chatHeading"><button id="backToChats" class="chatBack" type="button" aria-label="Volver a chats" title="Volver">‹</button><img id="roomAvatar" class="roomAvatar" alt="Foto de perfil del contacto" src="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Crect width=%2764%27 height=%2764%27 rx=%2732%27 fill=%27%23e8efec%27/%3E%3Ctext x=%2732%27 y=%2743%27 text-anchor=%27middle%27 font-size=%2732%27%3E%F0%9F%91%A4%3C/text%3E%3C/svg%3E"><div class="roomIdentity"><h2 id="chatTitle" role="button" tabindex="0" aria-label="Ver perfil del contacto">Familia klk</h2><p id="who" class="muted">Conversación privada</p></div><div class="roomActions"><button id="roomWallpaperToggle" type="button" aria-label="Cambiar fondo del chat" title="Fondo del chat">🎨</button><div class="roomCallWrap"><button id="roomCallMenu" type="button" aria-label="Opciones de llamada" aria-expanded="false" title="Llamar">☎</button><div id="roomCallOptions" class="roomCallOptions" hidden><button id="roomVoiceCall" type="button" aria-label="Llamada de voz">☎ <span>Llamada de voz</span></button><button id="roomVideoCall" type="button" aria-label="Videollamada">▣ <span>Videollamada</span></button></div></div><button id="settingsToggle" class="settingsToggle" type="button" aria-label="Más opciones" title="Más opciones">⋮</button></div></div></div>
+<section id="disappearingPanel" class="disappearingPanel" hidden aria-label="Mensajes temporales">
+ <div class="disappearingHead"><div><strong>Mensajes temporales</strong><small>Los mensajes nuevos desaparecerán después del plazo elegido.</small></div><button id="closeDisappearing" type="button" aria-label="Cerrar">×</button></div>
+ <label class="disappearingOption"><input type="radio" name="disappearingDuration" value="0"><span><b>Desactivados</b><small>Los mensajes se conservan</small></span></label>
+ <label class="disappearingOption"><input type="radio" name="disappearingDuration" value="24"><span><b>24 horas</b><small>Desaparecen después de un día</small></span></label>
+ <label class="disappearingOption"><input type="radio" name="disappearingDuration" value="168"><span><b>7 días</b><small>Desaparecen después de una semana</small></span></label>
+ <label class="disappearingOption"><input type="radio" name="disappearingDuration" value="2160"><span><b>90 días</b><small>Desaparecen después de tres meses</small></span></label>
+ <p id="disappearingStatus" role="status" aria-live="polite"></p>
+</section>
+<div id="disappearingNotice" class="disappearingNotice" hidden>◷ <span id="disappearingNoticeText"></span></div>
 <section id="roomWallpaperPanel" hidden aria-label="Fondos de esta conversación"><div class="roomWallpaperHead"><strong>Fondo de este chat</strong><button id="closeRoomWallpapers" type="button" aria-label="Cerrar">×</button></div><p>Elige un diseño. Solo cambiará esta conversación.</p><div class="roomWallpaperGrid">
 <button type="button" data-room-wallpaper="default"><span class="wallpaperPreview wp-default"></span><small>Original</small></button>
 <button type="button" data-room-wallpaper="lilac"><span class="wallpaperPreview wp-lilac"></span><small>Lila</small></button>
@@ -1711,6 +1730,47 @@ const roomWallpaperChoices={
  night:{image:"linear-gradient(135deg,#202b49,#455779)",color:"#293650",size:"cover"},
  minimal:{image:"linear-gradient(135deg,#f5f5f5,#e6e9ed)",color:"#eef0f2",size:"cover"}
 };
+const disappearingDurations={0:"desactivados",24:"24 horas",168:"7 días",2160:"90 días"};
+let disappearingSettingsUnsubscribe=null,activeDisappearingHours=0;
+function disappearingSettingsRef(conversationId=activeConversationId){
+ return db.collection("conversations").doc(conversationId).collection("settings").doc("disappearingMessages");
+}
+function renderDisappearingSettings(hours){
+ activeDisappearingHours=Number(hours)||0;
+ const panel=$("disappearingPanel");
+ if(panel)panel.querySelectorAll('input[name="disappearingDuration"]').forEach(input=>input.checked=Number(input.value)===activeDisappearingHours);
+ const notice=$("disappearingNotice"),text=$("disappearingNoticeText");
+ if(notice&&text){notice.hidden=activeDisappearingHours===0;text.textContent=activeDisappearingHours===0?"": "Los mensajes nuevos desaparecerán después de "+disappearingDurations[activeDisappearingHours]+".";}
+}
+function watchDisappearingSettings(){
+ if(disappearingSettingsUnsubscribe){disappearingSettingsUnsubscribe();disappearingSettingsUnsubscribe=null;}
+ if(!activeConversationId)return;
+ disappearingSettingsUnsubscribe=disappearingSettingsRef().onSnapshot(snapshot=>{
+  const data=snapshot.exists?snapshot.data():{};
+  renderDisappearingSettings(data.durationHours||0);
+ },error=>{showError("disappearingStatus",error);});
+}
+async function saveDisappearingDuration(hours){
+ const user=auth&&auth.currentUser;
+ if(!user||!activeConversationId)return;
+ if(!Object.prototype.hasOwnProperty.call(disappearingDurations,hours))return;
+ const status=$("disappearingStatus");status.textContent="Guardando configuración...";
+ try{
+  await disappearingSettingsRef().set({durationHours:Number(hours),updatedAt:firebase.firestore.FieldValue.serverTimestamp(),updatedBy:user.uid});
+  status.textContent="Configuración actualizada para los dos participantes.";
+ }catch(error){showError("disappearingStatus",error);}
+}
+$("settingsToggle").addEventListener("click",()=>{
+ if(!$("chat").classList.contains("room-open"))return;
+ $("settingsPanel").style.display="none";
+ const panel=$("disappearingPanel");panel.hidden=!panel.hidden;
+ if(!panel.hidden)watchDisappearingSettings();
+});
+$("closeDisappearing").addEventListener("click",()=>$("disappearingPanel").hidden=true);
+$("disappearingPanel").addEventListener("change",event=>{
+ const input=event.target.closest('input[name="disappearingDuration"]');
+ if(input)saveDisappearingDuration(Number(input.value));
+});
 async function openPrivateConversation(otherUid, otherName) {
  const user = auth.currentUser;
  if (!user || !otherUid || otherUid === user.uid) return;
@@ -1719,7 +1779,7 @@ async function openPrivateConversation(otherUid, otherName) {
  try {
   const ref = db.collection("conversations").doc(conversationId), existing = await ref.get();
   if (!existing.exists) await ref.set({members,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
-  activeConversationId = conversationId; activeConversationName = otherName; activeConversationPeerUid = otherUid;
+  activeConversationId = conversationId; activeConversationName = otherName; activeConversationPeerUid = otherUid; watchDisappearingSettings(); $("disappearingPanel").hidden=true;
   klkPushView("conversation");$("chat").classList.add("room-open"); const chatFooter=$("chat").querySelector(".chatFoot"); if(chatFooter){chatFooter.hidden=false;chatFooter.style.display="block";} $("chatTitle").textContent = otherName; updateRoomAvatar(otherUid);
   $("dmPanel").style.display = "none"; $("messages").style.display = "block";
   const composer=document.querySelector(".composer"); if(composer) composer.style.display="flex"; const recordStatus=$("recordStatus"); if(recordStatus) recordStatus.style.display="block";
@@ -1902,7 +1962,8 @@ $("send").onclick = async () => {
    email:user.email||"",
    displayName:(peopleCache.get(user.uid)||{}).displayName||(user.email||"Miembro").split("@")[0],
    uid:user.uid,
-   createdAt:firebase.firestore.FieldValue.serverTimestamp()
+   createdAt:firebase.firestore.FieldValue.serverTimestamp(),
+   ...(activeDisappearingHours ? {expiresAt:firebase.firestore.Timestamp.fromDate(new Date(Date.now()+activeDisappearingHours*60*60*1000))} : {})
   });
   void sendKlkPushForMessage(conversationId,sentMessage.id);
   if(activeConversationId===conversationId)$("chatStatus").textContent="";
@@ -2491,7 +2552,7 @@ window.addEventListener("popstate",()=>{
 $("homeMenu").addEventListener("click",toggleKlkSettings);
 $("backToChats").addEventListener("click",()=>{
  if(unsubscribe){unsubscribe();unsubscribe=null;}
- activeConversationId=null;activeConversationName=null;
+ if(disappearingSettingsUnsubscribe){disappearingSettingsUnsubscribe();disappearingSettingsUnsubscribe=null;} activeConversationId=null;activeConversationName=null;
  $("chat").classList.remove("room-open");
  const chatFooter=$("chat").querySelector(".chatFoot"); if(chatFooter) chatFooter.style.display="";
  $("messages").innerHTML="";
