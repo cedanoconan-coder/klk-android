@@ -276,6 +276,34 @@ test("permite crear una llamada solo dentro de una conversación privada", async
 });
 
 
+test("cada usuario administra su propia lista de bloqueos y no puede leer la de otros", async () => {
+  const owner = testEnv.authenticatedContext("member-1").firestore();
+  const other = testEnv.authenticatedContext("member-2").firestore();
+  const blockRef = doc(owner, "userBlocks/member-1/blocked/member-2");
+  await assertSucceeds(setDoc(blockRef, {blockedUid:"member-2",createdAt:serverTimestamp()}));
+  await assertSucceeds(getDoc(blockRef));
+  await assertFails(getDoc(doc(other, "userBlocks/member-1/blocked/member-2")));
+  await assertFails(setDoc(doc(owner, "userBlocks/member-1/blocked/member-1"), {
+    blockedUid:"member-1",createdAt:serverTimestamp()
+  }));
+  await assertSucceeds(deleteDoc(blockRef));
+});
+
+test("un bloqueo impide abrir y leer la conversación para ambos participantes", async () => {
+  await seedConversation();
+  await testEnv.withSecurityRulesDisabled(async context => {
+    await setDoc(doc(context.firestore(), "userBlocks/member-1/blocked/member-2"), {
+      blockedUid:"member-2",createdAt:Timestamp.now()
+    });
+  });
+  const first = testEnv.authenticatedContext("member-1").firestore();
+  const second = testEnv.authenticatedContext("member-2").firestore();
+  await assertFails(getDoc(doc(first, "conversations/member-1__member-2")));
+  await assertFails(getDoc(doc(second, "conversations/member-1__member-2")));
+  await assertFails(getDocs(collection(first, "conversations/member-1__member-2/messages")));
+  await assertFails(getDocs(collection(second, "conversations/member-1__member-2/messages")));
+});
+
 test("la configuración de mensajes temporales solo la pueden cambiar los miembros del chat", async () => {
   await seedConversation();
   const member = testEnv.authenticatedContext("member-1").firestore();
