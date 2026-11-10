@@ -1,8 +1,6 @@
 /* klk: llamadas privadas WebRTC con señalización Firestore */
 (function(){
  const $=id=>document.getElementById(id);
- const auth=window.auth||null;
- const db=window.db||null;
  const configuredTurn=Array.isArray(window.KLK_TURN_SERVERS)?window.KLK_TURN_SERVERS:[];
  const ICE_CONFIG={iceServers:[{urls:["stun:stun.l.google.com:19302","stun:stun1.l.google.com:19302"]},...configuredTurn]};
  let currentUid=null, incomingUnsub=null, activeCallUnsub=null, localStream=null, peer=null, callRef=null;
@@ -22,7 +20,7 @@
  function watchCallContacts(uid){
   if(callPeopleUnsub){callPeopleUnsub();callPeopleUnsub=null;}
   if(callConversationUnsub){callConversationUnsub();callConversationUnsub=null;}
-  callPeopleUnsub=db.collection("publicProfiles").where("directoryVisible","==",true).onSnapshot(snapshot=>{
+  callPeopleUnsub=window.db.collection("publicProfiles").where("directoryVisible","==",true).onSnapshot(snapshot=>{
    callDirectoryPeople.clear();
    snapshot.docs.forEach(doc=>callDirectoryPeople.set(doc.id,doc.data()));
    updateCallPeople();
@@ -30,7 +28,7 @@
    console.error("Directorio de llamadas:",error);
    $("callContacts").textContent="No se pudo cargar el directorio: "+error.message;
   });
-  callConversationUnsub=db.collection("conversations").where("members","array-contains",uid).onSnapshot(snapshot=>{
+  callConversationUnsub=window.db.collection("conversations").where("members","array-contains",uid).onSnapshot(snapshot=>{
    callConversationPeople.clear();
    snapshot.docs.forEach(doc=>{
     const peerUid=(doc.data().members||[]).find(member=>member!==uid);
@@ -57,7 +55,7 @@
  function renderCallContacts(){
   const list=$("callContacts"); if(!list)return;
   list.innerHTML="";
-  if(!auth||!auth.currentUser){list.textContent="Inicia sesión para consultar tu historial de llamadas.";return;}
+  if(!window.auth||!window.auth.currentUser){list.textContent="Inicia sesión para consultar tu historial de llamadas.";return;}
   const entries=[...(window.klkCallHistory||new Map()).values()].sort((a,b)=>{
    const av=a.data.createdAt&&(a.data.createdAt.toMillis?a.data.createdAt.toMillis():new Date(a.data.createdAt).getTime())||0;
    const bv=b.data.createdAt&&(b.data.createdAt.toMillis?b.data.createdAt.toMillis():new Date(b.data.createdAt).getTime())||0;
@@ -89,8 +87,8 @@
   const history=new Map();window.klkCallHistory=history;
   const render=()=>renderCallContacts();
   const handle=snapshot=>{snapshot.docs.forEach(doc=>history.set(doc.id,{id:doc.id,data:doc.data()}));render();};
-  const a=db.collection("calls").where("callerUid","==",uid).onSnapshot(handle,error=>{console.error("Historial de llamadas realizadas:",error);setStatus("No se pudo cargar el historial: "+error.message);});
-  const b=db.collection("calls").where("calleeUid","==",uid).onSnapshot(handle,error=>{console.error("Historial de llamadas recibidas:",error);setStatus("No se pudo cargar el historial: "+error.message);});
+  const a=window.db.collection("calls").where("callerUid","==",uid).onSnapshot(handle,error=>{console.error("Historial de llamadas realizadas:",error);setStatus("No se pudo cargar el historial: "+error.message);});
+  const b=window.db.collection("calls").where("calleeUid","==",uid).onSnapshot(handle,error=>{console.error("Historial de llamadas recibidas:",error);setStatus("No se pudo cargar el historial: "+error.message);});
   window.klkCallHistoryUnsubs=[a,b];
  }
  function showOverlay(name,status){
@@ -188,7 +186,7 @@
  function setTimeoutSafeCleanup(){window.setTimeout(cleanup,1600);}
  async function startCall(uid,name,mode){
   if(callRef||callStarting){setStatus("Ya tienes una llamada en curso o preparándose.");return;}
-  if(!auth||!auth.currentUser||!isCallContactAccepted(uid)){setStatus("Solo puedes llamar a miembros visibles en el directorio de klk.");return;}
+  if(!window.auth||!window.auth.currentUser||!isCallContactAccepted(uid)){setStatus("Solo puedes llamar a miembros visibles en el directorio de klk.");return;}
   callStarting=true;
   try{
    callMode=mode;callRole="caller";showOverlay(name,mode==="video"?"Solicitando cámara y micrófono...":"Solicitando micrófono...");
@@ -197,10 +195,10 @@
    const offer=await peer.createOffer();await peer.setLocalDescription(offer);
    const members=[currentUid,uid].sort();
    const conversationId=members.join("__");
-   const conversationRef=db.collection("conversations").doc(conversationId);
+   const conversationRef=window.db.collection("conversations").doc(conversationId);
    const conversationSnap=await conversationRef.get();
    if(!conversationSnap.exists)await conversationRef.set({members,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
-   callRef=db.collection("calls").doc();
+   callRef=window.db.collection("calls").doc();
    await callRef.set({callerUid:currentUid,calleeUid:uid,conversationId,mode,status:"ringing",offer:{type:offer.type,sdp:offer.sdp},createdAt:firebase.firestore.FieldValue.serverTimestamp(),updatedAt:firebase.firestore.FieldValue.serverTimestamp()});
    await flushLocalCandidates();
    $("callStatus").textContent="Llamando a "+name+"...";
@@ -249,7 +247,7 @@
  }
  function listenIncoming(uid){
   if(incomingUnsub)incomingUnsub();
-  incomingUnsub=db.collection("calls").where("calleeUid","==",uid).onSnapshot(snapshot=>{
+  incomingUnsub=window.db.collection("calls").where("calleeUid","==",uid).onSnapshot(snapshot=>{
    const doc=snapshot.docs.find(d=>d.data().status==="ringing"&&!callRef&&!incomingCall);
    if(!doc)return;
    const data=doc.data();incomingCall={ref:doc.ref,data};
@@ -308,7 +306,7 @@
  document.querySelectorAll('.homeFilters button').forEach(button=>button.addEventListener("click",()=>{
   if($("callsPanel"))$("callsPanel").style.display="none";
  }));
- if(auth)auth.onAuthStateChanged(user=>{
+ if(window.auth)window.auth.onAuthStateChanged(user=>{
   currentUid=user?user.uid:null;
   if(incomingUnsub){incomingUnsub();incomingUnsub=null;}
   if(!user){if(callRef)endCall();cleanup();if(window.klkCallHistoryUnsubs){window.klkCallHistoryUnsubs.forEach(stop=>stop());window.klkCallHistoryUnsubs=[];}callPeople.clear();callDirectoryPeople.clear();callConversationPeople.clear();[callPeopleUnsub,callConversationUnsub].forEach(stop=>{if(stop)stop();});callPeopleUnsub=callConversationUnsub=null;renderCallContacts();return;}
@@ -321,7 +319,7 @@
   const checks=[];
   const add=(label,ok,detail)=>checks.push((ok?"✓ ":"⚠ ")+label+": "+detail);
   add("Conexión segura",!!window.isSecureContext,window.isSecureContext?"HTTPS activo":"Abre klk desde su enlace HTTPS");
-  add("Sesión",!!(auth&&auth.currentUser),auth&&auth.currentUser?"Sesión iniciada":"Inicia sesión primero");
+  add("Sesión",!!(window.auth&&window.auth.currentUser),window.auth&&window.auth.currentUser?"Sesión iniciada":"Inicia sesión primero");
   add("Micrófono",!!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia),"getUserMedia "+(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia?"disponible":"no disponible"));
   add("WebRTC",!!window.RTCPeerConnection,window.RTCPeerConnection?"RTCPeerConnection disponible":"Navegador sin soporte WebRTC");
   let devices=[];
