@@ -1976,16 +1976,17 @@ async function uploadMedia(file, type, durationSeconds = null) {
  const user = auth && auth.currentUser;
  if (!user || !activeConversationId) { $("chatStatus").textContent = "Abre una conversación privada antes de compartir archivos."; return; }
  if (!file || sending) return;
+ const isVideo = type === "file" && file.type.startsWith("video/");
  if (type === "image" && !file.type.startsWith("image/")) { $("chatStatus").textContent = "Selecciona un archivo de imagen."; return; }
  if (type === "audio" && !file.type.startsWith("audio/")) { $("chatStatus").textContent = "No se pudo reconocer el formato del audio."; return; }
  if(type==="file" && file.size>20*1024*1024){$("chatStatus").textContent="El documento no puede superar 20 MB.";return;}
  sending = true;
- $("chatStatus").textContent = type === "image" ? "Optimizando foto o video..." : type==="audio"?"Preparando audio...":"Preparando documento...";
+ $("chatStatus").textContent = type === "image" ? "Optimizando foto..." : type==="audio"?"Preparando audio...":isVideo?"Preparando video...":"Preparando documento...";
  $("send").disabled = true; $("pickPhoto").disabled = true; $("takePhoto").disabled = true; $("recordAudio").disabled = true; $("sendAudio").disabled = true;
  try {
   const uploadFile = type === "image" ? await compressImage(file) : file;
   const maxBytes = type === "image" ? 10 * 1024 * 1024 : 20 * 1024 * 1024;
-  if (uploadFile.size > maxBytes) throw new Error(type === "image" ? "La foto pesa más de 10 MB incluso después de optimizarla." : type === "file" ? "El archivo no puede superar 20 MB." : "El audio no puede superar 20 MB.");
+  if (uploadFile.size > maxBytes) throw new Error(type === "image" ? "La foto pesa más de 10 MB incluso después de optimizarla." : type === "file" ? (isVideo?"El video no puede superar 20 MB.":"El archivo no puede superar 20 MB.") : "El audio no puede superar 20 MB.");
   const mimeType = uploadFile.type || (type === "image" ? "image/jpeg" : type === "file" ? "application/octet-stream" : "audio/webm");
   const idToken = await user.getIdToken();
   const response = await fetch(SUPABASE_URL + "/functions/v1/media", {
@@ -1995,7 +1996,7 @@ async function uploadMedia(file, type, durationSeconds = null) {
   });
   const signed = await response.json().catch(() => ({}));
   if (!response.ok || !signed.path || !signed.token) throw new Error(signed.error || "No se pudo preparar la carga en Supabase.");
-  $("chatStatus").textContent = type === "image" ? "Subiendo foto o video..." : type==="audio"?"Subiendo audio...":"Subiendo documento...";
+  $("chatStatus").textContent = type === "image" ? "Subiendo foto..." : type==="audio"?"Subiendo audio...":isVideo?"Subiendo video...":"Subiendo documento...";
   const { error: uploadError } = await getSupabaseClient().storage.from("Chat-media").uploadToSignedUrl(signed.path, signed.token, uploadFile, { contentType: mimeType });
   if (uploadError) throw uploadError;
   const sentMessage = await messagesCollection().add({
@@ -2004,7 +2005,7 @@ async function uploadMedia(file, type, durationSeconds = null) {
    email:user.email || "", displayName:(peopleCache.get(user.uid) || {}).displayName || (user.email || "Miembro").split("@")[0], uid:user.uid, createdAt:firebase.firestore.FieldValue.serverTimestamp()
   });
   await sendKlkPushForMessage(activeConversationId,sentMessage.id);
-  $("chatStatus").textContent = type === "image" ? "Foto o video enviado." : type==="file"?"Documento enviado.":"Audio enviado.";
+  $("chatStatus").textContent = type === "image" ? "Foto enviada." : type==="file"?(isVideo?"Video enviado.":"Documento enviado."):"Audio enviado.";
  } catch(error) {
   console.error("Error al enviar archivo:", error);
   $("chatStatus").textContent = "No se pudo enviar el archivo: " + (error.message || "Error desconocido");
