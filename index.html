@@ -778,6 +778,46 @@ main,#chat,.homeView{overscroll-behavior-y:contain}
  #chat.room-open .stickerContentArea [hidden]{display:none!important}
 }
 
+
+/* Novedades KLK: pantalla de estados inspirada en WhatsApp */
+.klkUpdates{position:relative;min-height:calc(100dvh - 150px);padding:0 0 100px!important;background:#fff!important;color:#111b21!important}
+.klkUpdates .updatesTopbar{height:62px;display:flex;align-items:center;justify-content:space-between;padding:0 22px;background:#fff}
+.klkUpdates .updatesTopbar h1{font-size:29px;font-weight:500;letter-spacing:-.5px;margin:0;color:#111b21}
+.klkUpdates .updatesTopActions{display:flex;align-items:center;gap:14px}
+.klkUpdates .updatesTopActions button{width:34px;height:42px;margin:0;padding:0;background:transparent;color:#111b21;font-size:30px;font-weight:400}
+.klkUpdates .updatesHeading{font-size:21px;font-weight:700;margin:28px 22px 22px;color:#111b21}
+.klkUpdates .myStatusRow{display:flex;align-items:center;gap:15px;width:100%;margin:0;padding:10px 22px 22px;border-radius:0;background:#fff;color:#111b21;text-align:left}
+.klkUpdates .myStatusAvatar{position:relative;display:grid;place-items:center;width:82px;height:82px;flex:0 0 82px;border-radius:50%;background:#e9efed;color:#667781;border:0}
+.klkUpdates .myStatusPhoto{display:grid;place-items:center;width:100%;height:100%;border-radius:50%;font-size:34px;background:#e9efed}
+.klkUpdates .myStatusAvatar i{position:absolute;right:-1px;bottom:-1px;width:36px;height:36px;display:grid;place-items:center;border:3px solid #fff;border-radius:50%;background:#25a56a;color:#fff;font-size:24px;font-style:normal}
+.klkUpdates .myStatusCopy{display:flex;flex-direction:column;gap:6px;min-width:0}
+.klkUpdates .myStatusCopy strong{font-size:20px;font-weight:600}
+.klkUpdates .myStatusCopy small{font-size:16px;color:#667781;font-weight:400}
+.klkUpdates .statusPromo{height:58px;display:flex;align-items:center;justify-content:center;gap:12px;margin:12px 5.5% 48px;border:1px solid #d0d4d6;border-radius:32px;color:#21845f;font-size:16px;font-weight:700}
+.klkUpdates .statusPromo span{font-size:22px}
+.klkUpdates .statusSectionTitle{font-size:17px;font-weight:600;color:#667078;margin:0 22px 16px}
+.klkUpdates .statusesFeed{display:flex;flex-direction:column;gap:0;padding:0 16px}
+.klkUpdates .statusesFeed>.hint{padding:12px 8px;color:#667781}
+.klkUpdates .statusCard{display:flex;align-items:center;gap:14px;padding:12px 5px;border:0;border-radius:0;background:#fff;min-height:112px}
+.klkUpdates .statusAvatar{width:84px;height:84px;flex:0 0 84px;padding:2px;border:3px solid #25c46a;border-radius:50%;background:#fff}
+.klkUpdates .statusCardBody{display:flex;flex-direction:column;gap:4px}
+.klkUpdates .statusCardBody strong{font-size:19px;font-weight:600;color:#111b21}
+.klkUpdates .statusCardBody p{font-size:16px;color:#667781;margin:0}
+.klkUpdates .statusCard>button{font-size:12px;padding:7px 9px;border-radius:18px}
+.klkUpdates .statusComposer{margin:0 16px 18px;padding:14px;border:1px solid #e1e5e7;border-radius:14px;background:#f8f9f9}
+.klkUpdates .statusComposer[hidden],.klkUpdates .statusSearchWrap[hidden]{display:none}
+.klkUpdates .statusComposer textarea{background:#fff;border-color:#e0e4e6;color:#111b21}
+.klkUpdates .statusComposerActions{justify-content:flex-end}
+.klkUpdates .statusPhotoPick{margin-right:auto;cursor:pointer}
+.klkUpdates .statusSearchWrap{padding:8px 18px}
+.klkUpdates .statusSearchWrap input{margin:0;border-radius:22px;background:#f1f3f4;border:0}
+.klkUpdates .statusFab{position:fixed;z-index:15;right:18px;display:grid;place-items:center;border:0;box-shadow:0 3px 7px #0003}
+.klkUpdates .statusTextFab{bottom:calc(118px + env(safe-area-inset-bottom));width:58px;height:58px;border-radius:17px;background:#f5f5f5;color:#566168;font-size:29px}
+.klkUpdates .statusPhotoFab{bottom:calc(40px + env(safe-area-inset-bottom));width:72px;height:72px;border-radius:23px;background:#111;color:#fff;font-size:30px}
+.klkUpdates .statusPhotoFab span{position:absolute;font-size:17px;transform:translate(11px,-9px)}
+@media(min-width:761px){.klkUpdates{max-width:760px;margin:0 auto}.klkUpdates .statusFab{position:absolute;right:20px}}
+@media(max-width:420px){.klkUpdates .updatesTopbar{padding:0 18px}.klkUpdates .updatesHeading{margin:25px 18px 18px}.klkUpdates .myStatusRow{padding-left:18px;padding-right:18px}.klkUpdates .statusAvatar{width:76px;height:76px;flex-basis:76px}.klkUpdates .myStatusAvatar{width:76px;height:76px;flex-basis:76px}.klkUpdates .statusCard{min-height:100px}.klkUpdates .statusCardBody strong{font-size:18px}.klkUpdates .statusCardBody p{font-size:15px}}
+
 </style>
 <style>
 /* Perfil compacto y selector de foto mediante cámara */
@@ -1096,11 +1136,27 @@ html[data-theme="dark"] #chat.room-open .attachmentGrid button:nth-child(5) .att
 <div class="contactProfileSection"><h3>Información</h3><div class="contactInfoRow"><span class="contactInfoIcon">ℹ</span><div class="contactInfoText"><small>Info. / Acerca de</small><strong id="contactProfileAboutDetail">Miembro de klk</strong></div></div></div>
 <p class="contactProfileInfo">Este es el perfil de contacto de klk. Aquí puedes iniciar una conversación, llamar y consultar el contenido compartido.</p><p id="contactProfileStatus" class="hint" role="status" aria-live="polite"></p></section>
  <section id="callsPanel" aria-label="Historial de llamadas"><h3>Historial de llamadas</h3><p class="hint">Tus llamadas de voz y videollamadas, recibidas, realizadas y perdidas.</p><div id="callContacts" class="hint">Cargando historial...</div><div class="callDiagnosticsBox"><button id="callDiagnostics" class="secondary" type="button">Comprobar cámara, micrófono y conexión</button><pre id="callDiagnosticsStatus" class="hint" role="status" aria-live="polite" style="white-space:pre-line;margin:8px 0"></pre></div><p id="callsStatus" class="hint" role="status" aria-live="polite"></p></section>
- <section id="updatesPanel" class="homeUtilityPanel" aria-label="Estados" hidden>
- <div class="statusHeading"><div><h2>Estados</h2><p class="hint">Comparte fotos o texto que desaparecen en 24 horas.</p></div><button id="refreshStatuses" class="secondary" type="button" style="width:auto;margin:0;padding:9px 12px">↻</button></div>
- <div class="statusComposer"><textarea id="statusText" rows="3" maxlength="500" placeholder="¿Qué quieres compartir hoy?"></textarea><div class="statusComposerActions"><label class="statusPhotoPick" for="statusPhoto">＋ Foto</label><input id="statusPhoto" type="file" accept="image/*" hidden><button id="publishStatus" type="button" style="width:auto;margin:0">Publicar estado</button></div><p id="statusFeedback" class="hint" role="status" aria-live="polite"></p></div>
- <h3 class="statusSectionTitle">Estados recientes</h3><div id="statusesFeed" aria-live="polite" class="statusesFeed"><p class="hint">Cargando estados...</p></div>
-</section>
+ <section id="updatesPanel" class="homeUtilityPanel klkUpdates" aria-label="Novedades" hidden>
+  <div class="updatesTopbar"><h1>Novedades</h1><div class="updatesTopActions"><button type="button" id="statusSearchToggle" aria-label="Buscar estados" title="Buscar">⌕</button><button type="button" id="refreshStatuses" aria-label="Actualizar estados" title="Actualizar">⋮</button></div></div>
+  <div id="statusSearchWrap" class="statusSearchWrap" hidden><input id="statusSearchInput" type="search" placeholder="Buscar estados..." aria-label="Buscar estados"></div>
+  <h2 class="updatesHeading">Estados</h2>
+  <button type="button" id="addStatusButton" class="myStatusRow">
+   <span class="myStatusAvatar"><span class="myStatusPhoto">◉</span><i>＋</i></span>
+   <span class="myStatusCopy"><strong>Añadir estado</strong><small>Desaparece después de 24 horas.</small></span>
+  </button>
+  <div class="statusPromo" aria-label="Promocionar tu estado"><span>◖</span> Promocionar tu estado</div>
+  <div id="statusComposer" class="statusComposer" hidden>
+   <textarea id="statusText" rows="3" maxlength="500" placeholder="¿Qué quieres compartir hoy?"></textarea>
+   <div class="statusComposerActions">
+    <label class="statusPhotoPick" for="statusPhoto">▧ Foto</label><input id="statusPhoto" type="file" accept="image/*" hidden>
+    <button id="publishStatus" type="button" style="width:auto;margin:0">Publicar</button>
+   </div><p id="statusFeedback" class="hint" role="status" aria-live="polite"></p>
+  </div>
+  <h3 class="statusSectionTitle">Recientes</h3>
+  <div id="statusesFeed" aria-live="polite" class="statusesFeed"><p class="hint">Cargando estados...</p></div>
+  <button type="button" id="statusTextFab" class="statusFab statusTextFab" aria-label="Crear estado de texto" title="Crear estado">✎</button>
+  <button type="button" id="statusPhotoFab" class="statusFab statusPhotoFab" aria-label="Crear estado con foto" title="Crear estado con foto">▣<span>＋</span></button>
+ </section>
  <section id="toolsPanel" class="homeUtilityPanel" aria-label="Herramientas" hidden>
   <h2>Herramientas</h2><p class="hint">Accesos rápidos para moverte por klk. Usa «Invitar» para agregar personas y comenzar a conversar.</p>
   <div class="toolGrid">
