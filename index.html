@@ -1701,6 +1701,16 @@ async function updateRoomAvatar(otherUid) {
  try { const url=await getMediaUrl(person.photoPath); if(url && activeConversationPeerUid===otherUid)avatar.src=url; }
  catch(error){console.warn("No se pudo cargar la foto del contacto:",error);}
 }
+const roomWallpaperChoices={
+ default:{image:"radial-gradient(#d8d0c5 .7px,transparent .7px)",color:"#efeae2",size:"18px 18px"},
+ lilac:{image:"linear-gradient(135deg,#eee5ff,#f9f4ff 55%,#e5dcfa)",color:"#f4effc",size:"cover"},
+ ocean:{image:"linear-gradient(135deg,#d7f1ff,#e7f7f5 55%,#c9ddf6)",color:"#e8f5fa",size:"cover"},
+ sunset:{image:"linear-gradient(135deg,#ffe0c8,#f4d9e9,#ffeebd)",color:"#fff1e8",size:"cover"},
+ hearts:{image:"radial-gradient(circle at 25% 35%,#e9a9c2 0 5px,transparent 6px),radial-gradient(circle at 75% 70%,#e9a9c2 0 5px,transparent 6px)",color:"#fff2f6",size:"34px 34px"},
+ nature:{image:"linear-gradient(135deg,#dcefdc,#f4f8e9 55%,#cde5d0)",color:"#eff7ed",size:"cover"},
+ night:{image:"linear-gradient(135deg,#202b49,#455779)",color:"#293650",size:"cover"},
+ minimal:{image:"linear-gradient(135deg,#f5f5f5,#e6e9ed)",color:"#eef0f2",size:"cover"}
+};
 async function openPrivateConversation(otherUid, otherName) {
  const user = auth.currentUser;
  if (!user || !otherUid || otherUid === user.uid) return;
@@ -1912,16 +1922,7 @@ $("send").onclick = async () => {
 };
 
 // Fondos guardados por conversación en este teléfono; no modifican los mensajes.
-const roomWallpaperChoices={
- default:{image:"radial-gradient(#d8d0c5 .7px,transparent .7px)",color:"#efeae2",size:"18px 18px"},
- lilac:{image:"linear-gradient(135deg,#eee5ff,#f9f4ff 55%,#e5dcfa)",color:"#f4effc",size:"cover"},
- ocean:{image:"linear-gradient(135deg,#d7f1ff,#e7f7f5 55%,#c9ddf6)",color:"#e8f5fa",size:"cover"},
- sunset:{image:"linear-gradient(135deg,#ffe0c8,#f4d9e9,#ffeebd)",color:"#fff1e8",size:"cover"},
- hearts:{image:"radial-gradient(circle at 25% 35%,#e9a9c2 0 5px,transparent 6px),radial-gradient(circle at 75% 70%,#e9a9c2 0 5px,transparent 6px)",color:"#fff2f6",size:"34px 34px"},
- nature:{image:"linear-gradient(135deg,#dcefdc,#f4f8e9 55%,#cde5d0)",color:"#eff7ed",size:"cover"},
- night:{image:"linear-gradient(135deg,#202b49,#455779)",color:"#293650",size:"cover"},
- minimal:{image:"linear-gradient(135deg,#f5f5f5,#e6e9ed)",color:"#eef0f2",size:"cover"}
-};
+
 function readRoomWallpapers(){try{return JSON.parse(localStorage.getItem("klk-room-wallpapers")||"{}");}catch(e){return {};}}
 function applyRoomWallpaper(){
  const area=$("messages");if(!area)return;
