@@ -2607,6 +2607,11 @@ $("sendAudio").onclick = async () => {
 <script src="./chat-camera.js"></script>
 <script src="./calls.js"></script>
 <script>
+// Configuración compartida explícitamente entre scripts independientes.
+window.KLK_SUPABASE_URL = "https://nrnqzzhhvjramxkahkqs.supabase.co";
+window.KLK_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_mV8KjGyjKOd6rDLTtNUBnQ_dvUIHItV";
+</script>
+<script>
 if ("serviceWorker" in navigator) window.addEventListener("load", async () => { try { const registration = await navigator.serviceWorker.register("./sw.js", {updateViaCache:"none"}); await registration.update(); } catch(error) { console.error("Service worker:", error); } });
 </script>
 <script>
@@ -2983,7 +2988,7 @@ document.querySelectorAll("[data-tool-action]").forEach(button=>button.addEventL
 
 
 /* Asistente IA klk: diagnóstico local, recuperación segura y ayuda */
-const KLK_ASSISTANT_URL = SUPABASE_URL + "/functions/v1/klk-assistant";
+const KLK_ASSISTANT_URL = window.KLK_SUPABASE_URL + "/functions/v1/klk-assistant";
 let klkAiHistory = [];
 let klkLastDiagnostics = null;
 function klkAssistantBubble(role, content) {
@@ -3000,7 +3005,7 @@ async function klkAssistantRequest(payload) {
  const token=await auth.currentUser.getIdToken();
  const response=await fetch(KLK_ASSISTANT_URL,{
   method:"POST",
-  headers:{"Content-Type":"application/json","apikey":SUPABASE_PUBLISHABLE_KEY,"Authorization":"Bearer "+token},
+  headers:{"Content-Type":"application/json","apikey":window.KLK_SUPABASE_PUBLISHABLE_KEY,"Authorization":"Bearer "+token},
   body:JSON.stringify(payload)
  });
  const data=await response.json().catch(()=>({}));
@@ -3197,7 +3202,7 @@ $("assistantQuestion").addEventListener("keydown",event=>{
     const response=await fetch(x.url);if(!response.ok)throw new Error("No se pudo descargar un archivo para reenviarlo.");
     const blob=await response.blob();const mimeType=x.data.mimeType||blob.type||"application/octet-stream";
     const token=await auth.currentUser.getIdToken();
-    const uploadResponse=await fetch(SUPABASE_URL+"/functions/v1/media",{method:"POST",headers:{"Content-Type":"application/json","apikey":SUPABASE_PUBLISHABLE_KEY,"Authorization":"Bearer "+token},body:JSON.stringify({action:"create-upload",type:mimeType.startsWith("video/")?"file":"image",size:blob.size,mimeType,conversationId:targetId})});
+    const uploadResponse=await fetch(window.KLK_SUPABASE_URL+"/functions/v1/media",{method:"POST",headers:{"Content-Type":"application/json","apikey":window.KLK_SUPABASE_PUBLISHABLE_KEY,"Authorization":"Bearer "+token},body:JSON.stringify({action:"create-upload",type:mimeType.startsWith("video/")?"file":"image",size:blob.size,mimeType,conversationId:targetId})});
     const signed=await uploadResponse.json().catch(()=>({}));if(!uploadResponse.ok||!signed.path||!signed.token)throw new Error(signed.error||"No se pudo preparar la copia del archivo.");
     const {error}=await getSupabaseClient().storage.from("Chat-media").uploadToSignedUrl(signed.path,signed.token,blob,{contentType:mimeType});if(error)throw error;
     const sent=await conversationRef.collection("messages").add({type:mimeType.startsWith("video/")?"file":"image",storagePath:signed.path,conversationId:targetId,mimeType,fileName:x.data.fileName||"archivo compartido",size:blob.size,email:auth.currentUser.email||"",displayName:(peopleCache.get(auth.currentUser.uid)||{}).displayName||(auth.currentUser.email||"Miembro").split("@")[0],uid:auth.currentUser.uid,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
@@ -3338,7 +3343,7 @@ $("assistantQuestion").addEventListener("keydown",event=>{
      const response=await fetch(sourceUrl);if(!response.ok)throw new Error("No se pudo descargar un archivo para reenviarlo.");
      const blob=await response.blob(),mimeType=d.mimeType||blob.type||"application/octet-stream";
      const token=await auth.currentUser.getIdToken();
-     const uploadResponse=await fetch(SUPABASE_URL+"/functions/v1/media",{method:"POST",headers:{"Content-Type":"application/json","apikey":SUPABASE_PUBLISHABLE_KEY,"Authorization":"Bearer "+token},body:JSON.stringify({action:"create-upload",type:d.type,size:blob.size,mimeType,conversationId:targetId})});
+     const uploadResponse=await fetch(window.KLK_SUPABASE_URL+"/functions/v1/media",{method:"POST",headers:{"Content-Type":"application/json","apikey":window.KLK_SUPABASE_PUBLISHABLE_KEY,"Authorization":"Bearer "+token},body:JSON.stringify({action:"create-upload",type:d.type,size:blob.size,mimeType,conversationId:targetId})});
      const signed=await uploadResponse.json().catch(()=>({}));
      if(!uploadResponse.ok||!signed.path||!signed.token)throw new Error(signed.error||"No se pudo preparar la copia del archivo.");
      const upload=await getSupabaseClient().storage.from("Chat-media").uploadToSignedUrl(signed.path,signed.token,blob,{contentType:mimeType});
