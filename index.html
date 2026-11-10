@@ -2827,7 +2827,8 @@ if (window.matchMedia("(display-mode: standalone)").matches || window.navigator.
  window.klkSetCurrentUid=uid=>{window.klkCurrentUid=uid||null;};apply();permissionButton();refreshCustomSounds();
 })();
 
-// Usa el selector DOM global declarado por el script principal.
+// Publica el selector para los scripts independientes que siguen a este bloque.
+window.$ = id => document.getElementById(id);
 $("inviteMember").addEventListener("click",()=>{ $("invitePanel").style.display=$("invitePanel").style.display==="block"?"none":"block"; $("inviteStatus").textContent=""; });
 let latestInviteCode = "";
 $("createInvite").addEventListener("click",async()=>{
