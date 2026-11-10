@@ -1,6 +1,8 @@
 /* klk: llamadas privadas WebRTC con señalización Firestore */
 (function(){
  const $=id=>document.getElementById(id);
+ const auth=window.auth||null;
+ const db=window.db||null;
  const configuredTurn=Array.isArray(window.KLK_TURN_SERVERS)?window.KLK_TURN_SERVERS:[];
  const ICE_CONFIG={iceServers:[{urls:["stun:stun.l.google.com:19302","stun:stun1.l.google.com:19302"]},...configuredTurn]};
  let currentUid=null, incomingUnsub=null, activeCallUnsub=null, localStream=null, peer=null, callRef=null;
