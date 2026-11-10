@@ -32,15 +32,13 @@ service cloud.firestore {
         && !exists(/databases/$(database)/documents/userBlocks/$(otherUid)/blocked/$(request.auth.uid));
     }
     function isConversationMember(conversationId) {
-      let members = get(/databases/$(database)/documents/conversations/$(conversationId)).data.members;
-      let otherUid = members[0] == request.auth.uid ? members[1] : members[0];
       return signedIn()
         && exists(/databases/$(database)/documents/conversations/$(conversationId))
-        && members is list
-        && members.size() == 2
-        && request.auth.uid in members
-        && !exists(/databases/$(database)/documents/userBlocks/$(request.auth.uid)/blocked/$(otherUid))
-        && !exists(/databases/$(database)/documents/userBlocks/$(otherUid)/blocked/$(request.auth.uid));
+        && get(/databases/$(database)/documents/conversations/$(conversationId)).data.members is list
+        && get(/databases/$(database)/documents/conversations/$(conversationId)).data.members.size() == 2
+        && request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.members
+        && !exists(/databases/$(database)/documents/userBlocks/$(request.auth.uid)/blocked/$(get(/databases/$(database)/documents/conversations/$(conversationId)).data.members[0] == request.auth.uid ? get(/databases/$(database)/documents/conversations/$(conversationId)).data.members[1] : get(/databases/$(database)/documents/conversations/$(conversationId)).data.members[0]))
+        && !exists(/databases/$(database)/documents/userBlocks/$(get(/databases/$(database)/documents/conversations/$(conversationId)).data.members[0] == request.auth.uid ? get(/databases/$(database)/documents/conversations/$(conversationId)).data.members[1] : get(/databases/$(database)/documents/conversations/$(conversationId)).data.members[0])/blocked/$(request.auth.uid));
     }
     function validUserProfile(userId) {
       return signedIn()
