@@ -50,7 +50,7 @@ button{background:#075e54;color:white;border:0;font-weight:700;cursor:pointer}bu
 #settingsPanel h3{margin:4px 0 12px;color:#075e54}
 .settingRow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid #edf0ef;font-size:14px}
 .settingRow input[type=checkbox]{width:22px;height:22px;margin:0;accent-color:#075e54}
-.settingRow select{width:auto;max-width:145px;margin:0;padding:8px;border-radius:10px;border:1px solid #d6dce0;background:#fff}
+.settingRow select{width:min(56%,220px);min-width:132px;max-width:220px;min-height:42px;margin:0;padding:8px;border-radius:10px;border:1px solid #d6dce0;background:#fff;position:relative;z-index:2;pointer-events:auto;touch-action:manipulation}select{pointer-events:auto!important;touch-action:manipulation;-webkit-appearance:auto;appearance:auto}
 
 /* Inicio estilo mensajería moderna para klk */
 header{background:#fff;color:#111b21;box-shadow:none;padding:calc(18px + env(safe-area-inset-top)) 20px 12px;font-size:30px}
@@ -1821,10 +1821,11 @@ async function saveDisappearingDuration(hours){
  }catch(error){showError("disappearingStatus",error);}
 }
 $("settingsToggle").addEventListener("click",()=>{
- if(!$("chat").classList.contains("room-open"))return;
- $("settingsPanel").style.display="none";
- const panel=$("disappearingPanel");panel.hidden=!panel.hidden;
- if(!panel.hidden)watchDisappearingSettings();
+ const panel=$("settingsPanel");
+ const shouldOpen=panel.style.display!=="block";
+ panel.style.display=shouldOpen?"block":"none";
+ $("disappearingPanel").hidden=true;
+ if(shouldOpen)panel.scrollTop=0;
 });
 $("closeDisappearing").addEventListener("click",()=>$("disappearingPanel").hidden=true);
 $("disappearingPanel").addEventListener("change",event=>{
@@ -2465,8 +2466,7 @@ if (window.matchMedia("(display-mode: standalone)").matches || window.navigator.
  function save(){try{localStorage.setItem("klk-settings",JSON.stringify(prefs));}catch(e){$("settingsStatus").textContent="No se pudieron guardar los cambios en este teléfono.";}apply();$("settingsStatus").textContent="Ajustes guardados automáticamente en este teléfono.";}
  [["settingSound","sound"],["settingVibration","vibration"],["settingPreview","preview"],["settingLastSeen","lastSeen"],["settingReadReceipts","readReceipts"],["settingAutoDownload","autoDownload"],["settingHighContrast","highContrast"],["settingReduceMotion","reduceMotion"]].forEach(([id,key])=>$(id).addEventListener("change",()=>{prefs[key]=$(id).checked;save();}));
  [["settingTextSize","textSize"],["settingTheme","theme"],["settingAccent","accent"],["settingDensity","density"],["settingWallpaper","wallpaper"],["settingBubbleStyle","bubbleStyle"],["settingOutgoingColor","outgoingColor"],["settingMessageTone","messageTone"],["settingCallTone","callTone"]].forEach(([id,key])=>$(id).addEventListener("change",e=>{prefs[key]=e.target.value;save();}));
- $("settingsToggle").addEventListener("click",()=>{const panel=$("settingsPanel");panel.style.display=panel.style.display==="block"?"none":"block";if(panel.style.display==="block")panel.scrollTop=0;});
- $("closeSettings").addEventListener("click",()=>{$("settingsPanel").style.display="none";});
+  $("closeSettings").addEventListener("click",()=>{$("settingsPanel").style.display="none";});
  $("resetSettings").addEventListener("click",()=>{prefs={...defaults};save();$("settingsStatus").textContent="Se restauró la apariencia original de klk.";});
  $("exportSettings").addEventListener("click",()=>{
   try{
