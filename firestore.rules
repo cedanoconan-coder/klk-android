@@ -11,15 +11,18 @@ service cloud.firestore {
         || (exists(settingsPath)
           && get(settingsPath).data.durationHours == 24
           && request.resource.data.keys().hasAny(['expiresAt'])
-          && request.resource.data.expiresAt == request.time + duration.value(24, 'h'))
+          && request.resource.data.expiresAt >= request.time + duration.value(24, 'h') - duration.value(2, 'm')
+          && request.resource.data.expiresAt <= request.time + duration.value(24, 'h') + duration.value(2, 'm'))
         || (exists(settingsPath)
           && get(settingsPath).data.durationHours == 168
           && request.resource.data.keys().hasAny(['expiresAt'])
-          && request.resource.data.expiresAt == request.time + duration.value(168, 'h'))
+          && request.resource.data.expiresAt >= request.time + duration.value(168, 'h') - duration.value(2, 'm')
+          && request.resource.data.expiresAt <= request.time + duration.value(168, 'h') + duration.value(2, 'm'))
         || (exists(settingsPath)
           && get(settingsPath).data.durationHours == 2160
           && request.resource.data.keys().hasAny(['expiresAt'])
-          && request.resource.data.expiresAt == request.time + duration.value(2160, 'h'));
+          && request.resource.data.expiresAt >= request.time + duration.value(2160, 'h') - duration.value(2, 'm')
+          && request.resource.data.expiresAt <= request.time + duration.value(2160, 'h') + duration.value(2, 'm'));
     }
     function canStartConversation(members) {
       let otherUid = members[0] == request.auth.uid ? members[1] : members[0];
