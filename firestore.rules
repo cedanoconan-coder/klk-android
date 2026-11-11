@@ -248,7 +248,7 @@ service cloud.firestore {
               && request.resource.data.keys().hasAll(['text'])
               && request.resource.data.text is string
               && (request.resource.data.text in ['❤️','😂','😍','🥰','😘','😭','😎','🥳','🔥','👍','👎','👏','🙏','💯','🤔','😴','🤗','🎉','💔','🤩','😡','🤝','👋','🙌']
-                || request.resource.data.text in ['KLK:👍','KLK:😂','KLK:❤️','KLK:🎉','KLK:🙏','KLK:😎']))
+                || request.resource.data.text in ['KLK:👍','KLK:😂','KLK:❤️','KLK:🎉','KLK:🙏','KLK:😎','KLK:01','KLK:02','KLK:03','KLK:04','KLK:05','KLK:06','KLK:07','KLK:08','KLK:09','KLK:10','KLK:11','KLK:12','KLK:13','KLK:14','KLK:15','KLK:16','KLK:17','KLK:18','KLK:19','KLK:20','KLK:21','KLK:22','KLK:23','KLK:24','KLK:25','KLK:26','KLK:27','KLK:28','KLK:29','KLK:30']))
             ||
             (request.resource.data.type == 'location'
               && request.resource.data.keys().hasAll(['latitude','longitude'])
