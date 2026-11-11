@@ -253,7 +253,7 @@ service cloud.firestore {
           && request.resource.data.keys().hasOnly(['uid','kind','updatedAt'])
           && request.resource.data.keys().hasAll(['uid','kind','updatedAt'])
           && request.resource.data.uid == userId
-          && request.resource.data.kind in ['typing','recording','idle']
+          && request.resource.data.kind in ['typing','recording','idle','online','offline']
           && request.resource.data.updatedAt == request.time;
         allow delete: if false;
       }
