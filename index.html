@@ -1167,7 +1167,7 @@ html,body{overscroll-behavior-y:contain}
 @media(prefers-reduced-motion:reduce){
  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
 }
-</style></head>
+</style><style id="klk-unread-count-v140">#chatsList .klkChatMeta{display:flex;flex-direction:column;align-items:flex-end;justify-content:center;gap:7px;margin-left:auto;flex-shrink:0}#chatsList .klkUnreadBadge{display:grid;place-items:center;min-width:22px;height:22px;padding:0 6px;border-radius:14px;background:#20b76a;color:white;font-size:12px;font-weight:800;line-height:1;box-sizing:border-box}#chatsList .klkHasUnread .chatRowInfo strong{font-weight:800}#chatsList .klkHasUnread .klkChatMeta time{color:#159653;font-weight:700}</style></head>
 <body>
 
 <main>
@@ -2016,7 +2016,7 @@ function renderConversations() {
   const name=document.createElement("strong");name.textContent=item.name;
   const preview=document.createElement("small");preview.textContent=item.preview||"Conversación privada";
   info.append(name,preview);row.append(avatar,info);
-  if(item.time){const time=document.createElement("time");time.textContent=item.time;row.append(time);}
+  const meta=document.createElement("span");meta.className="klkChatMeta";if(item.time){const time=document.createElement("time");time.textContent=item.time;meta.append(time);}if(item.unreadCount>0){const badge=document.createElement("span");badge.className="klkUnreadBadge";badge.textContent=item.unreadCount>99?"99+":String(item.unreadCount);badge.setAttribute("aria-label",item.unreadCount+" mensajes sin leer");meta.append(badge);row.classList.add("klkHasUnread");}row.append(meta);
   row.onclick=()=>openPrivateConversation(item.uid,item.name);list.append(row);
  }
 }
@@ -2042,7 +2042,7 @@ function syncConversationListeners(){
    let entry=conversationSubscriptions.get(id);
    if(!entry){entry={conversation:null,messages:null,lastMessageId:null,messagesInitialized:false};conversationSubscriptions.set(id,entry);}
    if(entry.messages)continue;
-   entry.messages=db.collection("conversations").doc(id).collection("messages").orderBy("createdAt","desc").limit(1).onSnapshot(messages=>{
+   entry.messages=db.collection("conversations").doc(id).collection("messages").orderBy("createdAt","desc").limit(100).onSnapshot(messages=>{
     const lastDoc=messages.empty?null:messages.docs[0];
     const last=lastDoc?lastDoc.data():null;
     if(entry.messagesInitialized&&lastDoc&&lastDoc.id!==entry.lastMessageId&&last&&last.uid!==user.uid){
@@ -2050,7 +2050,8 @@ function syncConversationListeners(){
     }
     entry.messagesInitialized=true;entry.lastMessageId=lastDoc?lastDoc.id:null;
     const latestPerson=peopleCache.get(uid)||person;
-    const cached={uid,name:latestPerson.displayName||latestPerson.email||"Contacto",photoUrl:null,preview:last?(last.type==="image"?"📷 Foto":last.type==="audio"?"🎙️ Nota de voz":last.type==="file"?"📎 Documento":last.text||"Mensaje"):"Todavía no hay mensajes",time:last?formatConversationTime(last.createdAt):"",sortTime:last&&last.createdAt&&last.createdAt.toMillis?last.createdAt.toMillis():0};
+    const unreadCount=messages.docs.reduce((count,doc)=>{const message=doc.data();return count+(message.uid!==user.uid&&(!Array.isArray(message.readBy)||!message.readBy.includes(user.uid))?1:0);},0);
+     const cached={unreadCount,uid,name:latestPerson.displayName||latestPerson.email||"Contacto",photoUrl:null,preview:last?(last.type==="image"?"📷 Foto":last.type==="audio"?"🎙️ Nota de voz":last.type==="file"?"📎 Documento":last.text||"Mensaje"):"Todavía no hay mensajes",time:last?formatConversationTime(last.createdAt):"",sortTime:last&&last.createdAt&&last.createdAt.toMillis?last.createdAt.toMillis():0};
     conversationCache.set(id,cached);
     if(latestPerson.photoPath)getMediaUrl(latestPerson.photoPath).then(url=>{if(conversationCache.has(id)){cached.photoUrl=url;renderConversations();}}).catch(()=>{});
     renderConversations();
