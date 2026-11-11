@@ -1320,7 +1320,7 @@ header small{color:#e8cfff!important}
 <button type="button" data-room-wallpaper="hearts"><span class="wallpaperPreview wp-hearts"></span><small>Corazones</small></button>
 <button type="button" data-room-wallpaper="nature"><span class="wallpaperPreview wp-nature"></span><small>Naturaleza</small></button>
 <button type="button" data-room-wallpaper="night"><span class="wallpaperPreview wp-night"></span><small>Noche</small></button>
-<button type="button" data-room-wallpaper="minimal"><span class="wallpaperPreview wp-minimal"></span><small>Minimalista</small></button>
+<button type="button" data-room-wallpaper="minimal"><span class="wallpaperPreview wp-minimal"></span><small>Minimalista</small></button> <button type="button" data-room-wallpaper="klk1"><span class="wallpaperPreview wp-klk1"></span><small>KLK 1</small></button> <button type="button" data-room-wallpaper="klk2"><span class="wallpaperPreview wp-klk2"></span><small>KLK 2</small></button> <button type="button" data-room-wallpaper="klk3"><span class="wallpaperPreview wp-klk3"></span><small>KLK 3</small></button>
 </div><p id="roomWallpaperStatus" role="status" aria-live="polite"></p></section>
 <section id="roomMediaGallery" hidden aria-label="Fotos y videos de esta conversación">
  <div class="roomMediaHead"><strong>Fotos y videos del chat</strong><button id="closeRoomMedia" type="button" aria-label="Cerrar">×</button></div>
@@ -2099,7 +2099,10 @@ const roomWallpaperChoices={
  hearts:{image:"radial-gradient(circle at 25% 35%,#e9a9c2 0 5px,transparent 6px),radial-gradient(circle at 75% 70%,#e9a9c2 0 5px,transparent 6px)",color:"#fff2f6",size:"34px 34px"},
  nature:{image:"linear-gradient(135deg,#dcefdc,#f4f8e9 55%,#cde5d0)",color:"#eff7ed",size:"cover"},
  night:{image:"linear-gradient(135deg,#202b49,#455779)",color:"#293650",size:"cover"},
- minimal:{image:"linear-gradient(135deg,#f5f5f5,#e6e9ed)",color:"#eef0f2",size:"cover"}
+ minimal:{image:"linear-gradient(135deg,#f5f5f5,#e6e9ed)",color:"#eef0f2",size:"cover"},
+ klk1:{image:"url(assets/klk-fondo-1.webp)",color:"#f4eafa",size:"cover"},
+ klk2:{image:"url(assets/klk-fondo-2.webp)",color:"#f6ecfc",size:"cover"},
+ klk3:{image:"url(assets/klk-fondo-3.webp)",color:"#efdaf9",size:"cover"}
 };
 const disappearingDurations={0:"desactivados",24:"24 horas",168:"7 días",2160:"90 días"};
 let disappearingSettingsUnsubscribe=null,activeDisappearingHours=0;
@@ -3706,4 +3709,10 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
 #toolsPanel .klkSettingsDetail{padding:0 4px 16px 57px;display:flex;flex-direction:column;gap:8px}
 #toolsPanel .klkSettingsDetail p{font-size:13px;color:#6d7380;line-height:1.45;margin:0 0 4px}
 #toolsPanel .klkSettingsDetail button{width:100%;text-align:left;margin:0;padding:11px 13px;border-radius:12px;background:#f6f1fa;color:#591b80;border:1px solid #e7d9ef;font-weight:650;font-size:13px;box-shadow:none}
+</style><style>
+#roomWallpaperPanel .wp-klk1{background:#f4eafa url("./assets/klk-fondo-1.webp") center/cover no-repeat}
+#roomWallpaperPanel .wp-klk2{background:#f6ecfc url("./assets/klk-fondo-2.webp") center/cover no-repeat}
+#roomWallpaperPanel .wp-klk3{background:#efdaf9 url("./assets/klk-fondo-3.webp") center/cover no-repeat}
+#roomWallpaperPanel [data-room-wallpaper^="klk"] .wallpaperPreview{height:78px;background-position:center}
+#messages{background-position:center center!important;background-repeat:no-repeat!important}
 </style></body></html>
