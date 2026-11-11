@@ -247,7 +247,8 @@ service cloud.firestore {
             (request.resource.data.type == 'sticker'
               && request.resource.data.keys().hasAll(['text'])
               && request.resource.data.text is string
-              && request.resource.data.text in ['❤️','😂','😍','🥰','😘','😭','😎','🥳','🔥','👍','👎','👏','🙏','💯','🤔','😴','🤗','🎉','💔','🤩','😡','🤝','👋','🙌'])
+              && (request.resource.data.text in ['❤️','😂','😍','🥰','😘','😭','😎','🥳','🔥','👍','👎','👏','🙏','💯','🤔','😴','🤗','🎉','💔','🤩','😡','🤝','👋','🙌']
+                || request.resource.data.text in ['KLK:👍','KLK:😂','KLK:❤️','KLK:🎉','KLK:🙏','KLK:😎'])
             ||
             (request.resource.data.type == 'location'
               && request.resource.data.keys().hasAll(['latitude','longitude'])
