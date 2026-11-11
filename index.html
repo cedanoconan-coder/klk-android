@@ -2011,7 +2011,7 @@ function renderConversations() {
  if(!rows.length){list.textContent="Todavía no tienes chats. Pulsa + para encontrar miembros y comenzar a conversar.";return;}
  for(const item of rows){
   const row=document.createElement("button");row.type="button";row.className="chatRow";
-  const avatar=document.createElement("img");avatar.className="personAvatar";avatar.alt="Foto de "+item.name;avatar.src=item.photoUrl||"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='32' fill='%23edf2ef'/%3E%3Ctext x='32' y='43' text-anchor='middle' font-size='32'%3E%F0%9F%91%A4%3C/text%3E%3C/svg%3E";
+  const avatar=document.createElement("img");avatar.className="personAvatar";avatar.alt="Foto de "+item.name;avatar.loading="lazy";avatar.decoding="async";avatar.src=item.photoUrl||"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='32' fill='%23edf2ef'/%3E%3Ctext x='32' y='43' text-anchor='middle' font-size='32'%3E%F0%9F%91%A4%3C/text%3E%3C/svg%3E";
   const info=document.createElement("span");info.className="chatRowInfo";
   const name=document.createElement("strong");name.textContent=item.name;
   const preview=document.createElement("small");preview.textContent=item.preview||"Conversación privada";
@@ -2773,7 +2773,7 @@ window.KLK_SUPABASE_URL = "https://nrnqzzhhvjramxkahkqs.supabase.co";
 window.KLK_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_mV8KjGyjKOd6rDLTtNUBnQ_dvUIHItV";
 </script>
 <script>
-if ("serviceWorker" in navigator) window.addEventListener("load", async () => { try { const registration = await navigator.serviceWorker.register("./sw.js", {updateViaCache:"none"}); await registration.update(); } catch(error) { console.error("Service worker:", error); } });
+if ("serviceWorker" in navigator) window.addEventListener("load", async () => { try { const registration = await navigator.serviceWorker.register("./sw.js", {updateViaCache:"none"}); await registration.update(); let lastCheck=Date.now(); document.addEventListener("visibilitychange",()=>{if(!document.hidden&&Date.now()-lastCheck>60000){lastCheck=Date.now();registration.update().catch(()=>{});}}); window.addEventListener("online",()=>registration.update().catch(()=>{})); } catch(error) { console.error("Service worker:", error); } });
 </script>
 <script>
 let pendingInstall = null;
