@@ -113,6 +113,9 @@
  let klkPeerUid=null;
  async function klkCallAvatar(uid){const node=$("callAvatar");if(!node)return;node.textContent="☎️";const person=callPeople.get(uid)||{};let url=person.photoURL||person.photoUrl||person.avatarUrl||person.profilePhotoURL||person.profilePhoto||"";if(person.photoPath&&typeof window.klkResolveProfilePhoto==="function"){try{url=await window.klkResolveProfilePhoto(person.photoPath)||url}catch(e){console.warn("Foto de llamada:",e)}}if(uid!==klkPeerUid||!overlay.classList.contains("visible"))return;if(typeof url==="string"&&/^https?:\/\//i.test(url)){const img=document.createElement("img");img.src=url;img.alt="Foto del contacto";img.style.cssText="width:100%;height:100%;object-fit:cover;border-radius:50%";img.onerror=()=>{img.remove();node.textContent="☎️"};node.replaceChildren(img)}}
  function klkResetVideoLayout(){const stage=$("callVideoStage");if(stage)stage.classList.remove("klkCallSwapped")}
+ let klkRingContext=null,klkRingInterval=null;
+ function klkStopOutgoingRing(){if(klkRingInterval){clearInterval(klkRingInterval);klkRingInterval=null}if(klkRingContext){klkRingContext.close().catch(()=>{});klkRingContext=null}}
+ function klkStartOutgoingRing(){klkStopOutgoingRing();try{const AudioCtx=window.AudioContext||window.webkitAudioContext;if(!AudioCtx)return;klkRingContext=new AudioCtx();const play=()=>{if(!klkRingContext||klkRingContext.state!=="running")return;const t=klkRingContext.currentTime;for(const offset of [0,.28]){const osc=klkRingContext.createOscillator(),gain=klkRingContext.createGain();osc.type="sine";osc.frequency.value=440;gain.gain.setValueAtTime(0,t+offset);gain.gain.linearRampToValueAtTime(.055,t+offset+.025);gain.gain.setValueAtTime(.055,t+offset+.18);gain.gain.linearRampToValueAtTime(0,t+offset+.24);osc.connect(gain);gain.connect(klkRingContext.destination);osc.start(t+offset);osc.stop(t+offset+.25)}};klkRingContext.resume().then(play).catch(()=>{});klkRingInterval=setInterval(play,3000)}catch(e){console.warn("Tono de llamada saliente no disponible",e)}}
  function showOverlay(name,status){
   $("callPeerName").textContent=name||"Contacto";klkResetVideoLayout();klkCallAvatar(klkPeerUid);
   // Keep the hang-up control available while browser permissions are pending.
@@ -132,7 +135,7 @@
   $("localVideo").style.display=callMode==="video"?"block":"none";
  }
  function cleanup(){
-  klkPeerUid=null;klkResetVideoLayout();callStarting=false;
+  klkStopOutgoingRing();klkPeerUid=null;klkResetVideoLayout();callStarting=false;
   if(window.klkStopIncomingCallSound)window.klkStopIncomingCallSound();
   if(activeCallUnsub){activeCallUnsub();activeCallUnsub=null;}
   if(incomingDocUnsub){incomingDocUnsub();incomingDocUnsub=null;}
@@ -200,10 +203,11 @@
   activeCallUnsub=callRef.onSnapshot(async snap=>{
    if(!snap.exists){cleanup();return;}
    const data=snap.data();callState=data.status;
+   if(data.status!=="ringing")klkStopOutgoingRing();
    if(data.status==="active"&&ringTimeout){window.clearTimeout(ringTimeout);ringTimeout=null;}
    if(data.status==="rejected"){ $("callStatus").textContent="La otra persona rechazó la llamada.";setTimeoutSafeCleanup();return; }
    if(data.status==="ended"){ $("callStatus").textContent="La llamada finalizó.";setTimeoutSafeCleanup();return; }
-   if(callRole==="caller"&&data.answer&&peer&&!peer.remoteDescription){
+   if(callRole==="caller"&&data.answer&&peer&&!peer.remoteDescription){klkStopOutgoingRing();
     try{await peer.setRemoteDescription(new RTCSessionDescription(data.answer));await flushCandidates();showActiveControls();$("callStatus").textContent="Conectando llamada...";}
     catch(error){$("callStatus").textContent="No se pudo conectar la llamada: "+error.message;}
    }
@@ -227,7 +231,7 @@
    callRef=window.db.collection("calls").doc();
    await callRef.set({callerUid:currentUid,calleeUid:uid,conversationId,mode,status:"ringing",offer:{type:offer.type,sdp:offer.sdp},createdAt:firebase.firestore.FieldValue.serverTimestamp(),updatedAt:firebase.firestore.FieldValue.serverTimestamp()});
    await flushLocalCandidates();
-   $("callStatus").textContent="Llamando a "+name+"...";
+   $("callStatus").textContent="Llamando a "+name+"...";klkStartOutgoingRing();
    $("endCall").hidden=false;watchCallDocument();watchRemoteCandidates();
    ringTimeout=window.setTimeout(()=>{if(callRef&&callRole==="caller"&&(callState==="ringing"||!callState)){ $("callStatus").textContent="No hubo respuesta.";endCall();}},45000);
   }catch(error){console.error("No se pudo iniciar la llamada:",error);$("callStatus").textContent=permissionMessage(error);setTimeoutSafeCleanup();}
