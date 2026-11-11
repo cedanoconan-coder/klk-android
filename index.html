@@ -1740,7 +1740,12 @@ async function performKlkLogout() {
  try {
   if (!auth) throw new Error("El servicio de inicio de sesión no está disponible.");
   await auth.signOut();
-  $("status").textContent = "Sesión cerrada correctamente.";
+  $("status").textContent = "Sesión cerrada correctamente. Buscando la última versión...";
+  // Renovar el código al cerrar sesión, sin eliminar los datos de la cuenta.
+  if("serviceWorker" in navigator){
+   try{const registration=await navigator.serviceWorker.getRegistration();if(registration)await registration.update();}catch(error){console.warn("Actualización de KLK:",error);}
+  }
+  window.location.replace(window.location.pathname+"?v=143&t="+Date.now());
  } catch (error) {
   const message = "No se pudo cerrar la sesión. Comprueba tu conexión e inténtalo de nuevo.";
   if ($("homeStatus")) $("homeStatus").textContent = message;
