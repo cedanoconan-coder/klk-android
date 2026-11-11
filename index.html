@@ -1179,7 +1179,7 @@ header small{color:#e8cfff!important}
 <section id="chat" class="card">
 
 <div id="homeView" class="homeView">
- <div class="homeTitle"><h1>Klk manin</h1><div class="homeActions"><button type="button" id="inviteMember" aria-label="Invitar a klk" title="Invitar a klk">＋</button><button type="button" id="profileButton" class="profileButton" aria-label="Cambiar foto de perfil"><img id="myProfilePhoto" alt="Foto de perfil"><span>Mi perfil</span></button><button type="button" id="quickLogout" class="quickLogout" aria-label="Cerrar sesión" title="Cerrar sesión">↪ Salir</button><input id="profilePhotoInput" type="file" accept="image/*" hidden><button type="button" id="homeMenu" aria-label="Ajustes" title="Ajustes"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg></button></div></div>
+ <div class="homeTitle"><h1 class="klkHeaderBrand"><img class="klkHeaderLogo" src="assets/klk-logo-nuevo.png" alt="Logo KLK" onerror="this.onerror=null;this.src='./icon.svg'"> <span>Klk manin</span></h1><div class="homeActions"><button type="button" id="inviteMember" aria-label="Invitar a klk" title="Invitar a klk">＋</button><button type="button" id="profileButton" class="profileButton" aria-label="Cambiar foto de perfil"><img id="myProfilePhoto" alt="Foto de perfil"><span>Mi perfil</span></button><button type="button" id="quickLogout" class="quickLogout" aria-label="Cerrar sesión" title="Cerrar sesión">↪ Salir</button><input id="profilePhotoInput" type="file" accept="image/*" hidden><button type="button" id="homeMenu" aria-label="Ajustes" title="Ajustes"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg></button></div></div>
  <section id="invitePanel" class="card" style="display:none;margin:0 16px 14px;padding:14px">
   <strong>Invitar a klk</strong>
   <p class="hint">Crea un código de un solo uso, válido durante 7 días. Compártelo solo con la persona que deseas agregar.</p>
@@ -3641,4 +3641,9 @@ enforce();
 }
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",setup);else setup();
 })();
-</script></body></html>
+</script><style>
+#homeView .homeTitle .klkHeaderBrand{display:flex!important;align-items:center!important;gap:9px!important;min-width:0}
+#homeView .klkHeaderLogo{display:block;width:43px;height:43px;flex:0 0 43px;object-fit:cover;border-radius:12px}
+#homeView .klkHeaderBrand span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media(max-width:390px){#homeView .klkHeaderLogo{width:35px;height:35px;flex-basis:35px}#homeView .homeTitle .klkHeaderBrand{gap:6px!important}}
+</style></body></html>
