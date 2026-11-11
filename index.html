@@ -1158,7 +1158,7 @@ header small{color:#e8cfff!important}
 .klkMessageSticker .klkStickerMood{font-size:34px}
 </style><style>#stickersPanel.open .stickersGrid:not([hidden]){display:grid!important}#stickersPanel.open .klkStickerChoice:not([hidden]){display:flex!important}#stickersPanel .stickersGrid[hidden],#stickersPanel .emojiGrid[hidden],#stickersPanel .stickerCategoryBar[hidden]{display:none!important}</style></head>
 <body>
-<header class="brandHeader"><img src="./icon.svg" alt="Logo de klk: pulgar arriba" class="brandMark"><div class="brandWords"><span>klk</span><small>Tu familia, siempre conectada ❤️</small></div></header>
+
 <main>
 <button id="installApp" class="secondary" type="button" hidden>Instalar klk en este teléfono</button>
 <section id="login" class="card">
@@ -3646,4 +3646,7 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
 #homeView .klkHeaderLogo{display:block;width:43px;height:43px;flex:0 0 43px;object-fit:cover;border-radius:12px}
 #homeView .klkHeaderBrand span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 @media(max-width:390px){#homeView .klkHeaderLogo{width:35px;height:35px;flex-basis:35px}#homeView .homeTitle .klkHeaderBrand{gap:6px!important}}
+</style><style>
+/* Remove obsolete global KLK banner; preserve the new logo beside Klk manin */
+body>.brandHeader,.brandHeader{display:none!important}
 </style></body></html>
