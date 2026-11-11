@@ -1266,15 +1266,10 @@ header small{color:#e8cfff!important}
   <button type="button" id="statusTextFab" class="statusFab statusTextFab" aria-label="Crear estado de texto" title="Crear estado">✎</button>
   <button type="button" id="statusPhotoFab" class="statusFab statusPhotoFab" aria-label="Crear estado con foto" title="Crear estado con foto">▣<span>＋</span></button>
  </section>
- <section id="toolsPanel" class="homeUtilityPanel" aria-label="Herramientas" hidden>
-  <h2>Herramientas</h2><p class="hint">Accesos rápidos para moverte por klk. Usa «Invitar» para agregar personas y comenzar a conversar.</p>
-  <div class="toolGrid">
-   <button type="button" data-go-tab="chats"><span>💬</span>Mis chats</button><button type="button" data-go-tab="calls"><span>☎️</span>Llamadas</button><button type="button" data-tool-action="assistant"><span>🤖</span>Asistente IA</button>
-   <button type="button" data-tool-action="settings"><span>⚙️</span>Ajustes</button><button type="button" data-tool-action="invite"><span>＋</span>Invitar</button>
-   <button type="button" data-tool-action="profile"><span>🖼️</span>Mi perfil</button><button type="button" data-tool-action="top"><span>⬆️</span>Ir arriba</button>
-  </div>
- </section>
-
+ <section id="toolsPanel" class="homeUtilityPanel klkSettingsHome" aria-label="Herramientas y configuración" hidden>
+<div class="klkSettingsIntro"><h2>Configuración</h2><p>Administra tu cuenta y personaliza Klk manin.</p></div>
+<div class="klkSettingsList"><details class="klkSettingsItem"><summary><span class="klkSettingsGlyph" aria-hidden="true">👤</span><span class="klkSettingsLabels"><strong>Cuenta y perfil</strong><small>Foto, datos personales y acceso</small></span><span class="klkSettingsChevron" aria-hidden="true">⌄</span></summary><div class="klkSettingsDetail"><button type="button" data-tool-action="profile">Abrir mi perfil</button><button type="button" data-tool-action="settings">Configuración de la cuenta</button></div></details><details class="klkSettingsItem"><summary><span class="klkSettingsGlyph" aria-hidden="true">🔒</span><span class="klkSettingsLabels"><strong>Privacidad y seguridad</strong><small>Bloqueo, protección y mensajes temporales</small></span><span class="klkSettingsChevron" aria-hidden="true">⌄</span></summary><div class="klkSettingsDetail"><p>Revisa las opciones de seguridad disponibles en la configuración.</p><button type="button" data-tool-action="settings">Abrir privacidad y seguridad</button></div></details><details class="klkSettingsItem"><summary><span class="klkSettingsGlyph" aria-hidden="true">💬</span><span class="klkSettingsLabels"><strong>Chats</strong><small>Mensajes, fondos y tamaño de letra</small></span><span class="klkSettingsChevron" aria-hidden="true">⌄</span></summary><div class="klkSettingsDetail"><p>Personaliza la apariencia y el comportamiento de tus conversaciones.</p><button type="button" data-tool-action="settings">Configurar chats</button><button type="button" data-go-tab="chats">Ir a mis chats</button></div></details><details class="klkSettingsItem"><summary><span class="klkSettingsGlyph" aria-hidden="true">🔔</span><span class="klkSettingsLabels"><strong>Notificaciones</strong><small>Sonidos, vibración y avisos</small></span><span class="klkSettingsChevron" aria-hidden="true">⌄</span></summary><div class="klkSettingsDetail"><p>Configura las alertas y los sonidos disponibles.</p><button type="button" data-tool-action="settings">Configurar notificaciones</button></div></details><details class="klkSettingsItem"><summary><span class="klkSettingsGlyph" aria-hidden="true">📞</span><span class="klkSettingsLabels"><strong>Llamadas</strong><small>Historial, audio y videollamadas</small></span><span class="klkSettingsChevron" aria-hidden="true">⌄</span></summary><div class="klkSettingsDetail"><button type="button" data-go-tab="calls">Ver historial de llamadas</button></div></details><details class="klkSettingsItem"><summary><span class="klkSettingsGlyph" aria-hidden="true">🎨</span><span class="klkSettingsLabels"><strong>Apariencia</strong><small>Tema claro u oscuro, colores y fondos</small></span><span class="klkSettingsChevron" aria-hidden="true">⌄</span></summary><div class="klkSettingsDetail"><button type="button" data-tool-action="settings">Personalizar apariencia</button></div></details><details class="klkSettingsItem"><summary><span class="klkSettingsGlyph" aria-hidden="true">👥</span><span class="klkSettingsLabels"><strong>Contactos e invitaciones</strong><small>Invitar personas a KLK</small></span><span class="klkSettingsChevron" aria-hidden="true">⌄</span></summary><div class="klkSettingsDetail"><button type="button" data-tool-action="invite">Invitar a un contacto</button></div></details><details class="klkSettingsItem"><summary><span class="klkSettingsGlyph" aria-hidden="true">🤖</span><span class="klkSettingsLabels"><strong>Asistente KLK</strong><small>Ayuda y diagnóstico de la aplicación</small></span><span class="klkSettingsChevron" aria-hidden="true">⌄</span></summary><div class="klkSettingsDetail"><button type="button" data-tool-action="assistant">Abrir asistente IA</button></div></details></div>
+</section>
  <section id="assistantPanel" class="homeUtilityPanel" aria-label="Asistente inteligente" hidden>
   <button type="button" class="secondary" data-tool-action="back-tools" aria-label="Volver a herramientas">‹ Volver a herramientas</button>
   <h2>🤖 Asistente inteligente</h2>
@@ -3694,4 +3689,21 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
 #callContacts .klkCallAgain svg{width:27px;height:27px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 #callContacts .klkCallAgain:disabled{opacity:.35}
 #callsPanel .callDiagnosticsBox{margin-top:22px}
+</style><style>
+#toolsPanel.klkSettingsHome{background:#fff!important;color:#18212b!important;padding:22px 17px 115px!important;min-height:65vh}
+#toolsPanel .klkSettingsIntro h2{font-size:26px;font-weight:750;margin:0 0 7px}
+#toolsPanel .klkSettingsIntro p{font-size:14px;color:#77808a;margin:0 0 17px;line-height:1.4}
+#toolsPanel .klkSettingsList{display:block!important;grid-template-columns:none!important}
+#toolsPanel .klkSettingsItem{display:block;border-bottom:1px solid #e9e8ed;margin:0;background:#fff;border-radius:0;box-shadow:none}
+#toolsPanel .klkSettingsItem summary{list-style:none;display:flex;align-items:center;gap:14px;padding:15px 2px;cursor:pointer;min-height:68px}
+#toolsPanel .klkSettingsItem summary::-webkit-details-marker{display:none}
+#toolsPanel .klkSettingsGlyph{width:43px;height:43px;flex:0 0 43px;display:grid;place-items:center;border-radius:13px;background:#f2e9fa;font-size:23px}
+#toolsPanel .klkSettingsLabels{display:flex;flex-direction:column;gap:4px;flex:1;min-width:0}
+#toolsPanel .klkSettingsLabels strong{font-size:16px;color:#22212b;font-weight:700}
+#toolsPanel .klkSettingsLabels small{font-size:12px;color:#7b7a86;line-height:1.35}
+#toolsPanel .klkSettingsChevron{color:#8b8191;font-size:22px;transition:transform .2s}
+#toolsPanel .klkSettingsItem[open] .klkSettingsChevron{transform:rotate(180deg)}
+#toolsPanel .klkSettingsDetail{padding:0 4px 16px 57px;display:flex;flex-direction:column;gap:8px}
+#toolsPanel .klkSettingsDetail p{font-size:13px;color:#6d7380;line-height:1.45;margin:0 0 4px}
+#toolsPanel .klkSettingsDetail button{width:100%;text-align:left;margin:0;padding:11px 13px;border-radius:12px;background:#f6f1fa;color:#591b80;border:1px solid #e7d9ef;font-weight:650;font-size:13px;box-shadow:none}
 </style></body></html>
