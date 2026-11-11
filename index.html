@@ -3853,4 +3853,41 @@ body.klk-custom-accent #chat header,body.klk-custom-accent #chat .topbar,body.kl
 @media(prefers-reduced-motion:reduce){#chat.room-open .msg .voicePlayButton{transition:none!important}}
 </style>
 <style id="klk-status-contacts-118">#statusesFeed .klkStatusSectionTitle{font-size:14px;font-weight:700;color:var(--klk-muted,#667781);margin:18px 5px 9px}#statusesFeed .statusCard{display:flex;align-items:center;gap:12px;padding:11px 8px;border-bottom:1px solid #88888818;cursor:pointer}#statusesFeed .statusAvatar{flex:0 0 54px;width:54px;height:54px;border:3px solid #25d366;border-radius:50%;overflow:hidden;display:grid;place-items:center}#statusesFeed .statusAvatar img{width:100%;height:100%;object-fit:cover;border-radius:50%}#statusesFeed .statusCardBody{flex:1;min-width:0}#statusesFeed .statusCardBody strong{font-size:16px}#statusesFeed .statusCardBody p{font-size:13px;margin-top:3px}</style>
-</body></html>
+<style id="klk-groups-v145">
+#klkGroupModal{position:fixed;inset:0;z-index:150;background:var(--klk-surface,#fff);color:var(--klk-text,#17211e);display:flex;flex-direction:column;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+#klkGroupModal[hidden]{display:none!important}.klkGroupHead{display:flex;align-items:center;gap:12px;padding:18px;border-bottom:1px solid #dce8e1}.klkGroupHead h2{margin:0;flex:1;font-size:21px}.klkGroupHead button{width:auto;margin:0;padding:8px 12px}.klkGroupContent{flex:1;overflow-y:auto;padding:18px}.klkGroupContent input:not([type=checkbox]){width:100%;margin:7px 0 15px;padding:13px;border:1px solid #cbdcd2;border-radius:14px}.klkGroupPerson{display:flex;align-items:center;gap:12px;padding:12px 5px;border-bottom:1px solid #e5eee8}.klkGroupPerson input{width:22px;height:22px;accent-color:#169c76}.klkGroupFooter{padding:12px 18px;border-top:1px solid #dce8e1}.klkGroupFooter button{width:100%;border-radius:15px;background:#128c7e;color:white;min-height:48px}.klkGroupMessage{padding:10px 13px;margin:8px 0;border-radius:16px;background:#eaf5f0;color:#18362b;max-width:86%;overflow-wrap:anywhere}.klkGroupMessage.mine{margin-left:auto;background:#d9f8df}.klkGroupMessage small{display:block;font-size:11px;color:#4e6c60;margin-bottom:3px}.klkGroupCompose{display:flex;gap:8px;padding:12px}.klkGroupCompose input{flex:1;min-width:0;margin:0!important}.klkGroupCompose button{width:auto;margin:0}.klkGroupEntry{display:flex;align-items:center;gap:12px;padding:14px;width:100%;border:0;border-bottom:1px solid #e7eee9;background:transparent;text-align:left;color:inherit}.klkGroupEntry span{font-size:28px}
+</style>
+<section id="klkGroupModal" hidden aria-label="Grupos KLK">
+<div class="klkGroupHead"><button type="button" id="klkGroupBack" class="secondary">‹ Volver</button><h2 id="klkGroupTitle">Grupos KLK</h2></div>
+<div class="klkGroupContent" id="klkGroupContent"></div><div id="klkGroupBottom" class="klkGroupFooter"></div>
+</section>
+<script>
+(function(){
+const modal=document.getElementById("klkGroupModal"),content=document.getElementById("klkGroupContent"),bottom=document.getElementById("klkGroupBottom"),title=document.getElementById("klkGroupTitle");
+let stopList=null,stopMessages=null,currentGroup=null;
+const el=(tag,cls,text)=>{const node=document.createElement(tag);if(cls)node.className=cls;if(text!==undefined)node.textContent=text;return node;};
+function close(){if(stopMessages){stopMessages();stopMessages=null;}if(stopList){stopList();stopList=null;}modal.hidden=true;currentGroup=null;}
+document.getElementById("klkGroupBack").onclick=close;
+function open(){modal.hidden=false;showList();}
+function showList(){if(stopMessages){stopMessages();stopMessages=null;}title.textContent="Grupos KLK";content.replaceChildren();bottom.replaceChildren();const create=el("button","","＋ Crear nuevo grupo");bottom.append(create);create.onclick=showCreate;
+if(stopList)stopList();if(!auth.currentUser){content.textContent="Inicia sesión para ver tus grupos.";return;}
+stopList=db.collection("klkGroups").where("members","array-contains",auth.currentUser.uid).onSnapshot(snap=>{content.replaceChildren();if(snap.empty)content.append(el("p","","Todavía no perteneces a ningún grupo."));snap.docs.forEach(doc=>{const data=doc.data(),button=el("button","klkGroupEntry");button.append(el("span","","👥"),el("strong","",data.name||"Grupo KLK"));button.onclick=()=>showChat(doc.id,data);content.append(button);});},error=>content.textContent="No se pudieron cargar los grupos: "+error.message);
+}
+function showCreate(){if(stopList){stopList();stopList=null;}title.textContent="Nuevo grupo";content.replaceChildren();bottom.replaceChildren();
+content.append(el("p","","Ponle un nombre y selecciona los contactos que participarán."));
+const name=el("input");name.placeholder="Nombre del grupo";name.maxLength=60;name.setAttribute("aria-label","Nombre del grupo");content.append(name);
+const contacts=el("div");content.append(contacts);const uid=auth.currentUser?.uid;
+const people=[...peopleCache.entries()].filter(([id])=>id!==uid&&!blockedUsers.has(id));people.sort((a,b)=>(a[1].displayName||"").localeCompare(b[1].displayName||""));
+if(!people.length)contacts.append(el("p","","No hay contactos disponibles para invitar."));
+people.forEach(([id,person])=>{const row=el("label","klkGroupPerson"),check=el("input");check.type="checkbox";check.value=id;row.append(check,el("span","",person.displayName||person.email||"Contacto"));contacts.append(row);});
+const status=el("p");content.append(status);const save=el("button","","Crear grupo");bottom.append(save);
+save.onclick=async()=>{const selected=[...contacts.querySelectorAll("input:checked")].map(n=>n.value);const groupName=name.value.trim();if(!groupName||selected.length<1){status.textContent="Escribe un nombre y selecciona al menos un contacto.";return;}if(selected.length>49){status.textContent="Máximo 50 participantes.";return;}save.disabled=true;try{await db.collection("klkGroups").add({name:groupName,members:[uid,...selected],admin:uid,createdAt:firebase.firestore.FieldValue.serverTimestamp()});showList();}catch(e){status.textContent="No se pudo crear el grupo: "+e.message;}finally{save.disabled=false;}};
+}
+function showChat(id,data){if(stopList){stopList();stopList=null;}currentGroup=id;title.textContent=data.name||"Grupo KLK";content.replaceChildren();bottom.replaceChildren();const note=el("p","",data.members.length+" participantes · Administrador: "+(data.admin===auth.currentUser.uid?"tú":"otro miembro"));content.append(note);const messages=el("div");content.append(messages);
+const compose=el("div","klkGroupCompose"),input=el("input");input.placeholder="Mensaje al grupo";input.maxLength=2000;const send=el("button","","Enviar");compose.append(input,send);bottom.append(compose);
+send.onclick=async()=>{const value=input.value.trim();if(!value)return;send.disabled=true;try{await db.collection("klkGroups").doc(id).collection("messages").add({uid:auth.currentUser.uid,text:value,createdAt:firebase.firestore.FieldValue.serverTimestamp()});input.value="";}catch(e){alert("No se pudo enviar: "+e.message);}finally{send.disabled=false;}};input.addEventListener("keydown",e=>{if(e.key==="Enter")send.click();});
+stopMessages=db.collection("klkGroups").doc(id).collection("messages").orderBy("createdAt","asc").limit(100).onSnapshot(snap=>{messages.replaceChildren();snap.docs.forEach(doc=>{const msg=doc.data(),mine=msg.uid===auth.currentUser.uid,bubble=el("div","klkGroupMessage"+(mine?" mine":""));const who=peopleCache.get(msg.uid);bubble.append(el("small","",mine?"Tú":(who?.displayName||"Participante")),el("span","",msg.text));messages.append(bubble);});content.scrollTop=content.scrollHeight;},error=>messages.textContent="No se pudieron cargar los mensajes: "+error.message);
+}
+const chats=document.getElementById("chatsPanel");if(chats){const btn=el("button","","👥 Grupos KLK · Crear y conversar");btn.type="button";btn.style.cssText="display:block;width:calc(100% - 24px);margin:8px 12px 12px;padding:13px;border-radius:15px;background:#e5f5ed;color:#086c57;font-weight:700;border:1px solid #b4e5cc;text-align:left";btn.onclick=open;chats.prepend(btn);}
+})();
+</script></body></html>
