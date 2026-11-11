@@ -122,6 +122,10 @@
   overlay.classList.toggle("klkIncoming",!!visible);
   if(handle){handle.style.transition="transform .22s cubic-bezier(.2,.8,.2,1)";handle.style.transform="translate3d(0,0,0)";handle.removeAttribute("aria-valuenow");}
  }
+ // Keep the incoming-call gesture above the fullscreen video stage and controls.
+ const klkSwipeFixStyle=document.createElement("style");
+ klkSwipeFixStyle.textContent="#callOverlay.visible.klkIncoming #klkIncomingSwipe{display:flex!important;position:absolute!important;left:0!important;right:0!important;bottom:calc(100px + env(safe-area-inset-bottom))!important;z-index:20!important;pointer-events:auto!important;touch-action:none!important;margin:0!important;order:unset!important;justify-content:center!important}#callOverlay.visible.klkIncoming .klkSwipeTrack{pointer-events:auto!important;touch-action:none!important}#callOverlay.visible.klkIncoming #klkSwipeHandle{position:relative!important;z-index:22!important;pointer-events:auto!important;touch-action:none!important;user-select:none!important}#callOverlay.visible.klkIncoming #callVideoStage{pointer-events:none!important}#callOverlay.visible.klkIncoming #callControls{z-index:19!important}";
+ document.head.appendChild(klkSwipeFixStyle);
  function klkInitIncomingSwipe(){
   const handle=$("klkSwipeHandle"),track=handle&&handle.closest(".klkSwipeTrack");
   if(!handle||!track)return;
@@ -132,7 +136,7 @@
   handle.setAttribute("aria-valuemin","0");handle.setAttribute("aria-valuemax","100");handle.setAttribute("aria-valuenow","0");
   handle.addEventListener("pointerdown",event=>{if(!overlay.classList.contains("klkIncoming")||completed)return;if(event.button!==undefined&&event.button!==0)return;active=true;pointerId=event.pointerId;startY=event.clientY;startX=event.clientX;lastY=startY;handle.style.transition="none";try{handle.setPointerCapture(pointerId)}catch(_){}event.preventDefault()});
   handle.addEventListener("pointermove",event=>{if(!active||event.pointerId!==pointerId)return;lastY=event.clientY;const dy=Math.max(-distance(),Math.min(0,lastY-startY));handle.style.transform="translate3d(0,"+dy+"px,0)";handle.setAttribute("aria-valuenow",String(Math.round(-dy/distance()*100)));event.preventDefault()});
-  handle.addEventListener("pointerup",event=>{if(!active||event.pointerId!==pointerId)return;const dy=event.clientY-startY,dx=event.clientX-startX;active=false;if(dy<=-distance()*.72&&Math.abs(dx)<Math.max(110,distance()))finish();else reset();event.preventDefault()});
+  handle.addEventListener("pointerup",event=>{if(!active||event.pointerId!==pointerId)return;const dy=event.clientY-startY,dx=event.clientX-startX;active=false;if(dy<=-distance()*.55&&Math.abs(dx)<Math.max(110,distance()))finish();else reset();event.preventDefault()});
   handle.addEventListener("pointercancel",reset);
   handle.addEventListener("lostpointercapture",()=>{if(active)reset()});
   handle.addEventListener("keydown",event=>{if((event.key==="Enter"||event.key===" "||event.key==="ArrowUp")&&overlay.classList.contains("klkIncoming")){event.preventDefault();finish()}});
