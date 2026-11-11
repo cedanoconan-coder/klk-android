@@ -68,17 +68,27 @@
    const person=callPeople.get(otherUid)||{};
    const name=person.displayName||person.email||"Contacto";
    const row=document.createElement("div");row.className="callContact callHistoryItem";
+   const avatar=document.createElement("div");avatar.className="klkCallAvatar";
+   const avatarUrl=person.photoURL||person.photoUrl||person.avatarUrl||person.profilePhotoURL||person.profilePhoto||"";
+   if(avatarUrl&&/^https?:\\/\\//.test(avatarUrl)){const photo=document.createElement("img");photo.src=avatarUrl;photo.alt="";photo.onerror=()=>{photo.remove();avatar.textContent=(name||"?").slice(0,1).toUpperCase();};avatar.append(photo);}
+   else avatar.textContent=(name||"?").slice(0,1).toUpperCase();
    const info=document.createElement("div");info.className="callContactInfo";
-   const title=document.createElement("strong");title.textContent=(data.mode==="video"?"▣ Videollamada":"☎ Llamada de voz")+" · "+name;
+   const title=document.createElement("strong");title.textContent=name;
    const status=document.createElement("small");
    const missed=!outgoing&&!data.connectedAt;
    const outcome=missed?"Perdida":outgoing&&!data.connectedAt?(data.status==="rejected"?"Rechazada":"Sin respuesta"):outgoing?"Realizada":"Recibida";
-   status.textContent=outcome+" · "+formatCallTime(data.createdAt)+(callDuration(data)?" · "+callDuration(data):"");
-   if(missed)status.classList.add("callMissed");
-   info.append(title,status);row.append(info);
-   const again=document.createElement("button");again.type="button";again.className="secondary";again.textContent="↗";again.title="Volver a llamar";again.setAttribute("aria-label","Volver a llamar a "+name);
+   const arrow=document.createElement("span");arrow.className="klkCallArrow"+(missed?" missed":"");arrow.textContent=outgoing?"↗":"↙";
+   const time=document.createElement("span");time.textContent=formatCallTime(data.createdAt)+(callDuration(data)?" · "+callDuration(data):"");
+   status.append(arrow,time);
+   if(missed){status.classList.add("callMissed");title.classList.add("callMissedName");}
+   info.append(title,status);row.append(avatar,info);
+   const again=document.createElement("button");again.type="button";again.className="klkCallAgain";
+   const video=data.mode==="video";
+   again.innerHTML=video?'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="5" width="14" height="14" rx="2"/><path d="m16.5 10 5-3v10l-5-3z"/></svg>':'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.6 3.5 10 7.2 8.2 10c1.2 2.4 3.3 4.5 5.7 5.7l2.8-1.8 3.7 3.4-2.1 3.3c-.5.8-1.5 1.1-2.4.8C9.5 20.2 3.8 14.5 2.6 7.4c-.2-.9 0-1.8.8-2.3z"/></svg>';
+   again.title=video?"Volver a hacer videollamada":"Volver a llamar";
+   again.setAttribute("aria-label",again.title+" a "+name);
    again.disabled=!isCallContactAccepted(otherUid);
-   again.onclick=()=>startCall(otherUid,name,data.mode==="video"?"video":"audio");
+   again.onclick=()=>startCall(otherUid,name,video?"video":"audio");
    row.append(again);list.append(row);
   });
  }
