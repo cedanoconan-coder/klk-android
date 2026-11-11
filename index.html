@@ -1178,7 +1178,15 @@ html,body{overscroll-behavior-y:contain}
 #callOverlay.visible.klkIncoming #klkIncomingSwipe{z-index:35!important}
 #callOverlay.visible:not(.klkIncoming) #klkIncomingSwipe{display:none!important}
 </style>
-<style id="klkChatFiltersStyle">#klkChatFilters{display:flex;gap:8px;overflow-x:auto;padding:9px 12px 13px;scrollbar-width:none}#klkChatFilters::-webkit-scrollbar{display:none}.klkChatFilter{flex:1 0 auto;min-width:72px;border:1px solid #e4d8ef;background:#f8f4fc;color:#351455;border-radius:19px;padding:9px 12px;display:flex;align-items:center;justify-content:center;gap:5px;flex-direction:column;font-weight:700;box-shadow:0 2px 6px #40005b12}.klkChatFilter span{font-size:22px}.klkChatFilter small{font-size:12px}.klkChatFilter.active{background:linear-gradient(140deg,#b800ed,#560080);color:white;border-color:#8e1cc0}#klkCreateGroupFab{position:fixed;right:20px;bottom:105px;z-index:20;background:linear-gradient(145deg,#b500e7,#62008d);color:white;border:2px solid #e4c5f4;border-radius:22px;width:67px;height:67px;box-shadow:0 5px 16px #4b006050;font-size:25px;display:grid;place-items:center}#klkGroupModal:not([hidden])~#klkCreateGroupFab{display:none}</style></head>
+<style id="klkChatFiltersStyle">
+#klkChatFilters{display:flex;align-items:stretch;gap:0;margin:3px 12px 12px;padding:0;border-bottom:2px solid #e9d8f4;overflow-x:auto;scrollbar-width:none;background:transparent}
+#klkChatFilters::-webkit-scrollbar{display:none}
+#klkChatFilters .klkChatFilter{flex:1 0 0;min-width:66px;min-height:66px;border:0;border-bottom:3px solid transparent;border-radius:0;background:transparent;color:#4e236e;padding:8px 3px 7px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;box-shadow:none;font-weight:700}
+#klkChatFilters .klkChatFilter span{font-size:23px;line-height:1.15}
+#klkChatFilters .klkChatFilter small{font-size:12px;white-space:nowrap}
+#klkChatFilters .klkChatFilter.active{background:linear-gradient(140deg,#26dc00,#009d27);color:white;border-bottom:3px solid #00a52a;border-radius:17px 17px 10px 10px}
+#klkCreateGroupFab{position:fixed;right:20px;bottom:108px;z-index:20;background:linear-gradient(145deg,#b500e7,#560079);color:white;border:2px solid #e4c5f4;border-radius:50%;width:64px;height:64px;box-shadow:0 5px 16px #4b006050;font-size:25px;display:grid;place-items:center}
+</style></head>
 <body>
 
 <main>
@@ -3920,10 +3928,10 @@ stopMessages=db.collection("klkGroups").doc(id).collection("messages").orderBy("
 const chats=document.getElementById("chatsPanel"),search=document.querySelector(".homeSearch");
 if(chats&&search&&!document.getElementById("klkChatFilters")){
  const bar=document.createElement("nav");bar.id="klkChatFilters";bar.setAttribute("aria-label","Filtros de chats");
- const items=[["Todos","💬"],["Grupos","👥"],["Favoritos","☆"],["Archivados","▣"]];
- items.forEach(([name,emoji])=>{const b=document.createElement("button");b.type="button";b.className="klkChatFilter"+(name==="Todos"?" active":"");b.innerHTML="<span aria-hidden='true'>"+emoji+"</span><small>"+name+"</small>";b.setAttribute("aria-pressed",name==="Todos"?"true":"false");b.onclick=()=>{bar.querySelectorAll("button").forEach(x=>{x.classList.remove("active");x.setAttribute("aria-pressed","false")});b.classList.add("active");b.setAttribute("aria-pressed","true");if(name==="Grupos"){open();return;}const list=document.getElementById("chatsList");if(name==="Todos"){if(list)list.style.display="";const empty=document.getElementById("klkFilterEmpty");if(empty)empty.remove();return;}if(list)list.style.display="none";let empty=document.getElementById("klkFilterEmpty");if(!empty){empty=document.createElement("p");empty.id="klkFilterEmpty";empty.className="hint";empty.style.cssText="padding:28px 20px;text-align:center";chats.append(empty);}empty.textContent=name==="Favoritos"?"No hay conversaciones favoritas todavía.":"No hay conversaciones archivadas todavía.";};bar.append(b);});
+ const items=[["Chats","💬"],["Grupos","👥"],["Favoritos","☆"],["Archivados","▣"]];
+ items.forEach(([name,emoji])=>{const b=document.createElement("button");b.type="button";b.className="klkChatFilter"+(name==="Chats"?" active":"");b.innerHTML="<span aria-hidden='true'>"+emoji+"</span><small>"+name+"</small>";b.setAttribute("aria-pressed",name==="Chats"?"true":"false");b.onclick=()=>{bar.querySelectorAll("button").forEach(x=>{x.classList.remove("active");x.setAttribute("aria-pressed","false")});b.classList.add("active");b.setAttribute("aria-pressed","true");if(name==="Grupos"){open();return;}const list=document.getElementById("chatsList");if(name==="Chats"){if(list)list.style.display="";const empty=document.getElementById("klkFilterEmpty");if(empty)empty.remove();return;}if(list)list.style.display="none";let empty=document.getElementById("klkFilterEmpty");if(!empty){empty=document.createElement("p");empty.id="klkFilterEmpty";empty.className="hint";empty.style.cssText="padding:28px 20px;text-align:center";chats.append(empty);}empty.textContent=name==="Favoritos"?"No hay conversaciones favoritas todavía.":"No hay conversaciones archivadas todavía.";};bar.append(b);});
  search.insertAdjacentElement("afterend",bar);
- const fab=document.createElement("button");fab.type="button";fab.id="klkCreateGroupFab";fab.setAttribute("aria-label","Crear grupo KLK");fab.textContent="👥＋";fab.onclick=open;chats.append(fab);
+ const fab=document.createElement("button");fab.type="button";fab.id="klkCreateGroupFab";fab.setAttribute("aria-label","Crear grupo KLK");fab.textContent="👥+";fab.onclick=open;chats.append(fab);
 }
 
 })();
