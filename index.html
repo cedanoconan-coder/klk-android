@@ -2792,7 +2792,14 @@ $("sendAudio").onclick = async () => {
    const item=group[0],preview=group[group.length-1];
    if(item.uid!==user.uid&&!contactSectionAdded){const heading=document.createElement("h3");heading.className="klkStatusSectionTitle";heading.textContent="Actualizaciones recientes";feed.appendChild(heading);contactSectionAdded=true;}
    const card=document.createElement("article");card.className="statusCard";const avatar=document.createElement("div");avatar.className="statusAvatar";avatar.textContent="◉";
-   const cachedProfile=typeof peopleCache!=="undefined"?peopleCache.get(item.uid):null;const avatarUrl=cachedProfile&&(cachedProfile.photoURL||cachedProfile.photoUrl||cachedProfile.avatarUrl);if(avatarUrl||preview.url){const im=document.createElement("img");im.src=avatarUrl||preview.url;im.alt="";avatar.replaceChildren(im);}
+   let cachedProfile=typeof peopleCache!=="undefined"?peopleCache.get(item.uid):null;
+   if(item.uid===user.uid&&!cachedProfile){try{const own=await window.db.collection("publicProfiles").doc(user.uid).get();if(own.exists)cachedProfile=own.data()}catch(e){console.warn("No se pudo cargar el perfil propio para estados",e)}}
+   let avatarUrl=cachedProfile&&(cachedProfile.photoURL||cachedProfile.photoUrl||cachedProfile.avatarUrl);
+   const photoPath=cachedProfile?.photoPath;
+   if(!avatarUrl&&photoPath){try{avatarUrl=await getMediaUrl(photoPath)}catch(e){console.warn("No se pudo cargar la foto de perfil del estado",e)}}
+   if(!avatarUrl&&item.uid===user.uid)avatarUrl=user.photoURL||"";
+   if(avatarUrl){const im=document.createElement("img");im.src=avatarUrl;im.alt="Foto de perfil de "+(item.uid===user.uid?"mi cuenta":item.displayName||"contacto");im.onerror=()=>{avatar.replaceChildren();avatar.textContent=(item.uid===user.uid?"YO":(item.displayName||"?").slice(0,1).toUpperCase())};avatar.replaceChildren(im)}
+   else avatar.textContent=item.uid===user.uid?"YO":(item.displayName||"?").slice(0,1).toUpperCase();
    const body=document.createElement("div");body.className="statusCardBody";const title=document.createElement("strong");title.textContent=(item.uid===user.uid?"Mi estado":item.displayName||"Contacto");
    const desc=document.createElement("p");desc.textContent=age(preview.createdAt)+(group.length>1?" · "+group.length+" estados":"");body.append(title,desc);card.append(avatar,body);
    card.setAttribute("role","button");card.tabIndex=0;card.setAttribute("aria-label","Ver estados de "+title.textContent);card.onclick=()=>view(item);card.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();view(item);}};
