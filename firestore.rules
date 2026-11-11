@@ -188,6 +188,44 @@ service cloud.firestore {
       allow update: if false;
     }
 
+    // Grupos: solamente sus integrantes pueden leer y enviar mensajes.
+    match /klkGroups/{groupId} {
+      function groupMember() {
+        return signedIn() && request.auth.uid in resource.data.members;
+      }
+      allow get, list: if groupMember();
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['name','members','admin','createdAt'])
+        && request.resource.data.keys().hasAll(['name','members','admin','createdAt'])
+        && request.resource.data.name is string
+        && request.resource.data.name.size() >= 1
+        && request.resource.data.name.size() <= 60
+        && request.resource.data.members is list
+        && request.resource.data.members.size() >= 2
+        && request.resource.data.members.size() <= 50
+        && request.resource.data.members.toSet().size() == request.resource.data.members.size()
+        && request.auth.uid in request.resource.data.members
+        && request.resource.data.admin == request.auth.uid
+        && request.resource.data.createdAt == request.time;
+      allow update, delete: if false;
+      match /messages/{messageId} {
+        function member() {
+          return signedIn()
+            && exists(/databases/$(database)/documents/klkGroups/$(groupId))
+            && request.auth.uid in get(/databases/$(database)/documents/klkGroups/$(groupId)).data.members;
+        }
+        allow read: if member();
+        allow create: if member()
+          && request.resource.data.keys().hasOnly(['uid','text','createdAt'])
+          && request.resource.data.keys().hasAll(['uid','text','createdAt'])
+          && request.resource.data.uid == request.auth.uid
+          && request.resource.data.text is string
+          && request.resource.data.text.size() >= 1
+          && request.resource.data.text.size() <= 2000
+          && request.resource.data.createdAt == request.time;
+        allow update, delete: if false;
+      }
+    }
     match /conversations/{conversationId} {
       // Permite comprobar si todavía no existe una conversación, sin revelar documentos existentes.
       allow get: if isConversationMember(conversationId)
