@@ -142,15 +142,18 @@
   callRef=null;callRole=null;callState=null;incomingCall=null;queuedCandidates=[];pendingLocalCandidates=[];muted=false;cameraOff=false;cameraFacingMode="user";ending=false;
   overlay.classList.remove("visible");
  }
+ function klkCallVideoConstraints(facing){return {facingMode:{ideal:facing},width:{ideal:1280},height:{ideal:720},frameRate:{ideal:24,max:30},resizeMode:"crop-and-scale"};}
+ async function klkTuneCallVideo(track){if(!track)return;try{const caps=typeof track.getCapabilities==="function"?track.getCapabilities():{};const extras={};if(caps.frameRate&&caps.frameRate.max>=24)extras.frameRate={ideal:24,max:30};if(caps.width&&caps.width.max>=640)extras.width={ideal:Math.min(1280,caps.width.max)};if(caps.height&&caps.height.max>=480)extras.height={ideal:Math.min(720,caps.height.max)};if(Object.keys(extras).length)await track.applyConstraints(extras)}catch(e){console.warn("Ajustes opcionales de cámara no disponibles",e)}}
+ async function klkTuneCallSender(sender){if(!sender||!sender.getParameters||!sender.setParameters)return;try{const params=sender.getParameters();if(!params.encodings||!params.encodings.length)return;params.degradationPreference="maintain-framerate";params.encodings.forEach(encoding=>{encoding.maxBitrate=1200000;encoding.maxFramerate=24});await sender.setParameters(params)}catch(e){console.warn("Ajustes WebRTC no disponibles",e)}}
  async function getLocalMedia(mode){
   if(!window.isSecureContext)throw new Error("Las llamadas requieren una conexión segura HTTPS. Abre klk desde su enlace oficial.");
   if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia||!window.RTCPeerConnection)throw new Error("Este navegador no admite llamadas WebRTC. Actualiza Chrome y vuelve a intentarlo.");
   cameraFacingMode="user";
-   return navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true},video:mode==="video"?{facingMode:{ideal:cameraFacingMode},width:{ideal:640},height:{ideal:480}}:false});
+   return navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true},video:mode==="video"?{facingMode:{ideal:cameraFacingMode},...klkCallVideoConstraints(cameraFacingMode)}:false});
  }
  function createPeer(){
   peer=new RTCPeerConnection(ICE_CONFIG);
-  localStream.getTracks().forEach(track=>peer.addTrack(track,localStream));
+  localStream.getTracks().forEach(track=>{const sender=peer.addTrack(track,localStream);if(track.kind==="video"){klkTuneCallVideo(track);klkTuneCallSender(sender)}});
   peer.ontrack=event=>{
    const stream=event.streams&&event.streams[0];
    if(stream){$("remoteVideo").srcObject=stream;$("remoteAudio").srcObject=stream;}
@@ -299,11 +302,11 @@
   let replacementStream=null;
   try{
    $("switchCameraCall").disabled=true;
-   replacementStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:nextFacing},width:{ideal:640},height:{ideal:480}},audio:false});
+   replacementStream=await navigator.mediaDevices.getUserMedia({video:klkCallVideoConstraints(nextFacing),audio:false});
    const nextTrack=replacementStream.getVideoTracks()[0];
    const sender=peer.getSenders().find(item=>item.track&&item.track.kind==="video");
    if(!nextTrack||!sender)throw new Error("No se pudo encontrar la cámara activa.");
-   await sender.replaceTrack(nextTrack);
+   await klkTuneCallVideo(nextTrack);await sender.replaceTrack(nextTrack);await klkTuneCallSender(sender);
    const previousTracks=localStream.getVideoTracks();
    previousTracks.forEach(track=>localStream.removeTrack(track));
    localStream.addTrack(nextTrack);nextTrack.enabled=!cameraOff;
