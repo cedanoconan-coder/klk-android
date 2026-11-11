@@ -1185,7 +1185,7 @@ html,body{overscroll-behavior-y:contain}
 #klkChatFilters .klkChatFilter span{font-size:23px;line-height:1.15}
 #klkChatFilters .klkChatFilter small{font-size:12px;white-space:nowrap}
 #klkChatFilters .klkChatFilter.active{background:linear-gradient(140deg,#26dc00,#009d27);color:white;border-bottom:3px solid #00a52a;border-radius:17px 17px 10px 10px}
-#klkCreateGroupFab{position:fixed;right:20px;bottom:108px;z-index:20;background:linear-gradient(145deg,#b500e7,#560079);color:white;border:2px solid #e4c5f4;border-radius:50%;width:64px;height:64px;box-shadow:0 5px 16px #4b006050;font-size:25px;display:grid;place-items:center}
+
 </style></head>
 <body>
 
@@ -3931,7 +3931,7 @@ if(chats&&search&&!document.getElementById("klkChatFilters")){
  const items=[["Chats","💬"],["Grupos","👥"],["Favoritos","☆"],["Archivados","▣"]];
  items.forEach(([name,emoji])=>{const b=document.createElement("button");b.type="button";b.className="klkChatFilter"+(name==="Chats"?" active":"");b.innerHTML="<span aria-hidden='true'>"+emoji+"</span><small>"+name+"</small>";b.setAttribute("aria-pressed",name==="Chats"?"true":"false");b.onclick=()=>{bar.querySelectorAll("button").forEach(x=>{x.classList.remove("active");x.setAttribute("aria-pressed","false")});b.classList.add("active");b.setAttribute("aria-pressed","true");if(name==="Grupos"){open();return;}const list=document.getElementById("chatsList");if(name==="Chats"){if(list)list.style.display="";const empty=document.getElementById("klkFilterEmpty");if(empty)empty.remove();return;}if(list)list.style.display="none";let empty=document.getElementById("klkFilterEmpty");if(!empty){empty=document.createElement("p");empty.id="klkFilterEmpty";empty.className="hint";empty.style.cssText="padding:28px 20px;text-align:center";chats.append(empty);}empty.textContent=name==="Favoritos"?"No hay conversaciones favoritas todavía.":"No hay conversaciones archivadas todavía.";};bar.append(b);});
  search.insertAdjacentElement("afterend",bar);
- const fab=document.createElement("button");fab.type="button";fab.id="klkCreateGroupFab";fab.setAttribute("aria-label","Crear grupo KLK");fab.textContent="👥+";fab.onclick=open;chats.append(fab);
+
 }
 
 })();
