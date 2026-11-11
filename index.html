@@ -1588,22 +1588,38 @@ let auth, db, firebaseInitError = null, unsubscribe = null, sending = false, med
 let authPersistenceReady = Promise.resolve(), firestorePersistenceReady = Promise.resolve(true);
 // Inicializar antes de cualquier apertura de chat que pueda llamar loadMessages().
 let messagesLoadingTimeout = null, disappearingExpiryTimer = null;
-let klkActivityUnsubscribe=null,klkActivityTimeout=null,klkLastActivitySent=0;
+let klkActivityUnsubscribe=null,klkActivityTimeout=null,klkLastActivitySent=0,klkPresenceInterval=null,klkPeerActivityState=null;setInterval(()=>{if(activeConversationId)klkRenderPeerPresence()},3000);
 async function klkPublishActivity(kind){
  if(!db||!auth?.currentUser||!activeConversationId)return;
  const conversation=activeConversationId,uid=auth.currentUser.uid;
  try{await db.collection("conversations").doc(conversation).collection("activity").doc(uid).set({uid,kind,updatedAt:firebase.firestore.FieldValue.serverTimestamp()})}catch(e){console.warn("Actividad de chat no disponible; revisa reglas Firebase",e)}
 }
+function klkRenderPeerPresence(){
+ const display=document.getElementById("klkPeerActivity"),who=document.getElementById("who");if(!display||!who)return;
+ const data=klkPeerActivityState,stamp=data?.updatedAt?.toMillis?.()||0,age=Date.now()-stamp;
+ const busy=age<8500&&(data?.kind==="typing"||data?.kind==="recording");
+ const online=age<65000&&data?.kind!=="offline";
+ display.textContent=busy?(data.kind==="recording"?"🎙 Grabando audio…":"Escribiendo…"):online?"En línea":"";
+ display.hidden=!display.textContent;
+ who.hidden=true;who.textContent="";
+}
+function klkStartPresence(){
+ if(klkPresenceInterval)clearInterval(klkPresenceInterval);
+ const pulse=()=>{if(activeConversationId&&document.visibilityState==="visible"&&auth?.currentUser)void klkPublishActivity("online")};
+ pulse();klkPresenceInterval=setInterval(pulse,25000);
+}
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden"){void klkPublishActivity("offline")}else if(activeConversationId)klkStartPresence()});
+window.addEventListener("pagehide",()=>{void klkPublishActivity("offline")});
 function klkWatchActivity(){
  if(klkActivityUnsubscribe){klkActivityUnsubscribe();klkActivityUnsubscribe=null}
- const display=document.getElementById("klkPeerActivity");if(display){display.hidden=true;display.textContent=""}
+ const display=document.getElementById("klkPeerActivity");if(display){display.hidden=true;display.textContent=""}klkPeerActivityState=null;klkRenderPeerPresence()
  if(!db||!activeConversationId||!activeConversationPeerUid)return;
  const conversation=activeConversationId,peer=activeConversationPeerUid;
  klkActivityUnsubscribe=db.collection("conversations").doc(conversation).collection("activity").doc(peer).onSnapshot(doc=>{
   if(conversation!==activeConversationId)return;
   const data=doc.exists?doc.data():null,stamp=data?.updatedAt?.toMillis?.()||0;
   const active=Date.now()-stamp<8500;
-  if(display){display.textContent=active&&data.kind==="recording"?"🎙 Grabando audio…":active&&data.kind==="typing"?"Escribiendo…":"";display.hidden=!display.textContent}
+  klkPeerActivityState=data;klkRenderPeerPresence()
  },e=>console.warn("No se pudo observar actividad del contacto",e));
 }
 let activeConversationId = null, activeConversationName = null, activeConversationPeerUid = null, peopleUnsubscribe = null, incomingRequestsUnsubscribe = null, outgoingRequestsUnsubscribe = null, conversationListUnsubscribe = null;
@@ -1880,7 +1896,7 @@ auth && auth.onAuthStateChanged(async user => {
   try{const biometric=JSON.parse(localStorage.getItem(KLK_BIOMETRIC_KEY)||"null");if(biometric&&biometric.uid===user.uid)showKlkBiometricLock();else hideKlkBiometricLock();}catch(e){hideKlkBiometricLock();}
   if ("Notification" in window && Notification.permission === "granted") registerKlkWebPush(user,false).catch(error=>console.warn("Registro push:",error));
   window.klkSetCurrentUid && window.klkSetCurrentUid(user.uid);
-  $("who").textContent = "Conectado: " + (user.email || "usuario");
+  $("who").textContent = ""; $("who").hidden=true;
   activeConversationId = null; activeConversationName = null;
   $("chat").classList.remove("room-open");
   $("chatTitle").textContent = "👨‍👩‍👧‍👦 Familia klk"; $("dmPanel").style.display = "none"; $("messages").style.display = "block";
@@ -2277,7 +2293,7 @@ async function openPrivateConversation(otherUid, otherName) {
   if(await isUserBlockedEitherWay(otherUid)){ $("chatStatus").textContent="No puedes abrir este chat porque uno de los dos miembros ha bloqueado al otro."; return; }
   const ref = db.collection("conversations").doc(conversationId), existing = await ref.get();
   if (!existing.exists) await ref.set({members,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
-  activeConversationId = conversationId; activeConversationName = otherName; activeConversationPeerUid = otherUid; klkWatchActivity(); watchDisappearingSettings(); $("disappearingPanel").hidden=true;
+  activeConversationId = conversationId; activeConversationName = otherName; activeConversationPeerUid = otherUid; klkWatchActivity(); klkStartPresence(); watchDisappearingSettings(); $("disappearingPanel").hidden=true;
   klkPushView("conversation");$("chat").classList.add("room-open"); const chatFooter=$("chat").querySelector(".chatFoot"); if(chatFooter){chatFooter.hidden=false;chatFooter.style.display="block";} $("chatTitle").textContent = otherName; updateRoomAvatar(otherUid);
   $("dmPanel").style.display = "none"; $("messages").style.display = "block";
   const composer=document.querySelector(".composer"); if(composer) composer.style.display="flex"; const recordStatus=$("recordStatus"); if(recordStatus) recordStatus.style.display="block";
@@ -2458,9 +2474,9 @@ $("message").addEventListener("input",syncComposerMode);
 $("message").addEventListener("input",()=>{
  if(!activeConversationId)return;
  if(klkActivityTimeout)clearTimeout(klkActivityTimeout);
- if(!$("message").value.trim()){void klkPublishActivity("idle");return}
+ if(!$("message").value.trim()){void klkPublishActivity("online");return}
  if(Date.now()-klkLastActivitySent>2500){klkLastActivitySent=Date.now();void klkPublishActivity("typing")}
- klkActivityTimeout=setTimeout(()=>{void klkPublishActivity("idle")},3500);
+ klkActivityTimeout=setTimeout(()=>{void klkPublishActivity("online")},3500);
 });
 $("message").addEventListener("blur",()=>{if(klkActivityTimeout)clearTimeout(klkActivityTimeout);void klkPublishActivity("idle")});
 $("send").onclick = async () => {
