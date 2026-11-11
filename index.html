@@ -2964,11 +2964,11 @@ if (window.matchMedia("(display-mode: standalone)").matches || window.navigator.
   pattern.notes.forEach(note=>{
    const oscillator=context.createOscillator(),gain=context.createGain(),at=base+note.t;
    oscillator.type=pattern.wave;oscillator.frequency.setValueAtTime(note.f,at);
-   gain.gain.setValueAtTime(.0001,at);gain.gain.exponentialRampToValueAtTime(.105,at+.018);gain.gain.exponentialRampToValueAtTime(.0001,at+note.d);
+   gain.gain.setValueAtTime(.0001,at);gain.gain.exponentialRampToValueAtTime(.32,at+.018);gain.gain.exponentialRampToValueAtTime(.0001,at+note.d);
    oscillator.connect(gain);gain.connect(context.destination);oscillator.start(at);oscillator.stop(at+note.d+.02);
   });
  }
- function playChime(){if(prefs.sound)playPattern(prefs.messageTone);}
+ function playChime(){if(prefs.sound){playPattern(prefs.messageTone);if(prefs.vibration&&navigator.vibrate)try{navigator.vibrate([140,65,140]);}catch(_){}}}
  function playCallChime(){if(prefs.sound)playPattern(prefs.callTone);}
  function stopCallRingtone(){if(callRingtoneTimer!==null){window.clearInterval(callRingtoneTimer);callRingtoneTimer=null;}}
  function startCallRingtone(){
