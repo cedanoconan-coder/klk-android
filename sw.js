@@ -26,18 +26,20 @@ const messaging = firebase.messaging();
 messaging.onBackgroundMessage(payload => {
   const data = payload && payload.data ? payload.data : {};
   const title = data.title || "klk · Nuevo mensaje";
-  const body = data.body || "Tienes un mensaje nuevo";
+  const body = typeof data.body === "string" && data.body.trim() ? data.body.trim().slice(0,240) : "Tienes un mensaje nuevo";
   return self.registration.showNotification(title, {
     body,
     icon: "./icon.svg",
     badge: "./icon.svg",
     tag: "klk-" + (data.conversationId || "message"),
-    data: { url: "./" },
+    data: { url: "./?from=notification" },
+    actions: [{action:"open",title:"Ver conversación"}],
+    timestamp: Date.now(),
     renotify: true,
     vibrate: [180, 80, 180]
   });
 });
-const CACHE_NAME = "klk-shell-v146";
+const CACHE_NAME = "klk-shell-v147";
 const APP_SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon.svg", "./calls.js?v=139", "./navigation.js", "./chat-camera.js"];
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => Promise.allSettled(APP_SHELL.map(path => cache.add(path)))));
