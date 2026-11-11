@@ -37,7 +37,7 @@ messaging.onBackgroundMessage(payload => {
     vibrate: [180, 80, 180]
   });
 });
-const CACHE_NAME = "klk-shell-v142";
+const CACHE_NAME = "klk-shell-v143";
 const APP_SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon.svg", "./calls.js?v=139", "./navigation.js", "./chat-camera.js"];
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => Promise.allSettled(APP_SHELL.map(path => cache.add(path)))));
