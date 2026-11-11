@@ -70,7 +70,7 @@
    const row=document.createElement("div");row.className="callContact callHistoryItem";
    const avatar=document.createElement("div");avatar.className="klkCallAvatar";
    const avatarUrl=person.photoURL||person.photoUrl||person.avatarUrl||person.profilePhotoURL||person.profilePhoto||"";
-   if(avatarUrl&&/^https?:\\/\\//.test(avatarUrl)){const photo=document.createElement("img");photo.src=avatarUrl;photo.alt="";photo.onerror=()=>{photo.remove();avatar.textContent=(name||"?").slice(0,1).toUpperCase();};avatar.append(photo);}
+   if(avatarUrl&&(avatarUrl.startsWith("https://")||avatarUrl.startsWith("http://"))){const photo=document.createElement("img");photo.src=avatarUrl;photo.alt="";photo.onerror=()=>{photo.remove();avatar.textContent=(name||"?").slice(0,1).toUpperCase();};avatar.append(photo);}
    else if(person.photoPath&&typeof window.klkResolveProfilePhoto==="function"){
     avatar.textContent=(name||"?").slice(0,1).toUpperCase();
     const path=person.photoPath;
