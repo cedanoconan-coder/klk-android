@@ -1240,7 +1240,7 @@ header small{color:#e8cfff!important}
 <div class="contactProfileSection"><h3>Archivos, enlaces y contenido multimedia</h3><button id="roomMediaToggle" class="contactMediaGalleryButton" type="button" hidden>▧ Abrir galería de fotos y videos</button><div class="contactMediaTabs"><button type="button" data-media-tab="image" class="active">Fotos</button><button type="button" data-media-tab="file">Documentos</button><button type="button" data-media-tab="all">Todo</button></div><div id="contactSharedMedia" class="contactSharedMedia">Selecciona una conversación.</div></div>
 <div class="contactProfileSection"><h3>Información</h3><div class="contactInfoRow"><span class="contactInfoIcon">ℹ</span><div class="contactInfoText"><small>Info. / Acerca de</small><strong id="contactProfileAboutDetail">Miembro de klk</strong></div></div></div>
 <p class="contactProfileInfo">Este es el perfil de contacto de klk. Aquí puedes iniciar una conversación, llamar y consultar el contenido compartido.</p><p id="contactProfileStatus" class="hint" role="status" aria-live="polite"></p></section>
- <section id="callsPanel" aria-label="Historial de llamadas"><h3>Historial de llamadas</h3><p class="hint">Tus llamadas de voz y videollamadas, recibidas, realizadas y perdidas.</p><div id="callContacts" class="hint">Cargando historial...</div><div class="callDiagnosticsBox"><button id="callDiagnostics" class="secondary" type="button">Comprobar cámara, micrófono y conexión</button><pre id="callDiagnosticsStatus" class="hint" role="status" aria-live="polite" style="white-space:pre-line;margin:8px 0"></pre></div><p id="callsStatus" class="hint" role="status" aria-live="polite"></p></section>
+ <section id="callsPanel" aria-label="Historial de llamadas"><div class="klkCallsHeading"><h2>Llamadas</h2><h3>Recientes</h3></div><div id="callContacts" class="hint">Cargando historial...</div><div class="callDiagnosticsBox"><button id="callDiagnostics" class="secondary" type="button">Comprobar cámara, micrófono y conexión</button><pre id="callDiagnosticsStatus" class="hint" role="status" aria-live="polite" style="white-space:pre-line;margin:8px 0"></pre></div><p id="callsStatus" class="hint" role="status" aria-live="polite"></p></section>
  <section id="updatesPanel" class="homeUtilityPanel klkUpdates" aria-label="Novedades" hidden>
   <div class="updatesTopbar"><h1>Novedades</h1><div class="updatesTopActions"><button type="button" id="statusSearchToggle" aria-label="Buscar estados" title="Buscar">⌕</button><button type="button" id="refreshStatuses" aria-label="Actualizar estados" title="Actualizar">⋮</button></div></div>
   <div id="statusSearchWrap" class="statusSearchWrap" hidden><input id="statusSearchInput" type="search" placeholder="Buscar estados..." aria-label="Buscar estados"></div>
@@ -3676,4 +3676,22 @@ catch(error){if(feedback)feedback.textContent="No se pudo preparar la foto. Inte
 }
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",install);else install();
 })();
-</script></body></html>
+</script><style>
+#callsPanel{background:#fff!important;color:#182025!important;padding:20px 18px 110px!important}
+#callsPanel .klkCallsHeading h2{font-size:27px;margin:4px 0 24px;font-weight:750}
+#callsPanel .klkCallsHeading h3{font-size:20px;margin:0 0 10px;font-weight:700}
+#callContacts{background:#fff!important}
+#callContacts .callHistoryItem{display:flex!important;align-items:center!important;gap:14px!important;padding:12px 0!important;border-bottom:1px solid #edf0f2!important;background:transparent!important;min-height:76px}
+#callContacts .klkCallAvatar{width:52px;height:52px;flex:0 0 52px;border-radius:50%;display:grid;place-items:center;overflow:hidden;background:#eee2f6;color:#64129b;font-weight:750;font-size:21px}
+#callContacts .klkCallAvatar img{width:100%;height:100%;object-fit:cover}
+#callContacts .callContactInfo{min-width:0;flex:1;padding:0}
+#callContacts .callContactInfo strong{display:block;font-size:16px;font-weight:650;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#172027}
+#callContacts .callContactInfo strong.callMissedName{color:#d81753}
+#callContacts .callContactInfo small{display:flex;align-items:center;gap:8px;font-size:13px;color:#747d83;margin-top:5px}
+#callContacts .klkCallArrow{font-size:20px;line-height:1;color:#8c979b}
+#callContacts .klkCallArrow.missed{color:#d81753}
+#callContacts .klkCallAgain{display:grid;place-items:center;width:43px;height:43px;flex:0 0 43px;background:transparent!important;color:#15191d!important;border:0!important;border-radius:50%;padding:8px;box-shadow:none!important}
+#callContacts .klkCallAgain svg{width:27px;height:27px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+#callContacts .klkCallAgain:disabled{opacity:.35}
+#callsPanel .callDiagnosticsBox{margin-top:22px}
+</style></body></html>
