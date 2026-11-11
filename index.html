@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- KLK_BUILD_20261110_3 -->
+<!-- KLK_BUILD_20261111_122 -->
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -2664,13 +2664,13 @@ $("sendAudio").onclick = async () => {
 
  const age=v=>{const d=v&&v.toDate?v.toDate():new Date(v||Date.now()),m=Math.max(0,Math.floor((Date.now()-d.getTime())/60000));return m<1?"Ahora":m<60?m+" min":Math.floor(m/60)+" h";};
  let currentStatuses=[];
- let statusAdvanceTimer=null;
+ window.__klkStatusAdvanceTimer=null;
  let klkViewerIndex=0,klkViewerStarted=0,klkViewerRemaining=5000,klkViewerPaused=false;
- function klkScheduleAdvance(){if(statusAdvanceTimer)clearTimeout(statusAdvanceTimer);klkViewerStarted=Date.now();if(klkViewerPaused)return;statusAdvanceTimer=setTimeout(()=>{if(klkViewerIndex<currentStatuses.length-1)renderViewerAt(klkViewerIndex+1);else $("closeStatusViewer").click();},klkViewerRemaining);}
- function klkPauseViewer(){if(!$("statusViewer").classList.contains("visible")||klkViewerPaused)return;klkViewerRemaining=Math.max(100,klkViewerRemaining-(Date.now()-klkViewerStarted));klkViewerPaused=true;if(statusAdvanceTimer)clearTimeout(statusAdvanceTimer);}
+ function klkScheduleAdvance(){if(window.__klkStatusAdvanceTimer)clearTimeout(window.__klkStatusAdvanceTimer);klkViewerStarted=Date.now();if(klkViewerPaused)return;window.__klkStatusAdvanceTimer=setTimeout(()=>{if(klkViewerIndex<currentStatuses.length-1)renderViewerAt(klkViewerIndex+1);else $("closeStatusViewer").click();},klkViewerRemaining);}
+ function klkPauseViewer(){if(!$("statusViewer").classList.contains("visible")||klkViewerPaused)return;klkViewerRemaining=Math.max(100,klkViewerRemaining-(Date.now()-klkViewerStarted));klkViewerPaused=true;if(window.__klkStatusAdvanceTimer)clearTimeout(window.__klkStatusAdvanceTimer);}
  function klkResumeViewer(){if(!klkViewerPaused)return;klkViewerPaused=false;klkScheduleAdvance();}
  async function renderViewerAt(index){
-  const item=currentStatuses[index];if(!item)return;klkViewerIndex=index;klkViewerRemaining=5000;klkViewerPaused=false;if(statusAdvanceTimer)clearTimeout(statusAdvanceTimer);
+  const item=currentStatuses[index];if(!item)return;klkViewerIndex=index;klkViewerRemaining=5000;klkViewerPaused=false;if(window.__klkStatusAdvanceTimer)clearTimeout(window.__klkStatusAdvanceTimer);
   $("statusViewerMeta").replaceChildren();
   const heading=document.createElement("strong");heading.textContent=(item.uid===(window.auth&&window.auth.currentUser&&window.auth.currentUser.uid)?"Mi estado":item.displayName||"Contacto")+" · "+age(item.createdAt);$("statusViewerMeta").appendChild(heading);
   const strip=document.createElement("div");strip.className="statusViewerPeople";
@@ -2695,7 +2695,7 @@ $("sendAudio").onclick = async () => {
  async function view(item){currentStatuses=currentStatuses.length?currentStatuses: [item];const index=currentStatuses.findIndex(x=>x.id===item.id);await renderViewerAt(index<0?0:index);}
  async function showStatusViews(item){const box=$("statusViewerContent");$("statusViewerMeta").textContent="Personas que vieron tu estado";box.replaceChildren();$("statusViewer").classList.add("visible");const loading=document.createElement("p");loading.className="statusViewerText";loading.textContent="Cargando visualizaciones...";box.appendChild(loading);try{const snap=await window.db.collection("statuses").doc(item.id).collection("views").orderBy("viewedAt","desc").get();box.replaceChildren();if(!snap.size){const empty=document.createElement("p");empty.className="statusViewerText";empty.textContent="Todavía nadie ha visto este estado.";box.appendChild(empty);return;}const heading=document.createElement("p");heading.textContent=snap.size+" visualización"+(snap.size===1?"":"es");heading.style.fontWeight="700";box.appendChild(heading);snap.forEach(doc=>{const data=doc.data(),row=document.createElement("div");row.style.cssText="display:flex;justify-content:space-between;gap:12px;padding:12px 4px;border-bottom:1px solid #ffffff33;text-align:left";const name=document.createElement("strong");name.textContent=data.displayName||"Contacto";const time=document.createElement("span");time.textContent=data.viewedAt&&data.viewedAt.toDate?data.viewedAt.toDate().toLocaleString():"Hora no disponible";time.style.cssText="font-size:12px;opacity:.8;text-align:right";row.append(name,time);box.appendChild(row);});}catch(error){box.replaceChildren();const p=document.createElement("p");p.className="statusViewerText";p.textContent="No se pudieron cargar las visualizaciones: "+(error.message||"error");box.appendChild(p);}}
  const klkStatusContent=$("statusViewerContent");let klkPressStarted=0;klkStatusContent.addEventListener("pointerdown",e=>{if(e.target.closest("button,input,textarea,a"))return;klkPressStarted=Date.now();klkPauseViewer();});klkStatusContent.addEventListener("pointerup",e=>{if(!klkPressStarted)return;const elapsed=Date.now()-klkPressStarted;klkPressStarted=0;if(elapsed<250&&!e.target.closest("button,input,textarea,a")){const rect=klkStatusContent.getBoundingClientRect();const backward=e.clientX<rect.left+rect.width*.32;const forward=e.clientX>rect.left+rect.width*.68;if(backward&&klkViewerIndex>0){renderViewerAt(klkViewerIndex-1);return}if(forward){if(klkViewerIndex<currentStatuses.length-1)renderViewerAt(klkViewerIndex+1);else $("closeStatusViewer").click();return}}klkResumeViewer();});klkStatusContent.addEventListener("pointercancel",()=>{klkPressStarted=0;klkResumeViewer()});
- $("closeStatusViewer").addEventListener("click",()=>{if(statusAdvanceTimer)clearTimeout(statusAdvanceTimer);statusAdvanceTimer=null;$("statusViewer").classList.remove("visible");});
+ $("closeStatusViewer").addEventListener("click",()=>{if(window.__klkStatusAdvanceTimer)clearTimeout(window.__klkStatusAdvanceTimer);window.__klkStatusAdvanceTimer=null;$("statusViewer").classList.remove("visible");});
  $("statusViewer").addEventListener("click",e=>{if(e.target===$("statusViewer"))$("closeStatusViewer").click();});
  async function refresh(){const user=window.auth&&window.auth.currentUser,feed=$("statusesFeed");if(!user||!feed)return;feed.innerHTML='<p class="hint">Cargando estados...</p>';try{
   const now=Date.now();
