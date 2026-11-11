@@ -2300,7 +2300,15 @@ const meta=document.createElement("div");meta.className="messageMeta";
    $("messages").appendChild(item);
    if(data.uid!==auth.currentUser.uid&&(!Array.isArray(data.readBy)||!data.readBy.includes(auth.currentUser.uid))){doc.ref.update({readBy:firebase.firestore.FieldValue.arrayUnion(auth.currentUser.uid)}).catch(error=>console.warn("No se pudo guardar la confirmación de lectura:",error));}
   }
-  $("messages").scrollTop = $("messages").scrollHeight;
+  // Mantener visible el mensaje más reciente al entrar y al actualizar el chat.
+  const messagePane=$("messages");
+  const goToLatest=()=>{if(messagePane.isConnected)messagePane.scrollTop=messagePane.scrollHeight;};
+  goToLatest();
+  requestAnimationFrame(()=>{goToLatest();requestAnimationFrame(goToLatest);});
+  messagePane.querySelectorAll("img,video,audio").forEach(media=>{
+   if(media.tagName==="IMG"&&!media.complete)media.addEventListener("load",goToLatest,{once:true});
+   if(media.tagName==="VIDEO")media.addEventListener("loadedmetadata",goToLatest,{once:true});
+  });
  }, error => {
   if (messagesLoadingTimeout) clearTimeout(messagesLoadingTimeout);
   messagesLoadingTimeout = null;
@@ -3886,7 +3894,7 @@ save.onclick=async()=>{const selected=[...contacts.querySelectorAll("input:check
 function showChat(id,data){if(stopList){stopList();stopList=null;}currentGroup=id;title.textContent=data.name||"Grupo KLK";content.replaceChildren();bottom.replaceChildren();const note=el("p","",data.members.length+" participantes · Administrador: "+(data.admin===auth.currentUser.uid?"tú":"otro miembro"));content.append(note);const messages=el("div");content.append(messages);
 const compose=el("div","klkGroupCompose"),input=el("input");input.placeholder="Mensaje al grupo";input.maxLength=2000;const send=el("button","","Enviar");compose.append(input,send);bottom.append(compose);
 send.onclick=async()=>{const value=input.value.trim();if(!value)return;send.disabled=true;try{await db.collection("klkGroups").doc(id).collection("messages").add({uid:auth.currentUser.uid,text:value,createdAt:firebase.firestore.FieldValue.serverTimestamp()});input.value="";}catch(e){alert("No se pudo enviar: "+e.message);}finally{send.disabled=false;}};input.addEventListener("keydown",e=>{if(e.key==="Enter")send.click();});
-stopMessages=db.collection("klkGroups").doc(id).collection("messages").orderBy("createdAt","asc").limit(100).onSnapshot(snap=>{messages.replaceChildren();snap.docs.forEach(doc=>{const msg=doc.data(),mine=msg.uid===auth.currentUser.uid,bubble=el("div","klkGroupMessage"+(mine?" mine":""));const who=peopleCache.get(msg.uid);bubble.append(el("small","",mine?"Tú":(who?.displayName||"Participante")),el("span","",msg.text));messages.append(bubble);});content.scrollTop=content.scrollHeight;},error=>messages.textContent="No se pudieron cargar los mensajes: "+error.message);
+stopMessages=db.collection("klkGroups").doc(id).collection("messages").orderBy("createdAt","asc").limit(100).onSnapshot(snap=>{messages.replaceChildren();snap.docs.forEach(doc=>{const msg=doc.data(),mine=msg.uid===auth.currentUser.uid,bubble=el("div","klkGroupMessage"+(mine?" mine":""));const who=peopleCache.get(msg.uid);bubble.append(el("small","",mine?"Tú":(who?.displayName||"Participante")),el("span","",msg.text));messages.append(bubble);});content.scrollTop=content.scrollHeight;requestAnimationFrame(()=>{content.scrollTop=content.scrollHeight;});},error=>messages.textContent="No se pudieron cargar los mensajes: "+error.message);
 }
 const chats=document.getElementById("chatsPanel");if(chats){const btn=el("button","","👥 Grupos KLK · Crear y conversar");btn.type="button";btn.style.cssText="display:block;width:calc(100% - 24px);margin:8px 12px 12px;padding:13px;border-radius:15px;background:#e5f5ed;color:#086c57;font-weight:700;border:1px solid #b4e5cc;text-align:left";btn.onclick=open;chats.prepend(btn);}
 })();
