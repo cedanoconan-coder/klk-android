@@ -3590,6 +3590,20 @@ const img=new Image();img.onload=()=>{addStickers();paintMessages();const root=d
 const choices=[["KLK:A01","klk-saludos.gif","Saludos"],["KLK:A02","klk-amor.gif","Amor"],["KLK:A03","klk-fiesta.gif","Fiesta"],["KLK:A04","klk-alegria.gif","Alegría"]];
 function install(){const grid=document.querySelector("#stickersPanel .stickersGrid");if(!grid||grid.querySelector('[data-sticker="KLK:A01"]'))return;
 const fragment=document.createDocumentFragment();for(const [id,file,label] of choices){const button=document.createElement("button");button.type="button";button.className="stickerChoice klkAnimatedChoice";button.dataset.sticker=id;button.title="KLK animado: "+label;button.setAttribute("aria-label",button.title);const img=document.createElement("img");img.src="assets/"+file;img.alt=label;img.loading="lazy";button.append(img);fragment.append(button);}grid.prepend(fragment);}
-if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",install);else install();
+function stabilize(){install();const grid=document.querySelector("#stickersPanel .stickersGrid");if(!grid)return;const obs=new MutationObserver(()=>{if(!grid.querySelector('[data-sticker="KLK:A01"]'))install();});obs.observe(grid,{childList:true});}
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",stabilize);else stabilize();
 })();
-</script></body></html>
+</script><style>
+/* KLK stickers: remove only the sticker message bubble, including the 30 originals */
+#roomMessages :is(.message,.messageBubble,.messageContent,.messageItem,.chatMessage,.messageRow):has(.stickerMessage),
+#roomMessages :is(.message,.messageBubble,.messageContent,.messageItem,.chatMessage,.messageRow):has(.klkOriginalMessage),
+#roomMessages :is(.message,.messageBubble,.messageContent,.messageItem,.chatMessage,.messageRow):has(.klkAnimatedSticker){
+ background:transparent!important;background-image:none!important;border:0!important;box-shadow:none!important;
+}
+#roomMessages .stickerMessage,#roomMessages .klkMessageSticker,#roomMessages .klkOriginalMessage,#roomMessages .klkAnimatedSticker{
+ background-color:transparent!important;border:0!important;box-shadow:none!important;border-radius:0!important;
+ padding:0!important;min-width:0!important;min-height:0!important;
+}
+#stickersPanel .klkOriginalChoice{background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important}
+#stickersPanel .klkOriginalThumb{border-radius:0!important}
+</style></body></html>
