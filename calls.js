@@ -111,7 +111,7 @@
   window.klkCallHistoryUnsubs=[a,b];
  }
  let klkPeerUid=null;
- function klkCallAvatar(uid){const node=$("callAvatar");if(!node)return;node.textContent="☎️";const person=callPeople.get(uid)||{};const url=person.photoURL||person.photoUrl||person.avatarUrl||person.profilePhotoURL||person.profilePhoto||"";if(typeof url==="string"&&/^https:\/\//i.test(url)){const img=document.createElement("img");img.src=url;img.alt="Foto del contacto";img.style.cssText="width:100%;height:100%;object-fit:cover;border-radius:50%";img.onerror=()=>{img.remove();node.textContent="☎️"};node.textContent="";node.appendChild(img)}}
+ async function klkCallAvatar(uid){const node=$("callAvatar");if(!node)return;node.textContent="☎️";const person=callPeople.get(uid)||{};let url=person.photoURL||person.photoUrl||person.avatarUrl||person.profilePhotoURL||person.profilePhoto||"";if(person.photoPath&&typeof window.klkResolveProfilePhoto==="function"){try{url=await window.klkResolveProfilePhoto(person.photoPath)||url}catch(e){console.warn("Foto de llamada:",e)}}if(uid!==klkPeerUid||!overlay.classList.contains("visible"))return;if(typeof url==="string"&&/^https?:\/\//i.test(url)){const img=document.createElement("img");img.src=url;img.alt="Foto del contacto";img.style.cssText="width:100%;height:100%;object-fit:cover;border-radius:50%";img.onerror=()=>{img.remove();node.textContent="☎️"};node.replaceChildren(img)}}
  function klkResetVideoLayout(){const stage=$("callVideoStage");if(stage)stage.classList.remove("klkCallSwapped")}
  function showOverlay(name,status){
   $("callPeerName").textContent=name||"Contacto";klkResetVideoLayout();klkCallAvatar(klkPeerUid);
@@ -322,7 +322,7 @@
    $("callStatus").textContent="No se pudo cambiar de cámara: "+(error.message||"dispositivo no disponible");
   }finally{$("switchCameraCall").disabled=false;}
  });
- const klkVideoStage=$("callVideoStage");if(klkVideoStage){klkVideoStage.addEventListener("click",event=>{if(callMode!=="video"||!overlay.classList.contains("visible")||!$("remoteVideo").srcObject||!$("localVideo").srcObject)return;if(event.target===$("localVideo")||event.target===$("remoteVideo"))klkVideoStage.classList.toggle("klkCallSwapped")})}
+ const klkVideoStage=$("callVideoStage");if(klkVideoStage){klkVideoStage.addEventListener("click",event=>{if(callMode!=="video"||!overlay.classList.contains("visible")||!$("remoteVideo").srcObject||!$("localVideo").srcObject)return;if(event.target===$("localVideo")||event.target===$("remoteVideo")||event.target===klkVideoStage)klkVideoStage.classList.toggle("klkCallSwapped")})}
  document.querySelectorAll('.homeBottom button').forEach(button=>{
   if(button.dataset.tab!=="calls"){button.addEventListener("click",()=>{if($("callsPanel"))$("callsPanel").style.display="none";});return;}
   button.addEventListener("click",()=>{
