@@ -110,8 +110,11 @@
   const b=window.db.collection("calls").where("calleeUid","==",uid).onSnapshot(handle,error=>{console.error("Historial de llamadas recibidas:",error);setStatus("No se pudo cargar el historial: "+error.message);});
   window.klkCallHistoryUnsubs=[a,b];
  }
+ let klkPeerUid=null;
+ function klkCallAvatar(uid){const node=$("callAvatar");if(!node)return;node.textContent="☎️";const person=callPeople.get(uid)||{};const url=person.photoURL||person.photoUrl||person.avatarUrl||person.profilePhotoURL||person.profilePhoto||"";if(typeof url==="string"&&/^https:\/\//i.test(url)){const img=document.createElement("img");img.src=url;img.alt="Foto del contacto";img.style.cssText="width:100%;height:100%;object-fit:cover;border-radius:50%";img.onerror=()=>{img.remove();node.textContent="☎️"};node.textContent="";node.appendChild(img)}}
+ function klkResetVideoLayout(){const stage=$("callVideoStage");if(stage)stage.classList.remove("klkCallSwapped")}
  function showOverlay(name,status){
-  $("callPeerName").textContent=name||"Contacto";
+  $("callPeerName").textContent=name||"Contacto";klkResetVideoLayout();klkCallAvatar(klkPeerUid);
   // Keep the hang-up control available while browser permissions are pending.
   $("callStatus").textContent=status||"";
   overlay.classList.add("visible");
@@ -129,7 +132,7 @@
   $("localVideo").style.display=callMode==="video"?"block":"none";
  }
  function cleanup(){
-  callStarting=false;
+  klkPeerUid=null;klkResetVideoLayout();callStarting=false;
   if(window.klkStopIncomingCallSound)window.klkStopIncomingCallSound();
   if(activeCallUnsub){activeCallUnsub();activeCallUnsub=null;}
   if(incomingDocUnsub){incomingDocUnsub();incomingDocUnsub=null;}
@@ -212,7 +215,7 @@
   if(!window.auth||!window.auth.currentUser||!isCallContactAccepted(uid)){setStatus("Solo puedes llamar a miembros visibles en el directorio de klk.");return;}
   callStarting=true;
   try{
-   callMode=mode;callRole="caller";showOverlay(name,mode==="video"?"Solicitando cámara y micrófono...":"Solicitando micrófono...");
+   callMode=mode;callRole="caller";klkPeerUid=uid;showOverlay(name,mode==="video"?"Solicitando cámara y micrófono...":"Solicitando micrófono...");
    const requestedStream=await getLocalMedia(mode);if(!callStarting){requestedStream.getTracks().forEach(track=>track.stop());return;}localStream=requestedStream;createPeer();
    if(mode==="video"){$("localVideo").srcObject=localStream;}
    const offer=await peer.createOffer();await peer.setLocalDescription(offer);
@@ -278,7 +281,7 @@
    ringTimeout=window.setTimeout(async()=>{if(incomingCall&&incomingCall.ref.id===doc.id&&!callRef){try{await doc.ref.update({status:"ended",updatedAt:firebase.firestore.FieldValue.serverTimestamp()});}catch(error){console.warn("No se pudo cerrar la llamada sin respuesta:",error);}incomingCall=null;cleanup();}},45000);
    callMode=data.mode==="video"?"video":"audio";
    const person=callPeople.get(data.callerUid)||{};
-   showOverlay(person.displayName||person.email||"Llamada entrante",callMode==="video"?"Videollamada entrante":"Llamada de voz entrante");
+   klkPeerUid=data.callerUid;showOverlay(person.displayName||person.email||"Llamada entrante",callMode==="video"?"Videollamada entrante":"Llamada de voz entrante");
    if(window.klkStartIncomingCallSound)window.klkStartIncomingCallSound();
    $("answerCall").hidden=false;$("rejectCall").hidden=false;
    $("answerCall").textContent="Responder";$("rejectCall").textContent="Rechazar";
@@ -319,6 +322,7 @@
    $("callStatus").textContent="No se pudo cambiar de cámara: "+(error.message||"dispositivo no disponible");
   }finally{$("switchCameraCall").disabled=false;}
  });
+ const klkVideoStage=$("callVideoStage");if(klkVideoStage){klkVideoStage.addEventListener("click",event=>{if(callMode!=="video"||!overlay.classList.contains("visible")||!$("remoteVideo").srcObject||!$("localVideo").srcObject)return;if(event.target===$("localVideo")||event.target===$("remoteVideo"))klkVideoStage.classList.toggle("klkCallSwapped")})}
  document.querySelectorAll('.homeBottom button').forEach(button=>{
   if(button.dataset.tab!=="calls"){button.addEventListener("click",()=>{if($("callsPanel"))$("callsPanel").style.display="none";});return;}
   button.addEventListener("click",()=>{
