@@ -3606,4 +3606,39 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
 }
 #stickersPanel .klkOriginalChoice{background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important}
 #stickersPanel .klkOriginalThumb{border-radius:0!important}
-</style></body></html>
+</style><style id="klk-strict-tabs-v2">
+/* Only the selected home panel may render; legacy styles cannot reveal Novedades below Chats. */
+#homeView:not([data-klk-tab="updates"]) #updatesPanel,
+#chat #homeView:not([data-klk-tab="updates"]) #updatesPanel,
+#homeView:not([data-klk-tab="calls"]) #callsPanel,
+#homeView:not([data-klk-tab="tools"]) #toolsPanel,
+#homeView:not([data-klk-tab="chats"]) #chatsPanel,
+#homeView:not([data-klk-tab="chats"]) #requestsPanel,
+#homeView:not([data-klk-tab="chats"]) #peopleList,
+#homeView:not([data-klk-tab="chats"]) #contactProfilePanel {display:none!important;visibility:hidden!important}
+#homeView[data-klk-tab="chats"] #updatesPanel,
+#homeView[data-klk-tab="chats"] .klkUpdates {display:none!important;visibility:hidden!important}
+</style>
+<script>
+(function(){
+function enforce(){
+const home=document.getElementById("homeView");if(!home)return;
+const nav=home.querySelector(".homeBottom");if(!nav)return;
+let tab=home.dataset.klkTab||"chats";
+if(!["chats","calls","updates","tools"].includes(tab))tab="chats";
+home.dataset.klkTab=tab;
+for(const [key,id] of Object.entries({chats:"chatsPanel",calls:"callsPanel",updates:"updatesPanel",tools:"toolsPanel"})){
+const panel=document.getElementById(id);if(!panel)continue;
+const show=key===tab;
+if(panel.hidden===show)panel.hidden=!show;
+if(panel.style.getPropertyValue("display")!==(show?"block":"none")||panel.style.getPropertyPriority("display")!=="important")panel.style.setProperty("display",show?"block":"none","important");
+}
+}
+function setup(){const home=document.getElementById("homeView");if(!home)return;home.dataset.klkTab="chats";const nav=home.querySelector(".homeBottom");if(!nav)return;
+nav.addEventListener("click",event=>{const btn=event.target.closest("[data-tab]");if(!btn)return;const tab=btn.dataset.tab;if(!["chats","calls","updates","tools"].includes(tab))return;home.dataset.klkTab=tab;enforce();},true);
+const observer=new MutationObserver(()=>enforce());for(const id of ["chatsPanel","callsPanel","updatesPanel","toolsPanel"]){const panel=document.getElementById(id);if(panel)observer.observe(panel,{attributes:true,attributeFilter:["style","hidden"]});}
+enforce();
+}
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",setup);else setup();
+})();
+</script></body></html>
