@@ -1,7 +1,7 @@
 {
   "id": "./",
-  "name": "klk - Mensajería",
-  "short_name": "klk",
+  "name": "Klk manin",
+  "short_name": "KLK",
   "description": "Mensajería privada uno a uno.",
   "lang": "es",
   "start_url": "./",
@@ -16,16 +16,22 @@
   "theme_color": "#075e54",
   "icons": [
     {
-      "src": "./icon.svg",
+      "src": "./icon-192.png",
       "sizes": "192x192",
-      "type": "image/svg+xml",
+      "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "./icon.svg",
+      "src": "./icon-512.png",
       "sizes": "512x512",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }
