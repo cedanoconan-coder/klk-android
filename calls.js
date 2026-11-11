@@ -71,6 +71,15 @@
    const avatar=document.createElement("div");avatar.className="klkCallAvatar";
    const avatarUrl=person.photoURL||person.photoUrl||person.avatarUrl||person.profilePhotoURL||person.profilePhoto||"";
    if(avatarUrl&&/^https?:\\/\\//.test(avatarUrl)){const photo=document.createElement("img");photo.src=avatarUrl;photo.alt="";photo.onerror=()=>{photo.remove();avatar.textContent=(name||"?").slice(0,1).toUpperCase();};avatar.append(photo);}
+   else if(person.photoPath&&typeof window.klkResolveProfilePhoto==="function"){
+    avatar.textContent=(name||"?").slice(0,1).toUpperCase();
+    const path=person.photoPath;
+    window.klkResolveProfilePhoto(path).then(url=>{
+     if(!url||!avatar.isConnected)return;
+     const photo=document.createElement("img");photo.src=url;photo.alt="Foto de "+name;
+     photo.onerror=()=>photo.remove();avatar.replaceChildren(photo);
+    }).catch(error=>console.warn("No se pudo cargar la foto del contacto en llamadas",error));
+   }
    else avatar.textContent=(name||"?").slice(0,1).toUpperCase();
    const info=document.createElement("div");info.className="callContactInfo";
    const title=document.createElement("strong");title.textContent=name;
