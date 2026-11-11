@@ -112,9 +112,10 @@
  }
  function showOverlay(name,status){
   $("callPeerName").textContent=name||"Contacto";
+  // Keep the hang-up control available while browser permissions are pending.
   $("callStatus").textContent=status||"";
   overlay.classList.add("visible");
-  $("answerCall").hidden=true;$("rejectCall").hidden=true;$("muteCall").hidden=true;$("cameraCall").hidden=true;$("switchCameraCall").hidden=true;$("endCall").hidden=true;
+  $("answerCall").hidden=true;$("rejectCall").hidden=true;$("muteCall").hidden=true;$("cameraCall").hidden=true;$("switchCameraCall").hidden=true;$("endCall").hidden=false;
   $("callAvatar").style.display="grid";$("remoteVideo").style.display="none";$("localVideo").style.display="none";
   $("remoteAudio").srcObject=null;$("remoteVideo").srcObject=null;$("remoteVideo").muted=true;$("localVideo").srcObject=null;
  }
@@ -209,7 +210,7 @@
   callStarting=true;
   try{
    callMode=mode;callRole="caller";showOverlay(name,mode==="video"?"Solicitando cámara y micrófono...":"Solicitando micrófono...");
-   localStream=await getLocalMedia(mode);createPeer();
+   const requestedStream=await getLocalMedia(mode);if(!callStarting){requestedStream.getTracks().forEach(track=>track.stop());return;}localStream=requestedStream;createPeer();
    if(mode==="video"){$("localVideo").srcObject=localStream;}
    const offer=await peer.createOffer();await peer.setLocalDescription(offer);
    const members=[currentUid,uid].sort();
