@@ -3559,4 +3559,23 @@ function install(){
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install);else install();
 })();
 </script>
-</body></html>
+<style>
+.klkOriginalThumb{display:block;width:100%;aspect-ratio:1.5;background-image:url("assets/klk-30-stickers.webp");background-size:600% 500%;background-repeat:no-repeat;border-radius:8px}
+.klkOriginalMessage{display:block!important;width:min(230px,62vw);aspect-ratio:1.5;background-image:url("assets/klk-30-stickers.webp");background-size:600% 500%;background-repeat:no-repeat;background-color:transparent!important;box-shadow:none!important;border:0!important;padding:0!important}
+</style><script>
+(function(){
+const labels=["KLK","¡Klk!","Amor","Risas","Estilo","Fiesta","Buenos días","Buenas tardes","Buenas noches","Gracias","De nada","OK","Perfecto","Listo","Entendido","Saludos","Feliz cumpleaños","Felicidades","Te espero","Estoy ocupado","Hablamos luego","En línea","Sin conexión","Klk manin","Vamos","Tranquilo","Bendiciones","Cuídate","Te quiero","KLK 👍"];
+const sprite="assets/klk-30-stickers.webp";
+function pos(n){return ((n%6)*20)+"% "+(Math.floor(n/6)*25)+"%";}
+function addStickers(){
+const grid=document.querySelector("#stickersPanel .stickersGrid");if(!grid||grid.querySelector('[data-sticker="KLK:01"]'))return;
+const fragment=document.createDocumentFragment();
+labels.forEach((label,i)=>{const b=document.createElement("button");b.type="button";b.className="stickerChoice klkOriginalChoice";b.dataset.sticker="KLK:"+String(i+1).padStart(2,"0");b.setAttribute("aria-label","KLK "+label);b.title=label;const pic=document.createElement("span");pic.className="klkOriginalThumb";pic.style.backgroundPosition=pos(i);b.appendChild(pic);fragment.appendChild(b);});
+grid.prepend(fragment);
+}
+function paintMessages(){
+document.querySelectorAll(".klkMessageSticker").forEach(el=>{const label=el.getAttribute("aria-label")||"";const m=label.match(/KLK:(\\d{2})/);if(!m||Number(m[1])<1||Number(m[1])>30)return;el.classList.add("klkOriginalMessage");el.style.backgroundPosition=pos(Number(m[1])-1);el.replaceChildren();});
+}
+const img=new Image();img.onload=()=>{addStickers();paintMessages();const root=document.querySelector("#roomMessages")||document.body;new MutationObserver(()=>paintMessages()).observe(root,{childList:true,subtree:true});};img.src=sprite;
+})();
+</script></body></html>
