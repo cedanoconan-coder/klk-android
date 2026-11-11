@@ -1186,7 +1186,7 @@ html,body{overscroll-behavior-y:contain}
 #klkChatFilters .klkChatFilter small{font-size:12px;white-space:nowrap}
 #klkChatFilters .klkChatFilter.active{background:linear-gradient(140deg,#26dc00,#009d27);color:white;border-bottom:3px solid #00a52a;border-radius:17px 17px 10px 10px}
 
-</style></head>
+</style><style id="klkChatManageStyles">.chatRow.klkChatSelected{outline:2px solid #7b00bc;background:#f5e8ff!important;border-radius:15px}#klkChatActionMenu{position:fixed;z-index:9999;bottom:105px;left:12px;right:12px;background:linear-gradient(110deg,#570080,#8b00ba);color:#fff;border-radius:16px;padding:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;box-shadow:0 8px 24px #31004466}#klkChatActionMenu strong{width:100%;font-size:13px}#klkChatActionMenu button{background:#fff;color:#510079;border:0;border-radius:12px;padding:10px 9px;font-weight:700;font-size:12px;width:auto;flex:1 0 auto}</style></head>
 <body>
 
 <main>
@@ -2038,10 +2038,28 @@ function formatConversationTime(value) {
  if (!value || typeof value.toDate !== "function") return "";
  return value.toDate().toLocaleString("es-DO",{hour:"2-digit",minute:"2-digit",day:"2-digit",month:"short"});
 }
+const klkChatPrefsKey=()=> "klk-chat-prefs-"+(auth?.currentUser?.uid||"guest");
+function klkChatPrefs(){try{return JSON.parse(localStorage.getItem(klkChatPrefsKey())||"{}")}catch{return {}}}
+function klkSaveChatPrefs(p){localStorage.setItem(klkChatPrefsKey(),JSON.stringify(p))}
+let klkChatFilter="Chats";const klkSelectedChats=new Set();
+function klkChatAction(action){
+ const ids=[...klkSelectedChats];if(!ids.length)return;
+ if(action==="block"&&!confirm("¿Bloquear "+ids.length+" contacto(s)? No podrán comunicarse contigo."))return;
+ if(action==="delete"){alert("Para evitar borrar mensajes por error, usa las opciones de eliminación dentro de cada conversación.");return;}
+ const prefs=klkChatPrefs();
+ ids.forEach(uid=>{if(action==="block"){setContactBlocked(uid,true);return;}const item=prefs[uid]||{};if(action==="favorite")item.favorite=!item.favorite;if(action==="archive")item.archived=!item.archived;if(action==="mute")item.muted=!item.muted;prefs[uid]=item;});
+ klkSaveChatPrefs(prefs);klkSelectedChats.clear();document.getElementById("klkChatActionMenu")?.remove();renderConversations();
+}
+function klkShowChatActions(){document.getElementById("klkChatActionMenu")?.remove();if(!klkSelectedChats.size)return;
+ const menu=document.createElement("div");menu.id="klkChatActionMenu";menu.setAttribute("role","toolbar");menu.setAttribute("aria-label","Acciones de chats seleccionados");
+ const label=document.createElement("strong");label.textContent=klkSelectedChats.size+" seleccionado(s)";menu.append(label);
+ [["☆ Favorito","favorite"],["▣ Archivar","archive"],["⊘ Bloquear","block"],["♩ Silenciar","mute"],["✕ Cerrar","close"]].forEach(([name,action])=>{const b=document.createElement("button");b.type="button";b.textContent=name;b.onclick=()=>{if(action==="close"){klkSelectedChats.clear();menu.remove();renderConversations()}else klkChatAction(action)};menu.append(b)});
+ document.body.append(menu);
+}
 function renderConversations() {
  const list=$("chatsList"); if(!list)return;
  list.innerHTML="";
- const rows=[...conversationCache.values()].filter(item=>!blockedUsers.has(item.uid)).sort((a,b)=>(b.sortTime||0)-(a.sortTime||0));
+ const prefs=klkChatPrefs();const rows=[...conversationCache.values()].filter(item=>!blockedUsers.has(item.uid)&&(klkChatFilter==="Favoritos"?!!prefs[item.uid]?.favorite:klkChatFilter==="Archivados"?!!prefs[item.uid]?.archived:!prefs[item.uid]?.archived)).sort((a,b)=>(b.sortTime||0)-(a.sortTime||0));
  if(!rows.length){list.textContent="Todavía no tienes chats. Pulsa + para encontrar miembros y comenzar a conversar.";return;}
  for(const item of rows){
   const row=document.createElement("button");row.type="button";row.className="chatRow";
@@ -2051,7 +2069,15 @@ function renderConversations() {
   const preview=document.createElement("small");preview.textContent=item.preview||"Conversación privada";
   info.append(name,preview);row.append(avatar,info);
   const meta=document.createElement("span");meta.className="klkChatMeta";if(item.time){const time=document.createElement("time");time.textContent=item.time;meta.append(time);}if(item.unreadCount>0){const badge=document.createElement("span");badge.className="klkUnreadBadge";badge.textContent=item.unreadCount>99?"99+":String(item.unreadCount);badge.setAttribute("aria-label",item.unreadCount+" mensajes sin leer");meta.append(badge);row.classList.add("klkHasUnread");}row.append(meta);
-  row.onclick=()=>openPrivateConversation(item.uid,item.name);list.append(row);
+  row.dataset.chatUid=item.uid;
+  if(klkSelectedChats.has(item.uid))row.classList.add("klkChatSelected");
+  let holdTimer=null,held=false;
+  const select=()=>{held=true;klkSelectedChats.has(item.uid)?klkSelectedChats.delete(item.uid):klkSelectedChats.add(item.uid);renderConversations();klkShowChatActions()};
+  row.addEventListener("pointerdown",e=>{if(e.pointerType!=="mouse")holdTimer=setTimeout(select,550)});
+  ["pointerup","pointercancel","pointerleave"].forEach(ev=>row.addEventListener(ev,()=>clearTimeout(holdTimer)));
+  row.addEventListener("contextmenu",e=>{e.preventDefault();clearTimeout(holdTimer);select()});
+  row.onclick=()=>{if(held){held=false;return}if(klkSelectedChats.size){select();return}openPrivateConversation(item.uid,item.name)};
+  list.append(row);
  }
 }
 function syncConversationListeners(){
@@ -3929,7 +3955,7 @@ const chats=document.getElementById("chatsPanel"),search=document.querySelector(
 if(chats&&search&&!document.getElementById("klkChatFilters")){
  const bar=document.createElement("nav");bar.id="klkChatFilters";bar.setAttribute("aria-label","Filtros de chats");
  const items=[["Chats","💬"],["Grupos","👥"],["Favoritos","☆"],["Archivados","▣"]];
- items.forEach(([name,emoji])=>{const b=document.createElement("button");b.type="button";b.className="klkChatFilter"+(name==="Chats"?" active":"");b.innerHTML="<span aria-hidden='true'>"+emoji+"</span><small>"+name+"</small>";b.setAttribute("aria-pressed",name==="Chats"?"true":"false");b.onclick=()=>{bar.querySelectorAll("button").forEach(x=>{x.classList.remove("active");x.setAttribute("aria-pressed","false")});b.classList.add("active");b.setAttribute("aria-pressed","true");if(name==="Grupos"){open();return;}const list=document.getElementById("chatsList");if(name==="Chats"){if(list)list.style.display="";const empty=document.getElementById("klkFilterEmpty");if(empty)empty.remove();return;}if(list)list.style.display="none";let empty=document.getElementById("klkFilterEmpty");if(!empty){empty=document.createElement("p");empty.id="klkFilterEmpty";empty.className="hint";empty.style.cssText="padding:28px 20px;text-align:center";chats.append(empty);}empty.textContent=name==="Favoritos"?"No hay conversaciones favoritas todavía.":"No hay conversaciones archivadas todavía.";};bar.append(b);});
+ items.forEach(([name,emoji])=>{const b=document.createElement("button");b.type="button";b.className="klkChatFilter"+(name==="Chats"?" active":"");b.innerHTML="<span aria-hidden='true'>"+emoji+"</span><small>"+name+"</small>";b.setAttribute("aria-pressed",name==="Chats"?"true":"false");b.onclick=()=>{bar.querySelectorAll("button").forEach(x=>{x.classList.remove("active");x.setAttribute("aria-pressed","false")});b.classList.add("active");b.setAttribute("aria-pressed","true");if(name==="Grupos"){open();return;}klkChatFilter=name;renderConversations();const list=document.getElementById("chatsList");if(name==="Chats"){if(list)list.style.display="";const empty=document.getElementById("klkFilterEmpty");if(empty)empty.remove();return;}if(list)list.style.display="";let empty=document.getElementById("klkFilterEmpty");if(!empty){empty=document.createElement("p");empty.id="klkFilterEmpty";empty.className="hint";empty.style.cssText="padding:28px 20px;text-align:center";chats.append(empty);}empty.remove();};bar.append(b);});
  search.insertAdjacentElement("afterend",bar);
 
 }
