@@ -116,8 +116,29 @@
  let klkRingContext=null,klkRingInterval=null;
  function klkStopOutgoingRing(){if(klkRingInterval){clearInterval(klkRingInterval);klkRingInterval=null}if(klkRingContext){klkRingContext.close().catch(()=>{});klkRingContext=null}}
  function klkStartOutgoingRing(){klkStopOutgoingRing();try{const AudioCtx=window.AudioContext||window.webkitAudioContext;if(!AudioCtx)return;klkRingContext=new AudioCtx();const play=()=>{if(!klkRingContext||klkRingContext.state!=="running")return;const t=klkRingContext.currentTime;for(const offset of [0,.28]){const osc=klkRingContext.createOscillator(),gain=klkRingContext.createGain();osc.type="sine";osc.frequency.value=440;gain.gain.setValueAtTime(0,t+offset);gain.gain.linearRampToValueAtTime(.055,t+offset+.025);gain.gain.setValueAtTime(.055,t+offset+.18);gain.gain.linearRampToValueAtTime(0,t+offset+.24);osc.connect(gain);gain.connect(klkRingContext.destination);osc.start(t+offset);osc.stop(t+offset+.25)}};klkRingContext.resume().then(play).catch(()=>{});klkRingInterval=setInterval(play,3000)}catch(e){console.warn("Tono de llamada saliente no disponible",e)}}
- function klkSetIncomingSwipe(visible){const panel=$("klkIncomingSwipe");if(panel)panel.hidden=!visible;overlay.classList.toggle("klkIncoming",!!visible);const handle=$("klkSwipeHandle");if(handle){handle.style.transition="transform .2s ease";handle.style.transform="translateY(0)"}}
- function klkInitIncomingSwipe(){const handle=$("klkSwipeHandle");if(!handle)return;let startY=0,startX=0,active=false,completed=false;handle.addEventListener("pointerdown",e=>{if(!overlay.classList.contains("klkIncoming"))return;active=true;completed=false;startY=e.clientY;startX=e.clientX;handle.style.transition="none";try{handle.setPointerCapture(e.pointerId)}catch(_){}e.preventDefault()});handle.addEventListener("pointermove",e=>{if(!active)return;const dy=Math.min(0,Math.max(-110,e.clientY-startY));handle.style.transform="translateY("+dy+"px)";e.preventDefault()});handle.addEventListener("pointerup",e=>{if(!active)return;active=false;const dy=e.clientY-startY,dx=e.clientX-startX;if(dy<-75&&Math.abs(dx)<110&&!completed){completed=true;klkSetIncomingSwipe(false);$("answerCall").click()}else{handle.style.transition="transform .2s ease";handle.style.transform="translateY(0)"}e.preventDefault()});handle.addEventListener("pointercancel",()=>{active=false;handle.style.transition="transform .2s ease";handle.style.transform="translateY(0)"});handle.addEventListener("keydown",e=>{if((e.key==="Enter"||e.key===" ")&&overlay.classList.contains("klkIncoming")){e.preventDefault();klkSetIncomingSwipe(false);$("answerCall").click()}})}
+ function klkSetIncomingSwipe(visible){
+  const panel=$("klkIncomingSwipe"),handle=$("klkSwipeHandle");
+  if(panel)panel.hidden=!visible;
+  overlay.classList.toggle("klkIncoming",!!visible);
+  if(handle){handle.style.transition="transform .22s cubic-bezier(.2,.8,.2,1)";handle.style.transform="translate3d(0,0,0)";handle.removeAttribute("aria-valuenow");}
+ }
+ function klkInitIncomingSwipe(){
+  const handle=$("klkSwipeHandle"),track=handle&&handle.closest(".klkSwipeTrack");
+  if(!handle||!track)return;
+  let startY=0,startX=0,active=false,completed=false,pointerId=null,lastY=0;
+  const distance=()=>Math.max(80,Math.min(160,track.getBoundingClientRect().height-70));
+  const reset=()=>{active=false;pointerId=null;handle.style.transition="transform .25s cubic-bezier(.2,.8,.2,1)";handle.style.transform="translate3d(0,0,0)";handle.setAttribute("aria-valuenow","0");};
+  const finish=()=>{if(completed||!overlay.classList.contains("klkIncoming")||!incomingCall)return;completed=true;active=false;handle.style.transition="transform .16s ease-out";handle.style.transform="translate3d(0,"+(-distance())+"px,0)";if(navigator.vibrate)try{navigator.vibrate(35)}catch(_){};const answer=$("answerCall");if(answer&&!answer.disabled)answer.click();};
+  handle.setAttribute("aria-valuemin","0");handle.setAttribute("aria-valuemax","100");handle.setAttribute("aria-valuenow","0");
+  handle.addEventListener("pointerdown",event=>{if(!overlay.classList.contains("klkIncoming")||completed)return;if(event.button!==undefined&&event.button!==0)return;active=true;pointerId=event.pointerId;startY=event.clientY;startX=event.clientX;lastY=startY;handle.style.transition="none";try{handle.setPointerCapture(pointerId)}catch(_){}event.preventDefault()});
+  handle.addEventListener("pointermove",event=>{if(!active||event.pointerId!==pointerId)return;lastY=event.clientY;const dy=Math.max(-distance(),Math.min(0,lastY-startY));handle.style.transform="translate3d(0,"+dy+"px,0)";handle.setAttribute("aria-valuenow",String(Math.round(-dy/distance()*100)));event.preventDefault()});
+  handle.addEventListener("pointerup",event=>{if(!active||event.pointerId!==pointerId)return;const dy=event.clientY-startY,dx=event.clientX-startX;active=false;if(dy<=-distance()*.72&&Math.abs(dx)<Math.max(110,distance()))finish();else reset();event.preventDefault()});
+  handle.addEventListener("pointercancel",reset);
+  handle.addEventListener("lostpointercapture",()=>{if(active)reset()});
+  handle.addEventListener("keydown",event=>{if((event.key==="Enter"||event.key===" "||event.key==="ArrowUp")&&overlay.classList.contains("klkIncoming")){event.preventDefault();finish()}});
+  const observer=new MutationObserver(()=>{if(!overlay.classList.contains("klkIncoming")){completed=false;reset()}});
+  observer.observe(overlay,{attributes:true,attributeFilter:["class"]});
+ }
  function showOverlay(name,status){
   klkSetIncomingSwipe(false);$("callPeerName").textContent=name||"Contacto";klkResetVideoLayout();klkCallAvatar(klkPeerUid);
   // Keep the hang-up control available while browser permissions are pending.
