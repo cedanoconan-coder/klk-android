@@ -37,28 +37,33 @@ messaging.onBackgroundMessage(payload => {
     vibrate: [180, 80, 180]
   });
 });
-const CACHE_NAME = "klk-shell-v140";
-const APP_SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon.svg", "./calls.js", "./navigation.js", "./chat-camera.js", "./assets/animaci%C3%B3n_ne%C3%B3n_del_logo_klk.png?v=137"];
+const CACHE_NAME = "klk-shell-v141";
+const APP_SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon.svg", "./calls.js?v=139", "./navigation.js", "./chat-camera.js"];
 self.addEventListener("install", event => {
-  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_SHELL)));
+  event.waitUntil(caches.open(CACHE_NAME).then(cache => Promise.allSettled(APP_SHELL.map(path => cache.add(path)))));
   self.skipWaiting();
 });
 self.addEventListener("activate", event => {
-  event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key)))));
+  event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key.startsWith("klk-shell-") && key !== CACHE_NAME).map(key => caches.delete(key)))));
   self.clients.claim();
 });
 self.addEventListener("fetch", event => {
   const request = event.request;
-  if (request.method !== "GET" || new URL(request.url).origin !== self.location.origin) return;
-  event.respondWith(fetch(request).then(response => {
-    if (response && response.ok) {
-      // No guardar enlaces de invitación: contienen códigos privados de un solo uso.
-      const hasInviteCode = new URL(request.url).searchParams.has("invite");
-      if (!hasInviteCode) {
-        const copy = response.clone();
-        caches.open(CACHE_NAME).then(cache => cache.put(request, copy));
-      }
+  if(request.method !== "GET")return;
+  const url = new URL(request.url);
+  if(url.origin !== self.location.origin)return;
+  // No almacenar invitaciones ni respuestas de servicios privados.
+  if(url.searchParams.has("invite"))return;
+  const isShell = request.mode === "navigate" || /\.(?:js|css|svg|webmanifest|html)$/.test(url.pathname) || url.pathname.endsWith("/");
+  if(!isShell)return;
+  event.respondWith((async()=>{
+    const cache=await caches.open(CACHE_NAME);
+    if(request.mode==="navigate"){
+      try{const fresh=await fetch(request,{cache:"no-store"});if(fresh.ok)await cache.put(request,fresh.clone());return fresh;}catch(error){return (await cache.match(request))||(await cache.match("./index.html"))||Response.error();}
     }
-    return response;
-  }).catch(() => caches.match(request).then(cached => cached || caches.match("./index.html"))));
+    const cached=await cache.match(request);
+    const update=fetch(request).then(async fresh=>{if(fresh.ok)await cache.put(request,fresh.clone());return fresh;});
+    if(cached){event.waitUntil(update.catch(()=>{}));return cached;}
+    try{return await update;}catch(error){return Response.error();}
+  })());
 });
