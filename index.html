@@ -1808,9 +1808,10 @@ auth && auth.onAuthStateChanged(async user => {
    const profileRef = db.collection("users").doc(user.uid);
    const profileSnapshot = await profileRef.get();
    if (!profileSnapshot.exists) {
+    // Conservar la sesion autenticada; no saltar la proteccion por invitacion.
     $("login").style.display="block"; $("chat").style.display="none";
-    $("status").textContent="Esta cuenta todavía no tiene una invitación activada. Cierra sesión y crea una cuenta con un código válido.";
-    await auth.signOut();
+    $("status").textContent="Tu cuenta se autentico, pero falta tu perfil de KLK. No hemos cerrado tu sesion. Contacta al administrador para recuperar el perfil o activar una invitacion valida.";
+    console.warn("Perfil KLK ausente para usuario autenticado:",user.uid);
     return;
    }
    await profileRef.set({uid:user.uid,email:user.email || "",displayName:user.displayName || (user.email || "Miembro").split("@")[0],updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true}); const privateProfile=(await profileRef.get()).data()||{};
