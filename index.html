@@ -1167,7 +1167,7 @@ html,body{overscroll-behavior-y:contain}
 @media(prefers-reduced-motion:reduce){
  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
 }
-</style><style id="klk-unread-count-v140">#chatsList .klkChatMeta{display:flex;flex-direction:column;align-items:flex-end;justify-content:center;gap:7px;margin-left:auto;flex-shrink:0}#chatsList .klkUnreadBadge{display:grid;place-items:center;min-width:22px;height:22px;padding:0 6px;border-radius:14px;background:#20b76a;color:white;font-size:12px;font-weight:800;line-height:1;box-sizing:border-box}#chatsList .klkHasUnread .chatRowInfo strong{font-weight:800}#chatsList .klkHasUnread .klkChatMeta time{color:#159653;font-weight:700}</style></head>
+</style><style id="klk-unread-count-v140">#chatsList .klkChatMeta{display:flex;flex-direction:column;align-items:flex-end;justify-content:center;gap:7px;margin-left:auto;flex-shrink:0}#chatsList .klkUnreadBadge{display:grid;place-items:center;min-width:22px;height:22px;padding:0 6px;border-radius:14px;background:#20b76a;color:white;font-size:12px;font-weight:800;line-height:1;box-sizing:border-box}#chatsList .klkHasUnread .chatRowInfo strong{font-weight:800}#chatsList .klkHasUnread .klkChatMeta time{color:#159653;font-weight:700}</style><style id="klk-tools-organized-v144">#toolsPanel .klkSettingsList{display:flex;flex-direction:column;gap:9px;padding:10px 0 22px}#toolsPanel .klkSettingsItem{border:1px solid var(--klk-line,#e8e8e8);border-radius:17px;overflow:hidden;background:var(--klk-surface,#fff);box-shadow:0 2px 8px #00000009}#toolsPanel .klkSettingsItem>summary{min-height:67px;padding:12px 14px;cursor:pointer;touch-action:manipulation}#toolsPanel .klkSettingsItem[open]{border-color:#34a57966;box-shadow:0 5px 18px #0b7e4a13}#toolsPanel .klkSettingsDetail{padding:9px 14px 15px;border-top:1px solid var(--klk-line,#eee)}#toolsPanel .klkSettingsDetail button{min-height:44px;text-align:left}#settingsPanel .settingsGroup>summary{position:relative;min-height:66px}#settingsPanel .settingsGroup[open]{border-color:#35a67b77}#settingsPanel .settingRow{flex-wrap:wrap;gap:9px}#settingsPanel .settingRow>span{flex:1;min-width:130px}#settingsPanel .settingRow select{max-width:100%;min-width:145px}#settingsPanel .settingsHeader{position:sticky;top:-14px;z-index:2;background:var(--klk-surface,#fff);padding:8px 0 12px}</style></head>
 <body>
 
 <main>
@@ -3141,9 +3141,26 @@ document.querySelectorAll("[data-go-filter]").forEach(button=>button.addEventLis
  const filter=document.querySelector('.homeFilters button[data-filter="'+button.dataset.goFilter+'"]');if(filter)filter.click();
  window.scrollTo({top:0,behavior:"smooth"});
 }));
+// Mantener un solo menú desplegado para facilitar la navegación móvil.
+document.querySelectorAll("#toolsPanel .klkSettingsItem, #settingsPanel .settingsGroup").forEach(group=>{
+ group.addEventListener("toggle",()=>{if(!group.open)return;const container=group.closest("#toolsPanel, #settingsPanel");if(!container)return;container.querySelectorAll(group.matches(".klkSettingsItem")?".klkSettingsItem[open]":".settingsGroup[open]").forEach(other=>{if(other!==group)other.open=false;});});
+});
 document.querySelectorAll("[data-tool-action]").forEach(button=>button.addEventListener("click",()=>{
  const action=button.dataset.toolAction;
- if(action==="settings")window.$("homeMenu").click();
+ if(action==="settings"){
+  const label=(button.textContent||"").toLowerCase();
+  const groups=[...document.querySelectorAll("#settingsPanel .settingsGroup")];
+  let target=0;
+  if(/notific|sonido/.test(label))target=1;
+  else if(/privacidad/.test(label))target=3;
+  else if(/seguridad|cuenta/.test(label))target=2;
+  else if(/chat/.test(label))target=0;
+  else if(/apariencia/.test(label))target=0;
+  const panel=window.$("settingsPanel");
+  panel.style.display="block";groups.forEach((group,index)=>group.open=index===target);
+  requestAnimationFrame(()=>{if(groups[target])groups[target].scrollIntoView({block:"start",behavior:"smooth"});});
+  klkPushView("settings");
+ }
  if(action==="assistant"){setHomeTab("tools");window.$("toolsPanel").style.display="none";window.$("assistantPanel").hidden=false;window.$("assistantPanel").style.display="block";window.$("assistantPanel").scrollIntoView({behavior:"smooth",block:"start"});}
  if(action==="back-tools"){setHomeTab("tools");window.$("toolsPanel").scrollIntoView({behavior:"smooth",block:"start"});}
  if(action==="invite"){window.$("inviteMember").click();window.scrollTo({top:0,behavior:"smooth"});}
