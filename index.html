@@ -2664,6 +2664,7 @@ $("sendAudio").onclick = async () => {
 
  const age=v=>{const d=v&&v.toDate?v.toDate():new Date(v||Date.now()),m=Math.max(0,Math.floor((Date.now()-d.getTime())/60000));return m<1?"Ahora":m<60?m+" min":Math.floor(m/60)+" h";};
  let currentStatuses=[];
+ let statusAdvanceTimer=null;
  let klkViewerIndex=0,klkViewerStarted=0,klkViewerRemaining=5000,klkViewerPaused=false;
  function klkScheduleAdvance(){if(statusAdvanceTimer)clearTimeout(statusAdvanceTimer);klkViewerStarted=Date.now();if(klkViewerPaused)return;statusAdvanceTimer=setTimeout(()=>{if(klkViewerIndex<currentStatuses.length-1)renderViewerAt(klkViewerIndex+1);else $("closeStatusViewer").click();},klkViewerRemaining);}
  function klkPauseViewer(){if(!$("statusViewer").classList.contains("visible")||klkViewerPaused)return;klkViewerRemaining=Math.max(100,klkViewerRemaining-(Date.now()-klkViewerStarted));klkViewerPaused=true;if(statusAdvanceTimer)clearTimeout(statusAdvanceTimer);}
