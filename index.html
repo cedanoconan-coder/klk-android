@@ -1200,7 +1200,7 @@ html,body{overscroll-behavior-y:contain}
 <button id="enter" type="submit">Iniciar sesión</button>
 </form>
 <input id="invitationCode" type="text" autocomplete="one-time-code" autocapitalize="characters" placeholder="Código de invitación para crear cuenta">
-<button id="register" class="secondary" type="button">Crear cuenta con invitación</button>
+<button id="register" class="secondary" type="button">Crear cuenta con invitación</button><button id="verifyInviteEmail" class="secondary" type="button">Ya confirmé mi correo · Activar invitación</button><button id="resendInviteEmail" class="secondary" type="button">Reenviar correo de confirmación</button>
 <p class="hint">El registro está cerrado: necesitas un código de invitación de un miembro de klk.</p>
 <button id="forgot" class="secondary" type="button">Olvidé mi contraseña</button>
 <p id="status" role="status" aria-live="polite"></p>
@@ -1719,6 +1719,13 @@ $("register").addEventListener("click", async () => {
    credential = await auth.signInWithEmailAndPassword(email, password);
   }
   const newUser = credential.user;
+  if(!newUser.emailVerified){
+    sessionStorage.setItem("klkPendingInvite",code);
+    await newUser.sendEmailVerification({url:window.location.origin+window.location.pathname});
+    invitationActivationInProgress=false;
+    $("status").textContent="Te enviamos un enlace de confirmación a "+email+". Abre tu correo, confirma y vuelve a KLK para pulsar «Ya confirmé mi correo». No necesitas la contraseña de tu correo para crear la de KLK.";
+    return;
+  }
   const profileRef = db.collection("users").doc(newUser.uid);
   await db.runTransaction(async transaction => {
    const fresh = await transaction.get(invitationRef);
@@ -1743,6 +1750,29 @@ $("register").addEventListener("click", async () => {
   if (auth.currentUser) await auth.signOut().catch(() => {});
   $("status").textContent = error.message || "No se pudo completar el registro. Revisa el código e inténtalo de nuevo.";
  } finally { setBusy(false); }
+});
+$("verifyInviteEmail").addEventListener("click",async()=>{
+ const status=$("status");status.textContent="";
+ if(!auth?.currentUser){status.textContent="Inicia sesión con el correo y la contraseña que creaste para KLK.";return}
+ const user=auth.currentUser;
+ try{
+  await user.reload();
+  if(!auth.currentUser.emailVerified){status.textContent="Todavía no se confirmó el correo. Abre el enlace que recibiste y vuelve a intentarlo.";return}
+  const code=(sessionStorage.getItem("klkPendingInvite")||$("invitationCode").value).trim().toUpperCase();
+  if(!/^[A-Z0-9]{8,16}$/.test(code)){status.textContent="Introduce tu código de invitación para activar la cuenta.";return}
+  const invitationRef=db.collection("invitations").doc(code),profileRef=db.collection("users").doc(user.uid);
+  await db.runTransaction(async tx=>{
+   const invitation=await tx.get(invitationRef),profile=await tx.get(profileRef);
+   if(profile.exists)throw new Error("Tu cuenta ya está activada.");
+   if(!invitation.exists||invitation.data().redeemedBy||!invitation.data().expiresAt||invitation.data().expiresAt.toDate()<=new Date())throw new Error("La invitación ya caducó o fue utilizada.");
+   tx.update(invitationRef,{redeemedBy:user.uid,redeemedAt:firebase.firestore.FieldValue.serverTimestamp()});
+   tx.set(profileRef,{uid:user.uid,email:user.email,displayName:user.displayName||user.email.split("@")[0],inviteCode:code,invitedBy:invitation.data().createdBy,directoryVisible:true,updatedAt:firebase.firestore.FieldValue.serverTimestamp()});
+  });
+  sessionStorage.removeItem("klkPendingInvite");status.textContent="Correo confirmado e invitación activada.";window.location.reload();
+ }catch(e){status.textContent=e.message||"No se pudo activar la invitación."}
+});
+$("resendInviteEmail").addEventListener("click",async()=>{
+ try{if(!auth?.currentUser)throw new Error("Primero crea la cuenta o inicia sesión.");await auth.currentUser.sendEmailVerification({url:window.location.origin+window.location.pathname});$("status").textContent="Correo de confirmación reenviado. Revisa también Spam."}catch(e){$("status").textContent=e.message||"No se pudo reenviar el correo."}
 });
 $("forgot").addEventListener("click", async () => {
  $("status").textContent = "";
@@ -1823,6 +1853,7 @@ $("enableBiometric").addEventListener("click",()=>{let saved=null;try{saved=JSON
 $("unlockBiometric").addEventListener("click",unlockKlkBiometric);
 try{const savedBiometric=JSON.parse(localStorage.getItem(KLK_BIOMETRIC_KEY)||"null");if(savedBiometric)$("enableBiometric").textContent="Activada";}catch(e){}
 auth && auth.onAuthStateChanged(async user => {
+ if(user&&!invitationActivationInProgress&&!user.emailVerified){$("login").style.display="block";$("chat").style.display="none";$("status").textContent="Confirma tu correo electrónico antes de activar tu invitación. Después pulsa «Ya confirmé mi correo».";return}
  if (user && invitationActivationInProgress) { $("login").style.display="none"; $("chat").style.display="none"; return; }
  $("login").style.display = user ? "none" : "block";
  $("chat").style.display = user ? "block" : "none";
