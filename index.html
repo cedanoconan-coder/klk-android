@@ -1252,7 +1252,12 @@ header small{color:#e8cfff!important}
   <div id="statusComposer" class="statusComposer" hidden>
    <textarea id="statusText" rows="3" maxlength="500" placeholder="¿Qué quieres compartir hoy?"></textarea>
    <div class="statusComposerActions">
-    <label class="statusPhotoPick" for="statusPhoto">▧ Foto</label><input id="statusPhoto" type="file" accept="image/*" hidden>
+    <div class="klkStatusMediaPicker" role="group" aria-label="Añadir imagen al estado">
+<label class="klkStatusMediaAction" for="statusPhoto"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="8" cy="9" r="1.4"/><path d="m4 17 5-5 4 4 3-3 4 4"/></svg><span>Galería</span></label>
+<button class="klkStatusMediaAction" type="button" id="statusCameraButton" aria-label="Tomar foto para estado"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h4l2-3h4l2 3h4v12H4z"/><circle cx="12" cy="13" r="3.5"/></svg><span>Cámara</span></button>
+<input id="statusPhoto" type="file" accept="image/*" hidden>
+<input id="statusCameraCapture" type="file" accept="image/*" capture="environment" hidden>
+</div>
     <button id="publishStatus" type="button" style="width:auto;margin:0">Publicar</button>
    </div><p id="statusFeedback" class="hint" role="status" aria-live="polite"></p>
   </div>
@@ -3649,4 +3654,26 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
 </style><style>
 /* Remove obsolete global KLK banner; preserve the new logo beside Klk manin */
 body>.brandHeader,.brandHeader{display:none!important}
-</style></body></html>
+</style><style>
+#updatesPanel .statusComposerActions{display:flex!important;align-items:center!important;gap:10px!important;justify-content:space-between!important;flex-wrap:wrap}
+#updatesPanel .klkStatusMediaPicker{display:flex;align-items:center;gap:8px;flex:1 1 auto}
+#updatesPanel .klkStatusMediaAction{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:46px;padding:9px 13px;border-radius:15px;background:#f0e5fa;color:#5b168a;border:1px solid #e4c9f7;box-shadow:none;font-size:14px;font-weight:750;cursor:pointer;width:auto;margin:0}
+#updatesPanel .klkStatusMediaAction svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+#updatesPanel .klkStatusMediaAction:active{background:#e3d0f5;transform:scale(.97)}
+#updatesPanel #publishStatus{min-height:46px;border-radius:15px;padding:10px 17px}
+@media(max-width:370px){#updatesPanel .klkStatusMediaAction{padding:9px 8px;gap:4px;font-size:12px}#updatesPanel .klkStatusMediaAction svg{width:17px;height:17px}#updatesPanel #publishStatus{padding:10px 12px}}
+</style><script>
+(function(){
+function install(){
+const camera=document.getElementById("statusCameraCapture"),button=document.getElementById("statusCameraButton"),photo=document.getElementById("statusPhoto"),feedback=document.getElementById("statusFeedback");
+if(!camera||!button||!photo)return;
+button.addEventListener("click",()=>camera.click());
+camera.addEventListener("change",()=>{
+const file=camera.files&&camera.files[0];if(!file)return;
+try{const transfer=new DataTransfer();transfer.items.add(file);photo.files=transfer.files;photo.dispatchEvent(new Event("change",{bubbles:true}));if(feedback)feedback.textContent="Foto de cámara lista para publicar.";}
+catch(error){if(feedback)feedback.textContent="No se pudo preparar la foto. Intenta seleccionarla desde Galería.";console.error("KLK camera status",error);}
+});
+}
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",install);else install();
+})();
+</script></body></html>
