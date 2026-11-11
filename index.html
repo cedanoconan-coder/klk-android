@@ -2267,7 +2267,7 @@ function loadMessages() {
      }
     } catch(error) { placeholder.textContent = "No se pudo cargar: " + error.message; }
    } else {
-    const body = document.createElement("p"); body.textContent = data.text || (data.type === "image" ? "📷 Foto" : data.type === "audio" ? "🎙️ Nota de voz" : ""); if(data.type==="sticker"){body.className="stickerMessage";body.setAttribute("aria-label","Sticker "+(data.text||""));if(typeof data.text==="string"&&data.text.startsWith("KLK:")){body.textContent="";body.classList.add("klkMessageSticker");const letters=document.createElement("span");letters.className="klkStickerLetters";letters.textContent="KLK";const mood=document.createElement("span");mood.className="klkStickerMood";mood.textContent=data.text.slice(4);body.append(letters,mood);}} item.appendChild(body);
+    const body = document.createElement("p"); body.textContent = data.text || (data.type === "image" ? "📷 Foto" : data.type === "audio" ? "🎙️ Nota de voz" : ""); if(data.type==="sticker"){body.className="stickerMessage";body.setAttribute("aria-label","Sticker "+(data.text||""));if(typeof data.text==="string"&&data.text.startsWith("KLK:A")){const gifMap={"KLK:A01":"klk-saludos.gif","KLK:A02":"klk-amor.gif","KLK:A03":"klk-fiesta.gif","KLK:A04":"klk-alegria.gif"};const file=gifMap[data.text];if(file){body.textContent="";body.classList.add("klkAnimatedSticker");const image=document.createElement("img");image.src="assets/"+file;image.alt="Sticker animado de KLK";image.loading="lazy";body.appendChild(image);}}else if(typeof data.text==="string"&&data.text.startsWith("KLK:")){body.textContent="";body.classList.add("klkMessageSticker");const letters=document.createElement("span");letters.className="klkStickerLetters";letters.textContent="KLK";const mood=document.createElement("span");mood.className="klkStickerMood";mood.textContent=data.text.slice(4);body.append(letters,mood);}} item.appendChild(body);
    }
    if (data.type === "location" && Number.isFinite(data.latitude) && Number.isFinite(data.longitude)) {
     const mapLink=document.createElement("a");mapLink.href="https://www.google.com/maps?q="+encodeURIComponent(data.latitude+","+data.longitude);mapLink.target="_blank";mapLink.rel="noopener";mapLink.textContent="📍 Ver ubicación compartida";item.appendChild(mapLink);
@@ -3577,5 +3577,19 @@ function paintMessages(){
 document.querySelectorAll(".klkMessageSticker").forEach(el=>{const label=el.getAttribute("aria-label")||"";const m=label.match(/KLK:([0-9]{2})/);if(!m||Number(m[1])<1||Number(m[1])>30)return;el.classList.add("klkOriginalMessage");el.style.backgroundPosition=pos(Number(m[1])-1);el.replaceChildren();});
 }
 const img=new Image();img.onload=()=>{addStickers();paintMessages();const root=document.querySelector("#roomMessages")||document.body;new MutationObserver(()=>paintMessages()).observe(root,{childList:true,subtree:true});};img.src=sprite;
+})();
+</script><style>
+/* KLK animated stickers: no message bubble; regular text bubbles unchanged */
+#roomMessages .message:has(.stickerMessage),#roomMessages .messageBubble:has(.stickerMessage),#roomMessages .messageContent:has(.stickerMessage){background:transparent!important;box-shadow:none!important;border:0!important;padding:0!important}
+#roomMessages .stickerMessage,#roomMessages .klkMessageSticker{background:transparent!important;box-shadow:none!important;border:0!important;padding:0!important;border-radius:0!important}
+.klkAnimatedSticker img{display:block;width:min(220px,58vw);height:auto;object-fit:contain}
+#stickersPanel .klkAnimatedChoice{padding:1px;background:transparent;border:0}
+#stickersPanel .klkAnimatedChoice img{display:block;width:100%;height:auto;aspect-ratio:1;object-fit:contain}
+</style><script>
+(function(){
+const choices=[["KLK:A01","klk-saludos.gif","Saludos"],["KLK:A02","klk-amor.gif","Amor"],["KLK:A03","klk-fiesta.gif","Fiesta"],["KLK:A04","klk-alegria.gif","Alegría"]];
+function install(){const grid=document.querySelector("#stickersPanel .stickersGrid");if(!grid||grid.querySelector('[data-sticker="KLK:A01"]'))return;
+const fragment=document.createDocumentFragment();for(const [id,file,label] of choices){const button=document.createElement("button");button.type="button";button.className="stickerChoice klkAnimatedChoice";button.dataset.sticker=id;button.title="KLK animado: "+label;button.setAttribute("aria-label",button.title);const img=document.createElement("img");img.src="assets/"+file;img.alt=label;img.loading="lazy";button.append(img);fragment.append(button);}grid.prepend(fragment);}
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",install);else install();
 })();
 </script></body></html>
