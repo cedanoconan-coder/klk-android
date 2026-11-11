@@ -1190,7 +1190,7 @@ html,body{overscroll-behavior-y:contain}
 <section id="chat" class="card">
 
 <div id="homeView" class="homeView">
- <div class="homeTitle"><h1 class="klkHeaderBrand"><img class="klkHeaderLogo" src="./assets/file_0000000058e88212afea8bb7c50b88ef.png?v=108" alt="Logo KLK" onerror="this.onerror=null;this.src='./icon.svg'"> <span>Klk manin</span></h1><div class="homeActions"><button type="button" id="inviteMember" aria-label="Invitar a klk" title="Invitar a klk">＋</button><button type="button" id="profileButton" class="profileButton" aria-label="Cambiar foto de perfil"><img id="myProfilePhoto" alt="Foto de perfil"><span>Mi perfil</span></button><button type="button" id="quickLogout" class="quickLogout" aria-label="Cerrar sesión" title="Cerrar sesión">↪ Salir</button><input id="profilePhotoInput" type="file" accept="image/*" hidden><button type="button" id="homeMenu" aria-label="Ajustes" title="Ajustes"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg></button></div></div>
+ <div class="homeTitle"><h1 class="klkHeaderBrand"><img class="klkHeaderLogo" src="./assets/file_0000000058e88212afea8bb7c50b88ef.png?v=148" alt="Logo KLK" onerror="this.onerror=null;this.src='./icon.svg'"> <span>Klk manin</span></h1><div class="homeActions"><button type="button" id="inviteMember" aria-label="Invitar a klk" title="Invitar a klk">＋</button><button type="button" id="profileButton" class="profileButton" aria-label="Cambiar foto de perfil"><img id="myProfilePhoto" alt="Foto de perfil"><span>Mi perfil</span></button><button type="button" id="quickLogout" class="quickLogout" aria-label="Cerrar sesión" title="Cerrar sesión">↪ Salir</button><input id="profilePhotoInput" type="file" accept="image/*" hidden><button type="button" id="homeMenu" aria-label="Ajustes" title="Ajustes"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg></button></div></div>
  <section id="invitePanel" class="card" style="display:none;margin:0 16px 14px;padding:14px">
   <strong>Invitar a klk</strong>
   <p class="hint">Crea un código de un solo uso, válido durante 7 días. Compártelo solo con la persona que deseas agregar.</p>
@@ -1464,6 +1464,16 @@ html,body{overscroll-behavior-y:contain}
     panel.appendChild(close);
   }
   window.addEventListener("error",function(event){
+    // Una imagen con alternativa visual no debe bloquear la interfaz ni mostrar un aviso crítico.
+    if(event.target instanceof HTMLImageElement){
+      const img=event.target;
+      if(img.dataset.klkFallbackApplied!=="yes"){
+        img.dataset.klkFallbackApplied="yes";
+        img.onerror=null;
+        img.src="./icon.svg";
+      }
+      return;
+    }
     const detail=event.message||(event.target&&event.target.src?"No se pudo cargar: "+event.target.src:"Error al ejecutar un archivo de KLK");
     report(detail+(event.filename?"\n"+event.filename+":"+event.lineno+":"+event.colno:""));
   },true);
