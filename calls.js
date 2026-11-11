@@ -116,8 +116,10 @@
  let klkRingContext=null,klkRingInterval=null;
  function klkStopOutgoingRing(){if(klkRingInterval){clearInterval(klkRingInterval);klkRingInterval=null}if(klkRingContext){klkRingContext.close().catch(()=>{});klkRingContext=null}}
  function klkStartOutgoingRing(){klkStopOutgoingRing();try{const AudioCtx=window.AudioContext||window.webkitAudioContext;if(!AudioCtx)return;klkRingContext=new AudioCtx();const play=()=>{if(!klkRingContext||klkRingContext.state!=="running")return;const t=klkRingContext.currentTime;for(const offset of [0,.28]){const osc=klkRingContext.createOscillator(),gain=klkRingContext.createGain();osc.type="sine";osc.frequency.value=440;gain.gain.setValueAtTime(0,t+offset);gain.gain.linearRampToValueAtTime(.055,t+offset+.025);gain.gain.setValueAtTime(.055,t+offset+.18);gain.gain.linearRampToValueAtTime(0,t+offset+.24);osc.connect(gain);gain.connect(klkRingContext.destination);osc.start(t+offset);osc.stop(t+offset+.25)}};klkRingContext.resume().then(play).catch(()=>{});klkRingInterval=setInterval(play,3000)}catch(e){console.warn("Tono de llamada saliente no disponible",e)}}
+ function klkSetIncomingSwipe(visible){const panel=$("klkIncomingSwipe");if(panel)panel.hidden=!visible;overlay.classList.toggle("klkIncoming",!!visible);const handle=$("klkSwipeHandle");if(handle){handle.style.transition="transform .2s ease";handle.style.transform="translateY(0)"}}
+ function klkInitIncomingSwipe(){const handle=$("klkSwipeHandle");if(!handle)return;let startY=0,startX=0,active=false,completed=false;handle.addEventListener("pointerdown",e=>{if(!overlay.classList.contains("klkIncoming"))return;active=true;completed=false;startY=e.clientY;startX=e.clientX;handle.style.transition="none";try{handle.setPointerCapture(e.pointerId)}catch(_){}e.preventDefault()});handle.addEventListener("pointermove",e=>{if(!active)return;const dy=Math.min(0,Math.max(-110,e.clientY-startY));handle.style.transform="translateY("+dy+"px)";e.preventDefault()});handle.addEventListener("pointerup",e=>{if(!active)return;active=false;const dy=e.clientY-startY,dx=e.clientX-startX;if(dy<-75&&Math.abs(dx)<110&&!completed){completed=true;klkSetIncomingSwipe(false);$("answerCall").click()}else{handle.style.transition="transform .2s ease";handle.style.transform="translateY(0)"}e.preventDefault()});handle.addEventListener("pointercancel",()=>{active=false;handle.style.transition="transform .2s ease";handle.style.transform="translateY(0)"});handle.addEventListener("keydown",e=>{if((e.key==="Enter"||e.key===" ")&&overlay.classList.contains("klkIncoming")){e.preventDefault();klkSetIncomingSwipe(false);$("answerCall").click()}})}
  function showOverlay(name,status){
-  $("callPeerName").textContent=name||"Contacto";klkResetVideoLayout();klkCallAvatar(klkPeerUid);
+  klkSetIncomingSwipe(false);$("callPeerName").textContent=name||"Contacto";klkResetVideoLayout();klkCallAvatar(klkPeerUid);
   // Keep the hang-up control available while browser permissions are pending.
   $("callStatus").textContent=status||"";
   overlay.classList.add("visible");
@@ -126,6 +128,7 @@
   $("remoteAudio").srcObject=null;$("remoteVideo").srcObject=null;$("remoteVideo").muted=true;$("localVideo").srcObject=null;
  }
  function showActiveControls(){
+  klkSetIncomingSwipe(false);
   $("answerCall").hidden=true;$("rejectCall").hidden=true;$("endCall").hidden=false;$("muteCall").hidden=false;
   $("cameraCall").hidden=callMode!=="video";$("switchCameraCall").hidden=callMode!=="video";
   $("cameraCall").textContent="Apagar cámara";
@@ -135,7 +138,7 @@
   $("localVideo").style.display=callMode==="video"?"block":"none";
  }
  function cleanup(){
-  klkStopOutgoingRing();klkPeerUid=null;klkResetVideoLayout();callStarting=false;
+  klkSetIncomingSwipe(false);klkStopOutgoingRing();klkPeerUid=null;klkResetVideoLayout();callStarting=false;
   if(window.klkStopIncomingCallSound)window.klkStopIncomingCallSound();
   if(activeCallUnsub){activeCallUnsub();activeCallUnsub=null;}
   if(incomingDocUnsub){incomingDocUnsub();incomingDocUnsub=null;}
@@ -287,11 +290,12 @@
    const person=callPeople.get(data.callerUid)||{};
    klkPeerUid=data.callerUid;showOverlay(person.displayName||person.email||"Llamada entrante",callMode==="video"?"Videollamada entrante":"Llamada de voz entrante");
    if(window.klkStartIncomingCallSound)window.klkStartIncomingCallSound();
-   $("answerCall").hidden=false;$("rejectCall").hidden=false;
+   $("answerCall").hidden=false;$("rejectCall").hidden=false;klkSetIncomingSwipe(true);
    $("answerCall").textContent="Responder";$("rejectCall").textContent="Rechazar";
    if(navigator.vibrate)navigator.vibrate([250,120,250]);
   },error=>setStatus("No se pudieron recibir llamadas: "+error.message));
  }
+ klkInitIncomingSwipe();
  $("answerCall").addEventListener("click",acceptCall);
  $("rejectCall").addEventListener("click",rejectCall);
  $("endCall").addEventListener("click",endCall);
