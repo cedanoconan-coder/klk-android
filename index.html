@@ -3574,7 +3574,7 @@ labels.forEach((label,i)=>{const b=document.createElement("button");b.type="butt
 grid.prepend(fragment);
 }
 function paintMessages(){
-document.querySelectorAll(".klkMessageSticker").forEach(el=>{const label=el.getAttribute("aria-label")||"";const m=label.match(/KLK:(\\d{2})/);if(!m||Number(m[1])<1||Number(m[1])>30)return;el.classList.add("klkOriginalMessage");el.style.backgroundPosition=pos(Number(m[1])-1);el.replaceChildren();});
+document.querySelectorAll(".klkMessageSticker").forEach(el=>{const label=el.getAttribute("aria-label")||"";const m=label.match(/KLK:([0-9]{2})/);if(!m||Number(m[1])<1||Number(m[1])>30)return;el.classList.add("klkOriginalMessage");el.style.backgroundPosition=pos(Number(m[1])-1);el.replaceChildren();});
 }
 const img=new Image();img.onload=()=>{addStickers();paintMessages();const root=document.querySelector("#roomMessages")||document.body;new MutationObserver(()=>paintMessages()).observe(root,{childList:true,subtree:true});};img.src=sprite;
 })();
