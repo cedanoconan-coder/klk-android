@@ -4093,7 +4093,16 @@ if(chats&&search&&!document.getElementById("klkChatFilters")){
  const bar=document.createElement("nav");bar.id="klkChatFilters";bar.setAttribute("aria-label","Filtros de chats");
  const items=[["Chats","💬"],["Grupos","👥"],["Favoritos","☆"],["Archivados","▣"]];
  items.forEach(([name,emoji])=>{const b=document.createElement("button");b.type="button";b.className="klkChatFilter"+(name==="Chats"?" active":"");b.innerHTML="<span aria-hidden='true'>"+emoji+"</span><small>"+name+"</small>";b.setAttribute("aria-pressed",name==="Chats"?"true":"false");b.onclick=()=>{bar.querySelectorAll("button").forEach(x=>{x.classList.remove("active");x.setAttribute("aria-pressed","false")});b.classList.add("active");b.setAttribute("aria-pressed","true");if(name==="Grupos"){open();return;}klkChatFilter=name;renderConversations();const list=document.getElementById("chatsList");if(name==="Chats"){if(list)list.style.display="";const empty=document.getElementById("klkFilterEmpty");if(empty)empty.remove();return;}if(list)list.style.display="";let empty=document.getElementById("klkFilterEmpty");if(!empty){empty=document.createElement("p");empty.id="klkFilterEmpty";empty.className="hint";empty.style.cssText="padding:28px 20px;text-align:center";chats.append(empty);}empty.remove();};bar.append(b);});
- search.insertAdjacentElement("afterend",bar);
+ const toggle=document.createElement("button");toggle.type="button";toggle.id="klkChatFiltersToggle";toggle.setAttribute("aria-controls","klkChatFilters");toggle.setAttribute("aria-expanded","false");toggle.setAttribute("aria-label","Mostrar filtros de chats");toggle.innerHTML='<span aria-hidden="true">⌄</span>';
+ toggle.style.cssText="display:block;margin:2px auto 4px;padding:2px 32px;border:0;border-radius:20px;background:transparent;color:#653285;font-size:23px;line-height:25px;cursor:pointer";
+ bar.style.setProperty("display","none","important");
+ function setFilters(open){bar.style.setProperty("display",open?"flex":"none","important");toggle.setAttribute("aria-expanded",String(open));toggle.setAttribute("aria-label",open?"Ocultar filtros de chats":"Mostrar filtros de chats");toggle.firstElementChild.textContent=open?"⌃":"⌄";}
+ toggle.addEventListener("click",()=>setFilters(toggle.getAttribute("aria-expanded")!=="true"));
+ bar.addEventListener("click",e=>{if(e.target.closest("button"))setFilters(false)});
+ search.insertAdjacentElement("afterend",toggle);
+ toggle.insertAdjacentElement("afterend",bar);
+ const observer=new MutationObserver(()=>{if(!chats.offsetParent)setFilters(false)});
+ observer.observe(chats,{attributes:true,attributeFilter:["style","class","hidden"]});
 
 }
 
