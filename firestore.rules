@@ -303,6 +303,8 @@ service cloud.firestore {
         && canStartConversation(request.resource.data.members);
       allow update, delete: if false;
       // KLK Momentos: recuerdos de una conversación existente.
+      // Las cápsulas futuras requieren entrega segura del contenido al desbloquearse;
+      // no se admiten aquí porque los participantes podrían leerlo antes.
       // Solo los dos participantes no bloqueados pueden acceder.
       match /moments/{momentId} {
         allow get, list: if isConversationMember(conversationId);
@@ -316,13 +318,8 @@ service cloud.firestore {
           && request.resource.data.title.size() <= 90
           && request.resource.data.message is string
           && request.resource.data.message.size() <= 2000
-          && request.resource.data.kind in ['memory','capsule']
-          && (request.resource.data.kind == 'memory'
-            && !request.resource.data.keys().hasAny(['unlockAt'])
-            || request.resource.data.kind == 'capsule'
-            && request.resource.data.keys().hasAll(['unlockAt'])
-            && request.resource.data.unlockAt is timestamp
-            && request.resource.data.unlockAt > request.time);
+          && request.resource.data.kind == 'memory'
+          && !request.resource.data.keys().hasAny(['unlockAt']);
         // No edición ni borrado hasta diseñar reglas de consentimiento.
         allow update, delete: if false;
       }
