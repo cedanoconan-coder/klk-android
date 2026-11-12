@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- KLK_BUILD_20261111_138 -->
+<!-- KLK_BUILD_20261111_154 -->
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -3522,6 +3522,20 @@ window.$("assistantQuestion").addEventListener("keydown",event=>{
   label.textContent=source.alt||"Foto de perfil";
   viewer.setAttribute("aria-hidden","false");
   viewer.classList.add("is-visible");
+  // Aplicar el diseño al abrir: no depende de reglas CSS antiguas.
+  const halo=viewer.querySelector(".klkProfileHalo");
+  if(halo){
+   halo.style.setProperty("display","block","important");
+   halo.style.setProperty("width","min(84vw,440px)","important");
+   halo.style.setProperty("height","min(84vw,440px)","important");
+   halo.style.setProperty("border-radius","50%","important");
+   halo.style.setProperty("background","conic-gradient(#a32dff,#eb4bfc,#22c9ff,#6059ff,#a32dff)","important");
+   enlarged.style.setProperty("width","100%","important");
+   enlarged.style.setProperty("height","100%","important");
+   enlarged.style.setProperty("object-fit","cover","important");
+   enlarged.style.setProperty("border-radius","50%","important");
+  }
+  viewer.dataset.klkViewerVersion="154";
  }
  document.addEventListener("click",function(event){
   const image=event.target.closest&&event.target.closest("#myProfilePhoto,#profilePanelPhoto,#contactProfilePhoto,#roomAvatar,.personAvatar");
