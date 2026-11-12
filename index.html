@@ -1588,7 +1588,7 @@ let auth, db, firebaseInitError = null, unsubscribe = null, sending = false, med
 let authPersistenceReady = Promise.resolve(), firestorePersistenceReady = Promise.resolve(true);
 // Inicializar antes de cualquier apertura de chat que pueda llamar loadMessages().
 let messagesLoadingTimeout = null, disappearingExpiryTimer = null;
-let klkActivityUnsubscribe=null,klkActivityTimeout=null,klkLastActivitySent=0,klkPresenceInterval=null,klkPeerActivityState=null;setInterval(()=>{if(activeConversationId)klkRenderPeerPresence()},3000);
+let klkActivityUnsubscribe=null,klkActivityTimeout=null,klkLastActivitySent=0,klkPresenceInterval=null,klkPeerActivityState=null,klkPresenceError=false;setInterval(()=>{if(activeConversationId)klkRenderPeerPresence()},3000);
 async function klkPublishActivity(kind){
  if(!db||!auth?.currentUser||!activeConversationId)return;
  const conversation=activeConversationId,uid=auth.currentUser.uid;
@@ -1599,29 +1599,29 @@ function klkRenderPeerPresence(){
  const data=klkPeerActivityState,stamp=data?.updatedAt?.toMillis?.()||0,age=Date.now()-stamp;
  const busy=age<8500&&(data?.kind==="typing"||data?.kind==="recording");
  const online=age<65000&&data?.kind!=="offline";
- display.textContent=busy?(data.kind==="recording"?"🎙 Grabando audio…":"Escribiendo…"):online?"● En línea":"Desconectado";
+ display.textContent=busy?(data.kind==="recording"?"🎙 Grabando audio…":"Escribiendo…"):online?"● En línea":klkPresenceError?"Estado no disponible":data?.kind==="offline"?"Desconectado":stamp?"Última actividad hace "+Math.max(1,Math.floor(age/60000))+" min":"Estado no disponible";
  display.hidden=false;
  display.classList.toggle("klkPresenceOffline",!busy&&!online);
  who.hidden=true;who.textContent="";
 }
 function klkStartPresence(){
  if(klkPresenceInterval)clearInterval(klkPresenceInterval);
- const pulse=()=>{if(activeConversationId&&document.visibilityState==="visible"&&auth?.currentUser)void klkPublishActivity("online")};
+ const pulse=()=>{if(activeConversationId&&document.visibilityState==="visible"&&auth?.currentUser&&!voiceHoldActive&&!document.getElementById("message")?.value.trim())void klkPublishActivity("online")};
  pulse();klkPresenceInterval=setInterval(pulse,25000);
 }
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden"){void klkPublishActivity("offline")}else if(activeConversationId)klkStartPresence()});
 window.addEventListener("pagehide",()=>{void klkPublishActivity("offline")});
 function klkWatchActivity(){
  if(klkActivityUnsubscribe){klkActivityUnsubscribe();klkActivityUnsubscribe=null}
- const display=document.getElementById("klkPeerActivity");if(display){display.hidden=true;display.textContent=""}klkPeerActivityState=null;klkRenderPeerPresence()
+ const display=document.getElementById("klkPeerActivity");if(display){display.hidden=true;display.textContent=""}klkPeerActivityState=null;klkPresenceError=false;klkRenderPeerPresence()
  if(!db||!activeConversationId||!activeConversationPeerUid)return;
  const conversation=activeConversationId,peer=activeConversationPeerUid;
  klkActivityUnsubscribe=db.collection("conversations").doc(conversation).collection("activity").doc(peer).onSnapshot(doc=>{
   if(conversation!==activeConversationId)return;
   const data=doc.exists?doc.data():null,stamp=data?.updatedAt?.toMillis?.()||0;
   const active=Date.now()-stamp<8500;
-  klkPeerActivityState=data;klkRenderPeerPresence()
- },e=>{console.warn("No se pudo observar actividad del contacto; verifica las reglas publicadas en Firebase",e);klkPeerActivityState=null;klkRenderPeerPresence()});
+  klkPresenceError=false;klkPeerActivityState=data;klkRenderPeerPresence()
+ },e=>{console.warn("No se pudo observar actividad del contacto; verifica las reglas publicadas en Firebase",e);klkPresenceError=true;klkPeerActivityState=null;klkRenderPeerPresence()});
 }
 let activeConversationId = null, activeConversationName = null, activeConversationPeerUid = null, peopleUnsubscribe = null, incomingRequestsUnsubscribe = null, outgoingRequestsUnsubscribe = null, conversationListUnsubscribe = null;
 const incomingRequests = new Map(), outgoingRequests = new Map(), peopleCache = new Map(), conversationSubscriptions = new Map(), conversationCache = new Map();
