@@ -1887,7 +1887,16 @@ $("enableBiometric").addEventListener("click",()=>{let saved=null;try{saved=JSON
 $("unlockBiometric").addEventListener("click",unlockKlkBiometric);
 try{const savedBiometric=JSON.parse(localStorage.getItem(KLK_BIOMETRIC_KEY)||"null");if(savedBiometric)$("enableBiometric").textContent="Activada";}catch(e){}
 auth && auth.onAuthStateChanged(async user => {
- if(user&&!invitationActivationInProgress&&!user.emailVerified){$("login").style.display="block";$("chat").style.display="none";$("status").textContent="Confirma tu correo electrónico antes de activar tu invitación. Después pulsa «Ya confirmé mi correo».";return}
+ if(user&&!invitationActivationInProgress&&!user.emailVerified){
+  try{
+   const existingProfile=await db.collection("users").doc(user.uid).get();
+   if(!existingProfile.exists){
+    $("login").style.display="block";$("chat").style.display="none";
+    $("status").textContent="Cuenta pendiente: confirma tu correo y pulsa «Ya confirmé mi correo · Activar invitación».";
+    return;
+   }
+  }catch(error){console.warn("No se pudo comprobar el perfil al iniciar sesión:",error)}
+ }
  if (user && invitationActivationInProgress) { $("login").style.display="none"; $("chat").style.display="none"; return; }
  $("login").style.display = user ? "none" : "block";
  $("chat").style.display = user ? "block" : "none";
