@@ -1943,6 +1943,7 @@ auth && auth.onAuthStateChanged(async user => {
   $("chatTitle").textContent = "👨‍👩‍👧‍👦 Familia klk"; $("dmPanel").style.display = "none"; $("messages").style.display = "block";
   try {
    await authPersistenceReady;
+   if (!isCurrentAuthState()) return;
    const persistenceEnabled = await firestorePersistenceReady;
    if (!isCurrentAuthState()) return;
    if (!persistenceEnabled) console.warn("Klk seguirá funcionando conectado, pero el modo sin conexión no quedó disponible en este navegador.");
@@ -1964,7 +1965,7 @@ auth && auth.onAuthStateChanged(async user => {
  if (!isCurrentAuthState()) return;
  loadPeople(); loadContactRequests(); loadMyProfile(); setHomeTab("chats");
   } catch(error) {
-   showError("chatStatus",error);
+   if (isCurrentAuthState()) showError("chatStatus",error);
   }
  } else {
   hideKlkBiometricLock();
