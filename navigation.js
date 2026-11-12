@@ -4,8 +4,31 @@
   const tabs = ["chats", "contacts", "calls", "updates", "tools"];
   const panelIds = ["chatsPanel", "requestsPanel", "peopleList", "callsPanel", "updatesPanel", "toolsPanel", "assistantPanel"];
 
+  // One primary destination and one contextual panel at a time.
+  const contextualIds = ["explorerPanel", "settingsPanel", "assistantPanel", "homeProfilePanel", "contactProfilePanel"];
+  function closeContextualPanels() {
+    contextualIds.forEach(id => {
+      const panel = document.getElementById(id);
+      if (!panel) return;
+      panel.hidden = true;
+      panel.style.display = "none";
+    });
+    ["attachmentPanel", "stickersPanel"].forEach(id => {
+      const panel = document.getElementById(id);
+      if (!panel) return;
+      panel.classList.remove("open");
+      panel.style.display = "none";
+    });
+    document.querySelectorAll('[aria-expanded="true"]').forEach(control => {
+      if (control.closest("#homeView") || control.id === "stickersToggle") {
+        control.setAttribute("aria-expanded", "false");
+      }
+    });
+  }
+
   function navigate(tab) {
     if (!tabs.includes(tab)) return;
+    closeContextualPanels();
     const get = id => document.getElementById(id);
     const home = get("homeView");
     if (home) home.style.display = "block";
@@ -13,7 +36,7 @@
     panelIds.forEach(id => {
       const panel = get(id);
       if (panel) {
-        panel.hidden = false;
+        panel.hidden = true;
         panel.style.display = "none";
       }
     });
@@ -23,7 +46,7 @@
     const search = get("homeSearch");
     const status = get("homeStatus");
     const filters = document.querySelector(".homeFilters");
-    if (search) search.style.display = (isChats || isContacts) ? "block" : "none";
+    if (search) search.style.display = isChats ? "block" : "none";
     if (status) status.style.display = isChats ? "block" : "none";
     if (filters) filters.style.display = isContacts ? "flex" : "none";
 
@@ -91,7 +114,7 @@
     tile.addEventListener("click", () => {
       navigate("tools");
       const panel = get("explorerPanel");
-      if (panel) panel.hidden = false;
+      if (panel) { closeContextualPanels(); panel.hidden = false; }
       if (panel) panel.scrollIntoView({behavior:"smooth", block:"start"});
     });
     grid.appendChild(tile);
@@ -191,7 +214,8 @@
       if (["settings","privacy","notifications","appearance"].includes(target)) {
         const settings = get("settingsPanel");
         if (settings) {
-          panel.hidden = true;
+          closeContextualPanels();
+          settings.hidden = false;
           settings.style.display = "block";
           settings.scrollTop = 0;
           const focusId = target === "appearance" ? "settingTheme" : target === "notifications" ? "settingSound" : target === "privacy" ? "settingPreview" : "settingTextSize";
@@ -208,7 +232,7 @@
         panel.hidden = true;
         navigate("tools");
         const assistant = get("assistantPanel");
-        if (assistant) { assistant.hidden = false; assistant.style.display = "block"; assistant.scrollIntoView({behavior:"smooth", block:"start"}); }
+        if (assistant) { closeContextualPanels(); assistant.hidden = false; assistant.style.display = "block"; assistant.scrollIntoView({behavior:"smooth", block:"start"}); }
       }
       if (button.hasAttribute("data-explorer-recheck")) runChecks();
     });
