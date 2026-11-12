@@ -2203,7 +2203,7 @@ function syncConversationListeners(){
    let entry=conversationSubscriptions.get(id);
    if(!entry){entry={conversation:null,messages:null,lastMessageId:null,messagesInitialized:false};conversationSubscriptions.set(id,entry);}
    if(entry.messages)continue;
-   entry.messages=db.collection("conversations").doc(id).collection("messages").orderBy("createdAt","desc").limit(100).onSnapshot(messages=>{
+   entry.messages=db.collection("conversations").doc(id).collection("messages").orderBy("createdAt","desc").limit(20).onSnapshot(messages=>{
     const lastDoc=messages.empty?null:messages.docs[0];
     const last=lastDoc?lastDoc.data():null;
     if(entry.messagesInitialized&&lastDoc&&lastDoc.id!==entry.lastMessageId&&last&&last.uid!==user.uid){
@@ -2238,7 +2238,7 @@ function loadPeople() {
  if (!user || !db) { $("peopleList").textContent = "Inicia sesión para cargar las personas."; return; }
  $("peopleList").textContent = "Conectando con el directorio de klk...";
  $("chatsList").textContent = "Cargando conversaciones...";
- peopleUnsubscribe = db.collection("publicProfiles").where("directoryVisible","==",true).onSnapshot({includeMetadataChanges:true}, async snapshot => {
+ peopleUnsubscribe = db.collection("publicProfiles").where("directoryVisible","==",true).onSnapshot(async snapshot => {
   peopleCache.clear(); snapshot.docs.forEach(d => peopleCache.set(d.id,d.data()));
   try { const own=await db.collection("publicProfiles").doc(user.uid).get(); if(own.exists)peopleCache.set(own.id,own.data()); } catch(error) { console.warn("No se pudo cargar tu proyección pública:",error); }
   $("homeStatus").textContent = "";
