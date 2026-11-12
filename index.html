@@ -3530,6 +3530,9 @@ window.$("assistantQuestion").addEventListener("keydown",event=>{
   openViewer(image);
  },true);
  closeButton.addEventListener("click",closeViewer);
+ let klkTouchY=null;
+ viewer.addEventListener("touchstart",e=>{if(e.touches.length===1)klkTouchY=e.touches[0].clientY},{passive:true});
+ viewer.addEventListener("touchend",e=>{if(klkTouchY!==null&&e.changedTouches.length===1&&e.changedTouches[0].clientY-klkTouchY>75)closeViewer();klkTouchY=null},{passive:true});
  viewer.addEventListener("click",function(event){if(event.target===viewer)closeViewer();});
  enlarged.addEventListener("click",function(event){event.stopPropagation();});
  document.addEventListener("keydown",function(event){if(event.key==="Escape"&&viewer.classList.contains("is-visible"))closeViewer();});
@@ -3613,7 +3616,7 @@ window.$("assistantQuestion").addEventListener("keydown",event=>{
 </script><div id="profilePhotoViewer" role="dialog" aria-modal="true" aria-label="Foto de perfil ampliada">
  <span class="photoViewerName" id="profilePhotoViewerName">Foto de perfil</span>
  <button class="photoViewerClose" id="profilePhotoViewerClose" type="button" aria-label="Cerrar foto">×</button>
- <img id="profilePhotoViewerImage" alt="Foto de perfil ampliada">
+ <div class="klkProfileHalo"><div class="klkProfileEmblem" aria-label="KLK">KLK<span>👍</span></div><img id="profilePhotoViewerImage" alt="Foto de perfil ampliada"></div>
  <span class="photoViewerHint">Toca fuera de la foto para cerrar</span>
 </div>
 
@@ -4160,6 +4163,16 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
 #attachmentPanel .klkAttachmentDragHandle span{display:block;width:44px;height:5px;border-radius:8px;background:#a5adb0;margin-top:3px}
 #attachmentPanel.klkAttachmentClosing{transition:transform .18s ease,opacity .18s ease;transform:translateY(110%);opacity:0}
 @media(prefers-reduced-motion:reduce){#attachmentPanel.klkAttachmentClosing{transition:none}}
+
+/* KLK: marco circular de perfil con emblema integrado */
+#profilePhotoViewer .photoViewerName{display:none}
+#profilePhotoViewer .klkProfileHalo{position:relative;width:min(82vw,440px);aspect-ratio:1;border-radius:50%;padding:8px;background:conic-gradient(from 25deg,#e04bff,#1dc9ff,#6755ff,#ad32ff,#e04bff);box-shadow:0 0 22px #9e39ff88,0 0 48px #4b80ff44;animation:klkHaloEnter .24s ease-out both;touch-action:pan-y}
+#profilePhotoViewer .klkProfileHalo img{width:100%;height:100%;max-width:none;max-height:none;object-fit:cover;border-radius:50%;box-shadow:none;background:#222}
+#profilePhotoViewer .klkProfileEmblem{position:absolute;z-index:2;top:-23px;left:50%;transform:translateX(-50%);min-width:84px;height:55px;border-radius:28px;border:3px solid #c657ff;background:linear-gradient(135deg,#42117d,#191447);box-shadow:0 0 16px #b22fff;color:white;display:flex;align-items:center;justify-content:center;gap:3px;font-weight:1000;font-size:23px;font-style:italic;letter-spacing:-1px;text-shadow:1px 2px #7429cb}
+#profilePhotoViewer .klkProfileEmblem span{font-size:19px;font-style:normal}
+#profilePhotoViewer .photoViewerHint{font-size:11px}
+@keyframes klkHaloEnter{from{opacity:.4;transform:scale(.93)}to{opacity:1;transform:scale(1)}}
+@media(prefers-reduced-motion:reduce){#profilePhotoViewer .klkProfileHalo{animation:none}}
 </style>
 <script>
 (function(){
