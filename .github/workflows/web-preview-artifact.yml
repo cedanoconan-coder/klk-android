@@ -1,0 +1,33 @@
+name: Preparar KLK Web de pruebas
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - fix/auth-messaging-stability-20261112
+
+permissions:
+  contents: read
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Preparar copia web sin publicar
+        run: |
+          mkdir -p preview
+          cp index.html preview/
+          cp calls.js preview/
+          cp -R assets preview/
+          for f in manifest.json manifest.webmanifest service-worker.js sw.js firebase-messaging-sw.js favicon.ico; do
+            if [ -f "$f" ]; then cp "$f" preview/; fi
+          done
+          printf '%s\n' 'KLK WEB - RAMA DE PRUEBAS' 'No publicar ni reemplazar la versión pública.' > preview/README-PRUEBAS.txt
+      - name: Guardar archivos de prueba descargables
+        uses: actions/upload-artifact@v4
+        with:
+          name: klk-web-pruebas
+          path: preview/
+          retention-days: 7
