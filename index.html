@@ -1510,8 +1510,15 @@ html,body{overscroll-behavior-y:contain}
       }
       return;
     }
-    const detail=event.message||(event.target&&event.target.src?"No se pudo cargar: "+event.target.src:"Error al ejecutar un archivo de KLK");
-    report(detail+(event.filename?"\n"+event.filename+":"+event.lineno+":"+event.colno:""));
+    const source=event.target&&event.target.src?event.target.src:"";
+    // Los scripts de terceros pueden emitir "Script error." sin detalles por restricciones CORS.
+    // No bloquear el chat con un aviso genérico que no permite diagnosticar la causa.
+    if(event.message==="Script error."&&!event.filename){
+      console.warn("KLK: error de script externo sin detalles CORS",source||"origen desconocido");
+      return;
+    }
+    const detail=event.message||(source?"No se pudo cargar: "+source:"Error al ejecutar un archivo de KLK");
+    report(detail+(event.filename?"\\n"+event.filename+":"+event.lineno+":"+event.colno:""));
   },true);
   window.addEventListener("unhandledrejection",function(event){
     const reason=event.reason;
