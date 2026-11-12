@@ -4426,4 +4426,26 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
 #chat.room-open .composer,#chat.room-open .chatFoot{background:linear-gradient(115deg,#e9d5ff 0%,#d8b4fe 100%)!important;border-top:1px solid #c9a2ec!important}
 #chat.room-open .composer input,#chat.room-open .composer textarea{background:#fff!important;color:#32134d!important}
 </style>
+
+<style id="klk-white-home-theme-v1">
+/* Inicio blanco: mantiene las pantallas de conversación y controles existentes. */
+#chat:not(.room-open) #homeView{background:#fff!important;color:#111b21!important}
+#chat:not(.room-open) #homeView .homeTitle{background:#fff!important;color:#111b21!important;border:0!important;border-radius:0!important;box-shadow:none!important;padding:14px 18px 12px!important}
+#chat:not(.room-open) #homeView .homeTitle h1,#chat:not(.room-open) #homeView .homeTitle .klkHeaderBrand span{color:#111b21!important}
+#chat:not(.room-open) #homeView .homeActions #homeMenu{background:transparent!important;color:#111b21!important}
+#chat:not(.room-open) #homeView .homeActions #homeMenu svg{fill:#111b21!important}
+#chat:not(.room-open) #homeView .homeSearch{background:#fff!important;padding:7px 16px 12px!important}
+#chat:not(.room-open) #homeView .homeSearch input,#chat:not(.room-open) #homeView #chatSearch{background:#f4f5f5!important;color:#172126!important;border:0!important;border-radius:28px!important;box-shadow:none!important;min-height:50px!important}
+#chat:not(.room-open) #homeView #chatsPanel,#chat:not(.room-open) #homeView #chatsList{background:#fff!important;color:#111b21!important}
+#chat:not(.room-open) #homeView #chatsList .chatRow,#chat:not(.room-open) #homeView #chatsList .conversationRow{background:#fff!important;border-bottom:1px solid #edf0f1!important;border-radius:0!important;box-shadow:none!important}
+#chat:not(.room-open) #homeView #chatsList .chatRow strong{color:#111b21!important}
+#chat:not(.room-open) #homeView #chatsList .chatRow small,#chat:not(.room-open) #homeView #chatsList .chatRow time{color:#667078!important}
+#chat:not(.room-open) #homeView .homeBottom{background:#fff!important;border:0!important;border-top:1px solid #e8ebed!important;box-shadow:0 -2px 9px #00000008!important;border-radius:0!important;bottom:0!important;padding:7px 6px calc(8px + env(safe-area-inset-bottom))!important}
+#chat:not(.room-open) #homeView .homeBottom button{background:transparent!important;color:#20282c!important;border-radius:15px!important;box-shadow:none!important}
+#chat:not(.room-open) #homeView .homeBottom button.active{background:#e2f5e6!important;color:#087a3a!important;border-radius:16px!important}
+#chat:not(.room-open) #homeView .homeBottom .navIcon,#chat:not(.room-open) #homeView .homeBottom .navLabel{color:inherit!important}
+#chat:not(.room-open) #homeView #openUsersFab{background:#07954e!important;color:#fff!important;border-color:#07954e!important;box-shadow:0 4px 15px #0002!important}
+#chat:not(.room-open) #homeView #callsPanel,#chat:not(.room-open) #homeView #updatesPanel,#chat:not(.room-open) #homeView #toolsPanel{background:#fff!important;color:#111b21!important}
+@media(prefers-reduced-motion:reduce){#homeView .homeBottom button{transition:none!important}}
+</style>
 </body></html>
