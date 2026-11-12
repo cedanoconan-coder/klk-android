@@ -4205,4 +4205,36 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
  handle.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '||e.key==='ArrowDown'){e.preventDefault();close()}});
 })();
 </script>
+<script>
+/* KLK: comprobar nuevas versiones sin interrumpir llamadas o conversaciones. */
+(function(){
+ const installedVersion=155;
+ const android=!!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform());
+ let notice=null;
+ function showUpdate(info){
+  if(notice)return;
+  notice=document.createElement('div');
+  notice.id='klkUpdateNotice';
+  notice.setAttribute('role','status');
+  notice.style.cssText='position:fixed;bottom:76px;left:12px;right:12px;z-index:99999;background:#25154b;color:white;padding:14px;border:2px solid #a75cff;border-radius:16px;box-shadow:0 8px 28px #0008;font:15px system-ui';
+  const title=document.createElement('div');title.textContent='Nueva actualización de KLK disponible';title.style.fontWeight='bold';
+  const action=document.createElement('button');action.type='button';action.textContent=android?'Descargar actualización':'Actualizar ahora';action.style.cssText='background:#a75cff;color:white;border:0;border-radius:10px;padding:10px 14px;margin-top:9px;font-weight:bold';
+  action.addEventListener('click',function(){if(android){window.open(info.androidDownload||'https://github.com/cedanoconan-coder/klk-android/actions/workflows/android-apk.yml','_blank');}else{location.reload();}});
+  const dismiss=document.createElement('button');dismiss.type='button';dismiss.textContent='Más tarde';dismiss.style.cssText='background:transparent;color:white;border:0;padding:10px';
+  dismiss.addEventListener('click',function(){notice.remove();notice=null;});
+  notice.append(title,action,dismiss);document.body.appendChild(notice);
+ }
+ async function check(){
+  if(!navigator.onLine)return;
+  try{
+   const response=await fetch('https://cedanoconan-coder.github.io/klk-android/version.json?t='+Date.now(),{cache:'no-store'});
+   if(!response.ok)return;
+   const info=await response.json();
+   if(Number(info.version)>installedVersion)showUpdate(info);
+  }catch(e){}
+ }
+ window.addEventListener('load',check,{once:true});
+ document.addEventListener('visibilitychange',function(){if(!document.hidden)check();});
+})();
+</script>
 </body></html>
