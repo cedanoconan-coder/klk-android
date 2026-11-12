@@ -302,13 +302,45 @@ service cloud.firestore {
         && conversationId == request.resource.data.members[0] + '__' + request.resource.data.members[1]
         && canStartConversation(request.resource.data.members);
       allow update, delete: if false;
+      // Consentimiento independiente de los chats. Ninguna invitación da acceso
+      // a recuerdos hasta que el destinatario acepte explícitamente.
+      match /momentSharing/{consentId} {
+        allow get: if consentId == 'consent' && isConversationMember(conversationId);
+        allow list: if false;
+        allow create: if consentId == 'consent'
+          && isConversationMember(conversationId)
+          && request.resource.data.keys().hasOnly(['inviterUid','inviteeUid','state','createdAt'])
+          && request.resource.data.keys().hasAll(['inviterUid','inviteeUid','state','createdAt'])
+          && request.resource.data.inviterUid == request.auth.uid
+          && request.resource.data.inviteeUid is string
+          && request.resource.data.inviteeUid != request.auth.uid
+          && request.resource.data.inviteeUid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.members
+          && request.resource.data.state == 'pending'
+          && request.resource.data.createdAt == request.time;
+        allow update: if consentId == 'consent'
+          && isConversationMember(conversationId)
+          && resource.data.keys().hasAll(['inviterUid','inviteeUid','state','createdAt'])
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['state','respondedAt'])
+          && request.resource.data.respondedAt == request.time
+          && ((resource.data.state == 'pending'
+              && request.auth.uid == resource.data.inviteeUid
+              && request.resource.data.state in ['accepted','rejected'])
+            || (resource.data.state == 'accepted'
+              && request.auth.uid in [resource.data.inviterUid, resource.data.inviteeUid]
+              && request.resource.data.state == 'revoked'));
+        allow delete: if false;
+      }
       // KLK Momentos: recuerdos de una conversación existente.
       // Las cápsulas futuras requieren entrega segura del contenido al desbloquearse;
       // no se admiten aquí porque los participantes podrían leerlo antes.
       // Solo los dos participantes no bloqueados pueden acceder.
       match /moments/{momentId} {
-        allow get, list: if isConversationMember(conversationId);
+        allow get, list: if isConversationMember(conversationId)
+          && exists(/databases/$(database)/documents/conversations/$(conversationId)/momentSharing/consent)
+          && get(/databases/$(database)/documents/conversations/$(conversationId)/momentSharing/consent).data.state == 'accepted';
         allow create: if isConversationMember(conversationId)
+          && exists(/databases/$(database)/documents/conversations/$(conversationId)/momentSharing/consent)
+          && get(/databases/$(database)/documents/conversations/$(conversationId)/momentSharing/consent).data.state == 'accepted'
           && request.resource.data.keys().hasOnly(['title','message','createdBy','createdAt','unlockAt','kind'])
           && request.resource.data.keys().hasAll(['title','message','createdBy','createdAt','kind'])
           && request.resource.data.createdBy == request.auth.uid
