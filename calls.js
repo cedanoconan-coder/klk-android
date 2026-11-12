@@ -152,6 +152,12 @@
   $("callAvatar").style.display="grid";$("remoteVideo").style.display="none";$("localVideo").style.display="none";
   $("remoteAudio").srcObject=null;$("remoteVideo").srcObject=null;$("remoteVideo").muted=true;$("localVideo").srcObject=null;
  }
+ // Mirror only the local self-preview, like a front-facing camera mirror.
+ // Keep the transmitted WebRTC video unchanged for the other participant.
+ function klkUpdateLocalCameraMirror(){
+  const preview=$("localVideo");
+  if(preview)preview.style.transform=cameraFacingMode==="user"?"scaleX(-1)":"none";
+ }
  function showActiveControls(){
   klkSetIncomingSwipe(false);
   $("answerCall").hidden=true;$("rejectCall").hidden=true;$("endCall").hidden=false;$("muteCall").hidden=false;
@@ -249,7 +255,7 @@
   try{
    callMode=mode;callRole="caller";klkPeerUid=uid;showOverlay(name,mode==="video"?"Solicitando cámara y micrófono...":"Solicitando micrófono...");
    const requestedStream=await getLocalMedia(mode);if(!callStarting){requestedStream.getTracks().forEach(track=>track.stop());return;}localStream=requestedStream;createPeer();
-   if(mode==="video"){$("localVideo").srcObject=localStream;}
+   if(mode==="video"){$("localVideo").srcObject=localStream;klkUpdateLocalCameraMirror();}
    const offer=await peer.createOffer();await peer.setLocalDescription(offer);
    const members=[currentUid,uid].sort();
    const conversationId=members.join("__");
@@ -281,7 +287,7 @@
   try{
    $("callStatus").textContent=callMode==="video"?"Activando cámara y micrófono...":"Activando micrófono...";
    localStream=await getLocalMedia(callMode);createPeer();
-   if(callMode==="video")$("localVideo").srcObject=localStream;
+   if(callMode==="video"){$("localVideo").srcObject=localStream;klkUpdateLocalCameraMirror();}
    await peer.setRemoteDescription(new RTCSessionDescription(data.offer));await flushCandidates();
    const answer=await peer.createAnswer();await peer.setLocalDescription(answer);
    await callRef.update({answer:{type:answer.type,sdp:answer.sdp},status:"active",connectedAt:firebase.firestore.FieldValue.serverTimestamp(),updatedAt:firebase.firestore.FieldValue.serverTimestamp()});
@@ -349,6 +355,7 @@
    $("localVideo").srcObject=localStream;
    previousTracks.forEach(track=>track.stop());
    cameraFacingMode=nextFacing;
+   klkUpdateLocalCameraMirror();
    $("callStatus").textContent=nextFacing==="environment"?"Cámara trasera activa":"Cámara frontal activa";
   }catch(error){
    if(replacementStream)replacementStream.getTracks().forEach(track=>track.stop());
