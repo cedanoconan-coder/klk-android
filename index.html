@@ -1971,6 +1971,8 @@ auth && auth.onAuthStateChanged(async user => {
   hideKlkBiometricLock();
   window.klkSetCurrentUid && window.klkSetCurrentUid(null);
   if (unsubscribe) unsubscribe(); unsubscribe = null;
+  if (messagesLoadingTimeout) clearTimeout(messagesLoadingTimeout); messagesLoadingTimeout = null;
+  if (disappearingExpiryTimer) clearTimeout(disappearingExpiryTimer); disappearingExpiryTimer = null;
   if (peopleUnsubscribe) peopleUnsubscribe(); peopleUnsubscribe = null;
   if (blockedUsersUnsubscribe) blockedUsersUnsubscribe(); blockedUsersUnsubscribe = null; blockedUsersListenerOwnerUid = null;
   if (myProfileUnsubscribe) myProfileUnsubscribe(); myProfileUnsubscribe = null;
@@ -2482,7 +2484,10 @@ function loadMessages() {
       const speeds=[0.5,1,1.5,2];let speedIndex=1;speed.addEventListener("click",()=>{speedIndex=(speedIndex+1)%speeds.length;audio.playbackRate=speeds[speedIndex];speed.textContent=speeds[speedIndex]+"×";speed.setAttribute("aria-label","Velocidad de reproducción: "+speeds[speedIndex]+" veces");});
       player.append(play,main,speed);layout.append(avatar,player,audio);item.appendChild(layout);updateProgress();
      }
-    } catch(error) { placeholder.textContent = "No se pudo cargar: " + error.message; }
+    } catch(error) {
+     if (activeConversationId !== requestedConversationId || !auth.currentUser || auth.currentUser.uid !== requestedUid) return;
+     placeholder.textContent = "No se pudo cargar: " + error.message;
+    }
    } else {
     const body = document.createElement("p"); body.textContent = data.text || (data.type === "image" ? "📷 Foto" : data.type === "audio" ? "🎙️ Nota de voz" : ""); if(data.type==="sticker"){body.className="stickerMessage";body.setAttribute("aria-label","Sticker "+(data.text||""));if(typeof data.text==="string"&&data.text.startsWith("KLK:A")){const gifMap={"KLK:A01":"klk-saludos.gif","KLK:A02":"klk-amor.gif","KLK:A03":"klk-fiesta.gif","KLK:A04":"klk-alegria.gif"};const file=gifMap[data.text];if(file){body.textContent="";body.classList.add("klkAnimatedSticker");const image=document.createElement("img");image.src="assets/"+file;image.alt="Sticker animado de KLK";image.loading="lazy";body.appendChild(image);}}else if(typeof data.text==="string"&&data.text.startsWith("KLK:")){body.textContent="";body.classList.add("klkMessageSticker");const letters=document.createElement("span");letters.className="klkStickerLetters";letters.textContent="KLK";const mood=document.createElement("span");mood.className="klkStickerMood";mood.textContent=data.text.slice(4);body.append(letters,mood);}} item.appendChild(body);
    }
