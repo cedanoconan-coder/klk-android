@@ -1398,6 +1398,7 @@ html,body{overscroll-behavior-y:contain}
  </div>
 </section>
 <section id="attachmentPanel" aria-label="Compartir archivos" aria-hidden="true">
+ <div class="klkAttachmentDragHandle" role="button" tabindex="0" aria-label="Desliza hacia abajo para cerrar archivos adjuntos"><span></span></div>
  <div class="attachmentPanelHead">Compartir en klk</div>
  <div class="attachmentGrid">
   <button id="shareGallery" type="button" aria-label="Fotos y videos"><span class="attachmentIcon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="8.5" cy="9" r="1.5"/><path d="m21 15-5-5L5 20"/></svg></span><small>Fotos</small></button>
@@ -4133,4 +4134,22 @@ function init(){
 }
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init);else init();
 })();
-</script></body></html>
+</script>
+<style>
+#attachmentPanel .klkAttachmentDragHandle{height:23px;display:flex;align-items:flex-start;justify-content:center;touch-action:pan-y;cursor:grab;user-select:none}
+#attachmentPanel .klkAttachmentDragHandle span{display:block;width:44px;height:5px;border-radius:8px;background:#a5adb0;margin-top:3px}
+#attachmentPanel.klkAttachmentClosing{transition:transform .18s ease,opacity .18s ease;transform:translateY(110%);opacity:0}
+@media(prefers-reduced-motion:reduce){#attachmentPanel.klkAttachmentClosing{transition:none}}
+</style>
+<script>
+(function(){
+ const panel=document.getElementById('attachmentPanel');const handle=panel&&panel.querySelector('.klkAttachmentDragHandle');if(!handle)return;
+ let startY=null,active=false;
+ function close(){if(!panel.classList.contains('open'))return;panel.classList.add('klkAttachmentClosing');const done=()=>{panel.classList.remove('klkAttachmentClosing');if(typeof closeAttachmentPanel==='function')closeAttachmentPanel();else{panel.classList.remove('open');panel.setAttribute('aria-hidden','true')}};window.setTimeout(done,190)}
+ handle.addEventListener('touchstart',e=>{if(e.touches.length!==1)return;startY=e.touches[0].clientY;active=true},{passive:true});
+ handle.addEventListener('touchend',e=>{if(active&&startY!==null&&e.changedTouches[0].clientY-startY>45)close();active=false;startY=null},{passive:true});
+ handle.addEventListener('touchcancel',()=>{active=false;startY=null},{passive:true});
+ handle.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '||e.key==='ArrowDown'){e.preventDefault();close()}});
+})();
+</script>
+</body></html>
