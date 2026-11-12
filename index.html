@@ -2400,6 +2400,7 @@ function loadMessages() {
  if (!activeConversationId) { $("messages").textContent = "Abre una conversación con una persona a la que hayas invitado o que te haya invitado."; return; }
  $("messages").textContent = "Cargando mensajes...";
  messagesLoadingTimeout = setTimeout(() => {
+  if (activeConversationId !== requestedConversationId || !auth.currentUser || auth.currentUser.uid !== requestedUid) return;
   if ($("messages").textContent !== "Cargando mensajes...") return;
   $("messages").innerHTML = "";
   const notice = document.createElement("p");
