@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- KLK_BUILD_20261111_136 -->
+<!-- KLK_BUILD_20261111_137 -->
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -4163,6 +4163,12 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
 #attachmentPanel .klkAttachmentDragHandle span{display:block;width:44px;height:5px;border-radius:8px;background:#a5adb0;margin-top:3px}
 #attachmentPanel.klkAttachmentClosing{transition:transform .18s ease,opacity .18s ease;transform:translateY(110%);opacity:0}
 @media(prefers-reduced-motion:reduce){#attachmentPanel.klkAttachmentClosing{transition:none}}
+
+
+/* KLK visor circular: reglas de prioridad alta para todos los tamaños */
+#profilePhotoViewer.is-visible .klkProfileHalo{display:block!important;position:relative!important;flex:none!important;width:min(84vw,440px)!important;height:min(84vw,440px)!important;aspect-ratio:1!important;border-radius:50%!important;padding:8px!important;background:conic-gradient(#a32dff,#eb4bfc,#22c9ff,#6059ff,#a32dff)!important;box-shadow:0 0 26px #a438ff99!important;overflow:visible!important}
+#profilePhotoViewer.is-visible .klkProfileHalo>#profilePhotoViewerImage{display:block!important;position:static!important;width:100%!important;height:100%!important;max-width:100%!important;max-height:100%!important;object-fit:cover!important;border-radius:50%!important;box-shadow:none!important}
+#profilePhotoViewer.is-visible .klkProfileEmblem{display:flex!important}
 
 /* KLK: marco circular de perfil con emblema integrado */
 #profilePhotoViewer .photoViewerName{display:none}
