@@ -4389,4 +4389,28 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
 })();
 </script>
 
+
+<style id="klk-hangup-button-v2">
+/* Control claro y accesible para terminar llamadas de voz y video. */
+#callOverlay.visible #endCall:not([hidden]),#callOverlay.visible #rejectCall:not([hidden]){
+ background:#e52948!important;color:#fff!important;border:2px solid #ffffff30!important;
+ width:68px!important;height:68px!important;min-width:68px!important;min-height:68px!important;
+ border-radius:50%!important;box-shadow:0 6px 22px #0008,0 0 0 5px #e5294826!important;
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ font-size:0!important;touch-action:manipulation;transition:transform .12s ease,filter .12s ease;
+}
+#callOverlay.visible #endCall::before,#callOverlay.visible #rejectCall::before{
+ content:""!important;display:block;width:35px;height:35px;background:#fff!important;
+ -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M12 8c-3.1 0-6.1.5-8.9 1.5-.7.2-1.1.9-1.1 1.6v3.2c0 .7.6 1.3 1.3 1.3h3.1c.6 0 1.1-.4 1.3-1l.6-2.1a14 14 0 0 1 7.4 0l.6 2.1c.2.6.7 1 1.3 1h3.1c.7 0 1.3-.6 1.3-1.3v-3.2c0-.7-.4-1.4-1.1-1.6A27 27 0 0 0 12 8Z'/%3E%3C/svg%3E") center/contain no-repeat;
+ mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M12 8c-3.1 0-6.1.5-8.9 1.5-.7.2-1.1.9-1.1 1.6v3.2c0 .7.6 1.3 1.3 1.3h3.1c.6 0 1.1-.4 1.3-1l.6-2.1a14 14 0 0 1 7.4 0l.6 2.1c.2.6.7 1 1.3 1h3.1c.7 0 1.3-.6 1.3-1.3v-3.2c0-.7-.4-1.4-1.1-1.6A27 27 0 0 0 12 8Z'/%3E%3C/svg%3E") center/contain no-repeat;
+ transform:none!important;
+}
+#callOverlay.visible #endCall:active,#callOverlay.visible #rejectCall:active{transform:scale(.93)!important;filter:brightness(.92)}
+#callOverlay.visible #endCall:focus-visible,#callOverlay.visible #rejectCall:focus-visible{outline:3px solid #fff!important;outline-offset:4px}
+@media(max-width:360px){#callOverlay.visible #endCall:not([hidden]),#callOverlay.visible #rejectCall:not([hidden]){width:60px!important;height:60px!important;min-width:60px!important;min-height:60px!important}}
+@media(prefers-reduced-motion:reduce){#callOverlay.visible #endCall,#callOverlay.visible #rejectCall{transition:none!important}}
+</style>
+<script id="klk-hangup-feedback-v2">
+(function(){function init(){['endCall','rejectCall'].forEach(id=>{const button=document.getElementById(id);if(!button)return;button.setAttribute('aria-label',id==='endCall'?'Finalizar llamada':'Rechazar llamada');button.setAttribute('title',id==='endCall'?'Finalizar llamada':'Rechazar llamada');button.addEventListener('click',()=>{try{if(navigator.vibrate)navigator.vibrate(35)}catch(e){}},{passive:true});});}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();})();
+</script>
 </body></html>
