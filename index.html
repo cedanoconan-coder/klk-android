@@ -1964,6 +1964,7 @@ auth && auth.onAuthStateChanged(async user => {
   if (incomingRequestsUnsubscribe) incomingRequestsUnsubscribe(); incomingRequestsUnsubscribe = null;
   if (outgoingRequestsUnsubscribe) outgoingRequestsUnsubscribe(); outgoingRequestsUnsubscribe = null;
   if (conversationListUnsubscribe) conversationListUnsubscribe(); conversationListUnsubscribe = null;
+  conversationListenersOwnerUid = null;
   for (const entry of conversationSubscriptions.values()) { if (entry.messages) entry.messages(); if (entry.conversation) entry.conversation(); }
   conversationSubscriptions.clear(); conversationCache.clear();
   incomingRequests.clear(); outgoingRequests.clear(); peopleCache.clear();
@@ -2181,9 +2182,13 @@ function renderConversations() {
  }
  list.append(fragment);
 }
+let conversationListenersOwnerUid = null;
 function syncConversationListeners(){
  const user=auth&&auth.currentUser;
  if(!user||!db)return;
+ // renderPeople can run repeatedly; do not tear down live listeners for the same account.
+ if(conversationListUnsubscribe && conversationListenersOwnerUid === user.uid)return;
+ conversationListenersOwnerUid = user.uid;
  if(conversationListUnsubscribe){conversationListUnsubscribe();conversationListUnsubscribe=null;}
  conversationListUnsubscribe=db.collection("conversations").where("members","array-contains",user.uid).onSnapshot(snapshot=>{
   const wanted=new Set(snapshot.docs.map(doc=>doc.id));
