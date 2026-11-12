@@ -2401,7 +2401,7 @@ function loadMessages() {
    if ((data.type === "image" || data.type === "audio" || data.type === "file") && (data.storagePath || data.mediaUrl)) {
     const placeholder = document.createElement("p"); placeholder.textContent = "Cargando archivo..."; item.appendChild(placeholder); $("messages").appendChild(item);
     try {
-     const url = data.storagePath ? await getMediaUrl(data.storagePath, data.conversationId || null) : data.mediaUrl;
+     const url = data.storagePath ? await getMediaUrl(data.storagePath, data.storagePath.startsWith("dm/") ? (data.conversationId || activeConversationId) : null) : data.mediaUrl;
      placeholder.remove();
      if (data.type === "image") {
       if((data.mimeType||"").startsWith("video/")){const video=document.createElement("video");video.src=url;video.controls=true;video.preload="metadata";video.playsInline=true;item.appendChild(video);}
