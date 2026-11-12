@@ -1652,9 +1652,12 @@ const incomingRequests = new Map(), outgoingRequests = new Map(), peopleCache = 
 const blockedUsers = new Set();
 let blockedUsersUnsubscribe = null;
 function blockedUsersRef(uid=(auth&&auth.currentUser&&auth.currentUser.uid)){return db.collection("userBlocks").doc(uid).collection("blocked");}
+let blockedUsersListenerOwnerUid = null;
 async function loadBlockedUsers(){
- if(blockedUsersUnsubscribe){blockedUsersUnsubscribe();blockedUsersUnsubscribe=null;}
  const user=auth&&auth.currentUser;if(!user)return;
+ if(blockedUsersUnsubscribe && blockedUsersListenerOwnerUid===user.uid)return;
+ if(blockedUsersUnsubscribe){blockedUsersUnsubscribe();blockedUsersUnsubscribe=null;}
+ blockedUsersListenerOwnerUid=user.uid;
  blockedUsersUnsubscribe=blockedUsersRef(user.uid).onSnapshot(snapshot=>{
   blockedUsers.clear();snapshot.docs.forEach(doc=>blockedUsers.add(doc.id));
   renderPeople();renderConversations();
@@ -1960,6 +1963,7 @@ auth && auth.onAuthStateChanged(async user => {
   window.klkSetCurrentUid && window.klkSetCurrentUid(null);
   if (unsubscribe) unsubscribe(); unsubscribe = null;
   if (peopleUnsubscribe) peopleUnsubscribe(); peopleUnsubscribe = null;
+  if (blockedUsersUnsubscribe) blockedUsersUnsubscribe(); blockedUsersUnsubscribe = null; blockedUsersListenerOwnerUid = null;
   if (myProfileUnsubscribe) myProfileUnsubscribe(); myProfileUnsubscribe = null;
   if (incomingRequestsUnsubscribe) incomingRequestsUnsubscribe(); incomingRequestsUnsubscribe = null;
   if (outgoingRequestsUnsubscribe) outgoingRequestsUnsubscribe(); outgoingRequestsUnsubscribe = null;
