@@ -35,7 +35,14 @@ jobs:
         run: npm run test:rules
 
       - name: Preparar archivos web
-        run: mkdir -p www && cp index.html calls.js icon.svg manifest.webmanifest sw.js www/
+        run: |
+          set -e
+          mkdir -p www
+          cp index.html calls.js chat-camera.js icon.svg manifest.webmanifest sw.js www/
+          if [ -d assets ]; then cp -R assets www/; fi
+          # Evitar generar una APK incompleta si falta un recurso esencial.
+          test -s www/chat-camera.js
+          test -s www/index.html
 
       - name: Verificar sintaxis JavaScript
         run: |
