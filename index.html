@@ -1205,7 +1205,7 @@ html,body{overscroll-behavior-y:contain}
 <h2>Bienvenido a klk</h2><p>Entra o crea tu cuenta familiar.</p>
 <form id="authForm">
 <input id="email" type="email" autocomplete="email" placeholder="Correo electrónico" required>
-<input id="password" type="password" autocomplete="current-password" placeholder="Contraseña (mínimo 6 caracteres)" minlength="6" required>
+<input id="password" type="password" autocomplete="current-password" placeholder="Contraseña (12+ caracteres para cuentas nuevas)" minlength="6" required>
 <button id="enter" type="submit">Iniciar sesión</button>
 </form>
 <input id="invitationCode" type="text" autocomplete="one-time-code" autocapitalize="characters" placeholder="Código de invitación para crear cuenta">
@@ -1259,7 +1259,7 @@ html,body{overscroll-behavior-y:contain}
   </div></details>
 
 
-  <details class="profileSubmenu"><summary><span>🔐 Seguridad</span><b>⌄</b></summary><div class="profileSubmenuBody"><p class="profileSubmenuHint">Protege el acceso a tu cuenta.</p><button id="profilePassword" class="profileAction" type="button"><span>Cambiar contraseña<small>Recibirás un enlace seguro en tu correo</small></span><b>›</b></button></div></details>
+  <details class="profileSubmenu"><summary><span>🔐 Seguridad</span><b>⌄</b></summary><div class="profileSubmenuBody"><p class="profileSubmenuHint">Confirma tu correo y protege el acceso. La autenticación multifactor y el cierre remoto de sesiones aún requieren configuración segura del servidor.</p><button id="profileVerifyEmail" class="profileAction" type="button"><span>Verificar correo electrónico<small id="profileVerifyHint">Confirma que controlas el correo de esta cuenta</small></span><b>›</b></button><p id="profileVerifyStatus" class="hint" role="status" aria-live="polite"></p><button id="profilePassword" class="profileAction" type="button"><span>Cambiar contraseña<small>Recibirás un enlace seguro en tu correo</small></span><b>›</b></button></div></details>
   <details class="profileSubmenu"><summary><span>🛡️ Privacidad</span><b>⌄</b></summary><div class="profileSubmenuBody"><button id="profilePrivacyInfo" class="profileAction" type="button"><span>Ver información de privacidad<small>Consulta los controles disponibles</small></span><b>›</b></button><p id="profilePrivacyStatus" class="hint" hidden>Los controles avanzados de privacidad todavía no están activos en klk; no mostraremos opciones que no se apliquen realmente.</p></div></details>
   <details class="profileSubmenu"><summary><span>🔔 Notificaciones y apariencia</span><b>⌄</b></summary><div class="profileSubmenuBody"><p class="profileSubmenuHint">Personaliza sonidos, vibración, tema, tamaño y fondo.</p><button id="profileOpenSettings" class="profileAction" type="button"><span>Abrir preferencias<small>Ver y modificar los ajustes de klk</small></span><b>›</b></button></div></details>
   <details class="profileSubmenu"><summary><span>↪️ Sesión</span><b>⌄</b></summary><div class="profileSubmenuBody"><button id="profileLogout" class="profileAction" type="button"><span>Cerrar sesión<small>Salir de esta cuenta en este teléfono</small></span><b>›</b></button></div></details>
@@ -1455,8 +1455,8 @@ html,body{overscroll-behavior-y:contain}
  <div class="settingRow"><span>Probar sonido de llamada</span><button id="testCallSound" type="button" style="width:auto;margin:0;padding:9px 12px">▶ Probar</button></div>
  <div class="settingRow"><span>Notificaciones del teléfono</span><button id="enableNotifications" type="button" style="width:auto;margin:0;padding:9px 12px">Activar</button></div>
  </div></details><details class="settingsGroup"><summary><span class="settingsGroupIcon">🔐</span><span><strong>Seguridad y cuenta</strong><small>Bloqueo del teléfono y sesión</small></span><b>⌄</b></summary><div class="settingsGroupBody"><h3>🔐 Seguridad de la cuenta</h3>
- <div class="settingRow"><span>Huella digital / bloqueo del teléfono</span><button id="enableBiometric" type="button" style="width:auto;margin:0;padding:9px 12px">Activar</button></div>
- <p id="biometricStatus" class="hint" role="status" aria-live="polite">Usa la autenticación segura del dispositivo para bloquear el acceso local a Klk.</p>
+ <div class="settingRow"><span>Bloqueo local del teléfono (no es MFA)</span><button id="enableBiometric" type="button" style="width:auto;margin:0;padding:9px 12px">Activar</button></div>
+ <p id="biometricStatus" class="hint" role="status" aria-live="polite">Bloqueo local de esta instalación. No sustituye la verificación en dos pasos ni revoca sesiones robadas.</p>
  <div class="settingRow"><span>Cerrar sesión</span><button id="settingsLogout" class="secondary" type="button" style="width:auto;margin:0;padding:9px 12px">Salir de Klk</button></div>
  </div></details><details class="settingsGroup"><summary><span class="settingsGroupIcon">🛡️</span><span><strong>Privacidad y datos</strong><small>Preferencias de conexión y mensajes</small></span><b>⌄</b></summary><div class="settingsGroupBody"><h3>🔒 Privacidad y datos</h3>
  <p class="hint">Estas opciones se guardan en este teléfono. Todavía no modifican la privacidad visible para otros usuarios ni la sincronización de Firebase.</p>
@@ -1760,7 +1760,7 @@ $("register").addEventListener("click", async () => {
  const email = $("email").value.trim(), password = $("password").value;
  const code = $("invitationCode").value.trim().toUpperCase();
  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { $("status").textContent = "Escribe un correo electrónico válido."; return; }
- if (password.length < 8 || !/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password)) { $("status").textContent = "Para crear una cuenta, usa una contraseña de al menos 8 caracteres con mayúscula, minúscula y número. Las cuentas existentes pueden seguir iniciando sesión con su contraseña actual."; return; }
+ if (password.length < 12 || !/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password) || !/[^A-Za-z0-9]/.test(password)) { $("status").textContent = "Para crear una cuenta nueva, usa al menos 12 caracteres e incluye mayúscula, minúscula, número y símbolo. Las cuentas existentes pueden seguir iniciando sesión con su contraseña actual."; return; }
  if (!/^[A-Z0-9]{8,16}$/.test(code)) { $("status").textContent = "Escribe un código de invitación válido."; return; }
  setBusy(true);
  try {
@@ -1847,12 +1847,12 @@ $("forgot").addEventListener("click", async () => {
   $("status").textContent = "Si el correo está registrado, Firebase enviará un enlace para cambiar la contraseña. Revisa también Spam o Correo no deseado.";
  } catch(error) {
   const messages = {
-   "auth/invalid-email":"El correo electrónico no es válido.",
-   "auth/user-not-found":"No encontramos una cuenta con ese correo.",
+   "auth/invalid-email":"El correo electrónico no tiene un formato válido.",
    "auth/too-many-requests":"Se hicieron demasiados intentos. Espera un momento e inténtalo de nuevo.",
    "auth/network-request-failed":"No hay conexión. Revisa tu internet e inténtalo de nuevo."
   };
-  $("status").textContent = messages[error.code] || "No se pudo enviar el correo. Inténtalo de nuevo.";
+  // Respuesta genérica para no revelar si una dirección tiene cuenta.
+  $("status").textContent = messages[error.code] || "Si el correo está registrado, recibirás instrucciones para recuperar el acceso. Revisa también Spam.";
  } finally { setBusy(false); }
 });
 async function performKlkLogout() {
@@ -2044,6 +2044,7 @@ function closeKlkProfilePanel(){const panel=$("homeProfilePanel");$("chat").clas
 $("profileClose").addEventListener("click",closeKlkProfilePanel);$("profileChangePhoto").addEventListener("click",()=>$("profilePhotoInput").click());
 $("profileSave").addEventListener("click",async()=>{const user=auth&&auth.currentUser;if(!user)return;const name=$("profileNameInput").value.trim();if(name.length<2){$("profileStatus").textContent="Escribe un nombre de al menos 2 caracteres.";return;}const button=$("profileSave");button.disabled=true;$("profileStatus").textContent="Guardando perfil...";try{await user.updateProfile({displayName:name});const about=$("profileAboutInput").value.trim();const mood=$("profileMoodSelect").value,directoryVisible=$("profileDirectoryVisible").checked,updatedAt=firebase.firestore.FieldValue.serverTimestamp();await db.collection("users").doc(user.uid).set({uid:user.uid,email:user.email||"",displayName:name,about,mood,directoryVisible,updatedAt},{merge:true});await db.collection("publicProfiles").doc(user.uid).set({uid:user.uid,displayName:name,about,mood,directoryVisible,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});try{localStorage.setItem("klk-profile-about",about);}catch(e){}$("myMoodEmoji").textContent=$("profileMoodSelect").value.split(" ")[0];$("myMoodLabel").textContent=$("profileMoodSelect").value;$("profilePanelName").textContent=name;$("profileStatus").textContent="Perfil actualizado correctamente.";}catch(error){$("profileStatus").textContent="No se pudo guardar: "+(error.message||"inténtalo de nuevo");}finally{button.disabled=false;}});
 $("profileAboutInput").value=localStorage.getItem("klk-profile-about")||"¡Hola! Estoy usando klk.";$("profileAboutInput").addEventListener("change",()=>{try{localStorage.setItem("klk-profile-about",$("profileAboutInput").value.trim());$("profileStatus").textContent="Tu información se guardó en este teléfono.";}catch(e){$("profileStatus").textContent="No se pudo guardar esta información.";}});
+$("profileVerifyEmail").addEventListener("click",async()=>{const user=auth&&auth.currentUser;if(!user||!user.email){$("profileVerifyStatus").textContent="Inicia sesión para verificar tu correo.";return;}const button=$("profileVerifyEmail");button.disabled=true;$("profileVerifyStatus").textContent="Comprobando el estado de tu correo...";try{await user.reload();if(auth.currentUser&&auth.currentUser.emailVerified){$("profileVerifyHint").textContent="Correo confirmado para esta cuenta";$("profileVerifyStatus").textContent="Tu correo ya está verificado.";}else{await auth.currentUser.sendEmailVerification();$("profileVerifyStatus").textContent="Enviamos un enlace de verificación. Abre tu correo y confirma la dirección; después vuelve a klk.";$("profileVerifyHint").textContent="Enlace enviado; revisa también Spam.";} }catch(error){$("profileVerifyStatus").textContent="No se pudo verificar el correo: "+(error.message||"inténtalo más tarde");}finally{button.disabled=false;}});
 $("profilePassword").addEventListener("click",async()=>{const user=auth&&auth.currentUser;if(!user||!user.email)return;$("profileStatus").textContent="Enviando enlace de cambio de contraseña...";try{await auth.sendPasswordResetEmail(user.email);$("profileStatus").textContent="Enviamos un enlace seguro a tu correo de acceso.";}catch(error){$("profileStatus").textContent="No se pudo enviar el correo: "+(error.message||"inténtalo más tarde");}});
 $("profilePrivacyInfo").addEventListener("click",()=>{$("profilePrivacyStatus").hidden=!$("profilePrivacyStatus").hidden;});$("profileOpenSettings").addEventListener("click",()=>{closeKlkProfilePanel();toggleKlkSettings();$("settingsPanel").scrollIntoView({block:"start",behavior:"smooth"});});$("profileLogout").addEventListener("click",()=>$("logout").click());
 $("profilePhotoInput").addEventListener("change", async event => {
