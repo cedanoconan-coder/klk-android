@@ -1727,7 +1727,7 @@ try {
  firebase.initializeApp(firebaseConfig);
  auth = firebase.auth(); db = firebase.firestore();
  authPersistenceReady = auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
- firestorePersistenceReady = db.enablePersistence().then(() => true).catch(error => {
+ firestorePersistenceReady = db.enablePersistence({ synchronizeTabs: true }).then(() => true).catch(error => {
   console.warn("No se pudo activar el almacenamiento sin conexión de Firestore:", error);
   return false;
  });
