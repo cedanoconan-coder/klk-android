@@ -38,9 +38,10 @@ jobs:
         run: |
           set -e
           mkdir -p www
-          cp index.html calls.js chat-camera.js icon.svg manifest.webmanifest sw.js www/
+          cp index.html navigation.js calls.js chat-camera.js icon.svg manifest.webmanifest sw.js www/
           if [ -d assets ]; then cp -R assets www/; fi
           # Evitar generar una APK incompleta si falta un recurso esencial.
+          test -s www/navigation.js
           test -s www/chat-camera.js
           test -s www/index.html
 
@@ -82,6 +83,7 @@ jobs:
           for script in /tmp/klk-inline-*.js; do
             node --check "$script"
           done
+          node --check navigation.js
           node --check calls.js
 
       - name: Generar proyecto Android
