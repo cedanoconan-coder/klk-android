@@ -170,6 +170,63 @@ service cloud.firestore {
       allow read, delete: if false;
     }
 
+
+    // Contactos QR: privacidad por defecto = aprobación.
+    match /contactPrivacy/{uid} {
+      allow get: if signedIn();
+      allow list: if false;
+      allow create, update: if signedIn() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['mode','updatedAt'])
+        && request.resource.data.mode in ['approval','direct']
+        && request.resource.data.updatedAt == request.time;
+      allow delete: if false;
+    }
+    match /qrContactRequests/{requestId} {
+      function validRequest() {
+        return signedIn()
+          && request.resource.data.keys().hasOnly(['from','to','status','createdAt','updatedAt'])
+          && request.resource.data.from is string
+          && request.resource.data.to is string
+          && request.resource.data.from != request.resource.data.to
+          && requestId == request.resource.data.from + '_' + request.resource.data.to;
+      }
+      allow get, list: if signedIn() && (resource.data.from == request.auth.uid || resource.data.to == request.auth.uid);
+      allow create: if validRequest()
+        && request.auth.uid == request.resource.data.from
+        && request.resource.data.status == 'pending'
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time
+        && !exists(/databases/$(database)/documents/userBlocks/$(request.resource.data.to)/blocked/$(request.auth.uid))
+        && !exists(/databases/$(database)/documents/userBlocks/$(request.auth.uid)/blocked/$(request.resource.data.to));
+      allow update: if validRequest()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','updatedAt'])
+        && request.auth.uid == resource.data.to
+        && resource.data.status == 'pending'
+        && request.resource.data.status in ['approved','rejected']
+        && request.resource.data.updatedAt == request.time;
+      allow delete: if false;
+    }
+    match /qrContacts/{uid}/members/{otherUid} {
+      function allowedLink() {
+        return (exists(/databases/$(database)/documents/contactPrivacy/$(otherUid))
+          && get(/databases/$(database)/documents/contactPrivacy/$(otherUid)).data.mode == 'direct')
+          || (exists(/databases/$(database)/documents/qrContactRequests/$(uid + '_' + otherUid))
+          && get(/databases/$(database)/documents/qrContactRequests/$(uid + '_' + otherUid)).data.status == 'approved')
+          || (exists(/databases/$(database)/documents/qrContactRequests/$(otherUid + '_' + uid))
+          && get(/databases/$(database)/documents/qrContactRequests/$(otherUid + '_' + uid)).data.status == 'approved');
+      }
+      allow get, list: if signedIn() && request.auth.uid == uid;
+      allow create: if signedIn() && request.auth.uid == uid && uid != otherUid
+        && request.resource.data.keys().hasOnly(['uid','addedAt'])
+        && request.resource.data.uid == otherUid
+        && request.resource.data.addedAt == request.time
+        && !exists(/databases/$(database)/documents/userBlocks/$(uid)/blocked/$(otherUid))
+        && !exists(/databases/$(database)/documents/userBlocks/$(otherUid)/blocked/$(uid))
+        && allowedLink();
+      allow delete: if signedIn() && request.auth.uid == uid;
+      allow update: if false;
+    }
+
     // Solicitudes de amistad retiradas: el chat se inicia directamente desde perfiles visibles.
     match /contactRequests/{requestId} {
       allow read, write: if false;
