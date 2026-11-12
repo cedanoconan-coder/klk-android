@@ -2344,22 +2344,37 @@ function closeRoomCallOptions(){const panel=$("roomCallOptions"),menu=$("roomCal
 const roomVoiceCallButton=$("roomVoiceCall");if(roomVoiceCallButton)roomVoiceCallButton.addEventListener("click",()=>{closeRoomCallOptions();if(!activeConversationPeerUid){const status=$("chatStatus");if(status)status.textContent="Abre primero una conversación privada.";return;}if(window.klkStartCall)window.klkStartCall(activeConversationPeerUid,activeConversationName||"Contacto","audio");else{const status=$("chatStatus");if(status)status.textContent="El servicio de llamadas todavía se está iniciando.";}});
 const roomVideoCallButton=$("roomVideoCall");if(roomVideoCallButton)roomVideoCallButton.addEventListener("click",()=>{closeRoomCallOptions();if(!activeConversationPeerUid){const status=$("chatStatus");if(status)status.textContent="Abre primero una conversación privada.";return;}if(window.klkStartCall)window.klkStartCall(activeConversationPeerUid,activeConversationName||"Contacto","video");else{const status=$("chatStatus");if(status)status.textContent="El servicio de llamadas todavía se está iniciando.";}});
 $("showPeople").onclick = () => { $("chat").classList.remove("room-open"); $("chatSearch").focus(); $("chatStatus").textContent = "Selecciona un miembro para conversar en privado."; };
-window.klkResolveProfilePhoto = (path) => getMediaUrl(path); async function getMediaUrl(path, conversationId = null) {
+window.klkResolveProfilePhoto = (path) => getMediaUrl(path); const mediaUrlPending = new Map();
+const mediaUrlRetryAfter = new Map();
+async function getMediaUrl(path, conversationId = null) {
  if (!path) return "";
- const cached = mediaUrlCache.get(path);
+ const key = String(conversationId || "") + "|" + path;
+ const cached = mediaUrlCache.get(key);
  if (cached && cached.expiresAt > Date.now() + 60000) return cached.url;
- const user = auth && auth.currentUser;
- if (!user) return "";
- const idToken = await user.getIdToken();
- const response = await fetch(SUPABASE_URL + "/functions/v1/media", {
-  method: "POST",
-  headers: { "Content-Type": "application/json", "apikey": SUPABASE_PUBLISHABLE_KEY, "Authorization": "Bearer " + idToken },
-  body: JSON.stringify({ action: "create-download-url", path, ...(conversationId ? {conversationId} : {}) })
- });
- const result = await response.json().catch(() => ({}));
- if (!response.ok || !result.signedUrl) throw new Error(result.error || "No se pudo abrir el archivo multimedia.");
- mediaUrlCache.set(path, { url: result.signedUrl, expiresAt: Date.now() + Number(result.expiresIn || 3600) * 1000 });
- return result.signedUrl;
+ const retryAfter = mediaUrlRetryAfter.get(key) || 0;
+ if (retryAfter > Date.now()) throw new Error("Servicio de archivos temporalmente limitado. Inténtalo de nuevo en unos minutos.");
+ if (mediaUrlPending.has(key)) return mediaUrlPending.get(key);
+ const pending = (async () => {
+  const user = auth && auth.currentUser;
+  if (!user) return "";
+  const idToken = await user.getIdToken();
+  const response = await fetch(SUPABASE_URL + "/functions/v1/media", {
+   method: "POST",
+   headers: { "Content-Type": "application/json", "apikey": SUPABASE_PUBLISHABLE_KEY, "Authorization": "Bearer " + idToken },
+   body: JSON.stringify({ action: "create-download-url", path, ...(conversationId ? {conversationId} : {}) })
+  });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok || !result.signedUrl) {
+   if (response.status === 429 || response.status === 503) mediaUrlRetryAfter.set(key, Date.now() + 120000);
+   else if (response.status === 403) mediaUrlRetryAfter.set(key, Date.now() + 30000);
+   throw new Error(result.error || "No se pudo abrir el archivo multimedia.");
+  }
+  mediaUrlRetryAfter.delete(key);
+  mediaUrlCache.set(key, { url: result.signedUrl, expiresAt: Date.now() + Number(result.expiresIn || 3600) * 1000 });
+  return result.signedUrl;
+ })();
+ mediaUrlPending.set(key,pending);
+ try { return await pending; } finally { mediaUrlPending.delete(key); }
 }
 function formatMessageTime(value) {
  if (!value) return "";
