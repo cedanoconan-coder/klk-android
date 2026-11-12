@@ -5,12 +5,16 @@ const serverTime=()=>firebase.firestore.FieldValue.serverTimestamp();
 const current=()=>typeof auth!=="undefined"&&auth?.currentUser;
 const store=()=>typeof db!=="undefined"&&db;
 let unsubs=[];
+let opening=false;
 function notify(message){$("qrContactNotice").textContent=message;}
-function close(){ $("qrContactOverlay").hidden=true;unsubs.forEach(fn=>fn());unsubs=[];}
+function close(){ $("qrContactOverlay").hidden=true;unsubs.forEach(fn=>fn());unsubs=[];opening=false;}
 function qrLink(uid){return new URL("./?contact="+encodeURIComponent(uid),location.href).href;}
 async function open(){
- if(!current()||!store())return;
+ if(!current()||!store()||opening)return;
+ opening=true;
  $("qrContactOverlay").hidden=false;
+ unsubs.forEach(fn=>fn());unsubs=[];
+ notify("");
  const uid=current().uid;
  const url=qrLink(uid);
  $("qrContactLink").value=url;
@@ -27,7 +31,7 @@ async function open(){
    const row=document.createElement("div");row.style.cssText="padding:10px;border-bottom:1px solid #ddd";
    const label=document.createElement("span");label.textContent="Solicitud de contacto: "+d.data().from.slice(0,12)+"… ";
    const accept=document.createElement("button");accept.textContent="Aceptar";accept.style.width="auto";
-   accept.onclick=async()=>{try{await d.ref.update({status:"approved",updatedAt:serverTime()});await db.collection("qrContacts").doc(uid).collection("members").doc(d.data().from).set({uid:d.data().from,addedAt:serverTime()});notify("Contacto aceptado");}catch(e){notify(e.message);}};
+   accept.onclick=async()=>{try{await d.ref.update({status:"approved",updatedAt:serverTime()});await db.collection("qrContacts").doc(uid).collection("members").doc(d.data().from).set({uid:d.data().from,addedAt:serverTime()});notify("Solicitud aceptada. El contacto queda autorizado.");}catch(e){notify(e.message);}};
    const reject=document.createElement("button");reject.textContent="Rechazar";reject.style.width="auto";reject.className="secondary";
    reject.onclick=async()=>{try{await d.ref.update({status:"rejected",updatedAt:serverTime()});}catch(e){notify(e.message);}};
    row.append(label,accept,reject);list.append(row);
@@ -71,6 +75,7 @@ function init(){
  $("qrContactShare").onclick=async()=>{const url=$("qrContactLink").value;try{if(navigator.share)await navigator.share({title:"Mi contacto KLK",url});else{await navigator.clipboard.writeText(url);notify("Enlace copiado");}}catch(e){notify("Comparte este enlace manualmente");}};
  $("qrContactAdd").onclick=()=>{let val=$("qrContactTarget").value.trim();try{const url=new URL(val);val=url.searchParams.get("contact")||"";}catch(e){}void add(val);};
  const incoming=new URLSearchParams(location.search).get("contact");if(incoming){$("qrContactTarget").value=incoming;const timer=setInterval(()=>{if(current()){clearInterval(timer);void open();}},800);setTimeout(()=>clearInterval(timer),30000);}
+ window.addEventListener("popstate",()=>{if(!$("qrContactOverlay").hidden)close();});
 }
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init);else init();
 })();
