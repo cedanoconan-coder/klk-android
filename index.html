@@ -4310,4 +4310,83 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
 })();
 </script>
 <script src="./qr-contacts.js?v=2" defer></script>
+
+<style id="klk-tools-navigation-v2-css">
+/* Herramientas: navegación por pantallas, sin acordeones ni saltos de desplazamiento. */
+#toolsPanel.klkSettingsHome{height:calc(100dvh - 150px);min-height:0!important;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;scroll-behavior:auto!important}
+#toolsPanel .klkSettingsItem>summary{touch-action:manipulation}
+#toolsPanel .klkSettingsChevron{transform:none!important}
+#toolsPanel .klkSettingsChevron::after{content:"›";font-size:25px}
+#toolsPanel .klkSettingsChevron{font-size:0!important}
+#toolsPanel.klk-tool-detail .klkSettingsIntro,#toolsPanel.klk-tool-detail .klkSettingsList>.klkSettingsItem:not(.klk-tool-selected){display:none!important}
+#toolsPanel.klk-tool-detail .klkSettingsList>.klkSettingsItem.klk-tool-selected{border:0!important}
+#toolsPanel.klk-tool-detail .klkSettingsItem.klk-tool-selected>summary{display:none!important}
+#toolsPanel.klk-tool-detail .klkSettingsItem.klk-tool-selected>.klkSettingsDetail{display:flex!important;padding:10px 2px 25px!important;gap:12px}
+#toolsPanel .klkToolScreenHeader{display:none;align-items:center;gap:13px;position:sticky;top:-22px;z-index:5;margin:-22px -17px 16px;padding:calc(15px + env(safe-area-inset-top,0px)) 17px 15px;background:var(--klk-surface,#fff);border-bottom:1px solid #e9e8ed}
+#toolsPanel.klk-tool-detail .klkToolScreenHeader{display:flex}
+#toolsPanel .klkToolScreenHeader button{display:grid;place-items:center;flex:0 0 42px;width:42px;height:42px;margin:0;padding:0;background:#f2e9fa;color:#591b80;border:0;border-radius:50%;font-size:28px}
+#toolsPanel .klkToolScreenHeader strong{font-size:19px;line-height:1.25}
+#toolsPanel .klkSettingsItem:not([open])>.klkSettingsDetail{display:none!important}
+#toolsPanel.klk-tool-detail .klkSettingsDetail .klkColorPicker,#toolsPanel.klk-tool-detail .klkSettingsDetail .klkDimmerSettings{padding-left:8px;padding-right:8px}
+@media(prefers-reduced-motion:reduce){#toolsPanel *{scroll-behavior:auto!important;transition:none!important}}
+</style>
+<script id="klk-tools-navigation-v2-js">
+(function(){
+ 'use strict';
+ function init(){
+  const panel=document.getElementById('toolsPanel');
+  if(!panel||panel.dataset.klkScreenNav==='ready')return;
+  const list=panel.querySelector('.klkSettingsList');
+  if(!list)return;
+  panel.dataset.klkScreenNav='ready';
+  const header=document.createElement('div');
+  header.className='klkToolScreenHeader';
+  const back=document.createElement('button');
+  back.type='button';back.textContent='‹';back.setAttribute('aria-label','Volver a Herramientas');
+  const title=document.createElement('strong');
+  header.append(back,title);list.before(header);
+  let selected=null,previousScroll=0;
+  function close(){
+   if(!selected)return false;
+   selected.classList.remove('klk-tool-selected');
+   selected.open=false;
+   selected=null;panel.classList.remove('klk-tool-detail');
+   title.textContent='';
+   panel.scrollTop=previousScroll;
+   return true;
+  }
+  function open(item){
+   if(selected===item)return;
+   if(selected)close();
+   previousScroll=panel.scrollTop;
+   selected=item;
+   list.querySelectorAll('.klkSettingsItem').forEach(other=>{if(other!==item)other.open=false;});
+   item.open=true;item.classList.add('klk-tool-selected');
+   title.textContent=item.querySelector('summary strong')?.textContent||'Configuración';
+   panel.classList.add('klk-tool-detail');
+   panel.scrollTop=0;
+   try{history.pushState({klkView:'tools-detail'},'',location.href)}catch(e){}
+   back.focus({preventScroll:true});
+  }
+  list.addEventListener('click',event=>{
+   const summary=event.target.closest('.klkSettingsItem>summary');
+   if(!summary||!list.contains(summary))return;
+   event.preventDefault();
+   open(summary.parentElement);
+  },true);
+  back.addEventListener('click',()=>{if(selected&&history.state?.klkView==='tools-detail')history.back();else close();});
+  window.addEventListener('popstate',()=>{if(selected)close();});
+  document.querySelectorAll('.homeBottom button[data-tab]').forEach(button=>{
+   button.addEventListener('click',()=>{if(button.dataset.tab!=='tools')close();});
+  });
+  document.querySelectorAll('[data-go-tab]').forEach(button=>button.addEventListener('click',()=>close()));
+  document.querySelectorAll('[data-tool-action="back-tools"]').forEach(button=>button.addEventListener('click',()=>close()));
+  document.addEventListener('keydown',event=>{
+   if(event.key==='Escape'&&selected&&document.getElementById('settingsPanel')?.style.display!=='block'){event.preventDefault();close();}
+  });
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
+</script>
+
 </body></html>
