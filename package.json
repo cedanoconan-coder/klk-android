@@ -5,7 +5,8 @@
   "description": "Aplicación familiar klk para Android",
   "scripts": {
     "android:sync": "cap sync android",
-    "test:rules": "firebase emulators:exec --only firestore --project demo-klk \"node --test tests/firestore.rules.test.mjs\""
+    "test:rules": "firebase emulators:exec --only firestore --project demo-klk \"node --test tests/firestore.rules.test.mjs\"",
+    "test:media-security": "node --test tests/media-path-security.test.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^7.4.3",
