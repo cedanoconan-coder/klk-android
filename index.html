@@ -4413,4 +4413,11 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
 <script id="klk-hangup-feedback-v2">
 (function(){function init(){['endCall','rejectCall'].forEach(id=>{const button=document.getElementById(id);if(!button)return;button.setAttribute('aria-label',id==='endCall'?'Finalizar llamada':'Rechazar llamada');button.setAttribute('title',id==='endCall'?'Finalizar llamada':'Rechazar llamada');button.addEventListener('click',()=>{try{if(navigator.vibrate)navigator.vibrate(35)}catch(e){}},{passive:true});});}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();})();
 </script>
+
+<style id="klk-light-purple-chat-header">
+/* Morado lavanda más claro para el encabezado de conversaciones. */
+#chat.room-open .chatTop{background:linear-gradient(115deg,#7d42bd 0%,#a369d7 100%)!important;color:#fff!important;border-bottom:2px solid #bc8fe7!important}
+#chat.room-open .chatTop #chatTitle,#chat.room-open .chatTop #who,#chat.room-open .chatTop .roomIdentity,#chat.room-open .chatTop .roomActions button,#chat.room-open .chatTop .chatBack{color:#fff!important}
+#chat.room-open .chatTop #who{opacity:.95}
+</style>
 </body></html>
