@@ -113,20 +113,23 @@ jobs:
           PY
 
       - name: Instalar herramienta para iconos Android
-        run: sudo apt-get update && sudo apt-get install -y librsvg2-bin
+        run: python3 -m pip install --user Pillow
 
-      - name: Aplicar logo klk a los iconos Android
+      - name: Aplicar icono oficial KLK a Android
         run: |
           set -e
-          for item in mdpi:108 hdpi:162 xhdpi:216 xxhdpi:324 xxxhdpi:432; do
-            density="${item%%:*}"
-            size="${item##*:}"
-            dir="android/app/src/main/res/mipmap-$density"
-            mkdir -p "$dir"
-            rsvg-convert -w "$size" -h "$size" icon.svg > "$dir/ic_launcher.png"
-            cp "$dir/ic_launcher.png" "$dir/ic_launcher_round.png"
-            cp "$dir/ic_launcher.png" "$dir/ic_launcher_foreground.png"
-          done
+          test -s 'assets/klk-icono-oficial(1).png'
+          python3 - <<'PY'
+          from pathlib import Path
+          from PIL import Image
+          src = Image.open('assets/klk-icono-oficial(1).png').convert('RGBA')
+          for density, size in [('mdpi', 108), ('hdpi', 162), ('xhdpi', 216), ('xxhdpi', 324), ('xxxhdpi', 432)]:
+              dest = Path('android/app/src/main/res') / ('mipmap-' + density)
+              dest.mkdir(parents=True, exist_ok=True)
+              img = src.resize((size, size), Image.Resampling.LANCZOS)
+              for name in ('ic_launcher.png', 'ic_launcher_round.png', 'ic_launcher_foreground.png'):
+                  img.save(dest / name)
+          PY
 
       - name: Declarar permisos de cámara y micrófono
         run: |
