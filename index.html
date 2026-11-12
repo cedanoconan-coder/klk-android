@@ -2432,10 +2432,11 @@ function loadMessages() {
   $("messages").innerHTML = "";
   if(disappearingExpiryTimer)clearTimeout(disappearingExpiryTimer);
   const nextExpiry=snapshot.docs.map(doc=>doc.data().expiresAt).filter(value=>value&&typeof value.toDate==="function").map(value=>value.toDate().getTime()).filter(time=>time>Date.now()).sort((a,b)=>a-b)[0];
-  if(nextExpiry)disappearingExpiryTimer=setTimeout(()=>{if(activeConversationId)loadMessages();},Math.min(nextExpiry-Date.now()+250,2147483000));
+  if(nextExpiry)disappearingExpiryTimer=setTimeout(()=>{if(activeConversationId === requestedConversationId && auth.currentUser && auth.currentUser.uid === requestedUid)loadMessages();},Math.min(nextExpiry-Date.now()+250,2147483000));
   window.klkMessageRecords = new Map();
   if (snapshot.empty) { $("messages").textContent = "Todavía no hay mensajes. ¡Envía el primero!"; return; }
   for (const doc of snapshot.docs.slice().reverse()) {
+   if (activeConversationId !== requestedConversationId || !auth.currentUser || auth.currentUser.uid !== requestedUid) return;
    const data = doc.data(), item = document.createElement("div");
    if (data.expiresAt && typeof data.expiresAt.toDate === "function" && data.expiresAt.toDate().getTime() <= Date.now()) continue;
    if (Array.isArray(data.deletedFor) && auth.currentUser && data.deletedFor.includes(auth.currentUser.uid)) continue;
@@ -2446,7 +2447,8 @@ function loadMessages() {
    if ((data.type === "image" || data.type === "audio" || data.type === "file") && (data.storagePath || data.mediaUrl)) {
     const placeholder = document.createElement("p"); placeholder.textContent = "Cargando archivo..."; item.appendChild(placeholder); $("messages").appendChild(item);
     try {
-     const url = data.storagePath ? await getMediaUrl(data.storagePath, data.storagePath.startsWith("dm/") ? (data.conversationId || activeConversationId) : null) : data.mediaUrl;
+     const url = data.storagePath ? await getMediaUrl(data.storagePath, data.storagePath.startsWith("dm/") ? (data.conversationId || requestedConversationId) : null) : data.mediaUrl;
+     if (activeConversationId !== requestedConversationId || !auth.currentUser || auth.currentUser.uid !== requestedUid) return;
      placeholder.remove();
      if (data.type === "image") {
       if((data.mimeType||"").startsWith("video/")){const video=document.createElement("video");video.src=url;video.controls=true;video.preload="metadata";video.playsInline=true;item.appendChild(video);}
