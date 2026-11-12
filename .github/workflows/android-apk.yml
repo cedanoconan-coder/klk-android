@@ -38,10 +38,11 @@ jobs:
         run: |
           set -e
           mkdir -p www
-          cp index.html calls.js chat-camera.js icon.svg manifest.webmanifest sw.js www/
+          cp index.html calls.js chat-camera.js qr-contacts.js icon.svg manifest.webmanifest sw.js www/
           if [ -d assets ]; then cp -R assets www/; fi
           # Evitar generar una APK incompleta si falta un recurso esencial.
           test -s www/chat-camera.js
+          test -s www/qr-contacts.js
           test -s www/index.html
 
       - name: Verificar sintaxis JavaScript
@@ -83,6 +84,8 @@ jobs:
             node --check "$script"
           done
           node --check calls.js
+          node --check chat-camera.js
+          node --check qr-contacts.js
 
       - name: Generar proyecto Android
         run: npx cap add android
