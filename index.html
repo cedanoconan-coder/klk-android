@@ -4349,7 +4349,7 @@ if(chats&&search&&!document.getElementById("klkChatFilters")){
  toggle.style.cssText="display:block;margin:2px auto 4px;padding:2px 32px;border:0;border-radius:20px;background:transparent;color:#653285;font-size:23px;line-height:25px;cursor:pointer";
  bar.style.setProperty("display","none","important");
  function setFilters(open){bar.style.setProperty("display",open?"flex":"none","important");toggle.setAttribute("aria-expanded",String(open));toggle.setAttribute("aria-label",open?"Ocultar filtros de chats":"Mostrar filtros de chats");toggle.firstElementChild.textContent=open?"⌃":"⌄";}
- toggle.addEventListener("click",()=>setFilters(toggle.getAttribute("aria-expanded")!=="true"));
+ let klkFiltersAutoHideTimer;function showFiltersTemporarily(){setFilters(true);clearTimeout(klkFiltersAutoHideTimer);klkFiltersAutoHideTimer=setTimeout(()=>setFilters(false),4500)}toggle.addEventListener("click",()=>{if(toggle.getAttribute("aria-expanded")==="true"){clearTimeout(klkFiltersAutoHideTimer);setFilters(false)}else showFiltersTemporarily()});bar.addEventListener("pointerdown",()=>{clearTimeout(klkFiltersAutoHideTimer);klkFiltersAutoHideTimer=setTimeout(()=>setFilters(false),4500)});toggle.style.cssText="display:block;margin:0 auto 2px;padding:3px 18px;min-height:25px;border:0;border-radius:16px;background:transparent;color:#8c8293;font-size:17px;line-height:19px;cursor:pointer;opacity:.65";
  bar.addEventListener("click",e=>{if(e.target.closest("button"))setFilters(false)});
  search.insertAdjacentElement("afterend",toggle);
  toggle.insertAdjacentElement("afterend",bar);
