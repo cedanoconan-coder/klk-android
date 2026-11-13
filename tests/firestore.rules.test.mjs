@@ -364,3 +364,24 @@ test("permite mensajes normales sin expiración cuando la función está desacti
     email:"member1@example.com", displayName:"Miembro Uno", createdAt:serverTimestamp()
   }));
 });
+
+
+test("las invitaciones no se pueden consultar sin autenticación ni después de expirar", async () => {
+  await testEnv.withSecurityRulesDisabled(async context => {
+    const db = context.firestore();
+    await setDoc(doc(db, "invitations/valid-code"), {
+      createdBy:"owner", createdAt:Timestamp.fromMillis(Date.now()-60000),
+      expiresAt:Timestamp.fromMillis(Date.now()+3600000), redeemedBy:null, redeemedAt:null
+    });
+    await setDoc(doc(db, "invitations/expired-code"), {
+      createdBy:"owner", createdAt:Timestamp.fromMillis(Date.now()-7200000),
+      expiresAt:Timestamp.fromMillis(Date.now()-3600000), redeemedBy:null, redeemedAt:null
+    });
+  });
+  const guest = testEnv.unauthenticatedContext().firestore();
+  const member = testEnv.authenticatedContext("member-1").firestore();
+  await assertFails(getDoc(doc(guest,"invitations/valid-code")));
+  await assertSucceeds(getDoc(doc(member,"invitations/valid-code")));
+  await assertFails(getDoc(doc(member,"invitations/expired-code")));
+  await assertFails(getDocs(collection(member,"invitations")));
+});
