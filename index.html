@@ -3471,6 +3471,25 @@ async function klkRunSafeDiagnostics() {
   browser:navigator.userAgent.includes("Android")?"Android":"Navegador móvil o escritorio"
  };
  const repairs=[];
+ // Comprobar lecturas reales de Firestore: una sesión activa no garantiza permisos de lectura.
+ checks.firestore={};
+ if(checks.firebaseSession&&db){
+  const uid=auth.currentUser.uid;
+  const probes=[
+   ["perfil",()=>db.collection("users").doc(uid).get({source:"server"})],
+   ["conversaciones",()=>db.collection("conversations").where("members","array-contains",uid).limit(1).get({source:"server"})],
+   ["llamadasRealizadas",()=>db.collection("calls").where("callerUid","==",uid).limit(1).get({source:"server"})],
+   ["llamadasRecibidas",()=>db.collection("calls").where("calleeUid","==",uid).limit(1).get({source:"server"})]
+  ];
+  await Promise.all(probes.map(async ([name,fn])=>{
+   let timeoutId;
+   try{
+    const snap=await Promise.race([fn(),new Promise((_,reject)=>{timeoutId=setTimeout(()=>reject(new Error("Tiempo de espera agotado al consultar Firestore")),9000)})]);
+    checks.firestore[name]={ok:true,documents:snap.size===undefined?(snap.exists?1:0):snap.size};
+   }catch(error){checks.firestore[name]={ok:false,code:error.code||"timeout",message:error.message||String(error)}}
+   finally{clearTimeout(timeoutId)}
+  }));
+ }
  if(checks.firebaseSession) {
   try { await auth.currentUser.getIdToken(true); repairs.push("Sesión de Firebase renovada."); }
   catch(error) { repairs.push("No se pudo renovar la sesión: "+(error.message||"error de sesión")); }
@@ -3514,6 +3533,7 @@ window.$("assistantDiagnose").addEventListener("click",async()=>{
    "Micrófono: "+(klkLastDiagnostics.checks.microphoneSupport?"compatible":"no compatible"),
    "Llamadas WebRTC: "+(klkLastDiagnostics.checks.videoCallSupport?"compatible":"no compatible"),
    "Service Worker: "+(klkLastDiagnostics.checks.serviceWorkerSupport?"disponible":"no disponible"),
+   ...Object.entries(klkLastDiagnostics.checks.firestore||{}).map(([name,result])=>"Firestore "+name+": "+(result.ok?"lectura correcta ("+result.documents+" encontrados)":("ERROR "+result.code+" — "+result.message))),
    ...klkLastDiagnostics.repairs
   ].join("\n");
   klkAssistantBubble("assistant","Resultado de la revisión:\n"+summary);
