@@ -227,26 +227,25 @@ test("permite enviar stickers autorizados y rechaza contenido arbitrario", async
   }));
 });
 
-test("los estados se pueden consultar por cualquier miembro autenticado", async () => {
+test("solo el autor y sus contactos QR autorizados pueden consultar estados", async () => {
   await seedPublicProfile("owner", false);
   await testEnv.withSecurityRulesDisabled(async context => {
-    await setDoc(doc(context.firestore(),"statuses/status-visible"),{
+    const admin=context.firestore();
+    await setDoc(doc(admin,"statuses/status-visible"),{
       uid:"owner",displayName:"Propietario",type:"text",text:"Hola",
       createdAt:Timestamp.now(),expiresAt:Timestamp.fromMillis(Date.now()+24*60*60*1000)
     });
+    await setDoc(doc(admin,"qrContacts/owner/members/member"),{uid:"member",addedAt:Timestamp.now()});
   });
-  const owner = testEnv.authenticatedContext("owner").firestore();
-  const member = testEnv.authenticatedContext("member").firestore();
-  const outsider = testEnv.authenticatedContext("outsider").firestore();
+  const owner=testEnv.authenticatedContext("owner").firestore();
+  const member=testEnv.authenticatedContext("member").firestore();
+  const outsider=testEnv.authenticatedContext("outsider").firestore();
   await assertSucceeds(getDoc(doc(owner,"statuses/status-visible")));
   await assertSucceeds(getDoc(doc(member,"statuses/status-visible")));
-  await assertSucceeds(getDoc(doc(outsider,"statuses/status-visible")));
-  await assertSucceeds(getDocs(query(
-    collection(outsider,"statuses"),
-    where("expiresAt",">",Timestamp.fromMillis(Date.now()))
-  )));
-  const anonymous = testEnv.unauthenticatedContext().firestore();
-  await assertFails(getDoc(doc(anonymous,"statuses/status-visible")));
+  await assertFails(getDoc(doc(outsider,"statuses/status-visible")));
+  await assertSucceeds(getDocs(query(collection(member,"statuses"),where("uid","==","owner"))));
+  await assertFails(getDocs(query(collection(outsider,"statuses"),where("expiresAt",">",Timestamp.fromMillis(Date.now())))));
+  await assertFails(getDoc(doc(testEnv.unauthenticatedContext().firestore(),"statuses/status-visible")));
 });
 
 test("un miembro puede reaccionar y registrar una visualización en un estado visible", async () => {
