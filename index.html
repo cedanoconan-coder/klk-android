@@ -4319,7 +4319,8 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
   pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
   if(pointers.size===2&&startDistance){
    const ratio=distance()/startDistance;
-   closePinch=startScale<=1.05&&ratio<0.72;
+   // Al reducir una foto ampliada hasta su tamaño normal, volver al chat.
+   closePinch=ratio<1&&(startScale*ratio<=1.05||startScale<=1.05&&ratio<0.72);
    scale=Math.max(1,Math.min(5,startScale*ratio));if(scale===1){x=0;y=0}
   }else if(pointers.size===1&&scale>1){x=e.clientX-startX;y=e.clientY-startY}
   render();
