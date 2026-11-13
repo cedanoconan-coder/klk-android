@@ -259,6 +259,8 @@
    callRef=window.db.collection("calls").doc();
    await callRef.set({callerUid:currentUid,calleeUid:uid,conversationId,mode,status:"ringing",offer:{type:offer.type,sdp:offer.sdp},createdAt:firebase.firestore.FieldValue.serverTimestamp(),updatedAt:firebase.firestore.FieldValue.serverTimestamp()});
    await flushLocalCandidates();
+   // Notify the callee through the authenticated server, even if their app is closed.
+   if(typeof window.klkSendIncomingCallPush==="function")void window.klkSendIncomingCallPush(callRef.id).catch(error=>console.warn("Aviso de llamada no disponible:",error));
    $("callStatus").textContent="Llamando a "+name+"...";klkStartOutgoingRing();
    $("endCall").hidden=false;watchCallDocument();watchRemoteCandidates();
    ringTimeout=window.setTimeout(()=>{if(callRef&&callRole==="caller"&&(callState==="ringing"||!callState)){ $("callStatus").textContent="No hubo respuesta.";endCall();}},45000);
