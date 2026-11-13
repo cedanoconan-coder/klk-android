@@ -2626,7 +2626,7 @@ function klkRestoreReplyDraft(){
 const klkReplyPreview=document.createElement("div");klkReplyPreview.id="klkReplyPreview";klkReplyPreview.hidden=true;
 klkReplyPreview.innerHTML='<div class="klkReplyContent" style="display:flex!important;flex:1!important;min-width:0!important;flex-direction:column!important;visibility:visible!important;opacity:1!important;color:#332442!important"><strong class="klkReplyName" style="display:block!important;visibility:visible!important;opacity:1!important;color:#7840a8!important;font-size:13px!important"></strong><span class="klkReplyText" style="display:block!important;visibility:visible!important;opacity:1!important;color:#332442!important;font-size:14px!important;white-space:normal!important;overflow:visible!important;text-overflow:clip!important"></span></div><button type="button" aria-label="Cancelar respuesta">×</button>';
 $("message").closest(".composer").parentNode.insertBefore(klkReplyPreview,$("message").closest(".composer"));
-function klkClearReply(){klkReplyTarget=null;klkSaveReplyDraft();klkReplyPreview.hidden=true;klkReplyPreview.style.removeProperty("display");klkReplyPreview.style.removeProperty("visibility");klkReplyPreview.style.removeProperty("opacity");}
+function klkClearReply(){klkReplyTarget=null;klkSaveReplyDraft();klkReplyPreview.hidden=true;klkReplyPreview.style.removeProperty("display");klkReplyPreview.style.removeProperty("visibility");klkReplyPreview.style.removeProperty("opacity");["position","left","width","bottom","z-index"].forEach(p=>klkReplyPreview.style.removeProperty(p));}
 klkReplyPreview.querySelector("button").onclick=klkClearReply;
 // Keep the reply attached to the composer across keyboard, viewport and chat refreshes.
 function klkEnsureReplyVisible(){
@@ -2640,6 +2640,12 @@ function klkEnsureReplyVisible(){
  if(klkReplyPreview.style.getPropertyValue("display")!=="flex")klkReplyPreview.style.setProperty("display","flex","important");
  if(klkReplyPreview.style.getPropertyValue("visibility")!=="visible")klkReplyPreview.style.setProperty("visibility","visible","important");
  if(klkReplyPreview.style.getPropertyValue("opacity")!=="1")klkReplyPreview.style.setProperty("opacity","1","important");
+ const rect=composer.getBoundingClientRect();
+ if(rect.width>0){
+  const left=Math.max(0,Math.round(rect.left)),width=Math.round(rect.width),bottom=Math.max(0,Math.round(window.innerHeight-rect.top+4));
+  const values={position:"fixed",left:left+"px",width:width+"px",bottom:bottom+"px","z-index":"2147483000"};
+  for(const [property,value] of Object.entries(values))if(klkReplyPreview.style.getPropertyValue(property)!==value)klkReplyPreview.style.setProperty(property,value,"important");
+ }
 }
 $("message").addEventListener("focus",klkEnsureReplyVisible);
 $("message").addEventListener("input",klkEnsureReplyVisible);
