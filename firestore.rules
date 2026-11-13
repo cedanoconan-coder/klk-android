@@ -534,6 +534,7 @@ service cloud.firestore {
           && get(/databases/$(database)/documents/statuses/$(statusId)).data.uid == request.auth.uid;
         allow create, update: if signedIn()
           && viewerUid == request.auth.uid
+          && canViewStatus(get(/databases/$(database)/documents/statuses/$(statusId)).data.uid)
           && get(/databases/$(database)/documents/statuses/$(statusId)).data.uid != request.auth.uid
           && get(/databases/$(database)/documents/statuses/$(statusId)).data.expiresAt > request.time
           && request.resource.data.keys().hasOnly(['uid','displayName','viewedAt'])
@@ -548,10 +549,12 @@ service cloud.firestore {
       // Cada usuario puede registrar o quitar su propio me gusta en un estado.
       match /likes/{likerUid} {
         allow read: if signedIn()
-          && exists(/databases/$(database)/documents/statuses/$(statusId));
+          && exists(/databases/$(database)/documents/statuses/$(statusId))
+          && canViewStatus(get(/databases/$(database)/documents/statuses/$(statusId)).data.uid);
         allow create: if signedIn()
           && likerUid == request.auth.uid
           && exists(/databases/$(database)/documents/statuses/$(statusId))
+          && canViewStatus(get(/databases/$(database)/documents/statuses/$(statusId)).data.uid)
           && get(/databases/$(database)/documents/statuses/$(statusId)).data.expiresAt > request.time
           && request.resource.data.keys().hasOnly(['uid','displayName','likedAt'])
           && request.resource.data.keys().hasAll(['uid','displayName','likedAt'])
