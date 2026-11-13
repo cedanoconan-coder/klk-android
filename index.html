@@ -1631,6 +1631,19 @@ async function registerKlkWebPush(user, askPermission = false) {
  return token;
 }
 
+window.klkSendIncomingCallPush = async function(callId) {
+ const user = auth && auth.currentUser;
+ if (!user || !/^[A-Za-z0-9_-]{1,128}$/.test(callId)) return;
+ const token = await user.getIdToken();
+ const response = await fetch(KLK_PUSH_FUNCTION_URL,{
+  method:"POST",
+  headers:{"Content-Type":"application/json","apikey":SUPABASE_PUBLISHABLE_KEY,"Authorization":"Bearer "+token},
+  body:JSON.stringify({callId})
+ });
+ const result = await response.json().catch(()=>({}));
+ if(!response.ok) throw new Error(result.error||"No se pudo enviar el aviso de llamada");
+ return result;
+};
 async function sendKlkPushForMessage(conversationId, messageId) {
  const user = auth && auth.currentUser;
  if (!user || !conversationId || !messageId) return;
@@ -3076,7 +3089,7 @@ $("sendAudio").onclick = async () => {
 </script>
 
 <script src="./chat-camera.js"></script>
-<script src="./calls.js?v=141"></script>
+<script src="./calls.js?v=142"></script>
 <script>
 // Configuración compartida explícitamente entre scripts independientes.
 window.KLK_SUPABASE_URL = "https://nrnqzzhhvjramxkahkqs.supabase.co";
