@@ -3,7 +3,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#075e54">
 <meta name="description" content="Chat privado para mantener a la familia conectada.">
 <meta name="mobile-web-app-capable" content="yes">
@@ -1203,6 +1203,12 @@ html,body{overscroll-behavior-y:contain}
 #chat.room-open .chatTop #chatTitle,#chat.room-open .chatTop #who,#chat.room-open .chatTop .roomIdentity,#chat.room-open .chatTop .roomActions button,#chat.room-open .chatTop .chatBack{color:#172126!important}
 #chat.room-open .chatTop #who,#chat.room-open .chatTop .muted,#chat.room-open .chatTop .klkPresenceOffline{color:#58656c!important;opacity:1!important}
 #chat.room-open .chatTop button{background:transparent!important;color:#172126!important}
+</style>
+<style id="klkKeyboardStable">
+/* Prevent mobile browser focus zoom and keep the system keyboard at its normal scale. */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),textarea,select{font-size:max(16px,1em)}
+#chat.room-open #message{font-size:17px!important}
 </style>
 </head>
 <body>
