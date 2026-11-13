@@ -2232,7 +2232,7 @@ function syncConversationListeners(){
     const unreadCount=messages.docs.reduce((count,doc)=>{const message=doc.data();return count+(message.uid!==user.uid&&(!Array.isArray(message.readBy)||!message.readBy.includes(user.uid))?1:0);},0);
      const cached={unreadCount,uid,name:latestPerson.displayName||latestPerson.email||"Contacto",photoUrl:null,preview:last?(last.type==="image"?"📷 Foto":last.type==="audio"?"🎙️ Nota de voz":last.type==="file"?"📎 Documento":last.text||"Mensaje"):"Todavía no hay mensajes",time:last?formatConversationTime(last.createdAt):"",sortTime:last&&last.createdAt&&last.createdAt.toMillis?last.createdAt.toMillis():0};
     conversationCache.set(id,cached);
-    if(latestPerson.photoPath)getMediaUrl(latestPerson.photoPath).then(url=>{if(conversationCache.has(id)){cached.photoUrl=url;renderConversations();}}).catch(()=>{});
+    if(latestPerson.photoPath)getMediaUrl(latestPerson.photoPath).then(url=>{if(conversationCache.get(id)===cached && cached.photoUrl!==url){cached.photoUrl=url;renderConversations();}}).catch(()=>{});
     renderConversations();
    },error=>showError("chatStatus",error));
   }
@@ -2255,7 +2255,7 @@ function loadPeople() {
  const user = auth && auth.currentUser;
  if (!user || !db) { $("peopleList").textContent = "Inicia sesión para cargar las personas."; return; }
  $("peopleList").textContent = "Conectando con el directorio de klk...";
- $("chatsList").textContent = "Cargando conversaciones...";
+ // El directorio no debe borrar conversaciones ya cargadas ni reiniciar su estado visual.
  peopleUnsubscribe = db.collection("publicProfiles").where("directoryVisible","==",true).onSnapshot(async snapshot => {
   peopleCache.clear(); snapshot.docs.forEach(d => peopleCache.set(d.id,d.data()));
   try { const own=await db.collection("publicProfiles").doc(user.uid).get(); if(own.exists)peopleCache.set(own.id,own.data()); } catch(error) { console.warn("No se pudo cargar tu proyección pública:",error); }
