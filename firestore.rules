@@ -422,7 +422,7 @@ service cloud.firestore {
           && validMessageExpiry(conversationId)
           && request.resource.data.keys().hasOnly([
             'type','text','storagePath','conversationId','mimeType','fileName',
-            'size','duration','latitude','longitude','email','uid','displayName','createdAt','expiresAt'
+            'size','duration','latitude','longitude','email','uid','displayName','createdAt','expiresAt','replyTo'
           ])
           && request.resource.data.keys().hasAll(['type','uid','createdAt'])
           && request.resource.data.uid == request.auth.uid
@@ -432,6 +432,23 @@ service cloud.firestore {
             || (request.resource.data.displayName is string
               && request.resource.data.displayName.size() > 0
               && request.resource.data.displayName.size() <= 100))
+          && (!request.resource.data.keys().hasAny(['replyTo'])
+            || (request.resource.data.type == 'text'
+              && request.resource.data.replyTo is map
+              && request.resource.data.replyTo.keys().hasOnly(['id','conversationId','uid','name','text'])
+              && request.resource.data.replyTo.keys().hasAll(['id','conversationId','uid','name','text'])
+              && request.resource.data.replyTo.id is string
+              && request.resource.data.replyTo.id.size() > 0
+              && request.resource.data.replyTo.id.size() <= 128
+              && request.resource.data.replyTo.conversationId == conversationId
+              && request.resource.data.replyTo.uid is string
+              && request.resource.data.replyTo.uid.size() > 0
+              && request.resource.data.replyTo.uid.size() <= 128
+              && request.resource.data.replyTo.name is string
+              && request.resource.data.replyTo.name.size() <= 100
+              && request.resource.data.replyTo.text is string
+              && request.resource.data.replyTo.text.size() > 0
+              && request.resource.data.replyTo.text.size() <= 180))
           && request.resource.data.createdAt == request.time
           && (
             (request.resource.data.type == 'text'
