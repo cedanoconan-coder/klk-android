@@ -1,5 +1,6 @@
 {
-  "version": 155,
-  "updatedAt": "2026-11-11",
+  "version": 156,
+  "updatedAt": "2026-11-13",
+  "channel": "test",
   "androidDownload": "https://github.com/cedanoconan-coder/klk-android/actions/workflows/android-apk.yml"
 }
