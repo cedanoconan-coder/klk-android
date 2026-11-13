@@ -3525,7 +3525,6 @@ window.$("assistantDiagnose").addEventListener("click",async()=>{
  window.$("assistantStatus").textContent="Revisando conexión, sesión y actualización de klk...";
  try {
   klkLastDiagnostics=await klkRunSafeDiagnostics();
-  const result=await klkAssistantRequest({action:"health"});
   const summary=[
    "Internet: "+(klkLastDiagnostics.checks.internet?"conectado":"sin conexión"),
    "HTTPS seguro: "+(klkLastDiagnostics.checks.secureContext?"sí":"no"),
@@ -3537,6 +3536,9 @@ window.$("assistantDiagnose").addEventListener("click",async()=>{
    ...klkLastDiagnostics.repairs
   ].join("\n");
   klkAssistantBubble("assistant","Resultado de la revisión:\n"+summary);
+  window.$("assistantStatus").textContent="Diagnóstico de Firestore terminado. Resultados mostrados arriba.";
+  let result={aiConfigured:false};
+  try{result=await Promise.race([klkAssistantRequest({action:"health"}),new Promise((_,reject)=>setTimeout(()=>reject(new Error("IA no disponible")),5000))]);}catch(error){console.warn("León IA opcional:",error)}
   if(result.aiConfigured) {
    window.$("assistantStatus").textContent="Revisión terminada. Consultando a la IA...";
    const ai=await klkAssistantRequest({action:"chat",message:"Analiza este diagnóstico y dime qué problemas encontraste y qué puedo hacer ahora.",diagnostics:klkLastDiagnostics});
