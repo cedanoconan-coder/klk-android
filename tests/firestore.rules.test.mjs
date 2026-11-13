@@ -248,20 +248,31 @@ test("solo el autor y sus contactos QR autorizados pueden consultar estados", as
   await assertFails(getDoc(doc(testEnv.unauthenticatedContext().firestore(),"statuses/status-visible")));
 });
 
-test("un miembro puede reaccionar y registrar una visualización en un estado visible", async () => {
+test("solo contactos autorizados pueden reaccionar y registrar vistas", async () => {
   await seedPublicProfile("owner", false);
   await testEnv.withSecurityRulesDisabled(async context => {
-    await setDoc(doc(context.firestore(),"statuses/status-interactions"),{
+    const admin = context.firestore();
+    await setDoc(doc(admin,"statuses/status-interactions"),{
       uid:"owner",displayName:"Propietario",type:"text",text:"Estado",
       createdAt:Timestamp.now(),expiresAt:Timestamp.fromMillis(Date.now()+24*60*60*1000)
     });
+    await setDoc(doc(admin,"qrContacts/owner/members/member"),{uid:"member",addedAt:Timestamp.now()});
   });
   const member = testEnv.authenticatedContext("member").firestore();
+  const outsider = testEnv.authenticatedContext("outsider").firestore();
   await assertSucceeds(setDoc(doc(member,"statuses/status-interactions/likes/member"),{
     uid:"member",displayName:"Miembro",likedAt:serverTimestamp()
   }));
   await assertSucceeds(setDoc(doc(member,"statuses/status-interactions/views/member"),{
     uid:"member",displayName:"Miembro",viewedAt:serverTimestamp()
+  }));
+  await assertSucceeds(getDoc(doc(member,"statuses/status-interactions/likes/member")));
+  await assertFails(getDoc(doc(outsider,"statuses/status-interactions/likes/member")));
+  await assertFails(setDoc(doc(outsider,"statuses/status-interactions/likes/outsider"),{
+    uid:"outsider",displayName:"Desconocido",likedAt:serverTimestamp()
+  }));
+  await assertFails(setDoc(doc(outsider,"statuses/status-interactions/views/outsider"),{
+    uid:"outsider",displayName:"Desconocido",viewedAt:serverTimestamp()
   }));
 });
 
