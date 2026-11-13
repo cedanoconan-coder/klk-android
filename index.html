@@ -4299,7 +4299,8 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
  const reset=()=>{scale=1;x=0;y=0;render()};
  let photoHistoryOpen=false;
  const hide=()=>{overlay.style.display='none';photo.removeAttribute('src');pointers.clear();reset();photoHistoryOpen=false};
- const requestClose=()=>{if(photoHistoryOpen)history.back();else hide()};
+ // Cerrar por gesto sin disparar popstate: otros paneles usan ese evento para salir del chat.
+ const requestClose=()=>{if(photoHistoryOpen){try{history.replaceState({klkPhotoViewerClosed:true},'',location.href)}catch(e){}}hide()};
  window.addEventListener('popstate',()=>{if(overlay.style.display!=='none')hide()});
  overlay.addEventListener('click',e=>{if(e.target===overlay)requestClose()});
  document.addEventListener('keydown',e=>{if(overlay.style.display==='none')return;if(e.key==='Escape'){e.preventDefault();requestClose()}else if(e.key==='ArrowLeft')showAdjacent(-1);else if(e.key==='ArrowRight')showAdjacent(1)});
