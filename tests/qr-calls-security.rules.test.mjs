@@ -106,3 +106,5 @@ test("candidatos ICE solo pueden ser escritos por el participante correspondient
   await assertSucceeds(setDoc(doc(db("bob"), "calls/call/calleeCandidates/one"), candidate));
   await assertFails(setDoc(doc(db("charlie"), "calls/call/calleeCandidates/two"), candidate));
 });
+
+// Tests run only against the isolated Firestore emulator.
