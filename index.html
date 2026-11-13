@@ -1236,6 +1236,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),textarea,select{font-size:max(16px,1em)}
 #chat.room-open #message{font-size:17px!important}
 </style>
+<style id="klk-compact-status-editor">#updatesPanel #statusComposer[hidden]{display:none!important}#updatesPanel #statusComposer{margin:8px 16px 12px!important;padding:12px!important;max-width:100%;border-radius:14px!important}#updatesPanel .statusComposerHeader{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}#updatesPanel #closeStatusComposer{width:34px;height:34px;min-width:34px;margin:0;padding:0;background:transparent;color:#333;font-size:20px}#updatesPanel #statusText{min-height:58px!important;max-height:120px!important}#updatesPanel .myStatusRow{margin-bottom:4px!important}</style>
 </head>
 <body>
 
@@ -1331,6 +1332,7 @@ input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),textarea,se
    <span class="myStatusCopy"><strong>Añadir estado</strong><small>Desaparece después de 24 horas.</small></span>
   </button>
   <div id="statusComposer" class="statusComposer" hidden>
+   <div class="statusComposerHeader"><strong>Crear estado</strong><button type="button" id="closeStatusComposer" aria-label="Cerrar editor de estados">✕</button></div>
    <textarea id="statusText" rows="3" maxlength="500" placeholder="¿Qué quieres compartir hoy?"></textarea>
    <div class="statusComposerActions">
     <div class="klkStatusMediaPicker" role="group" aria-label="Añadir imagen al estado">
@@ -2933,7 +2935,10 @@ $("sendAudio").onclick = async () => {
 <script>
 (()=>{const $=id=>document.getElementById(id);const expiryMs=86400000;
  const composer=$("statusComposer"),searchWrap=$("statusSearchWrap"),searchInput=$("statusSearchInput");
- function openStatusComposer(focusText=false){if(composer)composer.hidden=false;if(focusText)setTimeout(()=>$("statusText")?.focus(),60);composer?.scrollIntoView({behavior:"smooth",block:"nearest"});}
+ function openStatusComposer(focusText=false){if(!composer)return;composer.hidden=false;if(focusText)setTimeout(()=>$("statusText")?.focus(),60);composer.scrollIntoView({behavior:"smooth",block:"nearest"});}
+ function closeStatusComposer(){if(composer)composer.hidden=true;}
+ $("closeStatusComposer")?.addEventListener("click",closeStatusComposer);
+ document.querySelectorAll("[data-home-tab],.bottomNav button,.homeNav button").forEach(tab=>tab.addEventListener("click",()=>{if(!tab.closest("#statusComposer"))closeStatusComposer();}));
  $("addStatusButton")?.addEventListener("click",()=>openStatusComposer(true));
  $("statusTextFab")?.addEventListener("click",()=>openStatusComposer(true));
  $("statusPhotoFab")?.addEventListener("click",()=>{openStatusComposer(false);$("statusPhoto")?.click();});
@@ -3064,7 +3069,7 @@ $("sendAudio").onclick = async () => {
 }
  async function publish(){const user=window.auth&&window.auth.currentUser,text=$("statusText").value.trim(),files=Array.from($("statusPhoto").files||[]),btn=$("publishStatus");const selected=window.klkStatusEditedFiles&&window.klkStatusEditedFiles.length?window.klkStatusEditedFiles:files;const batch=selected.length?selected:[null];if(!user){$("statusFeedback").textContent="Inicia sesión para publicar.";return;}if(!text&&!selected.length){$("statusFeedback").textContent="Escribe algo o selecciona una foto o video.";return;}if(selected.some(file=>!(file.type.startsWith("image/")||file.type.startsWith("video/"))||file.size>(file.type.startsWith("video/")?150*1048576:30*1048576))){$("statusFeedback").textContent="Las fotos deben pesar hasta 10 MB y los videos hasta 50 MB.";return;}btn.disabled=true;$("statusFeedback").textContent="Preparando archivos para publicar...";
  try{for(const file of batch){let path="",mime="",size=0;if(file){$("statusFeedback").textContent="Optimizando y subiendo "+(file.type.startsWith("video/")?"video":"foto")+"...";const upload=file.type.startsWith("video/")?await klkCompressStatusVideo(file,msg=>$("statusFeedback").textContent=msg):await compressImage(file);if(upload.size>(file.type.startsWith("video/")?52428800:10485760))throw new Error("El archivo sigue siendo demasiado grande después de optimizarlo. Prueba un video más corto.");mime=(upload.type||file.type).split(";")[0].trim().toLowerCase();size=upload.size;const token=await user.getIdToken(),res=await fetch(window.KLK_SUPABASE_URL+"/functions/v1/media",{method:"POST",headers:{"Content-Type":"application/json","apikey":window.KLK_SUPABASE_PUBLISHABLE_KEY,"Authorization":"Bearer "+token},body:JSON.stringify({action:"create-upload",type:"status",size,mimeType:mime})}),signed=await res.json().catch(()=>({}));if(!res.ok||!signed.path||!signed.token)throw new Error(signed.error||"No se pudo preparar el archivo. Comprueba que el servicio de almacenamiento permita videos.");const result=await getSupabaseClient().storage.from("Chat-media").uploadToSignedUrl(signed.path,signed.token,upload,{contentType:mime});if(result.error)throw result.error;path=signed.path;}
- const profile=peopleCache.get(user.uid)||{},data={uid:user.uid,displayName:profile.displayName||user.displayName||(user.email||"Miembro").split("@")[0],type:file?(file.type.startsWith("video/")?"video":"image"):"text",text:text.slice(0,500),createdAt:firebase.firestore.FieldValue.serverTimestamp(),expiresAt:firebase.firestore.Timestamp.fromMillis(Date.now()+expiryMs)};if(file)Object.assign(data,{storagePath:path,mimeType:mime,size});await window.db.collection("statuses").add(data);}$("statusText").value="";$("statusPhoto").value="";window.klkStatusEditedFiles=[];document.dispatchEvent(new Event("klk-status-published"));$("statusFeedback").textContent="¡Estados publicados! Durarán 24 horas.";await refresh();
+ const profile=peopleCache.get(user.uid)||{},data={uid:user.uid,displayName:profile.displayName||user.displayName||(user.email||"Miembro").split("@")[0],type:file?(file.type.startsWith("video/")?"video":"image"):"text",text:text.slice(0,500),createdAt:firebase.firestore.FieldValue.serverTimestamp(),expiresAt:firebase.firestore.Timestamp.fromMillis(Date.now()+expiryMs)};if(file)Object.assign(data,{storagePath:path,mimeType:mime,size});await window.db.collection("statuses").add(data);}$("statusText").value="";$("statusPhoto").value="";window.klkStatusEditedFiles=[];document.dispatchEvent(new Event("klk-status-published"));$("statusFeedback").textContent="¡Estados publicados! Durarán 24 horas.";closeStatusComposer();await refresh();
  }catch(e){console.error(e);$("statusFeedback").textContent="No se pudo publicar: "+(e.message||"revisa las reglas y el servicio de archivos.");}finally{btn.disabled=false;}}
  $("publishStatus").addEventListener("click",publish);$("refreshStatuses").addEventListener("click",refresh);if(window.auth)window.auth.onAuthStateChanged(user=>{if(user)refresh();else $("statusesFeed").innerHTML='<p class="hint">Inicia sesión para ver estados.</p>';});window.klkRenderStatuses=refresh;
 })();
