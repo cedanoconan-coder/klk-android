@@ -1,6 +1,8 @@
 self.addEventListener("notificationclick", event => {
   event.notification.close();
-  const target = new URL(event.notification.data && event.notification.data.url || "./", self.location.origin).href;
+  const info = event.notification.data || {};
+  const target = new URL(info.url || "./", self.location.origin).href;
+  if (event.action === "decline") return;
   event.waitUntil((async () => {
     const clientsList = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
     for (const client of clientsList) {
@@ -25,6 +27,19 @@ firebase.initializeApp({
 const messaging = firebase.messaging();
 messaging.onBackgroundMessage(payload => {
   const data = payload && payload.data ? payload.data : {};
+  if (data.type === "incoming_call" && typeof data.callId === "string" && /^[a-zA-Z0-9_-]{1,128}$/.test(data.callId)) {
+    const video = data.mode === "video";
+    const caller = typeof data.callerName === "string" ? data.callerName.slice(0,80) : "Un contacto";
+    return self.registration.showNotification("KLK · Llamada entrante", {
+      body: caller + (video ? " te está videollamando" : " te está llamando"),
+      icon: "./icon.svg", badge: "./icon.svg",
+      tag: "klk-call-" + data.callId, renotify: true,
+      requireInteraction: true,
+      vibrate: [350,150,350,150,350],
+      data: { url: "./?incomingCall=" + encodeURIComponent(data.callId) },
+      actions: [{action:"answer",title:"Abrir llamada"},{action:"decline",title:"Cerrar aviso"}]
+    });
+  }
   const title = data.title || "klk · Nuevo mensaje";
   const body = typeof data.body === "string" && data.body.trim() ? data.body.trim().slice(0,240) : "Tienes un mensaje nuevo";
   return self.registration.showNotification(title, {
