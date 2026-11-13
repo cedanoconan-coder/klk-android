@@ -1260,7 +1260,7 @@ input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),textarea,se
 #chat.room-open .composer #send .sendGlyph{width:27px!important;height:27px!important}
 #chat.room-open .composer #send:active{transform:translateY(2px)!important;box-shadow:0 1px 0 #51217f,0 3px 6px rgba(68,28,109,.24)!important}
 @media(max-width:360px){#chat.room-open .composer #send{width:50px!important;min-width:50px!important;height:50px!important;flex-basis:50px!important}}
-</style><style id="klk-message-replies-v1">#klkReplyPreview{display:flex;align-items:center;gap:9px;padding:8px 12px;margin:4px 10px;background:#f4eafa;border-left:4px solid #8543c2;border-radius:9px;color:#332442;font-size:13px}#klkReplyPreview[hidden]{display:none!important}#klkReplyPreview .klkReplyText{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#klkReplyPreview button{border:0;background:transparent;color:#65417f;font-size:22px}.klkQuotedMessage{padding:5px 9px;margin-bottom:5px;border-left:3px solid #9854c9;background:rgba(133,67,194,.1);border-radius:5px;font-size:12px;max-width:100%;overflow-wrap:anywhere}.klkQuotedMessage strong{display:block;font-size:11px}</style><style id="klk-reply-preview-fix">#chat #klkReplyPreview:not([hidden]){display:flex!important;visibility:visible!important;opacity:1!important;position:relative!important;z-index:8!important;min-height:60px!important;background:#f4eafa!important;color:#332442!important;align-items:center!important}#klkReplyPreview .klkReplyContent{display:flex!important;flex:1!important;min-width:0!important;flex-direction:column!important;gap:4px!important}#klkReplyPreview .klkReplyName,#klkReplyPreview .klkReplyText{display:block!important;visibility:visible!important;color:#332442!important;white-space:normal!important;overflow-wrap:anywhere!important;line-height:1.4!important}#klkReplyPreview .klkReplyName{color:#7840a8!important;font-weight:700!important}#klkReplyPreview button{flex:0 0 36px!important;width:36px!important;min-width:36px!important;margin:0!important;padding:0!important}</style></head>
+</style><style id="klk-message-replies-v1">#klkReplyPreview{display:flex;align-items:center;gap:9px;padding:8px 12px;margin:4px 10px;background:#f4eafa;border-left:4px solid #8543c2;border-radius:9px;color:#332442;font-size:13px}#klkReplyPreview[hidden]{display:none!important}#klkReplyPreview .klkReplyText{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#klkReplyPreview button{border:0;background:transparent;color:#65417f;font-size:22px}.klkQuotedMessage{padding:5px 9px;margin-bottom:5px;border-left:3px solid #9854c9;background:rgba(133,67,194,.1);border-radius:5px;font-size:12px;max-width:100%;overflow-wrap:anywhere}.klkQuotedMessage strong{display:block;font-size:11px}</style><style id="klk-reply-draft-layout">#chat.room-open #klkReplyPreview:not([hidden]){flex:0 0 auto!important;flex-shrink:0!important;max-height:130px!important;overflow-y:auto!important}#chat.room-open .composer{flex-shrink:0!important}</style><style id="klk-reply-preview-fix">#chat #klkReplyPreview:not([hidden]){display:flex!important;visibility:visible!important;opacity:1!important;position:relative!important;z-index:8!important;min-height:60px!important;background:#f4eafa!important;color:#332442!important;align-items:center!important}#klkReplyPreview .klkReplyContent{display:flex!important;flex:1!important;min-width:0!important;flex-direction:column!important;gap:4px!important}#klkReplyPreview .klkReplyName,#klkReplyPreview .klkReplyText{display:block!important;visibility:visible!important;color:#332442!important;white-space:normal!important;overflow-wrap:anywhere!important;line-height:1.4!important}#klkReplyPreview .klkReplyName{color:#7840a8!important;font-weight:700!important}#klkReplyPreview button{flex:0 0 36px!important;width:36px!important;min-width:36px!important;margin:0!important;padding:0!important}</style></head>
 <body>
 
 <main>
@@ -2405,7 +2405,7 @@ async function openPrivateConversation(otherUid, otherName) {
   klkPushView("conversation");$("chat").classList.add("room-open"); const chatFooter=$("chat").querySelector(".chatFoot"); if(chatFooter){chatFooter.hidden=false;chatFooter.style.display="block";} $("chatTitle").textContent = otherName; updateRoomAvatar(otherUid);
   $("dmPanel").style.display = "none"; $("messages").style.display = "block";
   const composer=document.querySelector(".composer"); if(composer) composer.style.display="flex"; const recordStatus=$("recordStatus"); if(recordStatus) recordStatus.style.display="block";
-  $("chatStatus").textContent = "Conversación privada con " + otherName; $("roomWallpaperPanel").hidden=true; applyRoomWallpaper(); loadMessages();
+  $("chatStatus").textContent = "Conversación privada con " + otherName; $("roomWallpaperPanel").hidden=true; applyRoomWallpaper(); klkRestoreReplyDraft(); loadMessages();
  } catch(error) { showError("chatStatus",error); }
 }
 $("showGroup").onclick = () => { $("chatStatus").textContent = "klk permite conversaciones privadas entre miembros."; };
@@ -2604,11 +2604,29 @@ $("message").addEventListener("input",()=>{
  klkActivityTimeout=setTimeout(()=>{void klkPublishActivity("online")},3500);
 });
 $("message").addEventListener("blur",()=>{if(klkActivityTimeout)clearTimeout(klkActivityTimeout);void klkPublishActivity("idle")});
+const KLK_REPLY_DRAFT_KEY="klk-reply-draft-v1";
 let klkReplyTarget=null;
+function klkSaveReplyDraft(){
+ try{if(klkReplyTarget)sessionStorage.setItem(KLK_REPLY_DRAFT_KEY,JSON.stringify(klkReplyTarget));
+ else sessionStorage.removeItem(KLK_REPLY_DRAFT_KEY);}catch(error){console.warn("No se pudo guardar la respuesta pendiente",error);}
+}
+function klkRestoreReplyDraft(){
+ if(!activeConversationId||klkReplyTarget)return;
+ try{
+  const saved=JSON.parse(sessionStorage.getItem(KLK_REPLY_DRAFT_KEY)||"null");
+  if(saved&&saved.id&&saved.conversationId===activeConversationId){
+   klkReplyTarget=saved;
+   klkReplyPreview.querySelector(".klkReplyName").textContent="Responder a "+(saved.name||"Contacto");
+   klkReplyPreview.querySelector(".klkReplyText").textContent=saved.text||"Mensaje";
+   klkEnsureReplyVisible();
+  }
+ }catch(error){console.warn("No se pudo restaurar la respuesta pendiente",error);}
+}
+
 const klkReplyPreview=document.createElement("div");klkReplyPreview.id="klkReplyPreview";klkReplyPreview.hidden=true;
 klkReplyPreview.innerHTML='<div class="klkReplyContent" style="display:flex!important;flex:1!important;min-width:0!important;flex-direction:column!important;visibility:visible!important;opacity:1!important;color:#332442!important"><strong class="klkReplyName" style="display:block!important;visibility:visible!important;opacity:1!important;color:#7840a8!important;font-size:13px!important"></strong><span class="klkReplyText" style="display:block!important;visibility:visible!important;opacity:1!important;color:#332442!important;font-size:14px!important;white-space:normal!important;overflow:visible!important;text-overflow:clip!important"></span></div><button type="button" aria-label="Cancelar respuesta">×</button>';
 $("message").closest(".composer").parentNode.insertBefore(klkReplyPreview,$("message").closest(".composer"));
-function klkClearReply(){klkReplyTarget=null;klkReplyPreview.hidden=true;klkReplyPreview.style.removeProperty("display");klkReplyPreview.style.removeProperty("visibility");klkReplyPreview.style.removeProperty("opacity");}
+function klkClearReply(){klkReplyTarget=null;klkSaveReplyDraft();klkReplyPreview.hidden=true;klkReplyPreview.style.removeProperty("display");klkReplyPreview.style.removeProperty("visibility");klkReplyPreview.style.removeProperty("opacity");}
 klkReplyPreview.querySelector("button").onclick=klkClearReply;
 // Keep the reply attached to the composer across keyboard, viewport and chat refreshes.
 function klkEnsureReplyVisible(){
@@ -2627,9 +2645,9 @@ $("message").addEventListener("focus",klkEnsureReplyVisible);
 $("message").addEventListener("input",klkEnsureReplyVisible);
 window.addEventListener("resize",klkEnsureReplyVisible);
 if(window.visualViewport)window.visualViewport.addEventListener("resize",klkEnsureReplyVisible);
-new MutationObserver(()=>{if(klkReplyTarget)klkEnsureReplyVisible()}).observe($("chat"),{childList:true,subtree:true,attributes:true,attributeFilter:["hidden","style","class"]});
+new MutationObserver(()=>{if(klkReplyTarget)klkEnsureReplyVisible()}).observe($("chat"),{childList:true,subtree:true,attributes:true,attributeFilter:["hidden","class"]});
 
-window.klkSetReply=function(item){if(!item||item.conversationId!==activeConversationId)return;const d=item.data||{};klkReplyTarget={id:item.id,conversationId:item.conversationId,uid:d.uid||"",name:d.displayName||"Contacto",text:(d.text||({"image":"📷 Foto","audio":"🎤 Audio","file":"📎 Archivo","sticker":"Sticker"}[d.type])||"Mensaje").slice(0,180)};klkReplyPreview.querySelector(".klkReplyName").textContent="Responder a "+klkReplyTarget.name;klkReplyPreview.querySelector(".klkReplyText").textContent=klkReplyTarget.text;klkReplyPreview.hidden=false;klkReplyPreview.style.setProperty("display","flex","important");klkReplyPreview.style.setProperty("visibility","visible","important");klkReplyPreview.style.setProperty("opacity","1","important");};
+window.klkSetReply=function(item){if(!item||item.conversationId!==activeConversationId)return;const d=item.data||{};klkReplyTarget={id:item.id,conversationId:item.conversationId,uid:d.uid||"",name:d.displayName||"Contacto",text:(d.text||({"image":"📷 Foto","audio":"🎤 Audio","file":"📎 Archivo","sticker":"Sticker"}[d.type])||"Mensaje").slice(0,180)};klkReplyPreview.querySelector(".klkReplyName").textContent="Responder a "+klkReplyTarget.name;klkReplyPreview.querySelector(".klkReplyText").textContent=klkReplyTarget.text;klkReplyPreview.hidden=false;klkReplyPreview.style.setProperty("display","flex","important");klkReplyPreview.style.setProperty("visibility","visible","important");klkReplyPreview.style.setProperty("opacity","1","important");klkSaveReplyDraft();klkEnsureReplyVisible();};
 $("send").onclick = async () => {
  const input=$("message"), text=input.value.trim(), user=auth&&auth.currentUser;
  if (!user || !activeConversationId) { $("chatStatus").textContent = "Abre una conversación privada antes de enviar mensajes."; return; }
