@@ -1064,7 +1064,8 @@ html[data-theme="dark"] #chat.room-open .attachmentGrid button:nth-child(5) .att
 .klkUpdates .statusTextFab{bottom:calc(192px + env(safe-area-inset-bottom))!important;width:54px;height:54px;border-radius:18px;background:#006458;color:white}
 .klkUpdates .statusPhotoFab{bottom:calc(116px + env(safe-area-inset-bottom))!important;width:62px;height:62px;border-radius:20px;background:#006458;color:white}
 @media(max-height:650px){.klkUpdates .statusTextFab{bottom:calc(172px + env(safe-area-inset-bottom))!important}.klkUpdates .statusPhotoFab{bottom:calc(104px + env(safe-area-inset-bottom))!important}}
-</style>\n<style>
+</style>
+<style>
 /* Smooth vertical swipe in Novedades, with bottom controls unobstructed */
 #updatesPanel.klkUpdates:not([hidden]){height:calc(100dvh - 210px);min-height:320px;max-height:calc(100dvh - 160px);overflow-y:auto!important;overflow-x:hidden!important;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;padding-bottom:190px!important;scroll-behavior:smooth;box-sizing:border-box;scrollbar-width:thin;scrollbar-color:#c8dcd5 transparent}
 #updatesPanel.klkUpdates .statusFab{position:fixed!important}
@@ -1966,7 +1967,7 @@ auth && auth.onAuthStateChanged(async user => {
  const publicProfile={uid:user.uid,displayName:((privateProfile.displayName||user.displayName||(user.email||"").split("@")[0]||"").trim().length>=2?(privateProfile.displayName||user.displayName||(user.email||"").split("@")[0]).trim():"Miembro"),about:privateProfile.about||"",mood:privateProfile.mood||"",directoryVisible:privateProfile.directoryVisible!==false,updatedAt:firebase.firestore.FieldValue.serverTimestamp()};
  if(privateProfile.photoPath)publicProfile.photoPath=privateProfile.photoPath;
  await db.collection("publicProfiles").doc(user.uid).set(publicProfile,{merge:true});
- loadPeople(); loadContactRequests(); loadMyProfile(); setHomeTab("chats");
+ loadPeople(); syncConversationListeners(); loadContactRequests(); loadMyProfile(); setHomeTab("chats");
   } catch(error) {
    showError("chatStatus",error);
   }
@@ -2240,7 +2241,7 @@ function syncConversationListeners(){
    },error=>showError("chatStatus",error));
   }
   renderConversations();
- },error=>showError("chatStatus",error));
+ },error=>{showError("chatStatus",error);const list=$("chatsList");if(list&&list.textContent==="Cargando conversaciones...")list.textContent="No se pudieron cargar las conversaciones. Comprueba tu conexión y vuelve a intentar.";});
 }
 function renderRequests() {
  const list=$("requestsList");
