@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: ["main"]
   push:
-    branches: ["main", "market-readiness", "integrar-supabase-storage", "features/notificaciones-ajustes", "build/klk-ajustes-apk", "feature/complete-interface-settings", "feature/invitation-only-registration", "fix/integral-klk-reliability"]
+    branches: ["main", "test/update-check-v156", "market-readiness", "integrar-supabase-storage", "features/notificaciones-ajustes", "build/klk-ajustes-apk", "feature/complete-interface-settings", "feature/invitation-only-registration", "fix/integral-klk-reliability"]
   workflow_dispatch:
 
 permissions:
@@ -38,7 +38,7 @@ jobs:
         run: |
           set -e
           mkdir -p www
-          cp index.html calls.js chat-camera.js qr-contacts.js icon.svg manifest.webmanifest sw.js www/
+          cp index.html calls.js chat-camera.js qr-contacts.js icon.svg manifest.webmanifest sw.js version.json www/
           if [ -d assets ]; then cp -R assets www/; fi
           # Evitar generar una APK incompleta si falta un recurso esencial.
           test -s www/chat-camera.js
