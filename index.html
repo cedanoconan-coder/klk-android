@@ -2610,6 +2610,25 @@ klkReplyPreview.innerHTML='<div class="klkReplyContent" style="display:flex!impo
 $("message").closest(".composer").parentNode.insertBefore(klkReplyPreview,$("message").closest(".composer"));
 function klkClearReply(){klkReplyTarget=null;klkReplyPreview.hidden=true;klkReplyPreview.style.removeProperty("display");klkReplyPreview.style.removeProperty("visibility");klkReplyPreview.style.removeProperty("opacity");}
 klkReplyPreview.querySelector("button").onclick=klkClearReply;
+// Keep the reply attached to the composer across keyboard, viewport and chat refreshes.
+function klkEnsureReplyVisible(){
+ if(!klkReplyTarget||klkReplyTarget.conversationId!==activeConversationId)return;
+ const composer=$("message").closest(".composer");
+ if(!composer||!composer.parentNode)return;
+ if(klkReplyPreview.parentNode!==composer.parentNode||klkReplyPreview.nextElementSibling!==composer){
+  composer.parentNode.insertBefore(klkReplyPreview,composer);
+ }
+ if(klkReplyPreview.hidden)klkReplyPreview.hidden=false;
+ klkReplyPreview.style.setProperty("display","flex","important");
+ klkReplyPreview.style.setProperty("visibility","visible","important");
+ klkReplyPreview.style.setProperty("opacity","1","important");
+}
+$("message").addEventListener("focus",klkEnsureReplyVisible);
+$("message").addEventListener("input",klkEnsureReplyVisible);
+window.addEventListener("resize",klkEnsureReplyVisible);
+if(window.visualViewport)window.visualViewport.addEventListener("resize",klkEnsureReplyVisible);
+new MutationObserver(()=>{if(klkReplyTarget)klkEnsureReplyVisible()}).observe($("chat"),{childList:true,subtree:true,attributes:true,attributeFilter:["hidden","style","class"]});
+
 window.klkSetReply=function(item){if(!item||item.conversationId!==activeConversationId)return;const d=item.data||{};klkReplyTarget={id:item.id,conversationId:item.conversationId,uid:d.uid||"",name:d.displayName||"Contacto",text:(d.text||({"image":"📷 Foto","audio":"🎤 Audio","file":"📎 Archivo","sticker":"Sticker"}[d.type])||"Mensaje").slice(0,180)};klkReplyPreview.querySelector(".klkReplyName").textContent="Responder a "+klkReplyTarget.name;klkReplyPreview.querySelector(".klkReplyText").textContent=klkReplyTarget.text;klkReplyPreview.hidden=false;klkReplyPreview.style.setProperty("display","flex","important");klkReplyPreview.style.setProperty("visibility","visible","important");klkReplyPreview.style.setProperty("opacity","1","important");};
 $("send").onclick = async () => {
  const input=$("message"), text=input.value.trim(), user=auth&&auth.currentUser;
