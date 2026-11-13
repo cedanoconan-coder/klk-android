@@ -1241,7 +1241,8 @@ input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),textarea,se
 
 <main>
 <button id="installApp" class="secondary" type="button" hidden>Instalar klk en este teléfono</button>
-<section id="login" class="card">
+<div id="klkSessionLoading" role="status" aria-live="polite" style="text-align:center;padding:48px 16px;color:#66548c">Abriendo KLK…</div>
+<section id="login" class="card" style="display:none">
 <div class="loginBrand"><img onerror="this.onerror=null;this.src='./icon.svg'" src="./assets/animaci%C3%B3n_ne%C3%B3n_del_logo_klk.png?v=137" alt="Personajes animados de KLK" decoding="async"><span>klk</span><p>Conecta. Comparte. Dale 👍.</p></div>
 <h2>Bienvenido a klk</h2><p>Entra o crea tu cuenta familiar.</p>
 <form id="authForm">
@@ -1770,7 +1771,7 @@ try {
   console.warn("No se pudo activar el almacenamiento sin conexión de Firestore:", error);
   return false;
  });
-} catch (error) { firebaseInitError = error; $("status").textContent = "No se pudo iniciar Firebase. Comprueba la conexión a Internet y vuelve a abrir klk. Detalle: " + error.message; }
+} catch (error) { firebaseInitError = error; $("klkSessionLoading").style.display="none"; $("login").style.display="block"; $("status").textContent = "No se pudo iniciar Firebase. Comprueba la conexión a Internet y vuelve a abrir klk. Detalle: " + error.message; }
 // Compartir Firebase con los módulos externos de KLK.
 window.auth = auth || null;
 window.db = db || null;
@@ -1951,6 +1952,7 @@ $("enableBiometric").addEventListener("click",()=>{let saved=null;try{saved=JSON
 $("unlockBiometric").addEventListener("click",unlockKlkBiometric);
 try{const savedBiometric=JSON.parse(localStorage.getItem(KLK_BIOMETRIC_KEY)||"null");if(savedBiometric)$("enableBiometric").textContent="Activada";}catch(e){}
 auth && auth.onAuthStateChanged(async user => {
+ $("klkSessionLoading").style.display="none";
  if(user&&!invitationActivationInProgress&&!user.emailVerified){
   try{
    const existingProfile=await db.collection("users").doc(user.uid).get();
