@@ -4462,4 +4462,11 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
 @media(prefers-reduced-motion:reduce){#homeView .homeBottom button{transition:none!important}}
 </style>
 <script id="klk-momentos-entry">(()=>{const b=document.getElementById('klkMomentosToggle'),p=document.getElementById('klkMomentosBody');if(!b||!p)return;b.addEventListener('click',()=>{p.hidden=!p.hidden;b.setAttribute('aria-expanded',String(!p.hidden));b.textContent=p.hidden?'Abrir':'Cerrar';});})();</script>
+
+<style id="klk-white-chat-header-final-override">
+/* Última regla: evita que el antiguo tema lavanda vuelva a pintar la fila del contacto. */
+html body #chat.room-open .chatTop,html body.klk-custom-accent #chat.room-open .chatTop{background:#fff!important;background-image:none!important;color:#172126!important;border-bottom:1px solid #e5e7eb!important}
+html body #chat.room-open .chatTop #chatTitle,html body #chat.room-open .chatTop #who,html body #chat.room-open .chatTop .roomIdentity,html body #chat.room-open .chatTop .roomActions button,html body #chat.room-open .chatTop .chatBack,html body #chat.room-open .chatTop button{color:#172126!important}
+html body #chat.room-open .chatTop .muted,html body #chat.room-open .chatTop .klkPresenceOffline,html body #chat.room-open .chatTop #who{color:#52616b!important;opacity:1!important}
+</style>
 </body></html>
