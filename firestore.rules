@@ -245,7 +245,8 @@ service cloud.firestore {
         && request.resource.data.title is string && request.resource.data.title.size() > 0 && request.resource.data.title.size() <= 80
         && request.resource.data.text is string && request.resource.data.text.size() > 0 && request.resource.data.text.size() <= 3000
         && request.resource.data.createdAt == request.time
-        && request.resource.data.expiresAt == request.time + duration.value(24, 'h');
+        && request.resource.data.expiresAt >= request.time + duration.value(24, 'h') - duration.value(2, 'm')
+        && request.resource.data.expiresAt <= request.time + duration.value(24, 'h') + duration.value(2, 'm');
       allow delete: if signedIn() && request.auth.uid == authorUid;
       allow update: if false;
       match /reactions/{reactorUid} {
