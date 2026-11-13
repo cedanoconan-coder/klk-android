@@ -4691,4 +4691,39 @@ html body #chat.room-open .chatTop,html body.klk-custom-accent #chat.room-open .
 html body #chat.room-open .chatTop #chatTitle,html body #chat.room-open .chatTop #who,html body #chat.room-open .chatTop .roomIdentity,html body #chat.room-open .chatTop .roomActions button,html body #chat.room-open .chatTop .chatBack,html body #chat.room-open .chatTop button{color:#172126!important}
 html body #chat.room-open .chatTop .muted,html body #chat.room-open .chatTop .klkPresenceOffline,html body #chat.room-open .chatTop #who{color:#52616b!important;opacity:1!important}
 </style>
+
+<script>
+/* Swipe to reply: touch gesture with vertical-scroll protection. */
+(()=>{
+ const box=document.getElementById("messages");
+ if(!box)return;
+ let start=null;
+ box.addEventListener("touchstart",e=>{
+  if(e.touches.length!==1||e.target.closest("button,a,audio,video,input")){start=null;return;}
+  const el=e.target.closest(".msg[data-message-id]");
+  start=el?{id:el.dataset.messageId,x:e.touches[0].clientX,y:e.touches[0].clientY,el}:null;
+ },{passive:true});
+ box.addEventListener("touchend",e=>{
+  if(!start||!e.changedTouches.length)return;
+  const gesture=start;start=null;
+  const dx=e.changedTouches[0].clientX-gesture.x,dy=e.changedTouches[0].clientY-gesture.y;
+  if(dx<65||Math.abs(dy)>Math.abs(dx)*0.65)return;
+  const record=window.klkMessageRecords&&window.klkMessageRecords.get(gesture.id);
+  if(!record||typeof window.klkSetReply!=="function")return;
+  window.klkSetReply({id:gesture.id,...record});
+  if(navigator.vibrate)navigator.vibrate(12);
+ },{passive:true});
+ box.addEventListener("touchcancel",()=>{start=null;},{passive:true});
+ box.addEventListener("click",e=>{
+  const quote=e.target.closest(".klkQuotedMessage");if(!quote)return;
+  const message=quote.closest(".msg[data-message-id]");
+  const record=message&&window.klkMessageRecords&&window.klkMessageRecords.get(message.dataset.messageId);
+  const id=record&&record.data&&record.data.replyTo&&record.data.replyTo.id;
+  if(!id)return;
+  const target=[...box.querySelectorAll(".msg[data-message-id]")].find(el=>el.dataset.messageId===id);
+  if(target){target.scrollIntoView({block:"center",behavior:"smooth"});target.classList.add("klk-reply-highlight");setTimeout(()=>target.classList.remove("klk-reply-highlight"),1500);}
+ });
+})();
+</script>
+<style>.klkQuotedMessage{cursor:pointer}.klk-reply-highlight{outline:2px solid #9854c9;outline-offset:3px;transition:outline .2s}</style>
 </body></html>
