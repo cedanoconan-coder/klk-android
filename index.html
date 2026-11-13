@@ -4181,24 +4181,87 @@ body.klk-custom-accent #chat header,body.klk-custom-accent #chat .topbar,body.kl
 #klkCropOverlay .cropHint{text-align:center;color:#d3d6dc;font-size:13px;margin:10px 0}
 </style>
 <script id="klk-touch-crop-js">
-(function(){function init(){const editor=document.getElementById('klkStatusEditor');if(!editor)return;const cropButton=editor.querySelector('[data-edit="crop"]');if(!cropButton)return;
-const overlay=document.createElement('div');overlay.id='klkCropOverlay';overlay.innerHTML='<div class="cropBar"><button type="button" data-crop="cancel">✕ Cancelar</button><strong>Recortar foto</strong><button type="button" data-crop="apply">✓ Aplicar</button></div><div class="cropStage"><div class="cropFrame"><canvas></canvas><span class="cropHandle" aria-label="Ajustar marco"></span></div></div><div class="cropBar"><button type="button" data-crop="free">Libre</button><button type="button" data-crop="square">1:1</button><button type="button" data-crop="portrait">9:16</button><button type="button" data-crop="rotate">↻ 90°</button></div><p class="cropHint">Arrastra la foto, pellizca para ampliar o arrastra la esquina para ajustar el marco.</p>';document.body.appendChild(overlay);
-const frame=overlay.querySelector('.cropFrame'),canvas=overlay.querySelector('canvas'),ctx=canvas.getContext('2d');let source=null,scale=1,offsetX=0,offsetY=0,turn=0,ratio=0,pointers=new Map(),lastDistance=0,lastCenter=null,resizing=false;
-function dims(){return turn%2?{w:source.height,h:source.width}:{w:source.width,h:source.height}}
-function frameSize(){const area=overlay.querySelector('.cropStage');let maxW=Math.min(area.clientWidth,460),maxH=Math.min(area.clientHeight,540);if(!maxW||!maxH)return;let r=ratio||dims().w/dims().h;let w=Math.min(maxW,maxH*r),h=w/r;frame.style.width=w+'px';frame.style.height=h+'px';paint()}
-function paint(){if(!source)return;const w=Math.max(1,Math.round(frame.clientWidth)),h=Math.max(1,Math.round(frame.clientHeight));canvas.width=w*2;canvas.height=h*2;ctx.setTransform(2,0,0,2,0,0);ctx.fillStyle='#17191c';ctx.fillRect(0,0,w,h);const d=dims(),fit=Math.max(w/d.w,h/d.h),k=fit*scale;ctx.save();ctx.translate(w/2+offsetX,h/2+offsetY);ctx.rotate(turn*Math.PI/2);ctx.drawImage(source,-source.width*k/2,-source.height*k/2,source.width*k,source.height*k);ctx.restore()}
-function close(){overlay.classList.remove('open');pointers.clear();source=null}
-cropButton.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();const current=editor.querySelector('.klkEditStrip button.active img');if(!current)return;source=new Image();source.onload=()=>{scale=1;offsetX=offsetY=turn=0;ratio=0;overlay.classList.add('open');requestAnimationFrame(frameSize)};source.src=current.src},true);
-overlay.querySelector('[data-crop="cancel"]').onclick=close;
-for(const [mode,r] of [['free',0],['square',1],['portrait',9/16]])overlay.querySelector('[data-crop="'+mode+'"]').onclick=()=>{ratio=r;offsetX=offsetY=0;scale=1;frameSize()};
-overlay.querySelector('[data-crop="rotate"]').onclick=()=>{turn=(turn+1)%4;offsetX=offsetY=0;scale=1;frameSize()};
-function dist(a,b){return Math.hypot(a.x-b.x,a.y-b.y)}function center(a,b){return{x:(a.x+b.x)/2,y:(a.y+b.y)/2}}
-frame.addEventListener('pointerdown',e=>{e.preventDefault();frame.setPointerCapture(e.pointerId);pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});resizing=e.target.classList.contains('cropHandle');lastDistance=0;lastCenter=null});
-frame.addEventListener('pointermove',e=>{if(!pointers.has(e.pointerId))return;e.preventDefault();const previous=pointers.get(e.pointerId);pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});if(resizing&&pointers.size===1){ratio=0;const w=Math.max(100,Math.min(overlay.querySelector('.cropStage').clientWidth,frame.clientWidth+(e.clientX-previous.x))),h=Math.max(100,Math.min(overlay.querySelector('.cropStage').clientHeight,frame.clientHeight+(e.clientY-previous.y)));frame.style.width=w+'px';frame.style.height=h+'px'}else if(pointers.size===2){const [a,b]=Array.from(pointers.values()),d=dist(a,b),c=center(a,b);if(lastDistance)scale=Math.max(1,Math.min(8,scale*d/lastDistance));if(lastCenter){offsetX+=c.x-lastCenter.x;offsetY+=c.y-lastCenter.y}lastDistance=d;lastCenter=c}else{offsetX+=e.clientX-previous.x;offsetY+=e.clientY-previous.y}paint()});
-function release(e){pointers.delete(e.pointerId);lastDistance=0;lastCenter=null;resizing=false}frame.addEventListener('pointerup',release);frame.addEventListener('pointercancel',release);
-overlay.querySelector('[data-crop="apply"]').onclick=async()=>{if(!source)return;const w=frame.clientWidth,h=frame.clientHeight,d=dims(),fit=Math.max(w/d.w,h/d.h),k=fit*scale;const out=document.createElement('canvas');const max=1600,quality=Math.min(max/w,max/h,2);out.width=Math.round(w*quality);out.height=Math.round(h*quality);const c=out.getContext('2d');c.scale(quality,quality);c.fillStyle='#17191c';c.fillRect(0,0,w,h);c.translate(w/2+offsetX,h/2+offsetY);c.rotate(turn*Math.PI/2);c.drawImage(source,-source.width*k/2,-source.height*k/2,source.width*k,source.height*k);const blob=await new Promise(ok=>out.toBlob(ok,'image/jpeg',.92));if(!blob)return;const input=document.getElementById('statusPhoto'),files=Array.from(input.files||[]),active=Array.from(editor.querySelectorAll('.klkEditStrip button')).findIndex(b=>b.classList.contains('active'));if(active<0)return;const replacement=new File([blob],'estado-recortado.jpg',{type:'image/jpeg'});files[active]=replacement;const dt=new DataTransfer();files.forEach(f=>dt.items.add(f));close();input.files=dt.files;input.dispatchEvent(new Event('change',{bubbles:true}));};
-window.addEventListener('resize',()=>{if(overlay.classList.contains('open'))frameSize()});
-}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init()})();
+(function(){
+function init(){
+ const editor=document.getElementById('klkStatusEditor'),button=editor?.querySelector('[data-edit="crop"]');
+ if(!button)return;
+ const overlay=document.createElement('div');overlay.id='klkCropOverlay';
+ overlay.innerHTML='<div class="cropBar"><button type="button" data-crop="cancel">✕ Cancelar</button><strong>Recortar foto</strong><button type="button" data-crop="apply">✓ Aplicar</button></div><div class="cropStage"><div class="cropFrame" style="border:0;overflow:visible;touch-action:none"><canvas style="width:100%;height:100%;display:block"></canvas><div class="klkSelection" style="position:absolute;border:2px solid white;box-sizing:border-box;touch-action:none;z-index:3;box-shadow:0 0 0 999px #0007"><span class="klkHandle" style="position:absolute;right:-9px;bottom:-9px;width:27px;height:27px;border-right:5px solid white;border-bottom:5px solid white;touch-action:none"></span></div></div></div><div class="cropBar"><button type="button" data-crop="free">Libre</button><button type="button" data-crop="square">1:1</button><button type="button" data-crop="portrait">9:16</button></div><p class="cropHint">La foto permanece fija. Arrastra el marco o sus esquinas; usa dos dedos para cambiar su tamaño.</p>';
+ document.body.appendChild(overlay);
+ const frame=overlay.querySelector('.cropFrame'),canvas=overlay.querySelector('canvas'),selection=overlay.querySelector('.klkSelection'),ctx=canvas.getContext('2d');
+ let source=null,rect={x:0,y:0,w:0,h:0},ratio=0,active=-1;const pointers=new Map();let gesture=null;
+ function clamp(v,min,max){return Math.max(min,Math.min(max,v))}
+ function display(){selection.style.left=rect.x+'px';selection.style.top=rect.y+'px';selection.style.width=rect.w+'px';selection.style.height=rect.h+'px'}
+ function fit(){
+  if(!source)return;
+  const stage=overlay.querySelector('.cropStage'),maxW=Math.max(100,stage.clientWidth-20),maxH=Math.max(100,stage.clientHeight-20);
+  const scale=Math.min(maxW/source.naturalWidth,maxH/source.naturalHeight,1);
+  const w=Math.max(1,Math.round(source.naturalWidth*scale)),h=Math.max(1,Math.round(source.naturalHeight*scale));
+  frame.style.width=w+'px';frame.style.height=h+'px';canvas.width=source.naturalWidth;canvas.height=source.naturalHeight;ctx.drawImage(source,0,0);
+  resetSelection();
+ }
+ function resetSelection(){
+  const w=frame.clientWidth,h=frame.clientHeight;
+  if(!w||!h)return;
+  let sw=w*.85,sh=h*.85;if(ratio){if(sw/sh>ratio)sw=sh*ratio;else sh=sw/ratio}
+  rect={x:(w-sw)/2,y:(h-sh)/2,w:sw,h:sh};display();
+ }
+ function resize(w,h,cx,cy){
+  const fw=frame.clientWidth,fh=frame.clientHeight;
+  w=clamp(w,32,fw);h=clamp(h,32,fh);
+  if(ratio){if(w/h>ratio)w=h*ratio;else h=w/ratio;w=Math.min(w,fw);h=Math.min(h,fh)}
+  rect.w=w;rect.h=h;rect.x=clamp(cx-w/2,0,fw-w);rect.y=clamp(cy-h/2,0,fh-h);display();
+ }
+ function close(){overlay.classList.remove('open');pointers.clear();gesture=null;source=null}
+ button.addEventListener('click',e=>{
+  e.preventDefault();e.stopImmediatePropagation();
+  const selected=editor.querySelector('.klkEditStrip button.active img');if(!selected)return;
+  active=Array.from(editor.querySelectorAll('.klkEditStrip button')).findIndex(b=>b.classList.contains('active'));
+  const img=new Image();img.onload=()=>{source=img;ratio=0;overlay.classList.add('open');requestAnimationFrame(fit)};img.src=selected.src;
+ },true);
+ overlay.querySelector('[data-crop="cancel"]').onclick=close;
+ for(const [mode,r] of [['free',0],['square',1],['portrait',9/16]])overlay.querySelector('[data-crop="'+mode+'"]').onclick=()=>{ratio=r;resetSelection()};
+ function coords(e){const b=frame.getBoundingClientRect();return{x:e.clientX-b.left,y:e.clientY-b.top}}
+ function distance(a,b){return Math.hypot(a.x-b.x,a.y-b.y)}
+ selection.addEventListener('pointerdown',e=>{
+  e.preventDefault();selection.setPointerCapture(e.pointerId);pointers.set(e.pointerId,coords(e));
+  const ps=[...pointers.values()];
+  if(ps.length===2){gesture={kind:'pinch',start:distance(ps[0],ps[1]),initial:{...rect}}}
+  else gesture={kind:e.target.classList.contains('klkHandle')?'resize':'move',start:coords(e),initial:{...rect}};
+ });
+ selection.addEventListener('pointermove',e=>{
+  if(!pointers.has(e.pointerId)||!gesture)return;e.preventDefault();pointers.set(e.pointerId,coords(e));
+  const ps=[...pointers.values()],initial=gesture.initial;
+  if(ps.length===2){
+   if(gesture.kind!=='pinch'){gesture={kind:'pinch',start:distance(ps[0],ps[1]),initial:{...rect}};return}
+   const factor=distance(ps[0],ps[1])/Math.max(1,gesture.start);
+   resize(initial.w*factor,initial.h*factor,initial.x+initial.w/2,initial.y+initial.h/2);
+  }else if(gesture.kind==='move'){
+   const p=coords(e);rect.x=clamp(initial.x+p.x-gesture.start.x,0,frame.clientWidth-rect.w);rect.y=clamp(initial.y+p.y-gesture.start.y,0,frame.clientHeight-rect.h);display();
+  }else if(gesture.kind==='resize'){
+   const p=coords(e),dx=p.x-gesture.start.x,dy=p.y-gesture.start.y;
+   let w=clamp(initial.w+dx,32,frame.clientWidth-initial.x),h=clamp(initial.h+dy,32,frame.clientHeight-initial.y);
+   if(ratio){if(w/h>ratio)w=h*ratio;else h=w/ratio}
+   rect={x:initial.x,y:initial.y,w,h};display();
+  }
+ });
+ function release(e){pointers.delete(e.pointerId);gesture=null}
+ selection.addEventListener('pointerup',release);selection.addEventListener('pointercancel',release);
+ overlay.querySelector('[data-crop="apply"]').onclick=async()=>{
+  if(!source||active<0)return;
+  const sx=Math.round(rect.x/frame.clientWidth*source.naturalWidth),sy=Math.round(rect.y/frame.clientHeight*source.naturalHeight);
+  const sw=Math.max(1,Math.min(source.naturalWidth-sx,Math.round(rect.w/frame.clientWidth*source.naturalWidth)));
+  const sh=Math.max(1,Math.min(source.naturalHeight-sy,Math.round(rect.h/frame.clientHeight*source.naturalHeight)));
+  const out=document.createElement('canvas');out.width=sw;out.height=sh;out.getContext('2d').drawImage(source,sx,sy,sw,sh,0,0,sw,sh);
+  const blob=await new Promise(ok=>out.toBlob(ok,'image/jpeg',.92));if(!blob)return;
+  const input=document.getElementById('statusPhoto'),files=Array.from(input.files||[]);
+  files[active]=new File([blob],'estado-recortado.jpg',{type:'image/jpeg'});
+  const dt=new DataTransfer();files.forEach(f=>dt.items.add(f));close();input.files=dt.files;input.dispatchEvent(new Event('change',{bubbles:true}));
+ };
+ window.addEventListener('resize',()=>{if(overlay.classList.contains('open'))fit()});
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
 </script>
 <style id="klk-status-autoplay-css">.statusViewerNav{display:none!important}.klkStatusProgress{display:flex;gap:4px;width:100%;padding:4px 0 10px}.klkStatusProgress span{height:3px;flex:1;border-radius:4px;background:#ffffff55}.klkStatusProgress span.done{background:#fff}.klkStatusProgress span.active{background:#fff;animation:klkStatusFill 5s linear}@keyframes klkStatusFill{from{opacity:.4}to{opacity:1}}#statusViewerContent{touch-action:pan-y;user-select:none}</style>
 <style id="klk-status-camera-style">#klkStatusCamera{display:none;position:fixed;inset:0;z-index:999999;background:#08090d;color:white;flex-direction:column;padding:env(safe-area-inset-top) 12px env(safe-area-inset-bottom);box-sizing:border-box}#klkStatusCamera.open{display:flex}#klkStatusCamera video{flex:1;width:100%;min-height:0;object-fit:cover;border-radius:14px}#klkStatusCamera .klkCameraBar{display:flex;justify-content:space-around;align-items:center;gap:10px;padding:16px 0}#klkStatusCamera button{width:auto;border:0;border-radius:30px;padding:12px 18px;background:#fff;color:#171717;font-weight:700}#klkStatusCamera button.recording{background:#e32944;color:white}#klkStatusCamera .klkCameraMessage{text-align:center;font-size:13px;padding:8px}</style>
