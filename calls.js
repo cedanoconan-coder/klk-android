@@ -193,11 +193,24 @@
    if(stream){$("remoteVideo").srcObject=stream;$("remoteAudio").srcObject=stream;}
    $("callStatus").textContent=callMode==="video"?"Videollamada conectada":"Llamada conectada";
   };
+  // A short network drop should not immediately end an established call.
+  // WebRTC can recover transient ICE disconnections without renegotiation.
+  let connectionWarningTimer=null;
+  const clearConnectionWarning=()=>{if(connectionWarningTimer!==null){clearTimeout(connectionWarningTimer);connectionWarningTimer=null;}};
   peer.onconnectionstatechange=()=>{
-   if(!peer)return;
-   if(peer.connectionState==="connected")$("callStatus").textContent=callMode==="video"?"Videollamada conectada":"Llamada conectada";
-   if(peer.connectionState==="failed")$("callStatus").textContent="No se pudo establecer la conexión. Comprueba la red e inténtalo de nuevo.";
-   if(peer.connectionState==="disconnected")$("callStatus").textContent="Conexión interrumpida. Intentando recuperar...";
+   const current=peer;if(!current)return;
+   const state=current.connectionState;
+   if(state==="connected"){clearConnectionWarning();$("callStatus").textContent=callMode==="video"?"Videollamada conectada":"Llamada conectada";return;}
+   if(state==="disconnected"){
+    $("callStatus").textContent="Conexión interrumpida. Esperando recuperación de la red...";
+    clearConnectionWarning();
+    connectionWarningTimer=setTimeout(()=>{connectionWarningTimer=null;if(peer===current&&current.connectionState==="disconnected")$("callStatus").textContent="La conexión sigue interrumpida. Revisa Internet; la llamada se recuperará si vuelve la señal.";},12000);
+   }
+   if(state==="failed"){
+    clearConnectionWarning();
+    $("callStatus").textContent="La conexión falló. Finaliza y vuelve a llamar si no se restablece.";
+   }
+   if(state==="closed")clearConnectionWarning();
   };
   peer.onicecandidate=async event=>{
    if(!event.candidate||!callRole)return;
