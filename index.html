@@ -2619,8 +2619,8 @@ function klkEnsureReplyVisible(){
   composer.parentNode.insertBefore(klkReplyPreview,composer);
  }
  if(klkReplyPreview.hidden)klkReplyPreview.hidden=false;
- klkReplyPreview.style.setProperty("display","flex","important");
- klkReplyPreview.style.setProperty("visibility","visible","important");
+ if(klkReplyPreview.style.getPropertyValue("display")!=="flex")klkReplyPreview.style.setProperty("display","flex","important");
+ if(klkReplyPreview.style.getPropertyValue("visibility")!=="visible")klkReplyPreview.style.setProperty("visibility","visible","important");
  klkReplyPreview.style.setProperty("opacity","1","important");
 }
 $("message").addEventListener("focus",klkEnsureReplyVisible);
