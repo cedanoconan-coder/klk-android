@@ -1,0 +1,48 @@
+
+name: Publicar reglas de Firestore
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: firestore-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Desplegar reglas
+    runs-on: ubuntu-latest
+
+    environment:
+      name: firestore-production
+
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Autenticar con Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
+
+      - name: Instalar Firebase CLI
+        run: npm install --global firebase-tools
+
+      - name: Validar archivos
+        run: |
+          test -s firebase.json
+          test -s firestore.rules
+
+      - name: Publicar reglas
+        run: |
+          firebase deploy \
+            --only firestore:rules \
+            --project klk-familia \
+            --non-interactive
