@@ -1237,7 +1237,18 @@ input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),textarea,se
 #chat.room-open #message{font-size:17px!important}
 </style>
 <style id="klk-compact-status-editor">#updatesPanel #statusComposer[hidden]{display:none!important}#updatesPanel #statusComposer{margin:8px 16px 12px!important;padding:12px!important;max-width:100%;border-radius:14px!important}#updatesPanel .statusComposerHeader{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}#updatesPanel #closeStatusComposer{width:34px;height:34px;min-width:34px;margin:0;padding:0;background:transparent;color:#333;font-size:20px}#updatesPanel #statusText{min-height:58px!important;max-height:120px!important}#updatesPanel .myStatusRow{margin-bottom:4px!important}</style>
-<style id="klk-room-action-icon-refresh">#roomWallpaperToggle,#roomCallMenu{display:inline-flex!important;align-items:center!important;justify-content:center!important;min-width:44px!important;min-height:44px!important;padding:7px!important}#roomWallpaperToggle svg,#roomCallMenu svg{display:block;width:28px;height:28px;flex-shrink:0}</style><style id="klk-last-activity-black">#chat #who,#chat #klkPeerActivity,#chat .roomIdentity #who,#chat .roomIdentity #klkPeerActivity{color:#000!important;opacity:1!important;-webkit-text-fill-color:#000!important}</style></head>
+<style id="klk-room-action-icon-refresh">#roomWallpaperToggle,#roomCallMenu{display:inline-flex!important;align-items:center!important;justify-content:center!important;min-width:44px!important;min-height:44px!important;padding:7px!important}#roomWallpaperToggle svg,#roomCallMenu svg{display:block;width:28px;height:28px;flex-shrink:0}</style><style id="klk-last-activity-black">#chat #who,#chat #klkPeerActivity,#chat .roomIdentity #who,#chat .roomIdentity #klkPeerActivity{color:#000!important;opacity:1!important;-webkit-text-fill-color:#000!important}</style><style id="klk-responsive-conversation-type">
+/* Responsive chat type: preserve the user's size preference while fitting narrow screens. */
+#chat.room-open #messages .msg{max-width:min(88%,calc(100vw - 56px));min-width:0;overflow-wrap:anywhere}
+#chat.room-open #messages .msg p,
+#chat.room-open #messages .msg .messageText,
+#chat.room-open #messages .msg .messageBody{
+ font-size:clamp(14px,calc(var(--klk-chat-text-size,15px) * .88 + 0.35vw),var(--klk-chat-text-size,15px))!important;
+ line-height:1.5!important;overflow-wrap:anywhere!important;word-break:normal!important;white-space:pre-wrap!important;max-width:100%;
+}
+#chat.room-open #messages .msg img,#chat.room-open #messages .msg video{max-width:100%;height:auto}
+@media(max-width:380px){#chat.room-open #messages .msg{max-width:92%}#chat.room-open #messages .msg p,#chat.room-open #messages .msg .messageText,#chat.room-open #messages .msg .messageBody{line-height:1.42!important}}
+</style></head>
 <body>
 
 <main>
