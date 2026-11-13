@@ -4289,19 +4289,21 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
  overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-label','Foto ampliada');
  overlay.style.cssText='display:none;position:fixed;inset:0;z-index:20000;background:#08070cf5;align-items:center;justify-content:center;overflow:hidden;touch-action:none';
  const photo=document.createElement('img');photo.alt='Foto ampliada';photo.style.cssText='max-width:100vw;max-height:100dvh;width:auto;height:auto;object-fit:contain;transform-origin:center;touch-action:none;user-select:none;-webkit-user-drag:none';
- const close=document.createElement('button');close.type='button';close.textContent='×';close.setAttribute('aria-label','Cerrar foto');close.style.cssText='position:absolute;z-index:2;top:calc(12px + env(safe-area-inset-top));right:15px;width:44px;height:44px;border:0;border-radius:50%;background:#ffffff33;color:white;font-size:30px;cursor:pointer';
- overlay.append(photo,close);document.body.appendChild(overlay);
+ // Visor limpio: sin botón X. El botón Atrás de Android cierra la foto.
+ overlay.append(photo);document.body.appendChild(overlay);
  let scale=1,x=0,y=0,lastTap=0,startDistance=0,startScale=1,startX=0,startY=0,pointers=new Map();
  const render=()=>{photo.style.transform='translate('+x+'px,'+y+'px) scale('+scale+')'};
  const reset=()=>{scale=1;x=0;y=0;render()};
- const hide=()=>{overlay.style.display='none';photo.removeAttribute('src');pointers.clear();reset()};
- close.addEventListener('click',hide);
- overlay.addEventListener('click',e=>{if(e.target===overlay)hide()});
- document.addEventListener('keydown',e=>{if(e.key==='Escape'&&overlay.style.display!=='none')hide()});
+ let photoHistoryOpen=false;
+ const hide=()=>{overlay.style.display='none';photo.removeAttribute('src');pointers.clear();reset();photoHistoryOpen=false};
+ const requestClose=()=>{if(photoHistoryOpen)history.back();else hide()};
+ window.addEventListener('popstate',()=>{if(overlay.style.display!=='none')hide()});
+ overlay.addEventListener('click',e=>{if(e.target===overlay)requestClose()});
+ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&overlay.style.display!=='none'){e.preventDefault();requestClose()}});
  document.addEventListener('click',e=>{
   const img=e.target.closest&&e.target.closest('#messages img, #roomMediaGrid img');
   if(!img||!img.src||img.closest('button')||img.classList.contains('avatar')||img.closest('.messageAvatar,.avatar,.profilePhoto'))return;
-  e.preventDefault();e.stopImmediatePropagation();photo.src=img.currentSrc||img.src;reset();overlay.style.display='flex';
+  e.preventDefault();e.stopImmediatePropagation();photo.src=img.currentSrc||img.src;reset();overlay.style.display='flex';history.pushState({klkPhotoViewer:true},'');photoHistoryOpen=true;
  },true);
  const distance=()=>{const p=[...pointers.values()];return Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y)};
  photo.addEventListener('pointerdown',e=>{
