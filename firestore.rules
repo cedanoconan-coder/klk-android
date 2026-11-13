@@ -73,7 +73,7 @@ service cloud.firestore {
 
     match /invitations/{code} {
       // Solo se permite consultar un código concreto; no se puede listar invitaciones.
-      allow get: if resource.data.redeemedBy == null;
+      allow get: if signedIn() && resource.data.redeemedBy == null && resource.data.expiresAt > request.time;
       allow list: if false;
       allow create: if signedIn()
         && request.resource.data.keys().hasOnly(['createdBy','createdAt','expiresAt','redeemedBy','redeemedAt'])
