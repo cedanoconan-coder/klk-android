@@ -1736,6 +1736,8 @@ function setBusy(busy) {
 try {
  firebase.initializeApp(firebaseConfig);
  auth = firebase.auth(); db = firebase.firestore();
+ // En redes móviles/proxies, evitar transportes de streaming que dejan consultas pendientes.
+ db.settings({experimentalAutoDetectLongPolling:true,useFetchStreams:false});
  authPersistenceReady = auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
  firestorePersistenceReady = db.enablePersistence({ synchronizeTabs: true }).then(() => true).catch(error => {
   console.warn("No se pudo activar el almacenamiento sin conexión de Firestore:", error);
