@@ -3305,6 +3305,9 @@ window.$("homeGroup").addEventListener("click",()=>{ window.$("chatStatus").text
 function klkPushView(view){try{history.pushState({klkView:view},"",location.href);}catch(error){console.warn("No se pudo registrar la navegación:",error);}}
 function toggleKlkSettings(){const panel=window.$("settingsPanel");const opening=panel.style.display!=="block";panel.style.display=opening?"block":"none";if(opening){panel.scrollTop=0;klkPushView("settings");}}
 window.addEventListener("popstate",()=>{
+ // El historial del visor de fotos no debe cerrar la conversación.
+ const photoViewer=document.getElementById("klkChatPhotoZoom");
+ if(photoViewer&&photoViewer.style.display!=="none")return;
  const settings=window.$("settingsPanel"),contact=window.$("contactProfilePanel"),profile=window.$("homeProfilePanel");
  if(settings&&settings.style.display==="block"){settings.style.display="none";return;}
  if(contact&&!contact.hidden&&contact.style.display!=="none"){closeContactProfile();return;}
