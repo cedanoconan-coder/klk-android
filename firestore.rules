@@ -586,6 +586,7 @@ service cloud.firestore {
         && request.resource.data.offer is map
         && request.resource.data.offer.type == 'offer'
         && request.resource.data.offer.sdp is string
+        && request.resource.data.offer.sdp.size() <= 200000
         && request.resource.data.createdAt == request.time
         && request.resource.data.updatedAt == request.time
         && isConversationMember(request.resource.data.conversationId);
