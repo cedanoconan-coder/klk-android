@@ -1204,6 +1204,23 @@ html,body{overscroll-behavior-y:contain}
 #chat.room-open .chatTop #who,#chat.room-open .chatTop .muted,#chat.room-open .chatTop .klkPresenceOffline{color:#58656c!important;opacity:1!important}
 #chat.room-open .chatTop button{background:transparent!important;color:#172126!important}
 </style>
+<style id="klkComposerComfort">
+/* Slightly larger message entry and send control, including on narrow phones. */
+#chat.room-open .composer #message{
+ min-height:54px!important;
+ height:54px!important;
+ font-size:17px!important;
+ padding-inline:18px!important;
+}
+#chat.room-open .composer #send{
+ flex:0 0 46px!important;
+ width:46px!important;
+ min-width:46px!important;
+ height:46px!important;
+ font-size:22px!important;
+}
+#chat.room-open .composer{min-height:68px!important}
+</style>
 <style id="klkConversationTextSize">
 /* Apply saved text preference to existing and newly received messages. */
 #chat.room-open #messages .msg p,
