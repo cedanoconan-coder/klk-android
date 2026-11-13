@@ -50,16 +50,27 @@ async function add(uid){
   }else{
    const id=current().uid+"_"+uid;
    const ref=db.collection("qrContactRequests").doc(id);
-   const old=await ref.get();
-   if(old.exists){
-    if(old.data().status==="approved"){
-     await db.collection("qrContacts").doc(current().uid).collection("members").doc(uid).set({uid,addedAt:serverTime()});
-     return notify("Contacto agregado");
+   // Do not read a nonexistent request: the get rule depends on resource.data
+   // and Firebase rejects that lookup before the first request exists.
+   try{
+    await ref.set({from:current().uid,to:uid,status:"pending",createdAt:serverTime(),updatedAt:serverTime()});
+    notify("Solicitud enviada. Espera su aprobación.");
+   }catch(writeError){
+    // An existing request is intentionally immutable to the sender.
+    // Fetch its status only after the create attempt has failed.
+    let existing=null;
+    try{existing=await ref.get();}catch(readError){}
+    if(existing?.exists){
+     if(existing.data().status==="approved"){
+      const member=db.collection("qrContacts").doc(current().uid).collection("members").doc(uid);
+      const linked=await member.get();
+      if(!linked.exists)await member.set({uid,addedAt:serverTime()});
+      return notify("Contacto agregado");
+     }
+     return notify("Esta solicitud ya existe: "+existing.data().status);
     }
-    return notify("Esta solicitud ya existe: "+old.data().status);
+    throw writeError;
    }
-   await ref.set({from:current().uid,to:uid,status:"pending",createdAt:serverTime(),updatedAt:serverTime()});
-   notify("Solicitud enviada. Espera su aprobación.");
   }
  }catch(e){notify("No se pudo agregar: "+e.message);}
 }
