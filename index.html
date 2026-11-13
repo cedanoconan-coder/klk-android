@@ -1064,7 +1064,8 @@ html[data-theme="dark"] #chat.room-open .attachmentGrid button:nth-child(5) .att
 .klkUpdates .statusTextFab{bottom:calc(192px + env(safe-area-inset-bottom))!important;width:54px;height:54px;border-radius:18px;background:#006458;color:white}
 .klkUpdates .statusPhotoFab{bottom:calc(116px + env(safe-area-inset-bottom))!important;width:62px;height:62px;border-radius:20px;background:#006458;color:white}
 @media(max-height:650px){.klkUpdates .statusTextFab{bottom:calc(172px + env(safe-area-inset-bottom))!important}.klkUpdates .statusPhotoFab{bottom:calc(104px + env(safe-area-inset-bottom))!important}}
-</style>\n<style>
+</style>
+<style>
 /* Smooth vertical swipe in Novedades, with bottom controls unobstructed */
 #updatesPanel.klkUpdates:not([hidden]){height:calc(100dvh - 210px);min-height:320px;max-height:calc(100dvh - 160px);overflow-y:auto!important;overflow-x:hidden!important;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;padding-bottom:190px!important;scroll-behavior:smooth;box-sizing:border-box;scrollbar-width:thin;scrollbar-color:#c8dcd5 transparent}
 #updatesPanel.klkUpdates .statusFab{position:fixed!important}
@@ -1945,8 +1946,9 @@ auth && auth.onAuthStateChanged(async user => {
   $("chatTitle").textContent = "👨‍👩‍👧‍👦 Familia klk"; $("dmPanel").style.display = "none"; $("messages").style.display = "block";
   try {
    await authPersistenceReady;
-   const persistenceEnabled = await firestorePersistenceReady;
-   if (!persistenceEnabled) console.warn("Klk seguirá funcionando conectado, pero el modo sin conexión no quedó disponible en este navegador.");
+   // La sincronización de mensajes no debe esperar a escrituras de perfil ni a la caché offline.
+   syncConversationListeners(); loadPeople(); loadContactRequests(); loadMyProfile(); setHomeTab("chats");
+   firestorePersistenceReady.then(enabled=>{if(!enabled)console.warn("Caché offline de Firestore no disponible.");}).catch(console.warn);
    const profileRef = db.collection("users").doc(user.uid);
    const profileSnapshot = await profileRef.get();
    if (!profileSnapshot.exists) {
@@ -1960,7 +1962,6 @@ auth && auth.onAuthStateChanged(async user => {
  const publicProfile={uid:user.uid,displayName:((privateProfile.displayName||user.displayName||(user.email||"").split("@")[0]||"").trim().length>=2?(privateProfile.displayName||user.displayName||(user.email||"").split("@")[0]).trim():"Miembro"),about:privateProfile.about||"",mood:privateProfile.mood||"",directoryVisible:privateProfile.directoryVisible!==false,updatedAt:firebase.firestore.FieldValue.serverTimestamp()};
  if(privateProfile.photoPath)publicProfile.photoPath=privateProfile.photoPath;
  await db.collection("publicProfiles").doc(user.uid).set(publicProfile,{merge:true});
- syncConversationListeners(); loadPeople(); loadContactRequests(); loadMyProfile(); setHomeTab("chats");
   } catch(error) {
    showError("chatStatus",error);
   }
