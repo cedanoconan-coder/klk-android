@@ -1735,7 +1735,7 @@ function setBusy(busy) {
 try {
  firebase.initializeApp(firebaseConfig);
  auth = firebase.auth(); db = firebase.firestore();
- authPersistenceReady = auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+ authPersistenceReady = auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(error=>{console.warn("No se pudo confirmar la persistencia local de KLK:",error);throw error});
  firestorePersistenceReady = db.enablePersistence({ synchronizeTabs: true }).then(() => true).catch(error => {
   console.warn("No se pudo activar el almacenamiento sin conexión de Firestore:", error);
   return false;
@@ -1920,7 +1920,13 @@ async function unlockKlkBiometric(){
 $("enableBiometric").addEventListener("click",()=>{let saved=null;try{saved=JSON.parse(localStorage.getItem(KLK_BIOMETRIC_KEY)||"null");}catch(e){}if(saved){if(window.confirm("¿Quieres desactivar el bloqueo biométrico de este teléfono?")){localStorage.removeItem(KLK_BIOMETRIC_KEY);$("enableBiometric").textContent="Activar";$("biometricStatus").textContent="Bloqueo biométrico desactivado en este teléfono."}}else enableKlkBiometric();});
 $("unlockBiometric").addEventListener("click",unlockKlkBiometric);
 try{const savedBiometric=JSON.parse(localStorage.getItem(KLK_BIOMETRIC_KEY)||"null");if(savedBiometric)$("enableBiometric").textContent="Activada";}catch(e){}
+// Esperar la restauración de la sesión local antes de cambiar de pantalla.
+let klkLastAuthenticatedUid=null;
 auth && auth.onAuthStateChanged(async user => {
+ try{await authPersistenceReady}catch(error){console.warn("Persistencia de sesión KLK:",error)}
+ // Una renovación de token no debe sacar al usuario del chat ni reiniciar su vista.
+ if(user&&klkLastAuthenticatedUid===user.uid&&!invitationActivationInProgress)return;
+ klkLastAuthenticatedUid=user?user.uid:null;
  if(user&&!invitationActivationInProgress&&!user.emailVerified){
   try{
    const existingProfile=await db.collection("users").doc(user.uid).get();
