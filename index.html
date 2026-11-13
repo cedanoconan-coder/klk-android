@@ -3837,12 +3837,14 @@ window.$("assistantQuestion").addEventListener("keydown",event=>{
  bar.innerHTML='<span class="klkMessageSelectionCount" aria-live="polite">0 seleccionados</span><button type="button" data-action="copy">Copiar</button><button type="button" data-action="forward">Reenviar</button><button type="button" data-action="delete">Eliminar</button><button type="button" class="klkSelectionCancel" data-action="cancel">Cancelar</button>';
  box.parentNode.insertBefore(bar,box);
  const count=bar.querySelector(".klkMessageSelectionCount");
- const replyButton=document.createElement("button");replyButton.type="button";replyButton.textContent="Responder";replyButton.dataset.action="reply";bar.insertBefore(replyButton,bar.querySelector('[data-action="copy"]'));
+ const replyButton=document.createElement("button");replyButton.type="button";replyButton.textContent="↩ Responder";replyButton.dataset.action="reply";replyButton.setAttribute("aria-label","Responder al mensaje seleccionado");bar.insertBefore(replyButton,bar.querySelector('[data-action="copy"]'));
  const selected=new Set();
  let pressTimer=null,pressStart=null,suppressClickUntil=0;
  const messageNode=id=>[...box.querySelectorAll(".msg[data-message-id]")].find(el=>el.dataset.messageId===id);
  function refresh(){
   bar.hidden=selected.size===0;
+  replyButton.disabled=selected.size!==1;
+  replyButton.title=selected.size===1?"Responder al mensaje seleccionado":"Selecciona un solo mensaje para responder";
   count.textContent=selected.size+" seleccionado"+(selected.size===1?"":"s");
   box.querySelectorAll(".msg[data-message-id]").forEach(el=>{
    const active=selected.has(el.dataset.messageId);
@@ -3964,7 +3966,7 @@ window.$("assistantQuestion").addEventListener("keydown",event=>{
  bar.addEventListener("click",event=>{
   const button=event.target.closest("button[data-action]");if(!button)return;
   const action=button.dataset.action;
-  if(action==="reply"){const items=ordered();if(items.length===1&&window.klkSetReply){window.klkSetReply(items[0]);cancel()}else document.getElementById("chatStatus").textContent="Selecciona un solo mensaje para responder.";}
+  if(action==="reply"){const items=ordered();if(items.length===1&&window.klkSetReply){window.klkSetReply(items[0]);cancel();document.getElementById("chatStatus").textContent="Respondiendo al mensaje seleccionado.";}else document.getElementById("chatStatus").textContent="Selecciona un solo mensaje para responder.";}
   else if(action==="cancel")cancel();
   else if(action==="copy")copySelected();
   else if(action==="delete")deleteSelected();
