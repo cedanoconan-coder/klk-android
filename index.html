@@ -1204,6 +1204,15 @@ html,body{overscroll-behavior-y:contain}
 #chat.room-open .chatTop #who,#chat.room-open .chatTop .muted,#chat.room-open .chatTop .klkPresenceOffline{color:#58656c!important;opacity:1!important}
 #chat.room-open .chatTop button{background:transparent!important;color:#172126!important}
 </style>
+<style id="klkConversationTextSize">
+/* Apply saved text preference to existing and newly received messages. */
+#chat.room-open #messages .msg p,
+#chat.room-open #messages .msg .messageText,
+#chat.room-open #messages .msg .messageBody{
+ font-size:var(--klk-chat-text-size,15px)!important;
+ line-height:1.45!important;
+}
+</style>
 <style id="klkKeyboardStable">
 /* Prevent mobile browser focus zoom and keep the system keyboard at its normal scale. */
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
@@ -1446,7 +1455,7 @@ input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),textarea,se
 <section id="settingsPanel" aria-label="Configuración de klk"><details id="klkPhoneSecurity" style="margin:14px 0;padding:14px;border:1px solid #b9c9c5;border-radius:16px"><summary style="font-weight:700;cursor:pointer">🪪 Mi identidad KLK · invitación QR</summary><p class="hint">Tu identidad y tus conversaciones se conservan en la cuenta con la que ya iniciaste sesión. Para invitar a alguien, utiliza un código o QR de KLK. No necesitas SMS.</p><button id="klkIdentityInvite" type="button">Crear mi invitación QR</button><p class="hint">Para recuperar el acceso, usa el correo y contraseña de tu cuenta actual. No cierres sesión hasta comprobar tu método de acceso.</p><div hidden aria-hidden="true"><p class="hint">Primero inicia sesión con tu cuenta actual. Verificaremos tu número sin crear otra cuenta ni cambiar tus conversaciones.</p><label for="klkPhoneNumber">Número internacional</label><input id="klkPhoneNumber" type="tel" inputmode="tel" autocomplete="tel" placeholder="+18091234567"><div id="klkPhoneRecaptcha" style="margin:10px 0"></div><button id="klkPhoneSend" type="button">Enviar código SMS</button><label for="klkPhoneCode">Código recibido</label><input id="klkPhoneCode" inputmode="numeric" autocomplete="one-time-code" placeholder="6 dígitos"><button id="klkPhoneVerify" type="button" disabled>Verificar y vincular</button><p id="klkPhoneStatus" role="status" aria-live="polite"></p></div></details>
  <div class="settingsHeader"><div><h2>Configuración</h2><p>Todo organizado para que encuentres rápido lo que necesitas.</p></div><button id="closeSettings" class="settingsClose" type="button" aria-label="Cerrar ajustes">×</button></div>
  <button id="settingsDisappearingToggle" type="button" class="secondary" style="width:100%;margin:8px 0 14px">◷ Configurar mensajes temporales de este chat</button>
- <details class="settingsGroup"><summary><span class="settingsGroupIcon">🎨</span><span><strong>Apariencia</strong><small>Tema, colores, texto y fondos</small></span><b>⌄</b></summary><div class="settingsGroupBody"><div class="settingRow"><span>Tamaño del texto</span><select id="settingTextSize"><option value="14">Pequeño</option><option value="15">Normal</option><option value="17">Grande</option><option value="19">Muy grande</option><option value="21">Extra grande</option></select></div>
+ <details class="settingsGroup"><summary><span class="settingsGroupIcon">🎨</span><span><strong>Apariencia</strong><small>Tema, colores, texto y fondos</small></span><b>⌄</b></summary><div class="settingsGroupBody"><div class="settingRow"><span>Tamaño del texto</span><select id="settingTextSize"><option value="14">Pequeño</option><option value="15">Normal</option><option value="17">Grande</option><option value="19">Muy grande</option><option value="21">Extra grande</option><option value="24">Gigante</option><option value="26">Máximo</option></select></div>
  <div class="settingRow"><span>Tema de la aplicación</span><select id="settingTheme"><option value="light">Claro</option><option value="dark">Oscuro</option><option value="system">Automático del teléfono</option></select></div>
  <div class="settingRow"><span>Color principal</span><select id="settingAccent"><option value="teal">Verde</option><option value="blue">Azul</option><option value="purple">Morado</option><option value="rose">Rosa</option><option value="orange">Naranja</option></select></div>
  <div class="settingRow"><span>Espaciado</span><select id="settingDensity"><option value="comfortable">Cómodo</option><option value="compact">Compacto</option></select></div>
@@ -3154,7 +3163,7 @@ if (window.matchMedia("(display-mode: standalone)").matches || window.navigator.
   const outgoingColors={green:dark?"#245c4b":"#d9fdd3",blue:dark?"#244c70":"#dcecff",purple:dark?"#4a3b68":"#eee3ff",pink:dark?"#663d50":"#ffe3ed",gray:dark?"#3b484e":"#e8ecee"};
   root.style.setProperty("--klk-outgoing-bg",outgoingColors[prefs.outgoingColor]||outgoingColors.green);
   root.dataset.bubbles=["classic","rounded","square"].includes(prefs.bubbleStyle)?prefs.bubbleStyle:"classic";
-  document.querySelectorAll(".msg p").forEach(el=>el.style.fontSize=prefs.textSize+"px");
+  root.style.setProperty("--klk-chat-text-size",Math.max(14,Math.min(26,Number(prefs.textSize)||15))+"px");
   $("settingSound").checked=!!prefs.sound;$("settingVibration").checked=!!prefs.vibration;$("settingPreview").checked=!!prefs.preview;
   $("settingMessageTone").value=prefs.messageTone||"classic";$("settingCallTone").value=prefs.callTone||"bell";
   $("settingTextSize").value=prefs.textSize;$("settingTheme").value=prefs.theme;$("settingAccent").value=prefs.accent;$("settingDensity").value=prefs.density;$("settingWallpaper").value=prefs.wallpaper;$("settingBubbleStyle").value=prefs.bubbleStyle||"classic";$("settingOutgoingColor").value=prefs.outgoingColor||"green";
