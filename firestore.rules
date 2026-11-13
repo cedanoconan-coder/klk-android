@@ -227,6 +227,42 @@ service cloud.firestore {
       allow update: if false;
     }
 
+    // KLK Historias: solo contactos QR autorizados, nunca el directorio público.
+    match /klkStories/{authorUid}/posts/{storyId} {
+      function isContact() {
+        return signedIn() && (
+          exists(/databases/$(database)/documents/qrContacts/$(authorUid)/members/$(request.auth.uid))
+          || exists(/databases/$(database)/documents/qrContacts/$(request.auth.uid)/members/$(authorUid))
+        ) && !exists(/databases/$(database)/documents/userBlocks/$(authorUid)/blocked/$(request.auth.uid))
+          && !exists(/databases/$(database)/documents/userBlocks/$(request.auth.uid)/blocked/$(authorUid));
+      }
+      function canView() { return signedIn() && (request.auth.uid == authorUid || isContact()); }
+      allow get, list: if canView();
+      allow create: if signedIn() && request.auth.uid == authorUid
+        && request.resource.data.keys().hasOnly(['authorUid','title','text','createdAt'])
+        && request.resource.data.keys().hasAll(['authorUid','title','text','createdAt'])
+        && request.resource.data.authorUid == authorUid
+        && request.resource.data.title is string && request.resource.data.title.size() > 0 && request.resource.data.title.size() <= 80
+        && request.resource.data.text is string && request.resource.data.text.size() > 0 && request.resource.data.text.size() <= 3000
+        && request.resource.data.createdAt == request.time;
+      allow delete: if signedIn() && request.auth.uid == authorUid;
+      allow update: if false;
+      match /reactions/{reactorUid} {
+        allow get, list: if signedIn() && (request.auth.uid == authorUid || request.auth.uid == reactorUid);
+        allow create, update: if signedIn() && request.auth.uid == reactorUid
+          && reactorUid != authorUid
+          && exists(/databases/$(database)/documents/klkStories/$(authorUid)/posts/$(storyId))
+          && (exists(/databases/$(database)/documents/qrContacts/$(authorUid)/members/$(reactorUid))
+              || exists(/databases/$(database)/documents/qrContacts/$(reactorUid)/members/$(authorUid)))
+          && !exists(/databases/$(database)/documents/userBlocks/$(authorUid)/blocked/$(reactorUid))
+          && !exists(/databases/$(database)/documents/userBlocks/$(reactorUid)/blocked/$(authorUid))
+          && request.resource.data.keys().hasOnly(['emoji','updatedAt'])
+          && request.resource.data.emoji in ['❤️','😂','👏','😮','💜']
+          && request.resource.data.updatedAt == request.time;
+        allow delete: if signedIn() && request.auth.uid == reactorUid;
+      }
+    }
+
     // Solicitudes de amistad retiradas: el chat se inicia directamente desde perfiles visibles.
     match /contactRequests/{requestId} {
       allow read, write: if false;
