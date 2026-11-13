@@ -1260,7 +1260,7 @@ input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),textarea,se
 #chat.room-open .composer #send .sendGlyph{width:27px!important;height:27px!important}
 #chat.room-open .composer #send:active{transform:translateY(2px)!important;box-shadow:0 1px 0 #51217f,0 3px 6px rgba(68,28,109,.24)!important}
 @media(max-width:360px){#chat.room-open .composer #send{width:50px!important;min-width:50px!important;height:50px!important;flex-basis:50px!important}}
-</style></head>
+</style><style id="klk-message-replies-v1">#klkReplyPreview{display:flex;align-items:center;gap:9px;padding:8px 12px;margin:4px 10px;background:#f4eafa;border-left:4px solid #8543c2;border-radius:9px;color:#332442;font-size:13px}#klkReplyPreview[hidden]{display:none!important}#klkReplyPreview .klkReplyText{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#klkReplyPreview button{border:0;background:transparent;color:#65417f;font-size:22px}.klkQuotedMessage{padding:5px 9px;margin-bottom:5px;border-left:3px solid #9854c9;background:rgba(133,67,194,.1);border-radius:5px;font-size:12px;max-width:100%;overflow-wrap:anywhere}.klkQuotedMessage strong{display:block;font-size:11px}</style></head>
 <body>
 
 <main>
@@ -2492,6 +2492,8 @@ function loadMessages() {
    item.dataset.messageId=doc.id;
    window.klkMessageRecords.set(doc.id,{ref:doc.ref,data,conversationId:activeConversationId});
    const senderProfile = data.uid ? peopleCache.get(data.uid) : null;
+   if(data.replyTo&&data.replyTo.text){const quote=document.createElement("div");quote.className="klkQuotedMessage";const who=document.createElement("strong");who.textContent=data.replyTo.name||"Mensaje";const excerpt=document.createElement("span");excerpt.textContent=data.replyTo.text;quote.append(who,excerpt);item.appendChild(quote);}
+
    if ((data.type === "image" || data.type === "audio" || data.type === "file") && (data.storagePath || data.mediaUrl)) {
     const placeholder = document.createElement("p"); placeholder.textContent = "Cargando archivo..."; item.appendChild(placeholder); $("messages").appendChild(item);
     try {
@@ -2602,11 +2604,19 @@ $("message").addEventListener("input",()=>{
  klkActivityTimeout=setTimeout(()=>{void klkPublishActivity("online")},3500);
 });
 $("message").addEventListener("blur",()=>{if(klkActivityTimeout)clearTimeout(klkActivityTimeout);void klkPublishActivity("idle")});
+let klkReplyTarget=null;
+const klkReplyPreview=document.createElement("div");klkReplyPreview.id="klkReplyPreview";klkReplyPreview.hidden=true;
+klkReplyPreview.innerHTML='<span class="klkReplyText"></span><button type="button" aria-label="Cancelar respuesta">×</button>';
+$("message").closest(".composer").parentNode.insertBefore(klkReplyPreview,$("message").closest(".composer"));
+function klkClearReply(){klkReplyTarget=null;klkReplyPreview.hidden=true;}
+klkReplyPreview.querySelector("button").onclick=klkClearReply;
+window.klkSetReply=function(item){if(!item||item.conversationId!==activeConversationId)return;const d=item.data||{};klkReplyTarget={id:item.id,conversationId:item.conversationId,uid:d.uid||"",name:d.displayName||"Contacto",text:(d.text||({"image":"📷 Foto","audio":"🎤 Audio","file":"📎 Archivo","sticker":"Sticker"}[d.type])||"Mensaje").slice(0,180)};klkReplyPreview.querySelector(".klkReplyText").textContent="Responder a "+klkReplyTarget.name+": "+klkReplyTarget.text;klkReplyPreview.hidden=false;$("message").focus();};
 $("send").onclick = async () => {
  const input=$("message"), text=input.value.trim(), user=auth&&auth.currentUser;
  if (!user || !activeConversationId) { $("chatStatus").textContent = "Abre una conversación privada antes de enviar mensajes."; return; }
  if (!text || sending) return;
  const conversationId=activeConversationId;
+ const reply=klkReplyTarget&&klkReplyTarget.conversationId===conversationId?{...klkReplyTarget}:null;
  sending=true;
  input.value="";
  syncComposerMode();
@@ -2616,12 +2626,14 @@ $("send").onclick = async () => {
   const sentMessage=await db.collection("conversations").doc(conversationId).collection("messages").add({
    type:"text",
    text,
+   ...(reply?{replyTo:reply}:{}),
    email:user.email||"",
    displayName:(peopleCache.get(user.uid)||{}).displayName||(user.email||"Miembro").split("@")[0],
    uid:user.uid,
    createdAt:firebase.firestore.FieldValue.serverTimestamp(),
    ...(activeDisappearingHours ? {expiresAt:firebase.firestore.Timestamp.fromDate(new Date(Date.now()+activeDisappearingHours*60*60*1000))} : {})
   });
+  if(reply&&klkReplyTarget&&klkReplyTarget.id===reply.id)klkClearReply();
   void sendKlkPushForMessage(conversationId,sentMessage.id);
   if(activeConversationId===conversationId)$("chatStatus").textContent="";
  } catch(error) {
@@ -3788,6 +3800,7 @@ window.$("assistantQuestion").addEventListener("keydown",event=>{
  bar.innerHTML='<span class="klkMessageSelectionCount" aria-live="polite">0 seleccionados</span><button type="button" data-action="copy">Copiar</button><button type="button" data-action="forward">Reenviar</button><button type="button" data-action="delete">Eliminar</button><button type="button" class="klkSelectionCancel" data-action="cancel">Cancelar</button>';
  box.parentNode.insertBefore(bar,box);
  const count=bar.querySelector(".klkMessageSelectionCount");
+ const replyButton=document.createElement("button");replyButton.type="button";replyButton.textContent="Responder";replyButton.dataset.action="reply";bar.insertBefore(replyButton,bar.querySelector('[data-action="copy"]'));
  const selected=new Set();
  let pressTimer=null,pressStart=null,suppressClickUntil=0;
  const messageNode=id=>[...box.querySelectorAll(".msg[data-message-id]")].find(el=>el.dataset.messageId===id);
@@ -3914,7 +3927,8 @@ window.$("assistantQuestion").addEventListener("keydown",event=>{
  bar.addEventListener("click",event=>{
   const button=event.target.closest("button[data-action]");if(!button)return;
   const action=button.dataset.action;
-  if(action==="cancel")cancel();
+  if(action==="reply"){const items=ordered();if(items.length===1&&window.klkSetReply){window.klkSetReply(items[0]);cancel()}else document.getElementById("chatStatus").textContent="Selecciona un solo mensaje para responder.";}
+  else if(action==="cancel")cancel();
   else if(action==="copy")copySelected();
   else if(action==="delete")deleteSelected();
   else if(action==="forward")forwardSelected();
