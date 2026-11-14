@@ -45,7 +45,8 @@
  }
  function klkAttachReactionChannel(channel){
   klkReactionChannel=channel;
-  channel.onmessage=event=>{try{const data=JSON.parse(event.data);if(data?.type==="klk-reaction"&&klkReactionChoices.includes(data.emoji))klkShowReaction(data.emoji,true)}catch(e){}};
+  channel.addEventListener("open",()=>{klkLooksBroadcast()});
+  channel.onmessage=event=>{try{const data=JSON.parse(event.data);if(data?.type==="klk-reaction"&&klkReactionChoices.includes(data.emoji))klkShowReaction(data.emoji,true);if(data?.type==="klk-look"&&["","😎","🧢","👩‍🦰","👑","🤠","🥸"].includes(data.emoji)){klkLooksRemote.textContent=data.emoji;klkLooksRemote.style.display=data.emoji?"block":"none"}}catch(e){}};
   channel.onclose=()=>{if(klkReactionChannel===channel){klkReactionChannel=null;klkStopReactionRepeat()}};
  }
  // A held reaction repeats until the finger/mouse is released; keyboard activation sends once.
@@ -89,12 +90,40 @@
  const klkLooksPreview=document.createElement("div");
  klkLooksPreview.setAttribute("aria-hidden","true");
  klkLooksPreview.style.cssText="position:absolute;top:8%;left:50%;transform:translateX(-50%);font-size:clamp(60px,18vw,110px);pointer-events:none;z-index:18;display:none;filter:drop-shadow(0 5px 8px #0008)";
+ const klkLooksRemote=document.createElement("div");
+ klkLooksRemote.setAttribute("aria-label","Accesorio de la otra persona");
+ klkLooksRemote.style.cssText="display:none;position:absolute;top:10%;left:50%;transform:translateX(-50%);font-size:clamp(60px,18vw,110px);pointer-events:none;z-index:17;filter:drop-shadow(0 5px 8px #0008)";
+ $("callVideoStage")?.append(klkLooksRemote);
+ let klkLooksDetector=null,klkLooksTimer=null,klkLooksBusy=false;
+ if(typeof window.FaceDetector==="function"){try{klkLooksDetector=new window.FaceDetector({fastMode:true,maxDetectedFaces:1})}catch(e){klkLooksDetector=null}}
+ async function klkLooksTrack(){
+  const video=$("localVideo");
+  if(klkLooksBusy||!klkLooksSelected||!klkLooksDetector||!video||video.readyState<2||!overlay.classList.contains("visible"))return;
+  klkLooksBusy=true;
+  try{
+   const faces=await klkLooksDetector.detect(video);
+   if(!faces.length){klkLooksPreview.style.display="none";return}
+   const f=faces[0].boundingBox;
+   const rect=video.getBoundingClientRect(),stage=$("callVideoStage").getBoundingClientRect();
+   const scale=Math.min(rect.width/video.videoWidth,rect.height/video.videoHeight);
+   const renderedW=video.videoWidth*scale,renderedH=video.videoHeight*scale;
+   const x=rect.left+(rect.width-renderedW)/2+(f.x+f.width/2)*scale-stage.left;
+   const y=rect.top+(rect.height-renderedH)/2+(f.y+(klkLooksSelected==="😎"?.42:.02)*f.height)*scale-stage.top;
+   klkLooksPreview.style.left=x+"px";klkLooksPreview.style.top=y+"px";
+   klkLooksPreview.style.fontSize=Math.max(28,Math.min(125,f.width*scale*1.1))+"px";
+   klkLooksPreview.style.display="block";
+  }catch(e){klkLooksDetector=null;klkLooksPreview.style.left="50%";klkLooksPreview.style.top="8%"}
+  finally{klkLooksBusy=false}
+ }
+ function klkLooksBroadcast(){
+  if(klkReactionChannel?.readyState==="open"){try{klkReactionChannel.send(JSON.stringify({type:"klk-look",emoji:klkLooksSelected}))}catch(e){}}
+ }
  const klkLooksOptions=[["","Sin efecto"],["😎","Gafas"],["🧢","Gorra"],["👩‍🦰","Peluca"],["👑","Corona"],["🤠","Sombrero"],["🥸","Bigote"]];
  let klkLooksSelected="";
  for(const [emoji,label] of klkLooksOptions){
   const button=document.createElement("button");button.type="button";button.textContent=emoji?emoji+" "+label:label;
   button.style.cssText="border:1px solid #ffffff55;border-radius:14px;padding:8px;background:#ffffff22;color:white;font-size:16px;-webkit-user-select:none;user-select:none";
-  button.addEventListener("click",()=>{klkLooksSelected=emoji;klkLooksPreview.textContent=emoji;klkLooksPreview.style.display=emoji?"block":"none";klkLooksTray.style.display="none"});
+  button.addEventListener("click",()=>{klkLooksSelected=emoji;klkLooksPreview.textContent=emoji;klkLooksPreview.style.display=emoji?"block":"none";klkLooksTray.style.display="none";klkLooksBroadcast()});
   klkLooksTray.append(button);
  }
  klkLooksButton.addEventListener("click",()=>{klkLooksTray.style.display=klkLooksTray.style.display==="flex"?"none":"flex"});
@@ -106,6 +135,8 @@
   klkLooksButton.style.display=visible?"inline-block":"none";
   if(!visible)klkLooksTray.style.display="none";
   klkLooksPreview.style.display=visible&&klkLooksSelected?"block":"none";
+  if(visible&&!klkLooksTimer)klkLooksTimer=setInterval(klkLooksTrack,250);
+  if(!visible&&klkLooksTimer){clearInterval(klkLooksTimer);klkLooksTimer=null}
  }
  const setStatus=(message)=>{if($("callsStatus"))$("callsStatus").textContent=message||"";};
  function isCallContactAccepted(uid){return callPeople.has(uid);}
@@ -284,7 +315,7 @@
   $("localVideo").style.display=callMode==="video"?"block":"none";klkUpdateMirrorPreview();
  }
  function cleanup(){
-  klkLooksSelected="";klkLooksTray.style.display="none";klkLooksPreview.style.display="none";klkLooksButton.style.display="none";klkStopReactionRepeat();klkReactionBar.style.display="none";klkReactionLayer.replaceChildren();klkReactionChannel=null;
+  if(klkLooksTimer){clearInterval(klkLooksTimer);klkLooksTimer=null}klkLooksRemote.style.display="none";klkLooksRemote.textContent="";klkLooksSelected="";klkLooksTray.style.display="none";klkLooksPreview.style.display="none";klkLooksButton.style.display="none";klkStopReactionRepeat();klkReactionBar.style.display="none";klkReactionLayer.replaceChildren();klkReactionChannel=null;
   klkSetIncomingSwipe(false);klkStopOutgoingRing();klkPeerUid=null;klkResetVideoLayout();callStarting=false;
   if(window.klkStopIncomingCallSound)window.klkStopIncomingCallSound();
   if(activeCallUnsub){activeCallUnsub();activeCallUnsub=null;}
