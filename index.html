@@ -2143,13 +2143,36 @@ async function openContactProfile(uid,person,returnTo="people"){
  $("contactProfileMessage").onclick=()=>{closeContactProfile();openPrivateConversation(uid,displayName||"Conversación");};
  $("contactProfileVoice").onclick=()=>window.klkStartCall&&window.klkStartCall(uid,displayName,"audio");
  $("contactProfileVideo").onclick=()=>window.klkStartCall&&window.klkStartCall(uid,displayName,"video");
- $("contactProfileShare").onclick=async()=>{
-  const shareText="Contacto de klk: "+displayName+(person.email?" · "+person.email:"");
-  try{
-   if(navigator.share){await navigator.share({title:"Contacto de klk",text:shareText});$("contactProfileStatus").textContent="Contacto compartido.";}
-   else if(navigator.clipboard&&navigator.clipboard.writeText){await navigator.clipboard.writeText(shareText);$("contactProfileStatus").textContent="Datos del contacto copiados.";}
-   else{window.prompt("Copia los datos del contacto:",shareText);}
-  }catch(error){if(error&&error.name!=="AbortError")$("contactProfileStatus").textContent="No se pudo compartir el contacto.";}
+ $("contactProfileShare").onclick=()=>{
+  const old=$("klkContactShareDialog");if(old)old.remove();
+  const dialog=document.createElement("div");dialog.id="klkContactShareDialog";
+  dialog.style.cssText="position:fixed;inset:0;background:#0009;z-index:99999;display:flex;align-items:flex-end;justify-content:center;padding:14px";
+  const panel=document.createElement("div");panel.style.cssText="width:min(100%,440px);max-height:82dvh;overflow:auto;border-radius:22px;background:var(--klk-surface,#fff);color:var(--klk-text,#111);padding:20px;box-shadow:0 12px 40px #0004";
+  const title=document.createElement("h3");title.textContent="Compartir contacto: "+displayName;title.style.margin="0 0 12px";
+  const close=document.createElement("button");close.type="button";close.textContent="Cerrar";close.style.cssText="float:right;padding:8px;border:0;background:transparent;color:inherit";
+  close.onclick=()=>dialog.remove();panel.append(close,title);
+  const content=document.createElement("div");panel.append(content);
+  const shareText="Contacto de KLK: "+displayName+"\\nIdentificador: "+uid+"\\nPara agregarlo, solicita su aprobación en KLK.";
+  const option=(label,fn)=>{const b=document.createElement("button");b.type="button";b.textContent=label;b.style.cssText="display:block;width:100%;margin:10px 0;padding:14px;border:1px solid #aa91c6;border-radius:14px;background:transparent;color:inherit;text-align:left";b.onclick=fn;content.append(b)};
+  const home=()=>{content.replaceChildren();option("💬 Enviar a un contacto de KLK",()=>{
+   content.replaceChildren();const back=document.createElement("button");back.type="button";back.textContent="← Volver";back.onclick=home;content.append(back);
+   const recipients=[...peopleCache.entries()].filter(([id])=>id!==uid&&id!==auth.currentUser?.uid&&!blockedUsers.has(id));
+   if(!recipients.length){const p=document.createElement("p");p.textContent="No hay otros contactos disponibles.";content.append(p)}
+   recipients.forEach(([id,p])=>option("👤 "+(p.displayName||"Contacto"),async()=>{
+    dialog.remove();await openPrivateConversation(id,p.displayName||"Contacto");
+    if(activeConversationPeerUid!==id)return;
+    const input=$("message");if(input){input.value=shareText;input.dispatchEvent(new Event("input",{bubbles:true}));input.focus();}
+   }));
+  });
+  option("▦ Mostrar código QR",()=>{
+   content.replaceChildren();const back=document.createElement("button");back.type="button";back.textContent="← Volver";back.onclick=home;content.append(back);
+   const hint=document.createElement("p");hint.textContent="Este QR contiene el nombre y el identificador de KLK. No concede acceso automático al contacto.";content.append(hint);
+   const qr=document.createElement("div");qr.style.cssText="display:flex;justify-content:center;padding:15px;background:white";content.append(qr);
+   if(window.QRCode){new QRCode(qr,{text:shareText,width:210,height:210,colorDark:"#171020",colorLight:"#ffffff"});}
+   else{const p=document.createElement("p");p.textContent="El generador QR no está disponible. Puedes copiar los datos del contacto.";content.append(p)}
+   option("Copiar datos",async()=>{try{await navigator.clipboard.writeText(shareText)}catch(e){window.prompt("Copia los datos:",shareText)}});
+  });};
+  home();dialog.append(panel);dialog.addEventListener("click",e=>{if(e.target===dialog)dialog.remove()});document.body.append(dialog);
  };
  await renderContactSharedMedia("image");
  $("contactProfilePanel").scrollIntoView({block:"start",behavior:"smooth"});
