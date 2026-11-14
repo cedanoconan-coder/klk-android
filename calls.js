@@ -501,6 +501,24 @@
    if(stream){$("remoteVideo").srcObject=stream;$("remoteAudio").srcObject=stream;}
    $("callStatus").textContent=callMode==="video"?"Videollamada conectada":"Llamada conectada";
   };
+  // Network recovery: wait for the browser to restore ICE without dropping the call.
+  // ICE restarts require an offer/answer exchange; do not invoke restartIce()
+  // without signaling because it would leave the remote peer out of sync.
+  const connectionPeer=peer;
+  const updateNetworkState=()=>{
+   if(peer!==connectionPeer||!overlay?.classList.contains("visible"))return;
+   if(!navigator.onLine&&connectionPeer.connectionState!=="connected"){
+    $("callStatus").textContent="Sin Internet. La llamada intentará recuperarse cuando vuelva la conexión.";
+   }
+  };
+  window.addEventListener("offline",updateNetworkState);
+  window.addEventListener("online",updateNetworkState);
+  connectionPeer.addEventListener("signalingstatechange",()=>{
+   if(connectionPeer.signalingState==="closed"){
+    window.removeEventListener("offline",updateNetworkState);
+    window.removeEventListener("online",updateNetworkState);
+   }
+  });
   // A short network drop should not immediately end an established call.
   // WebRTC can recover transient ICE disconnections without renegotiation.
   let connectionWarningTimer=null;
