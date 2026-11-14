@@ -94,25 +94,64 @@
  klkLooksRemote.setAttribute("aria-label","Accesorio de la otra persona");
  klkLooksRemote.style.cssText="display:none;position:absolute;top:10%;left:50%;transform:translateX(-50%);font-size:clamp(60px,18vw,110px);pointer-events:none;z-index:17;filter:drop-shadow(0 5px 8px #0008)";
  $("callVideoStage")?.append(klkLooksRemote);
- let klkLooksDetector=null,klkLooksTimer=null,klkLooksBusy=false;
+ let klkLooksDetector=null,klkLooksTimer=null,klkLooksBusy=false,klkLooksFallbackLoading=null,klkLooksFallback=null,klkLooksFace=null;
+ function klkLooksLoadFallback(){
+  if(klkLooksFallbackLoading)return klkLooksFallbackLoading;
+  klkLooksFallbackLoading=new Promise((resolve,reject)=>{
+   if(window.FaceDetection){resolve(window.FaceDetection);return}
+   const script=document.createElement("script");
+   script.src="https://cdn.jsdelivr.net/npm/@mediapipe/face_detection@0.4/face_detection.js";
+   script.crossOrigin="anonymous";
+   script.onload=()=>window.FaceDetection?resolve(window.FaceDetection):reject(new Error("Detector facial no disponible"));
+   script.onerror=()=>reject(new Error("No se pudo cargar el detector facial"));
+   document.head.append(script);
+  }).then(Detector=>{
+   klkLooksFallback=new Detector({locateFile:file=>"https://cdn.jsdelivr.net/npm/@mediapipe/face_detection@0.4/"+file});
+   klkLooksFallback.setOptions({model:"short",minDetectionConfidence:0.5});
+   klkLooksFallback.onResults(results=>{
+    const box=results.detections?.[0]?.boundingBox;
+    klkLooksFace=box?{xCenter:box.xCenter,yCenter:box.yCenter,width:box.width,height:box.height}:null;
+   });
+  }).catch(error=>{console.warn("KLK Looks: seguimiento facial no disponible",error);klkLooksFallback=null});
+  return klkLooksFallbackLoading;
+ }
+ function klkLooksPosition(f,video){
+  const rect=video.getBoundingClientRect(),stage=$("callVideoStage").getBoundingClientRect();
+  if(!rect.width||!rect.height||!video.videoWidth||!video.videoHeight)return;
+  const style=getComputedStyle(video),fit=style.objectFit;
+  const scale=fit==="cover"?Math.max(rect.width/video.videoWidth,rect.height/video.videoHeight):Math.min(rect.width/video.videoWidth,rect.height/video.videoHeight);
+  const renderedW=video.videoWidth*scale,renderedH=video.videoHeight*scale;
+  const x=rect.left+(rect.width-renderedW)/2+(f.x+f.width/2)*scale-stage.left;
+  const y=rect.top+(rect.height-renderedH)/2+(f.y+(klkLooksSelected==="😎"?.42:.02)*f.height)*scale-stage.top;
+  klkLooksPreview.style.left=x+"px";klkLooksPreview.style.top=y+"px";
+  klkLooksPreview.style.transform="translate(-50%,-50%)";
+  klkLooksPreview.style.fontSize=Math.max(28,Math.min(125,f.width*scale*1.1))+"px";
+  klkLooksPreview.style.display="block";
+ }
+
  if(typeof window.FaceDetector==="function"){try{klkLooksDetector=new window.FaceDetector({fastMode:true,maxDetectedFaces:1})}catch(e){klkLooksDetector=null}}
  async function klkLooksTrack(){
   const video=$("localVideo");
-  if(klkLooksBusy||!klkLooksSelected||!klkLooksDetector||!video||video.readyState<2||!overlay.classList.contains("visible"))return;
+  if(klkLooksBusy||!klkLooksSelected||!video||video.readyState<2||!overlay.classList.contains("visible"))return;
   klkLooksBusy=true;
   try{
-   const faces=await klkLooksDetector.detect(video);
-   if(!faces.length){klkLooksPreview.style.display="none";return}
-   const f=faces[0].boundingBox;
-   const rect=video.getBoundingClientRect(),stage=$("callVideoStage").getBoundingClientRect();
-   const scale=Math.min(rect.width/video.videoWidth,rect.height/video.videoHeight);
-   const renderedW=video.videoWidth*scale,renderedH=video.videoHeight*scale;
-   const x=rect.left+(rect.width-renderedW)/2+(f.x+f.width/2)*scale-stage.left;
-   const y=rect.top+(rect.height-renderedH)/2+(f.y+(klkLooksSelected==="😎"?.42:.02)*f.height)*scale-stage.top;
-   klkLooksPreview.style.left=x+"px";klkLooksPreview.style.top=y+"px";
-   klkLooksPreview.style.fontSize=Math.max(28,Math.min(125,f.width*scale*1.1))+"px";
-   klkLooksPreview.style.display="block";
-  }catch(e){klkLooksDetector=null;klkLooksPreview.style.left="50%";klkLooksPreview.style.top="8%"}
+   let face=null;
+   if(klkLooksDetector){
+    try{const faces=await klkLooksDetector.detect(video);face=faces[0]?.boundingBox||null}
+    catch(e){klkLooksDetector=null}
+   }
+   if(!klkLooksDetector){
+    await klkLooksLoadFallback();
+    if(klkLooksFallback){
+     klkLooksFace=null;
+     await klkLooksFallback.send({image:video});
+     const f=klkLooksFace;
+     if(f)face={x:(f.xCenter-f.width/2)*video.videoWidth,y:(f.yCenter-f.height/2)*video.videoHeight,width:f.width*video.videoWidth,height:f.height*video.videoHeight};
+    }
+   }
+   if(face)klkLooksPosition(face,video);
+   else if(klkLooksDetector||klkLooksFallback)klkLooksPreview.style.display="none";
+  }catch(e){console.warn("KLK Looks: error de seguimiento",e)}
   finally{klkLooksBusy=false}
  }
  function klkLooksBroadcast(){
@@ -123,7 +162,7 @@
  for(const [emoji,label] of klkLooksOptions){
   const button=document.createElement("button");button.type="button";button.textContent=emoji?emoji+" "+label:label;
   button.style.cssText="border:1px solid #ffffff55;border-radius:14px;padding:8px;background:#ffffff22;color:white;font-size:16px;-webkit-user-select:none;user-select:none";
-  button.addEventListener("click",()=>{klkLooksSelected=emoji;klkLooksPreview.textContent=emoji;klkLooksPreview.style.display=emoji?"block":"none";klkLooksTray.style.display="none";klkLooksBroadcast()});
+  button.addEventListener("click",()=>{klkLooksSelected=emoji;klkLooksPreview.textContent=emoji;klkLooksPreview.style.display=emoji?"block":"none";if(emoji&&!klkLooksDetector)klkLooksLoadFallback();klkLooksTray.style.display="none";klkLooksBroadcast()});
   klkLooksTray.append(button);
  }
  klkLooksButton.addEventListener("click",()=>{klkLooksTray.style.display=klkLooksTray.style.display==="flex"?"none":"flex"});
