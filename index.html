@@ -1327,6 +1327,11 @@ input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),textarea,se
   <button id="createInvite" type="button">Crear invitación</button>
   <button id="shareInvite" class="secondary" type="button" hidden>Compartir invitación</button>
   <p id="inviteStatus" class="hint" role="status" aria-live="polite"></p>
+  <section aria-label="Mis invitados" style="margin-top:16px;border-top:1px solid #ddd;padding-top:12px">
+   <strong>Mis invitados</strong>
+   <p id="myInvitesCount" class="hint" aria-live="polite">Cargando invitaciones…</p>
+   <div id="myInvitesList" aria-live="polite"></div>
+  </section>
  </section>
  
 <section id="homeProfilePanel" aria-label="Mi perfil y configuración">
@@ -3524,6 +3529,35 @@ if (window.matchMedia("(display-mode: standalone)").matches || window.navigator.
 // Publica el selector para los scripts independientes que siguen a este bloque.
 window.$ = id => document.getElementById(id);
 window.$("inviteMember").addEventListener("click",()=>{ window.$("invitePanel").style.display=window.$("invitePanel").style.display==="block"?"none":"block"; window.$("inviteStatus").textContent=""; });
+
+let myInvitesUnsubscribe = null;
+let myInvitesOwner = null;
+function watchMyInvites(){
+ const uid = auth && auth.currentUser && auth.currentUser.uid;
+ if(myInvitesOwner === uid && myInvitesUnsubscribe) return;
+ if(myInvitesUnsubscribe){myInvitesUnsubscribe();myInvitesUnsubscribe=null;}
+ myInvitesOwner=uid || null;
+ const count=window.$("myInvitesCount"),list=window.$("myInvitesList");
+ if(!uid){count.textContent="Inicia sesión para consultar tus invitaciones.";list.replaceChildren();return;}
+ count.textContent="Cargando invitaciones…";
+ myInvitesUnsubscribe=db.collection("invitations").where("createdBy","==",uid).onSnapshot(snapshot=>{
+  list.replaceChildren();
+  const docs=snapshot.docs.sort((a,b)=>(b.data().createdAt?.toMillis?.()||0)-(a.data().createdAt?.toMillis?.()||0));
+  const redeemed=docs.filter(d=>!!d.data().redeemedBy).length;
+  count.textContent=redeemed+" registro(s) completado(s) de "+docs.length+" invitación(es).";
+  if(!docs.length){const p=document.createElement("p");p.className="hint";p.textContent="Todavía no has creado invitaciones.";list.append(p);}
+  for(const item of docs){
+   const data=item.data(),used=!!data.redeemedBy,expired=!used && data.expiresAt?.toMillis?.()<=Date.now();
+   const p=document.createElement("p");p.className="hint";
+   const date=used?data.redeemedAt:data.createdAt;
+   const when=date?.toDate?.()?.toLocaleString("es-DO")||"Fecha no disponible";
+   p.textContent=(used?"✓ Registro completado":expired?"Caducada":"Pendiente")+" · "+item.id+" · "+when;
+   list.append(p);
+  }
+ },error=>{count.textContent="No se pudieron cargar tus invitaciones: "+(error.code||error.message);list.replaceChildren();});
+}
+auth && auth.onAuthStateChanged(()=>watchMyInvites());
+
 let latestInviteCode = "";
 window.$("createInvite").addEventListener("click",async()=>{
  const user=auth&&auth.currentUser;

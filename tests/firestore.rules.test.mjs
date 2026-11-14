@@ -364,3 +364,39 @@ test("permite mensajes normales sin expiración cuando la función está desacti
     email:"member1@example.com", displayName:"Miembro Uno", createdAt:serverTimestamp()
   }));
 });
+
+
+test("solo el creador puede listar sus invitaciones", async () => {
+  await testEnv.withSecurityRulesDisabled(async context => {
+    for (const [code, creator] of [["CODE-A", "owner"], ["CODE-B", "other"]]) {
+      await setDoc(doc(context.firestore(), "invitations/" + code), {
+        createdBy: creator, createdAt: Timestamp.now(),
+        expiresAt: Timestamp.fromMillis(Date.now() + 86400000),
+        redeemedBy: null, redeemedAt: null
+      });
+    }
+  });
+  const owner = testEnv.authenticatedContext("owner").firestore();
+  await assertSucceeds(getDocs(query(collection(owner, "invitations"), where("createdBy", "==", "owner"))));
+  await assertFails(getDocs(collection(owner, "invitations")));
+  await assertFails(getDocs(query(collection(owner, "invitations"), where("createdBy", "==", "other"))));
+});
+
+test("el perfil nuevo no puede falsificar al invitador", async () => {
+  await testEnv.withSecurityRulesDisabled(async context => {
+    await setDoc(doc(context.firestore(), "invitations/CLAIM-1"), {
+      createdBy: "owner", createdAt: Timestamp.now(),
+      expiresAt: Timestamp.fromMillis(Date.now() + 86400000),
+      redeemedBy: "new-user", redeemedAt: Timestamp.now()
+    });
+  });
+  const db = testEnv.authenticatedContext("new-user").firestore();
+  await assertFails(setDoc(doc(db, "users/new-user"), {
+    uid: "new-user", email: "new@example.com", displayName: "Nuevo",
+    updatedAt: serverTimestamp(), inviteCode: "CLAIM-1", invitedBy: "attacker"
+  }));
+  await assertSucceeds(setDoc(doc(db, "users/new-user"), {
+    uid: "new-user", email: "new@example.com", displayName: "Nuevo",
+    updatedAt: serverTimestamp(), inviteCode: "CLAIM-1", invitedBy: "owner"
+  }));
+});
