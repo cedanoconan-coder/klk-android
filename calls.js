@@ -406,9 +406,9 @@
  klkMirrorStyle.textContent="#callOverlay .klkMirrorPreviewButton{position:absolute;top:calc(72px + env(safe-area-inset-top));right:16px;z-index:25;border:1px solid #ffffff55;border-radius:20px;background:#39235fcf;color:white;padding:9px 13px;font:600 13px system-ui;box-shadow:0 3px 12px #0004}#callOverlay .klkMirrorPreviewButton[hidden]{display:none!important}#callOverlay #localVideo.klkPreviewMirrored{transform:scaleX(-1)!important}";
  document.head.appendChild(klkMirrorStyle);
  // No mirror selector is mounted in the call interface.
- // Ensure neither local nor remote camera is mirrored by inherited CSS.
+ // Mirror both displayed call videos; WebRTC media tracks remain unchanged.
  const klkNaturalCameraStyle=document.createElement("style");
- klkNaturalCameraStyle.textContent="#callOverlay #localVideo,#callOverlay #remoteVideo,#callOverlay.visible #localVideo,#callOverlay.visible #remoteVideo{transform:none!important;scale:1 1!important;rotate:none!important}";
+ klkNaturalCameraStyle.textContent="#callOverlay #localVideo,#callOverlay #remoteVideo,#callOverlay.visible #localVideo,#callOverlay.visible #remoteVideo{transform:scaleX(-1)!important;scale:1 1!important;rotate:none!important}";
  document.head.appendChild(klkNaturalCameraStyle);
  function klkUpdateMirrorPreview(){
   const video=$("localVideo");
