@@ -648,6 +648,10 @@ main,#chat,.homeView{overscroll-behavior-y:contain}
 #usersOverlay .contactDirectoryAbout{margin:0 0 9px;color:var(--klk-muted);font-size:14px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere}
 #usersOverlay .contactDirectoryMood{margin:0 0 10px;color:var(--klk-accent);font-size:13px}
 #usersOverlay .contactDirectoryMessage{width:auto;margin:4px 0 0;padding:9px 14px;border:0;border-radius:20px;background:var(--klk-accent);color:#fff;font-size:13px;font-weight:650}
+#usersOverlay .contactDirectoryField{margin:5px 0 9px;font-size:13px;line-height:1.45;overflow-wrap:anywhere}
+#usersOverlay .contactDirectoryField strong{color:var(--klk-text)}
+#usersOverlay .contactDirectoryActions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+#usersOverlay .contactDirectoryProfile{width:auto;margin:4px 0 0;padding:9px 14px;border:1px solid var(--klk-line);border-radius:20px;background:var(--klk-surface);color:var(--klk-text);font-size:13px;font-weight:650}
 @keyframes directoryReveal{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
 @media(max-width:420px){#usersOverlay .contactDirectoryDetails{padding-left:82px}}
 
@@ -2190,10 +2194,26 @@ function renderPeople() {
   const details = document.createElement("div"); details.className = "contactDirectoryDetails"; details.hidden = true;
   const about = document.createElement("p"); about.className = "contactDirectoryAbout"; about.textContent = person.about || "Este miembro todavía no ha añadido información personal.";
   details.append(about);
-  if(person.mood){const mood=document.createElement("p");mood.className="contactDirectoryMood";mood.textContent="Estado de ánimo: "+person.mood;details.append(mood);}
+  // Solo información que ya existe en el perfil público del contacto.
+  const addPublicField=(label,value)=>{
+   if(typeof value!=="string"||!value.trim())return;
+   const field=document.createElement("p");field.className="contactDirectoryField";
+   const heading=document.createElement("strong");heading.textContent=label+": ";
+   const content=document.createElement("span");content.textContent=value.trim();
+   field.append(heading,content);details.append(field);
+  };
+  addPublicField("Usuario",person.username||person.handle||"");
+  if(person.mood)addPublicField("Estado de ánimo",person.mood);
+  const actions=document.createElement("div");actions.className="contactDirectoryActions";
+  const profile=document.createElement("button");profile.type="button";profile.className="contactDirectoryProfile";profile.textContent="Ver perfil completo";
+  profile.addEventListener("click",()=>{
+   const overlay=$("usersOverlay");overlay?.classList.remove("open");overlay?.setAttribute("aria-hidden","true");
+   openContactProfile(uid,person,"people");
+  });
+  actions.append(profile);
   const action=document.createElement("button");action.type="button";action.className="contactDirectoryMessage";action.textContent="Enviar mensaje";
   action.addEventListener("click",()=>openPrivateConversation(uid,person.displayName||person.email||"Conversación"));
-  details.append(action);
+  actions.append(action);details.append(actions);
   head.setAttribute("aria-expanded","false");
   head.addEventListener("click",()=>{const expanded=!details.hidden;details.hidden=expanded;head.setAttribute("aria-expanded",String(!expanded));row.classList.toggle("expanded",!expanded);});
   row.append(head,details); list.append(row);
