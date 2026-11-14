@@ -1308,7 +1308,21 @@ input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),textarea,se
 <button id="enter" type="submit">Iniciar sesión</button>
 </form>
 <input id="invitationCode" type="text" autocomplete="one-time-code" autocapitalize="characters" placeholder="Código de invitación para crear cuenta">
-<button id="register" class="secondary" type="button">Crear cuenta con invitación</button><button id="verifyInviteEmail" class="secondary" type="button">Ya confirmé mi correo · Activar invitación</button><button id="resendInviteEmail" class="secondary" type="button">Reenviar correo de confirmación</button>
+<button id="register" class="secondary" type="button">Crear cuenta con invitación</button>
+<script>/* Independent registration diagnostics: works even if the main application script fails. */
+(function(){
+ var button=document.getElementById('register'),status=document.getElementById('status');
+ if(!button||!status)return;
+ button.addEventListener('click',function(){
+  status.textContent='Procesando solicitud de registro…';
+  window.setTimeout(function(){
+   if(status.textContent==='Procesando solicitud de registro…'){
+    status.textContent='El registro no pudo iniciarse. Recarga KLK y vuelve a intentarlo. Si persiste, informa de un error de carga de la aplicación.';
+   }
+  },1200);
+ },true);
+})();
+</script><button id="verifyInviteEmail" class="secondary" type="button">Ya confirmé mi correo · Activar invitación</button><button id="resendInviteEmail" class="secondary" type="button">Reenviar correo de confirmación</button>
 <p class="hint">El registro está cerrado: necesitas un código de invitación de un miembro de klk.</p>
 <button id="forgot" class="secondary" type="button">Olvidé mi contraseña</button>
 <p id="status" role="status" aria-live="polite"></p>
@@ -1852,7 +1866,7 @@ if (inviteFromUrl) {
 $("register").addEventListener("click", async () => {
  if ($("register").disabled) return;
  $("status").textContent = "Validando invitación…";
- if (!auth || !db) { $("status").textContent = "Firebase no está disponible. Comprueba tu conexión e inténtalo de nuevo."; return; }
+ if (!auth || !db) { $("status").textContent = "Firebase no está disponible. " + (firebaseInitError && firebaseInitError.message ? firebaseInitError.message : "Comprueba tu conexión e inténtalo de nuevo."); return; }
  const email = $("email").value.trim(), password = $("password").value;
  const code = $("invitationCode").value.trim().toUpperCase();
  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { $("status").textContent = "Escribe un correo electrónico válido."; return; }
@@ -1861,7 +1875,7 @@ $("register").addEventListener("click", async () => {
  setBusy(true);
  try {
   const invitationRef = db.collection("invitations").doc(code);
-  const invitationSnapshot = await invitationRef.get({source:"server"});
+  const invitationSnapshot = await Promise.race([invitationRef.get({source:"server"}),new Promise((_,reject)=>setTimeout(()=>reject(new Error("Firebase no respondió a tiempo al validar la invitación. Comprueba tu conexión y vuelve a intentarlo.")),15000))]);
   if (!invitationSnapshot.exists) throw new Error("El código de invitación no existe.");
   const invitation = invitationSnapshot.data();
   if (invitation.redeemedBy || !invitation.expiresAt || invitation.expiresAt.toDate() <= new Date()) throw new Error("Este código ya se utilizó o ha caducado. Pide otra invitación.");
@@ -1907,7 +1921,7 @@ $("register").addEventListener("click", async () => {
   invitationActivationInProgress = false;
   // Si la activación falla, cerrar la sesión temporal para volver al formulario
   // y evitar que el estado de autenticación deje la interfaz bloqueada.
-  if (auth.currentUser) await auth.signOut().catch(() => {});
+  if (auth && auth.currentUser) { try { await Promise.race([auth.signOut(),new Promise((_,reject)=>setTimeout(()=>reject(new Error('Tiempo de espera agotado al cerrar sesión')),5000))]); } catch(signOutError) { console.warn('No se pudo cerrar la sesión temporal:',signOutError); } }
   $("status").textContent = error.code === "auth/too-many-requests" ? "Firebase bloqueó temporalmente los intentos. Espera antes de volver a registrarte." : (error.message || "No se pudo completar el registro. Revisa el código e inténtalo de nuevo.");
  } finally { setBusy(false); }
 });
