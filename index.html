@@ -4934,4 +4934,6 @@ html body #chat.room-open .chatTop .muted,html body #chat.room-open .chatTop .kl
 })();
 </script>
 <style>.klkQuotedMessage{cursor:pointer}.klk-reply-highlight{outline:2px solid #9854c9;outline-offset:3px;transition:outline .2s}</style>
+<style>#callsPanel .klk-group-join-slot{position:static!important;margin:12px 0 18px;z-index:auto}#callsPanel .klk-group-join-slot button{position:static!important;inset:auto!important;transform:none!important;max-width:100%;box-shadow:0 3px 12px #0002}#homeView:not([data-klk-tab="calls"]) .klk-group-join-slot{display:none!important}</style>
+<script>(()=>{const calls=document.getElementById('callsPanel');if(!calls)return;const slot=document.createElement('div');slot.className='klk-group-join-slot';slot.hidden=true;(calls.querySelector('.klkCallsHeading')||calls).insertAdjacentElement('afterend',slot);function relocate(){for(const el of document.querySelectorAll('button,[role="button"]')){if(slot.contains(el)||el.closest('#callsPanel'))continue;const label=(el.textContent||'').replace(/\s+/g,' ').trim().toLowerCase();if(!label.includes('unirse a video grupal'))continue;slot.appendChild(el);slot.hidden=false;}}relocate();new MutationObserver(relocate).observe(document.body,{childList:true,subtree:true});})();</script>
 </body></html>
