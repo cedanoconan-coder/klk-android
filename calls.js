@@ -112,6 +112,27 @@
  }
  let klkPeerUid=null;
  async function klkCallAvatar(uid){const node=$("callAvatar");if(!node)return;node.textContent="☎️";const person=callPeople.get(uid)||{};let url=person.photoURL||person.photoUrl||person.avatarUrl||person.profilePhotoURL||person.profilePhoto||"";if(person.photoPath&&typeof window.klkResolveProfilePhoto==="function"){try{url=await window.klkResolveProfilePhoto(person.photoPath)||url}catch(e){console.warn("Foto de llamada:",e)}}if(uid!==klkPeerUid||!overlay.classList.contains("visible"))return;if(typeof url==="string"&&/^https?:\/\//i.test(url)){const img=document.createElement("img");img.src=url;img.alt="Foto del contacto";img.style.cssText="width:100%;height:100%;object-fit:cover;border-radius:50%";img.onerror=()=>{img.remove();node.textContent="☎️"};node.replaceChildren(img)}}
+ // Local preview only: WebRTC sends the original, unmirrored video track.
+ let klkMirrorPreview=false;
+ const klkMirrorButton=document.createElement("button");
+ klkMirrorButton.type="button";
+ klkMirrorButton.id="klkMirrorPreview";
+ klkMirrorButton.className="klkMirrorPreviewButton";
+ klkMirrorButton.hidden=true;
+ klkMirrorButton.setAttribute("aria-label","Activar efecto espejo");
+ const klkMirrorStyle=document.createElement("style");
+ klkMirrorStyle.textContent="#callOverlay .klkMirrorPreviewButton{position:absolute;top:calc(72px + env(safe-area-inset-top));right:16px;z-index:25;border:1px solid #ffffff55;border-radius:20px;background:#39235fcf;color:white;padding:9px 13px;font:600 13px system-ui;box-shadow:0 3px 12px #0004}#callOverlay .klkMirrorPreviewButton[hidden]{display:none!important}#callOverlay #localVideo.klkPreviewMirrored{transform:scaleX(-1)!important}";
+ document.head.appendChild(klkMirrorStyle);
+ overlay.appendChild(klkMirrorButton);
+ function klkUpdateMirrorPreview(){
+  const video=$("localVideo");
+  if(video)video.classList.toggle("klkPreviewMirrored",klkMirrorPreview&&cameraFacingMode==="user");
+  klkMirrorButton.hidden=callMode!=="video"||!localStream||!overlay.classList.contains("visible");
+  klkMirrorButton.textContent=klkMirrorPreview?"Espejo: sí":"Espejo: no";
+  klkMirrorButton.setAttribute("aria-label",klkMirrorPreview?"Desactivar efecto espejo":"Activar efecto espejo");
+  klkMirrorButton.setAttribute("aria-pressed",String(klkMirrorPreview));
+ }
+ klkMirrorButton.addEventListener("click",()=>{klkMirrorPreview=!klkMirrorPreview;klkUpdateMirrorPreview()});
  function klkResetVideoLayout(){const stage=$("callVideoStage");if(stage)stage.classList.remove("klkCallSwapped")}
  let klkRingContext=null,klkRingInterval=null;
  function klkStopOutgoingRing(){if(klkRingInterval){clearInterval(klkRingInterval);klkRingInterval=null}if(klkRingContext){klkRingContext.close().catch(()=>{});klkRingContext=null}}
@@ -147,7 +168,7 @@
   klkSetIncomingSwipe(false);$("callPeerName").textContent=name||"Contacto";klkResetVideoLayout();klkCallAvatar(klkPeerUid);
   // Keep the hang-up control available while browser permissions are pending.
   $("callStatus").textContent=status||"";
-  overlay.classList.add("visible");
+  overlay.classList.add("visible");klkUpdateMirrorPreview();
   $("answerCall").hidden=true;$("rejectCall").hidden=true;$("muteCall").hidden=true;$("cameraCall").hidden=true;$("switchCameraCall").hidden=true;$("endCall").hidden=false;
   $("callAvatar").style.display="grid";$("remoteVideo").style.display="none";$("localVideo").style.display="none";
   $("remoteAudio").srcObject=null;$("remoteVideo").srcObject=null;$("remoteVideo").muted=true;$("localVideo").srcObject=null;
@@ -160,7 +181,7 @@
   $("muteCall").textContent="Silenciar";$("muteCall").classList.remove("muted");
   $("callAvatar").style.display=callMode==="video"?"none":"grid";
   $("remoteVideo").style.display=callMode==="video"?"block":"none";
-  $("localVideo").style.display=callMode==="video"?"block":"none";
+  $("localVideo").style.display=callMode==="video"?"block":"none";klkUpdateMirrorPreview();
  }
  function cleanup(){
   klkSetIncomingSwipe(false);klkStopOutgoingRing();klkPeerUid=null;klkResetVideoLayout();callStarting=false;
@@ -174,7 +195,7 @@
   if(localStream){localStream.getTracks().forEach(t=>t.stop());localStream=null;}
   $("remoteVideo").srcObject=null;$("localVideo").srcObject=null;$("remoteAudio").srcObject=null;
   callRef=null;callRole=null;callState=null;incomingCall=null;queuedCandidates=[];pendingLocalCandidates=[];muted=false;cameraOff=false;cameraFacingMode="user";ending=false;
-  overlay.classList.remove("visible");
+  overlay.classList.remove("visible");klkMirrorPreview=false;klkUpdateMirrorPreview();
  }
  function klkCallVideoConstraints(facing){return {facingMode:{ideal:facing},width:{ideal:1280},height:{ideal:720},frameRate:{ideal:24,max:30},resizeMode:"crop-and-scale"};}
  async function klkTuneCallVideo(track){if(!track)return;try{const caps=typeof track.getCapabilities==="function"?track.getCapabilities():{};const extras={};if(caps.frameRate&&caps.frameRate.max>=24)extras.frameRate={ideal:24,max:30};if(caps.width&&caps.width.max>=640)extras.width={ideal:Math.min(1280,caps.width.max)};if(caps.height&&caps.height.max>=480)extras.height={ideal:Math.min(720,caps.height.max)};if(Object.keys(extras).length)await track.applyConstraints(extras)}catch(e){console.warn("Ajustes opcionales de cámara no disponibles",e)}}
@@ -361,7 +382,7 @@
    localStream.addTrack(nextTrack);nextTrack.enabled=!cameraOff;
    $("localVideo").srcObject=localStream;
    previousTracks.forEach(track=>track.stop());
-   cameraFacingMode=nextFacing;
+   cameraFacingMode=nextFacing;klkUpdateMirrorPreview();
    $("callStatus").textContent=nextFacing==="environment"?"Cámara trasera activa":"Cámara frontal activa";
   }catch(error){
    if(replacementStream)replacementStream.getTracks().forEach(track=>track.stop());
