@@ -127,7 +127,7 @@
  function klkUpdateMirrorPreview(){
   const video=$("localVideo");
   if(video)video.classList.toggle("klkPreviewMirrored",klkMirrorPreview&&cameraFacingMode==="user");
-  klkMirrorButton.hidden=callMode!=="video"||!localStream||!overlay.classList.contains("visible");
+  klkMirrorButton.hidden=true; // Vista normal fija: ocultar el selector de espejo.
   klkMirrorButton.textContent=klkMirrorPreview?"Espejo: sí":"Espejo: no";
   klkMirrorButton.setAttribute("aria-label",klkMirrorPreview?"Desactivar efecto espejo":"Activar efecto espejo");
   klkMirrorButton.setAttribute("aria-pressed",String(klkMirrorPreview));
