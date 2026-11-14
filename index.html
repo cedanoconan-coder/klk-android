@@ -2152,7 +2152,7 @@ async function openContactProfile(uid,person,returnTo="people"){
   const close=document.createElement("button");close.type="button";close.textContent="Cerrar";close.style.cssText="float:right;padding:8px;border:0;background:transparent;color:inherit";
   close.onclick=()=>dialog.remove();panel.append(close,title);
   const content=document.createElement("div");panel.append(content);
-  const shareText="Contacto de KLK: "+displayName+"\\nIdentificador: "+uid+"\\nPara agregarlo, solicita su aprobación en KLK.";
+  const shareText="Contacto de KLK: "+displayName+"\nIdentificador: "+uid+"\nPara agregarlo, solicita su aprobación en KLK.";
   const option=(label,fn)=>{const b=document.createElement("button");b.type="button";b.textContent=label;b.style.cssText="display:block;width:100%;margin:10px 0;padding:14px;border:1px solid #aa91c6;border-radius:14px;background:transparent;color:inherit;text-align:left";b.onclick=fn;content.append(b)};
   const home=()=>{content.replaceChildren();option("💬 Enviar a un contacto de KLK",()=>{
    content.replaceChildren();const back=document.createElement("button");back.type="button";back.textContent="← Volver";back.onclick=home;content.append(back);
@@ -2576,7 +2576,23 @@ function loadMessages() {
      }
     } catch(error) { placeholder.textContent = "No se pudo cargar: " + error.message; }
    } else {
-    const body = document.createElement("p"); body.textContent = data.text || (data.type === "image" ? "📷 Foto" : data.type === "audio" ? "🎙️ Nota de voz" : ""); if(data.type==="sticker"){body.className="stickerMessage";body.setAttribute("aria-label","Sticker "+(data.text||""));if(typeof data.text==="string"&&data.text.startsWith("KLK:A")){const gifMap={"KLK:A01":"klk-saludos.gif","KLK:A02":"klk-amor.gif","KLK:A03":"klk-fiesta.gif","KLK:A04":"klk-alegria.gif"};const file=gifMap[data.text];if(file){body.textContent="";body.classList.add("klkAnimatedSticker");const image=document.createElement("img");image.src="assets/"+file;image.alt="Sticker animado de KLK";image.loading="lazy";body.appendChild(image);}}else if(typeof data.text==="string"&&data.text.startsWith("KLK:")){body.textContent="";body.classList.add("klkMessageSticker");const letters=document.createElement("span");letters.className="klkStickerLetters";letters.textContent="KLK";const mood=document.createElement("span");mood.className="klkStickerMood";mood.textContent=data.text.slice(4);body.append(letters,mood);}} item.appendChild(body);
+    const body = document.createElement("p"); body.textContent = data.text || (data.type === "image" ? "📷 Foto" : data.type === "audio" ? "🎙️ Nota de voz" : ""); if(data.type==="sticker"){body.className="stickerMessage";body.setAttribute("aria-label","Sticker "+(data.text||""));if(typeof data.text==="string"&&data.text.startsWith("KLK:A")){const gifMap={"KLK:A01":"klk-saludos.gif","KLK:A02":"klk-amor.gif","KLK:A03":"klk-fiesta.gif","KLK:A04":"klk-alegria.gif"};const file=gifMap[data.text];if(file){body.textContent="";body.classList.add("klkAnimatedSticker");const image=document.createElement("img");image.src="assets/"+file;image.alt="Sticker animado de KLK";image.loading="lazy";body.appendChild(image);}}else if(typeof data.text==="string"&&data.text.startsWith("KLK:")){body.textContent="";body.classList.add("klkMessageSticker");const letters=document.createElement("span");letters.className="klkStickerLetters";letters.textContent="KLK";const mood=document.createElement("span");mood.className="klkStickerMood";mood.textContent=data.text.slice(4);body.append(letters,mood);}} if(typeof data.text==="string"&&data.text.startsWith("Contacto de KLK: ")){
+      const normalized=data.text.replace(/\\\\n/g,"\\n");
+      const match=normalized.match(/^Contacto de KLK: ([^\\n]+)\\nIdentificador: ([A-Za-z0-9_-]{12,128})/);
+      if(match){
+       body.textContent="";body.className="klkSharedContactCard";
+       const heading=document.createElement("strong");heading.textContent="👤 Contacto de KLK";
+       const name=document.createElement("div");name.textContent=match[1];name.style.cssText="font-size:18px;font-weight:700;margin:8px 0";
+       const info=document.createElement("small");info.textContent="Contacto compartido · Su aprobación puede ser necesaria";
+       body.append(heading,name,info);
+       const targetUid=match[2],target=peopleCache.get(targetUid);
+       if(target&&targetUid!==auth.currentUser?.uid){
+        const open=document.createElement("button");open.type="button";open.textContent="Ver contacto";open.style.cssText="display:block;margin-top:12px;border:1px solid currentColor;border-radius:14px;padding:9px 14px;background:transparent;color:inherit";
+        open.onclick=()=>openContactProfile(targetUid,target,"chat");body.append(open);
+       }
+      }else{body.textContent=normalized;}
+     }
+     item.appendChild(body);
    }
    if (data.type === "location" && Number.isFinite(data.latitude) && Number.isFinite(data.longitude)) {
     const mapLink=document.createElement("a");mapLink.href="https://www.google.com/maps?q="+encodeURIComponent(data.latitude+","+data.longitude);mapLink.target="_blank";mapLink.rel="noopener";mapLink.textContent="📍 Ver ubicación compartida";item.appendChild(mapLink);
