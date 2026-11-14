@@ -1264,7 +1264,20 @@ input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),textarea,se
 #chat.room-open .composer #send .sendGlyph{width:27px!important;height:27px!important}
 #chat.room-open .composer #send:active{transform:translateY(2px)!important;box-shadow:0 1px 0 #51217f,0 3px 6px rgba(68,28,109,.24)!important}
 @media(max-width:360px){#chat.room-open .composer #send{width:50px!important;min-width:50px!important;height:50px!important;flex-basis:50px!important}}
-</style><style id="klk-message-replies-v1">#klkReplyPreview{display:flex;align-items:center;gap:9px;padding:8px 12px;margin:4px 10px;background:#f4eafa;border-left:4px solid #8543c2;border-radius:9px;color:#332442;font-size:13px}#klkReplyPreview[hidden]{display:none!important}#klkReplyPreview .klkReplyText{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#klkReplyPreview button{border:0;background:transparent;color:#65417f;font-size:22px}.klkQuotedMessage{padding:5px 9px;margin-bottom:5px;border-left:3px solid #9854c9;background:rgba(133,67,194,.1);border-radius:5px;font-size:12px;max-width:100%;overflow-wrap:anywhere}.klkQuotedMessage strong{display:block;font-size:11px}</style><style id="klk-reply-draft-layout">#chat.room-open #klkReplyPreview:not([hidden]){flex:0 0 auto!important;flex-shrink:0!important;max-height:130px!important;overflow-y:auto!important}#chat.room-open .composer{flex-shrink:0!important}</style><style id="klk-reply-preview-fix">#chat #klkReplyPreview:not([hidden]){display:flex!important;visibility:visible!important;opacity:1!important;position:relative!important;z-index:8!important;min-height:60px!important;background:#f4eafa!important;color:#332442!important;align-items:center!important}#klkReplyPreview .klkReplyContent{display:flex!important;flex:1!important;min-width:0!important;flex-direction:column!important;gap:4px!important}#klkReplyPreview .klkReplyName,#klkReplyPreview .klkReplyText{display:block!important;visibility:visible!important;color:#332442!important;white-space:normal!important;overflow-wrap:anywhere!important;line-height:1.4!important}#klkReplyPreview .klkReplyName{color:#7840a8!important;font-weight:700!important}#klkReplyPreview button{flex:0 0 36px!important;width:36px!important;min-width:36px!important;margin:0!important;padding:0!important}</style></head>
+</style><style id="klk-message-replies-v1">#klkReplyPreview{display:flex;align-items:center;gap:9px;padding:8px 12px;margin:4px 10px;background:#f4eafa;border-left:4px solid #8543c2;border-radius:9px;color:#332442;font-size:13px}#klkReplyPreview[hidden]{display:none!important}#klkReplyPreview .klkReplyText{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#klkReplyPreview button{border:0;background:transparent;color:#65417f;font-size:22px}.klkQuotedMessage{padding:5px 9px;margin-bottom:5px;border-left:3px solid #9854c9;background:rgba(133,67,194,.1);border-radius:5px;font-size:12px;max-width:100%;overflow-wrap:anywhere}.klkQuotedMessage strong{display:block;font-size:11px}</style><style id="klk-reply-draft-layout">#chat.room-open #klkReplyPreview:not([hidden]){flex:0 0 auto!important;flex-shrink:0!important;max-height:130px!important;overflow-y:auto!important}#chat.room-open .composer{flex-shrink:0!important}</style><style id="klk-reply-preview-fix">#chat #klkReplyPreview:not([hidden]){display:flex!important;visibility:visible!important;opacity:1!important;position:relative!important;z-index:8!important;min-height:60px!important;background:#f4eafa!important;color:#332442!important;align-items:center!important}#klkReplyPreview .klkReplyContent{display:flex!important;flex:1!important;min-width:0!important;flex-direction:column!important;gap:4px!important}#klkReplyPreview .klkReplyName,#klkReplyPreview .klkReplyText{display:block!important;visibility:visible!important;color:#332442!important;white-space:normal!important;overflow-wrap:anywhere!important;line-height:1.4!important}#klkReplyPreview .klkReplyName{color:#7840a8!important;font-weight:700!important}#klkReplyPreview button{flex:0 0 36px!important;width:36px!important;min-width:36px!important;margin:0!important;padding:0!important}</style><style id="klkSharedContactCardStyles">
+.klkSharedContactCard{display:block!important;box-sizing:border-box;width:min(100%,310px);padding:14px!important;border-radius:20px!important;background:linear-gradient(155deg,#faf6ff,#f0e5ff)!important;color:#271b3c!important;box-shadow:0 5px 18px #271b3c1c;border:1px solid #dfc9f5;overflow:hidden}
+.klkSharedContactTop{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-bottom:10px;border-bottom:1px solid #e3d5ee;font-size:11px;font-weight:800;letter-spacing:.05em;color:#7950a2}
+.klkSharedContactTop span:last-child{font-size:9px;color:#907d9f}
+.klkSharedContactIdentity{display:flex;align-items:center;gap:12px;padding:15px 0}
+.klkSharedContactIdentity>div:last-child{min-width:0;display:flex;flex-direction:column;gap:4px}
+.klkSharedContactIdentity strong{font-size:19px;line-height:1.25;overflow-wrap:anywhere;color:#271b3c}
+.klkSharedContactIdentity small{font-size:12px;color:#78678a}
+.klkSharedContactAvatar{height:60px;width:60px;flex:none;display:grid;place-items:center;border-radius:50%;background:#e6d3fa;color:#7950a2;font-size:27px;font-weight:700;overflow:hidden;border:3px solid white;box-shadow:0 2px 9px #32134e26}
+.klkSharedContactAvatar img{width:100%;height:100%;object-fit:cover}
+.klkSharedContactPrivacy{font-size:11px;line-height:1.4;padding:9px 10px;background:#fff9;border-radius:10px;color:#655776}
+.klkSharedContactOpen{display:block;width:100%;margin-top:12px;border:0;border-radius:12px;padding:12px;background:#8755b6;color:white;font-size:14px;font-weight:750;box-shadow:0 3px 8px #8755b640}
+</style>
+</head>
 <body>
 
 <main>
@@ -2582,13 +2595,24 @@ function loadMessages() {
       const match=normalized.match(/Contacto\s+de\s+KLK\s*:\s*([\s\S]*?)\s*Identificador\s*:?\s*([A-Za-z0-9_-]{12,128})/i);
       if(match){
        body.textContent="";body.className="klkSharedContactCard";
-       const heading=document.createElement("strong");heading.textContent="👤 Contacto de KLK";
-       const name=document.createElement("div");name.textContent=match[1];name.style.cssText="font-size:18px;font-weight:700;margin:8px 0";
-       const info=document.createElement("small");info.textContent="Contacto compartido · Su aprobación puede ser necesaria";
-       body.append(heading,name,info);
        const targetUid=match[2],target=peopleCache.get(targetUid);
+       const top=document.createElement("div");top.className="klkSharedContactTop";
+       const brand=document.createElement("span");brand.textContent="👍 KLK MANIN";
+       const type=document.createElement("span");type.textContent="CONTACTO";
+       top.append(brand,type);
+       const identity=document.createElement("div");identity.className="klkSharedContactIdentity";
+       const avatar=document.createElement("div");avatar.className="klkSharedContactAvatar";
+       const photo=target&&(target.photoURL||target.photoUrl||target.avatarUrl);
+       if(typeof photo==="string"&&/^https:\/\//i.test(photo)){const img=document.createElement("img");img.src=photo;img.alt="";img.loading="lazy";img.referrerPolicy="no-referrer";avatar.append(img);}
+       else{avatar.textContent=(match[1].trim().charAt(0)||"K").toUpperCase();}
+       const textWrap=document.createElement("div");
+       const name=document.createElement("strong");name.textContent=match[1].trim();
+       const subtitle=document.createElement("small");subtitle.textContent="Contacto compartido";
+       textWrap.append(name,subtitle);identity.append(avatar,textWrap);
+       const privacy=document.createElement("div");privacy.className="klkSharedContactPrivacy";privacy.textContent="♢ Privacidad protegida · Puede requerir aprobación";
+       body.append(top,identity,privacy);
        if(target&&targetUid!==auth.currentUser?.uid){
-        const open=document.createElement("button");open.type="button";open.textContent="Ver contacto";open.style.cssText="display:block;margin-top:12px;border:1px solid currentColor;border-radius:14px;padding:9px 14px;background:transparent;color:inherit";
+        const open=document.createElement("button");open.type="button";open.className="klkSharedContactOpen";open.textContent="Ver contacto";
         open.onclick=()=>openContactProfile(targetUid,target,"chat");body.append(open);
        }
       }else{body.textContent=normalized;}
