@@ -1276,6 +1276,22 @@ input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),textarea,se
 .klkSharedContactAvatar img{width:100%;height:100%;object-fit:cover}
 .klkSharedContactPrivacy{font-size:11px;line-height:1.4;padding:9px 10px;background:#fff9;border-radius:10px;color:#655776}
 .klkSharedContactOpen{display:block;width:100%;margin-top:12px;border:0;border-radius:12px;padding:12px;background:#8755b6;color:white;font-size:14px;font-weight:750;box-shadow:0 3px 8px #8755b640}
+
+/* Tarjeta compartida KLK: neon compacto y accesible para pantallas pequeñas */
+.klkSharedContactCard{width:min(100%,340px)!important;padding:10px!important;border-radius:23px!important;background:linear-gradient(155deg,#f9e7ff 0%,#e9c7ff 55%,#e3baff 100%)!important;border:2px solid #f4c8ff!important;box-shadow:0 0 0 2px #8f17e8,0 0 16px #b82cff66,0 8px 18px #39104e3d!important}
+.klkSharedContactTop{margin:-10px -10px 0;padding:10px 12px!important;border-radius:20px 20px 13px 13px;background:linear-gradient(115deg,#35005f,#8500d8 60%,#360063);border-bottom:2px solid #eb7aff!important;color:white!important;box-shadow:inset 0 -3px 12px #ff60ff88}
+.klkSharedBrand{display:flex;align-items:center;gap:9px;min-width:0}
+.klkSharedBrand img{width:48px;height:48px;object-fit:contain;border-radius:12px;background:#480074;box-shadow:0 0 8px #f57aff}
+.klkSharedBrand>span{display:flex;flex-direction:column;line-height:1;gap:3px}
+.klkSharedBrand b{font-size:23px;letter-spacing:2px;color:#fff;text-shadow:0 2px 2px #2a0059,0 0 6px #ffb9ff}
+.klkSharedBrand small{font-size:10px;letter-spacing:2px;color:#b9ff39}
+.klkSharedContactTop>span:last-child{color:#fff!important;font-size:9px!important}
+.klkSharedContactIdentity{padding:17px 7px 12px!important}
+.klkSharedContactAvatar{width:72px!important;height:72px!important;border:3px solid #d632ff!important;box-shadow:0 0 0 3px #fff,0 0 11px #ac19ff!important}
+.klkSharedContactIdentity strong{font-size:22px!important;color:#280047!important}
+.klkSharedContactPrivacy{background:#ffffffb8!important;border:1px solid #fff;color:#4e2872!important}
+.klkSharedContactOpen{background:linear-gradient(180deg,#bd20ff,#5d009b)!important;border:2px solid #efb4ff!important;border-radius:18px!important;box-shadow:0 3px 0 #420070,0 0 9px #c425ff88!important;font-size:15px!important}
+.klkSharedContactOpen:active{transform:translateY(2px);box-shadow:0 1px 0 #420070!important}
 </style>
 </head>
 <body>
@@ -2597,7 +2613,7 @@ function loadMessages() {
        body.textContent="";body.className="klkSharedContactCard";
        const targetUid=match[2],target=peopleCache.get(targetUid);
        const top=document.createElement("div");top.className="klkSharedContactTop";
-       const brand=document.createElement("span");brand.textContent="👍 KLK MANIN";
+       const brand=document.createElement("span");brand.className="klkSharedBrand";const logo=document.createElement("img");logo.src="./assets/animaci%C3%B3n_ne%C3%B3n_del_logo_klk.png";logo.alt="Logo KLK";logo.loading="lazy";logo.onerror=()=>{logo.src="./icon.svg";logo.onerror=null};const lettering=document.createElement("span");lettering.innerHTML="<b>KLK</b><small>MANIN 👍</small>";brand.append(logo,lettering);
        const type=document.createElement("span");type.textContent="CONTACTO";
        top.append(brand,type);
        const identity=document.createElement("div");identity.className="klkSharedContactIdentity";
