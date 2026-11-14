@@ -38,9 +38,10 @@ jobs:
         run: |
           set -e
           mkdir -p www
-          cp index.html calls.js chat-camera.js qr-contacts.js icon.svg manifest.webmanifest sw.js www/
+          cp index.html calls.js group-calls.js chat-camera.js qr-contacts.js icon.svg manifest.webmanifest sw.js www/
           if [ -d assets ]; then cp -R assets www/; fi
           # Evitar generar una APK incompleta si falta un recurso esencial.
+          test -s www/group-calls.js
           test -s www/chat-camera.js
           test -s www/qr-contacts.js
           test -s www/index.html
@@ -84,6 +85,7 @@ jobs:
             node --check "$script"
           done
           node --check calls.js
+          node --check group-calls.js
           node --check chat-camera.js
           node --check qr-contacts.js
 
