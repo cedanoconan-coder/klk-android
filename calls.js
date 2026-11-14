@@ -9,6 +9,37 @@
  let callRole=null, callMode="audio", callState=null, callStarting=false, remoteCandidatesUnsub=null, localCandidatesUnsub=null, queuedCandidates=[];
  let incomingCall=null, incomingDocUnsub=null, ringTimeout=null, muted=false, cameraOff=false, cameraFacingMode="user", ending=false, pendingLocalCandidates=[];
  const overlay=$("callOverlay");
+
+ // Gestos KLK: reactions travel privately over the existing WebRTC connection.
+ let klkReactionChannel=null;
+ const klkReactionChoices=["👍","❤️","😂","👏","🎉"];
+ const klkReactionBar=document.createElement("div");
+ klkReactionBar.id="klkReactionBar";
+ klkReactionBar.setAttribute("aria-label","Reacciones de videollamada");
+ klkReactionBar.style.cssText="display:none;gap:8px;justify-content:center;flex-wrap:wrap;padding:8px;z-index:20";
+ const klkReactionLayer=document.createElement("div");
+ klkReactionLayer.style.cssText="position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:15";
+ const klkReactionStyle=document.createElement("style");
+ klkReactionStyle.textContent="@keyframes klkReactionFloat{from{transform:translateY(0) scale(.8);opacity:1}to{transform:translateY(-180px) scale(1.3);opacity:0}} #klkReactionBar button{width:44px;min-width:44px;height:44px;min-height:44px;border:1px solid #ffffff66;border-radius:50%;background:#ffffff25;font-size:24px;padding:0;touch-action:manipulation}";
+ document.head.append(klkReactionStyle);
+ $("callVideoStage")?.append(klkReactionLayer);
+ $("callControls")?.parentNode?.insertBefore(klkReactionBar,$("callControls"));
+ function klkShowReaction(emoji,remote=false){
+  if(!klkReactionChoices.includes(emoji)||callMode!=="video"||!overlay.classList.contains("visible"))return;
+  const el=document.createElement("span");el.textContent=emoji;el.setAttribute("aria-label",remote?"Reacción recibida":"Reacción enviada");
+  el.style.cssText="position:absolute;bottom:18%;left:"+(remote?65:25)+"%;font-size:44px;animation:klkReactionFloat 1.8s ease-out forwards";
+  klkReactionLayer.append(el);setTimeout(()=>el.remove(),1900);
+ }
+ function klkAttachReactionChannel(channel){
+  klkReactionChannel=channel;
+  channel.onmessage=event=>{try{const data=JSON.parse(event.data);if(data?.type==="klk-reaction"&&klkReactionChoices.includes(data.emoji))klkShowReaction(data.emoji,true)}catch(e){}};
+  channel.onclose=()=>{if(klkReactionChannel===channel)klkReactionChannel=null};
+ }
+ for(const emoji of klkReactionChoices){
+  const button=document.createElement("button");button.type="button";button.textContent=emoji;button.setAttribute("aria-label","Enviar reacción "+emoji);
+  button.addEventListener("click",()=>{if(klkReactionChannel?.readyState!=="open")return;klkShowReaction(emoji);klkReactionChannel.send(JSON.stringify({type:"klk-reaction",emoji}))});
+  klkReactionBar.append(button);
+ }
  const setStatus=(message)=>{if($("callsStatus"))$("callsStatus").textContent=message||"";};
  function isCallContactAccepted(uid){return callPeople.has(uid);}
  function acceptedPeople(){return [...callPeople.entries()].filter(([uid])=>uid!==currentUid&&isCallContactAccepted(uid));}
@@ -165,6 +196,7 @@
   observer.observe(overlay,{attributes:true,attributeFilter:["class"]});
  }
  function showOverlay(name,status){
+  klkReactionBar.style.display="none";
   klkSetIncomingSwipe(false);$("callPeerName").textContent=name||"Contacto";klkResetVideoLayout();klkCallAvatar(klkPeerUid);
   // Keep the hang-up control available while browser permissions are pending.
   $("callStatus").textContent=status||"";
@@ -174,6 +206,7 @@
   $("remoteAudio").srcObject=null;$("remoteVideo").srcObject=null;$("remoteVideo").muted=true;$("localVideo").srcObject=null;
  }
  function showActiveControls(){
+  klkReactionBar.style.display=callMode==="video"?"flex":"none";
   klkSetIncomingSwipe(false);
   $("answerCall").hidden=true;$("rejectCall").hidden=true;$("endCall").hidden=false;$("muteCall").hidden=false;
   $("cameraCall").hidden=callMode!=="video";$("switchCameraCall").hidden=callMode!=="video";
@@ -184,6 +217,7 @@
   $("localVideo").style.display=callMode==="video"?"block":"none";klkUpdateMirrorPreview();
  }
  function cleanup(){
+  klkReactionBar.style.display="none";klkReactionLayer.replaceChildren();klkReactionChannel=null;
   klkSetIncomingSwipe(false);klkStopOutgoingRing();klkPeerUid=null;klkResetVideoLayout();callStarting=false;
   if(window.klkStopIncomingCallSound)window.klkStopIncomingCallSound();
   if(activeCallUnsub){activeCallUnsub();activeCallUnsub=null;}
@@ -208,6 +242,8 @@
  }
  function createPeer(){
   peer=new RTCPeerConnection(ICE_CONFIG);
+  peer.ondatachannel=event=>{if(event.channel.label==="klk-reactions")klkAttachReactionChannel(event.channel)};
+  if(callRole==="caller"&&callMode==="video")klkAttachReactionChannel(peer.createDataChannel("klk-reactions"));
   localStream.getTracks().forEach(track=>{const sender=peer.addTrack(track,localStream);if(track.kind==="video"){klkTuneCallVideo(track);klkTuneCallSender(sender)}});
   peer.ontrack=event=>{
    const stream=event.streams&&event.streams[0];
