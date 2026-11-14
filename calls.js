@@ -182,7 +182,7 @@
  let klkPeerUid=null;
  async function klkCallAvatar(uid){const node=$("callAvatar");if(!node)return;node.textContent="☎️";const person=callPeople.get(uid)||{};let url=person.photoURL||person.photoUrl||person.avatarUrl||person.profilePhotoURL||person.profilePhoto||"";if(person.photoPath&&typeof window.klkResolveProfilePhoto==="function"){try{url=await window.klkResolveProfilePhoto(person.photoPath)||url}catch(e){console.warn("Foto de llamada:",e)}}if(uid!==klkPeerUid||!overlay.classList.contains("visible"))return;if(typeof url==="string"&&/^https?:\/\//i.test(url)){const img=document.createElement("img");img.src=url;img.alt="Foto del contacto";img.style.cssText="width:100%;height:100%;object-fit:cover;border-radius:50%";img.onerror=()=>{img.remove();node.textContent="☎️"};node.replaceChildren(img)}}
  // Local preview only: WebRTC sends the original, unmirrored video track.
- let klkMirrorPreview=true;
+ let klkMirrorPreview=false;
  const klkMirrorButton=document.createElement("button");
  klkMirrorButton.type="button";
  klkMirrorButton.id="klkMirrorPreview";
@@ -195,13 +195,13 @@
  // No mirror selector is mounted in the call interface.
  function klkUpdateMirrorPreview(){
   const video=$("localVideo");
-  if(video)video.classList.toggle("klkPreviewMirrored",klkMirrorPreview&&cameraFacingMode==="user");
+  if(video)video.classList.remove("klkPreviewMirrored");
   klkMirrorButton.hidden=true; // Kept detached from DOM.
   klkMirrorButton.textContent=klkMirrorPreview?"Espejo: sí":"Espejo: no";
   klkMirrorButton.setAttribute("aria-label",klkMirrorPreview?"Desactivar efecto espejo":"Activar efecto espejo");
   klkMirrorButton.setAttribute("aria-pressed",String(klkMirrorPreview));
  }
- klkMirrorButton.addEventListener("click",()=>{klkMirrorPreview=!klkMirrorPreview;klkUpdateMirrorPreview()});
+ // Mirror toggle intentionally disabled; local preview keeps natural orientation.
  function klkResetVideoLayout(){const stage=$("callVideoStage");if(stage)stage.classList.remove("klkCallSwapped")}
  let klkRingContext=null,klkRingInterval=null;
  function klkStopOutgoingRing(){if(klkRingInterval){clearInterval(klkRingInterval);klkRingInterval=null}if(klkRingContext){klkRingContext.close().catch(()=>{});klkRingContext=null}}
