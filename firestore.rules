@@ -650,6 +650,58 @@ service cloud.firestore {
       }
     }
 
+    // Four-person group video rooms: fixed invitees, no public signaling.
+    match /groupCalls/{roomId} {
+      function member() { return signedIn() && request.auth.uid in resource.data.memberUids; }
+      function validMembers(d) {
+        return d.memberUids is list && d.memberUids.size() >= 2 && d.memberUids.size() <= 4
+          && d.memberUids.toSet().size() == d.memberUids.size()
+          && d.hostUid in d.memberUids;
+      }
+      allow get, list: if member();
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['hostUid','memberUids','activeUids','status','createdAt'])
+        && request.resource.data.hostUid == request.auth.uid
+        && validMembers(request.resource.data)
+        && request.resource.data.activeUids == []
+        && request.resource.data.status == 'active'
+        && request.resource.data.createdAt == request.time;
+      allow update: if member()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['activeUids','status'])
+        && request.resource.data.hostUid == resource.data.hostUid
+        && request.resource.data.memberUids == resource.data.memberUids
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.activeUids is list
+        && request.resource.data.activeUids.size() <= 4
+        && request.resource.data.activeUids.toSet().size() == request.resource.data.activeUids.size()
+        && request.resource.data.activeUids.hasOnly(resource.data.memberUids)
+        && (
+          (request.resource.data.status == resource.data.status
+            && request.resource.data.activeUids.toSet().difference(resource.data.activeUids.toSet()).hasOnly([request.auth.uid])
+            && resource.data.activeUids.toSet().difference(request.resource.data.activeUids.toSet()).hasOnly([request.auth.uid]))
+          || (request.auth.uid == resource.data.hostUid
+            && resource.data.status == 'active'
+            && request.resource.data.status == 'ended'
+            && request.resource.data.activeUids == resource.data.activeUids)
+        );
+      allow delete: if false;
+      match /signals/{signalId} {
+        function parent() { return get(/databases/$(database)/documents/groupCalls/$(roomId)).data; }
+        function allowed() { return signedIn() && request.auth.uid in parent().memberUids; }
+        allow get, list: if allowed() && resource.data.toUid == request.auth.uid;
+        allow create: if allowed() && parent().status == 'active'
+          && request.resource.data.keys().hasOnly(['fromUid','toUid','type','payload','createdAt'])
+          && request.resource.data.fromUid == request.auth.uid
+          && request.resource.data.toUid in parent().memberUids
+          && request.resource.data.toUid != request.auth.uid
+          && request.resource.data.type in ['offer','answer','candidate']
+          && request.resource.data.payload is map
+          && request.resource.data.payload.toString().size() <= 200000
+          && request.resource.data.createdAt == request.time;
+        allow update, delete: if false;
+      }
+    }
+
     // The legacy global /messages collection is intentionally inaccessible.
     match /messages/{messageId} {
       allow read, write: if false;
