@@ -9,6 +9,18 @@
  let callRole=null, callMode="audio", callState=null, callStarting=false, remoteCandidatesUnsub=null, localCandidatesUnsub=null, queuedCandidates=[];
  let incomingCall=null, incomingDocUnsub=null, ringTimeout=null, muted=false, cameraOff=false, cameraFacingMode="user", ending=false, pendingLocalCandidates=[];
  const overlay=$("callOverlay");
+ // Prevent Android's native Copy/Select all toolbar inside the active call screen.
+ // Scoped to the call overlay so chat message selection remains available.
+ const klkCallSelectionStyle=document.createElement("style");
+ klkCallSelectionStyle.textContent="#callOverlay,#callOverlay *{-webkit-user-select:none!important;user-select:none!important;-webkit-touch-callout:none!important}#callOverlay input,#callOverlay textarea{user-select:text!important;-webkit-user-select:text!important}";
+ document.head.appendChild(klkCallSelectionStyle);
+ overlay?.addEventListener("contextmenu",event=>{if(overlay.classList.contains("visible"))event.preventDefault()});
+ overlay?.addEventListener("selectstart",event=>{if(overlay.classList.contains("visible"))event.preventDefault()});
+ overlay?.addEventListener("pointerdown",()=>{
+  if(!overlay.classList.contains("visible"))return;
+  const selection=window.getSelection?.();
+  if(selection&&!selection.isCollapsed)selection.removeAllRanges();
+ },{passive:true});
 
  // Gestos KLK: reactions travel privately over the existing WebRTC connection.
  let klkReactionChannel=null;
