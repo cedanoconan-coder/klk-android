@@ -4037,10 +4037,28 @@ window.$("assistantQuestion").addEventListener("keydown",event=>{
    document.getElementById("chatStatus").textContent=items.length+" mensaje(s) copiado(s).";cancel();
   }catch(error){document.getElementById("chatStatus").textContent="No se pudieron copiar los mensajes. "+(error.message||"");}
  }
+ async function klkChooseDeleteMode(hasOwn){
+  return new Promise(resolve=>{
+   const overlay=document.createElement("div");overlay.style.cssText="position:fixed;inset:0;background:rgba(12,10,27,.62);z-index:999999;display:flex;align-items:center;justify-content:center;padding:22px";
+   const card=document.createElement("section");card.setAttribute("role","dialog");card.setAttribute("aria-modal","true");card.setAttribute("aria-label","Eliminar mensajes");card.style.cssText="width:min(100%,390px);box-sizing:border-box;background:#fff;border-radius:26px;padding:26px 22px;box-shadow:0 20px 70px #0005;color:#221b32;font-family:inherit";
+   const icon=document.createElement("div");icon.textContent="🗑️";icon.style.cssText="font-size:30px;background:#f3edff;width:62px;height:62px;border-radius:20px;display:grid;place-items:center;margin-bottom:16px";card.append(icon);
+   const title=document.createElement("h2");title.textContent="Eliminar mensajes";title.style.cssText="font-size:23px;margin:0 0 8px";card.append(title);
+   const info=document.createElement("p");info.textContent="Elige cómo deseas eliminar los mensajes seleccionados.";info.style.cssText="font-size:14px;line-height:1.5;color:#6b6477;margin:0 0 22px";card.append(info);
+   const buttons=document.createElement("div");buttons.style.cssText="display:grid;gap:10px";
+   const make=(label,value,css)=>{const b=document.createElement("button");b.type="button";b.textContent=label;b.style.cssText="width:100%;border:0;border-radius:16px;padding:15px 12px;font:600 15px inherit;cursor:pointer;"+css;b.onclick=()=>finish(value);buttons.append(b);};
+   if(hasOwn)make("Eliminar para todos","all","background:#eee6ff;color:#57259b");
+   make("Eliminar solo para mí","me","background:#f4f3f7;color:#292333");
+   make("Cancelar",null,"background:transparent;color:#756b84");card.append(buttons);overlay.append(card);
+   const onKey=e=>{if(e.key==="Escape")finish(null)};
+   function finish(value){document.removeEventListener("keydown",onKey);overlay.remove();resolve(value)}
+   overlay.addEventListener("click",e=>{if(e.target===overlay)finish(null)});document.addEventListener("keydown",onKey);document.body.append(overlay);
+  });
+ }
  async function deleteSelected(){
   const items=ordered();if(!items.length||!auth||!auth.currentUser)return;
-  const all=window.confirm("¿Eliminar para todos los participantes los mensajes que tú enviaste? Pulsa Cancelar para eliminarlos solo para ti.");
-  if(all&&!window.confirm("Confirmar eliminación para todos de tus mensajes seleccionados."))return;
+  const mode=await klkChooseDeleteMode(items.some(item=>item.data.uid===auth.currentUser.uid));
+  if(!mode)return;
+  const all=mode==="all";
   try{
    for(const item of items){
     if(all&&item.data.uid===auth.currentUser.uid)await item.ref.delete();
