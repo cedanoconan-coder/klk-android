@@ -124,14 +124,15 @@
   const angle=Math.atan2(right.y-left.y,right.x-left.x)*180/Math.PI;
   const type=klkLooksSelected;
   const isGlasses=type==="😎",isMustache=type==="🥸",isHair=type==="👩‍🦰";
-  const width=Math.max(55,Math.min(340,eyeDistance*(isGlasses?2.05:isMustache?1.25:isHair?3.25:type==="🧢"?3.1:2.75)));
+  const width=Math.max(55,Math.min(340,eyeDistance*(isGlasses?2.05:isMustache?1.25:isHair?3.25:type==="🧢"?3.0:2.75)));
   const x=(left.x+right.x)/2;
-  const y=isGlasses?(left.y+right.y)/2:isMustache?nose.y+eyeDistance*.42:isHair?brow.y-eyeDistance*.47:type==="🧢"?brow.y-eyeDistance*.87:brow.y-eyeDistance*.68;
+  const y=isGlasses?(left.y+right.y)/2:isMustache?nose.y+eyeDistance*.42:isHair?brow.y-eyeDistance*.47:type==="🧢"?brow.y-eyeDistance*.90:brow.y-eyeDistance*.68;
   klkLooksPreview.style.left=x+"px";klkLooksPreview.style.top=y+"px";
   klkLooksPreview.style.width=width+"px";
   klkLooksPreview.style.height=(width*(isHair?.82:isGlasses?.50:isMustache?.38:type==="🧢"?.56:.54))+"px";
   const yaw=(type==="😎"||type==="🧢")?Math.max(-28,Math.min(28,(nose.x-x)/Math.max(1,eyeDistance)*75)):0;
   klkLooksPreview.style.transform="translate(-50%,-50%) perspective(520px) rotateZ("+angle.toFixed(1)+"deg) rotateY("+yaw.toFixed(1)+"deg)";
+  if(type==="🧢"&&klkCap3D)klkCap3D.render(yaw*Math.PI/180,angle*Math.PI/180);
   klkLooksPreview.style.display="block";
  }
 
@@ -211,14 +212,55 @@
   "🤠":'<svg viewBox="0 0 240 130" xmlns="http://www.w3.org/2000/svg"><path d="M48 93 Q58 9 118 12 Q183 10 192 93" fill="#b87535" stroke="#603b1c" stroke-width="6"/><path d="M46 79 Q120 101 194 79 L193 98 Q120 120 47 98Z" fill="#6b3b20"/><path d="M11 90 Q49 112 117 102 Q189 112 228 89 Q242 118 198 121 Q113 133 35 120 Q-1 117 11 90Z" fill="#a8662f" stroke="#603b1c" stroke-width="5"/></svg>',
   "🥸":'<svg viewBox="0 0 240 90" xmlns="http://www.w3.org/2000/svg"><path d="M119 30 Q85 -2 45 21 Q19 42 40 66 Q65 83 119 49 Q175 83 201 66 Q223 42 195 21 Q156 -2 119 30Z" fill="#3b261c" stroke="#1b1513" stroke-width="5"/><path d="M48 30 Q78 17 107 38 M131 38 Q162 17 192 30" fill="none" stroke="#9a7456" opacity=".5" stroke-width="5"/></svg>'
  };
+ let klkCap3D=null,klkCapLoading=null;
+ async function klkCapEnsure(){
+  if(klkCap3D)return klkCap3D;
+  if(klkCapLoading)return klkCapLoading;
+  klkCapLoading=(async()=>{
+   const THREE=await import("https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js");
+   const renderer=new THREE.WebGLRenderer({alpha:true,antialias:true,powerPreference:"low-power"});
+   renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));renderer.setSize(320,200,false);
+   renderer.setClearColor(0,0);renderer.outputColorSpace=THREE.SRGBColorSpace;
+   renderer.domElement.style.cssText="display:block;width:100%;height:100%;pointer-events:none";
+   const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(34,1.6,.1,100);
+   camera.position.set(0,.15,6.5);camera.lookAt(0,.05,0);
+   scene.add(new THREE.HemisphereLight(0xffffff,0x303039,2.2));
+   const light=new THREE.DirectionalLight(0xffffff,2.6);light.position.set(-3,5,6);scene.add(light);
+   const fill=new THREE.DirectionalLight(0x9daac4,.8);fill.position.set(4,1,-2);scene.add(fill);
+   const cap=new THREE.Group();scene.add(cap);
+   const fabric=new THREE.MeshStandardMaterial({color:0x15171b,roughness:.91,metalness:0,side:THREE.DoubleSide});
+   const seam=new THREE.MeshStandardMaterial({color:0x34363a,roughness:1});
+   const brimMat=new THREE.MeshStandardMaterial({color:0x111318,roughness:.85,side:THREE.DoubleSide});
+   const dome=new THREE.Mesh(new THREE.SphereGeometry(1.16,48,24,0,Math.PI*2,0,Math.PI*.52),fabric);
+   dome.scale.set(1,.78,.88);dome.position.y=-.19;cap.add(dome);
+   const rim=new THREE.Mesh(new THREE.TorusGeometry(1.14,.022,8,64,Math.PI),seam);
+   rim.rotation.x=Math.PI/2;rim.position.y=-.19;rim.position.z=.01;cap.add(rim);
+   const seamPoints=[];for(let i=0;i<=28;i++){let t=i/28*Math.PI*.51;seamPoints.push(new THREE.Vector3(0,-.19+.78*Math.cos(t),.88*Math.sin(t)))}
+   const seamCurve=new THREE.CatmullRomCurve3(seamPoints);cap.add(new THREE.Mesh(new THREE.TubeGeometry(seamCurve,32,.008,5,false),seam));
+   const brimShape=new THREE.Shape();
+   brimShape.moveTo(-1.05,0);brimShape.quadraticCurveTo(-1.24,-.36,-1.34,-.76);
+   brimShape.quadraticCurveTo(0,-1.14,1.34,-.76);
+   brimShape.quadraticCurveTo(1.24,-.36,1.05,0);
+   brimShape.quadraticCurveTo(0,-.24,-1.05,0);
+   const brimGeo=new THREE.ExtrudeGeometry(brimShape,{depth:.055,bevelEnabled:true,bevelThickness:.025,bevelSize:.018,bevelSegments:2,curveSegments:28});
+   const brim=new THREE.Mesh(brimGeo,brimMat);
+   brim.rotation.x=-Math.PI/2.9;brim.position.set(0,-.22,.77);cap.add(brim);
+   const button=new THREE.Mesh(new THREE.SphereGeometry(.065,12,8),fabric);button.position.y=.61;cap.add(button);
+   cap.rotation.x=-.1;
+   const state={renderer,scene,camera,cap,canvas:renderer.domElement,render(yaw=0,roll=0){cap.rotation.y=yaw;cap.rotation.z=roll;renderer.render(scene,camera)}};
+   state.render();klkCap3D=state;return state;
+  })().catch(e=>{console.warn("KLK gorra 3D no disponible",e);return null}).finally(()=>{klkCapLoading=null});
+  return klkCapLoading;
+ }
  function klkLookSetGraphic(target,emoji){
   target.replaceChildren();
   if(!emoji)return;
+  if(emoji==="🧢"){klkCapEnsure().then(model=>{if(model&&klkLooksSelected==="🧢"&&target===klkLooksPreview){target.replaceChildren(model.canvas);model.render()}});return}
   const svg=klkLookArtwork[emoji];
   if(svg){const img=document.createElement("img");img.alt="";img.draggable=false;img.src="data:image/svg+xml;charset=utf-8,"+encodeURIComponent(svg);img.style.cssText="display:block;width:100%;height:100%;object-fit:contain";target.append(img)}
   else target.textContent=emoji;
  }
- const klkLooksOptions=[["","Sin efecto"],["😎","Aviator 3D"],["🧢","Gorra realista"],["👩‍🦰","Peluca"],["👑","Corona"],["🤠","Sombrero"],["🥸","Bigote"]];
+ const klkLooksOptions=[["","Sin efecto"],["😎","Aviator 3D"],["🧢","Gorra 3D negra"],["👩‍🦰","Peluca"],["👑","Corona"],["🤠","Sombrero"],["🥸","Bigote"]];
  let klkLooksSelected="";
  for(const [emoji,label] of klkLooksOptions){
   const button=document.createElement("button");button.type="button";button.textContent=emoji?emoji+" "+label:label;
