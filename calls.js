@@ -12,23 +12,24 @@
 
  // Gestos KLK: reactions travel privately over the existing WebRTC connection.
  let klkReactionChannel=null;
- const klkReactionChoices=["👍","❤️","😂","👏","🎉"];
+ const klkReactionChoices=["👍","❤️","😂","👏","🎉","😍","🥰","😘","😮","😢","🔥","💜","🙌","🤩","😎","💯"];
  const klkReactionBar=document.createElement("div");
  klkReactionBar.id="klkReactionBar";
  klkReactionBar.setAttribute("aria-label","Reacciones de videollamada");
- klkReactionBar.style.cssText="display:none;gap:8px;justify-content:center;flex-wrap:wrap;padding:8px;z-index:20";
+ klkReactionBar.style.cssText="display:none;gap:7px;align-items:center;overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x proximity;max-width:100%;padding:10px 12px;z-index:20;box-sizing:border-box;scrollbar-width:thin;-webkit-overflow-scrolling:touch";
  const klkReactionLayer=document.createElement("div");
  klkReactionLayer.style.cssText="position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:15";
  const klkReactionStyle=document.createElement("style");
- klkReactionStyle.textContent="@keyframes klkReactionFloat{from{transform:translateY(0) scale(.8);opacity:1}to{transform:translateY(-180px) scale(1.3);opacity:0}} #klkReactionBar button{width:44px;min-width:44px;height:44px;min-height:44px;border:1px solid #ffffff66;border-radius:50%;background:#ffffff25;font-size:24px;padding:0;touch-action:manipulation}";
+ klkReactionStyle.textContent=`@keyframes klkReactionFloat{0%{transform:translate3d(0,20px,0) scale(.35) rotate(-15deg);opacity:0;filter:blur(3px)}15%{opacity:1;filter:blur(0);transform:translate3d(0,0,0) scale(1.22) rotate(8deg)}38%{transform:translate3d(18px,-75px,0) scale(1.05) rotate(-8deg)}70%{opacity:1;transform:translate3d(-12px,-175px,0) scale(1.35) rotate(9deg)}100%{transform:translate3d(16px,-275px,0) scale(1.65) rotate(-6deg);opacity:0}}@keyframes klkReactionSpark{0%{opacity:0;transform:translate(-50%,-50%) scale(.3)}30%{opacity:1}100%{opacity:0;transform:translate(-50%,-50%) scale(2.1)}}#klkReactionBar button{flex:0 0 47px;scroll-snap-align:center;width:47px;height:47px;border:1px solid #ffffff80;border-radius:18px;background:linear-gradient(145deg,#ffffff55,#ffffff18);box-shadow:0 4px 12px #0004,inset 0 1px 2px #fff8;font-size:27px;padding:0;touch-action:manipulation;transition:transform .16s ease,background .16s ease}#klkReactionBar button:active{transform:scale(1.18);background:#ffffff66}#klkReactionBar button:focus-visible{outline:3px solid #e8d5ff;outline-offset:2px}.klkReactionBubble{position:absolute;bottom:12%;font-size:clamp(65px,15vw,100px);line-height:1;filter:drop-shadow(0 8px 9px #0008);animation:klkReactionFloat 2.5s cubic-bezier(.2,.7,.25,1) forwards;will-change:transform,opacity;white-space:nowrap}.klkReactionSpark{position:absolute;left:50%;top:50%;width:80px;height:80px;border-radius:50%;border:3px solid #f4c7ff;box-shadow:0 0 24px #e3b4ff;animation:klkReactionSpark .8s ease-out forwards}@media(prefers-reduced-motion:reduce){.klkReactionBubble{animation-duration:.9s}.klkReactionSpark{display:none}#klkReactionBar button{transition:none}}`;
  document.head.append(klkReactionStyle);
  $("callVideoStage")?.append(klkReactionLayer);
  $("callControls")?.parentNode?.insertBefore(klkReactionBar,$("callControls"));
  function klkShowReaction(emoji,remote=false){
   if(!klkReactionChoices.includes(emoji)||callMode!=="video"||!overlay.classList.contains("visible"))return;
-  const el=document.createElement("span");el.textContent=emoji;el.setAttribute("aria-label",remote?"Reacción recibida":"Reacción enviada");
-  el.style.cssText="position:absolute;bottom:18%;left:"+(remote?65:25)+"%;font-size:44px;animation:klkReactionFloat 1.8s ease-out forwards";
-  klkReactionLayer.append(el);setTimeout(()=>el.remove(),1900);
+  const el=document.createElement("span");el.className="klkReactionBubble";el.textContent=emoji;el.setAttribute("aria-label",remote?"Reacción recibida":"Reacción enviada");
+  el.style.left=(remote?58+Math.random()*19:12+Math.random()*20)+"%";
+  const spark=document.createElement("span");spark.className="klkReactionSpark";spark.setAttribute("aria-hidden","true");el.append(spark);
+  klkReactionLayer.append(el);setTimeout(()=>el.remove(),2600);
  }
  function klkAttachReactionChannel(channel){
   klkReactionChannel=channel;
