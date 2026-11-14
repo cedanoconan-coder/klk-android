@@ -1837,7 +1837,13 @@ $("authForm").addEventListener("submit", async event => {
  event.preventDefault(); $("status").textContent = "";
  if (!auth) { $("status").textContent = "Firebase no está disponible. " + (firebaseInitError && firebaseInitError.message ? firebaseInitError.message : "Comprueba tu conexión a Internet y vuelve a abrir klk."); return; }
  setBusy(true);
- try { await authPersistenceReady; await auth.signInWithEmailAndPassword($("email").value.trim(), $("password").value); }
+ try {
+  $("status").textContent = "Preparando sesión segura…";
+  await Promise.race([authPersistenceReady, new Promise((_, reject) => setTimeout(() => reject(new Error("La preparación de la sesión tardó demasiado. Revisa tu conexión y vuelve a intentarlo.")), 12000))]);
+  $("status").textContent = "Comprobando correo y contraseña…";
+  await Promise.race([auth.signInWithEmailAndPassword($("email").value.trim(), $("password").value), new Promise((_, reject) => setTimeout(() => reject(new Error("Firebase no respondió a tiempo. Comprueba tu conexión y vuelve a intentarlo.")), 20000))]);
+  $("status").textContent = "Sesión validada. Abriendo KLK…";
+ }
  catch(error) { showError("status", error); }
  finally { setBusy(false); }
 });
