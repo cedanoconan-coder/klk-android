@@ -285,11 +285,11 @@
  $("callVideoStage")?.append(klkLooksPreview);
  function klkLooksVisibility(){
   const visible=callMode==="video"&&overlay.classList.contains("visible");
-  klkLooksButton.style.display=visible?"inline-block":"none";
+  klkLooksButton.style.display="none"; // KLK Looks temporalmente desactivado
   if(!visible)klkLooksTray.style.display="none";
   klkLooksPreview.style.display="none";
-  if(visible&&!klkLooksTimer)klkLooksTimer=setInterval(klkLooksTrack,250);
-  if(!visible&&klkLooksTimer){clearInterval(klkLooksTimer);klkLooksTimer=null}
+  // Seguimiento de rostro suspendido mientras KLK Looks esté desactivado.
+  if(klkLooksTimer){clearInterval(klkLooksTimer);klkLooksTimer=null}
  }
  const setStatus=(message)=>{if($("callsStatus"))$("callsStatus").textContent=message||"";};
  function isCallContactAccepted(uid){return callPeople.has(uid);}
