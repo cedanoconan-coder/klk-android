@@ -34,11 +34,36 @@
  function klkAttachReactionChannel(channel){
   klkReactionChannel=channel;
   channel.onmessage=event=>{try{const data=JSON.parse(event.data);if(data?.type==="klk-reaction"&&klkReactionChoices.includes(data.emoji))klkShowReaction(data.emoji,true)}catch(e){}};
-  channel.onclose=()=>{if(klkReactionChannel===channel)klkReactionChannel=null};
+  channel.onclose=()=>{if(klkReactionChannel===channel){klkReactionChannel=null;klkStopReactionRepeat()}};
+ }
+ // A held reaction repeats until the finger/mouse is released; keyboard activation sends once.
+ let klkReactionRepeatTimer=null;
+ let klkReactionHeldPointer=null;
+ function klkStopReactionRepeat(){
+  if(klkReactionRepeatTimer!==null){clearInterval(klkReactionRepeatTimer);klkReactionRepeatTimer=null;}
+  klkReactionHeldPointer=null;
+ }
+ function klkSendReaction(emoji){
+  if(klkReactionChannel?.readyState!=="open"||callMode!=="video"||!overlay.classList.contains("visible"))return false;
+  klkShowReaction(emoji);
+  try{klkReactionChannel.send(JSON.stringify({type:"klk-reaction",emoji}));return true;}
+  catch(error){klkStopReactionRepeat();return false;}
  }
  for(const emoji of klkReactionChoices){
-  const button=document.createElement("button");button.type="button";button.textContent=emoji;button.setAttribute("aria-label","Enviar reacción "+emoji);
-  button.addEventListener("click",()=>{if(klkReactionChannel?.readyState!=="open")return;klkShowReaction(emoji);klkReactionChannel.send(JSON.stringify({type:"klk-reaction",emoji}))});
+  const button=document.createElement("button");button.type="button";button.textContent=emoji;button.setAttribute("aria-label","Mantener presionado para enviar reacción "+emoji);
+  button.style.touchAction="none";
+  button.addEventListener("pointerdown",event=>{
+   if(event.button!==0||klkReactionHeldPointer!==null)return;
+   klkReactionHeldPointer=event.pointerId;
+   if(!klkSendReaction(emoji)){klkStopReactionRepeat();return;}
+   try{button.setPointerCapture(event.pointerId)}catch(error){}
+   klkReactionRepeatTimer=setInterval(()=>{if(!klkSendReaction(emoji))klkStopReactionRepeat()},320);
+  });
+  const stop=event=>{if(klkReactionHeldPointer===event.pointerId)klkStopReactionRepeat()};
+  button.addEventListener("pointerup",stop);
+  button.addEventListener("pointercancel",stop);
+  button.addEventListener("lostpointercapture",stop);
+  button.addEventListener("click",event=>{if(event.detail===0)klkSendReaction(emoji)});
   klkReactionBar.append(button);
  }
  const setStatus=(message)=>{if($("callsStatus"))$("callsStatus").textContent=message||"";};
@@ -218,7 +243,7 @@
   $("localVideo").style.display=callMode==="video"?"block":"none";klkUpdateMirrorPreview();
  }
  function cleanup(){
-  klkReactionBar.style.display="none";klkReactionLayer.replaceChildren();klkReactionChannel=null;
+  klkStopReactionRepeat();klkReactionBar.style.display="none";klkReactionLayer.replaceChildren();klkReactionChannel=null;
   klkSetIncomingSwipe(false);klkStopOutgoingRing();klkPeerUid=null;klkResetVideoLayout();callStarting=false;
   if(window.klkStopIncomingCallSound)window.klkStopIncomingCallSound();
   if(activeCallUnsub){activeCallUnsub();activeCallUnsub=null;}
