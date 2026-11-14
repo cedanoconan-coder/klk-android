@@ -2579,7 +2579,7 @@ function loadMessages() {
     const body = document.createElement("p"); body.textContent = data.text || (data.type === "image" ? "📷 Foto" : data.type === "audio" ? "🎙️ Nota de voz" : ""); if(data.type==="sticker"){body.className="stickerMessage";body.setAttribute("aria-label","Sticker "+(data.text||""));if(typeof data.text==="string"&&data.text.startsWith("KLK:A")){const gifMap={"KLK:A01":"klk-saludos.gif","KLK:A02":"klk-amor.gif","KLK:A03":"klk-fiesta.gif","KLK:A04":"klk-alegria.gif"};const file=gifMap[data.text];if(file){body.textContent="";body.classList.add("klkAnimatedSticker");const image=document.createElement("img");image.src="assets/"+file;image.alt="Sticker animado de KLK";image.loading="lazy";body.appendChild(image);}}else if(typeof data.text==="string"&&data.text.startsWith("KLK:")){body.textContent="";body.classList.add("klkMessageSticker");const letters=document.createElement("span");letters.className="klkStickerLetters";letters.textContent="KLK";const mood=document.createElement("span");mood.className="klkStickerMood";mood.textContent=data.text.slice(4);body.append(letters,mood);}} if(typeof data.text==="string"&&data.text.startsWith("Contacto de KLK: ")){
       // Acepta mensajes antiguos con saltos reales, literales o eliminados.
       const normalized=data.text.replace(/\\n/g,"\n");
-      const match=normalized.match(/^Contacto de KLK:\s*([\s\S]*?)\s*Identificador:\s*([A-Za-z0-9_-]{12,128})/i);
+      const match=normalized.match(/Contacto\s+de\s+KLK\s*:\s*([\s\S]*?)\s*Identificador\s*:?\s*([A-Za-z0-9_-]{12,128})/i);
       if(match){
        body.textContent="";body.className="klkSharedContactCard";
        const heading=document.createElement("strong");heading.textContent="👤 Contacto de KLK";
