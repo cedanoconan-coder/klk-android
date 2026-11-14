@@ -1308,7 +1308,21 @@ input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),textarea,se
 <button id="enter" type="submit">Iniciar sesión</button>
 </form>
 <input id="invitationCode" type="text" autocomplete="one-time-code" autocapitalize="characters" placeholder="Código de invitación para crear cuenta">
-<button id="register" class="secondary" type="button">Crear cuenta con invitación</button><button id="verifyInviteEmail" class="secondary" type="button">Ya confirmé mi correo · Activar invitación</button><button id="resendInviteEmail" class="secondary" type="button">Reenviar correo de confirmación</button>
+<button id="register" class="secondary" type="button">Crear cuenta con invitación</button>
+<script>/* Independent registration diagnostics: works even if the main application script fails. */
+(function(){
+ var button=document.getElementById('register'),status=document.getElementById('status');
+ if(!button||!status)return;
+ button.addEventListener('click',function(){
+  status.textContent='Procesando solicitud de registro…';
+  window.setTimeout(function(){
+   if(status.textContent==='Procesando solicitud de registro…'){
+    status.textContent='El registro no pudo iniciarse. Recarga KLK y vuelve a intentarlo. Si persiste, informa de un error de carga de la aplicación.';
+   }
+  },1200);
+ },true);
+})();
+</script><button id="verifyInviteEmail" class="secondary" type="button">Ya confirmé mi correo · Activar invitación</button><button id="resendInviteEmail" class="secondary" type="button">Reenviar correo de confirmación</button>
 <p class="hint">El registro está cerrado: necesitas un código de invitación de un miembro de klk.</p>
 <button id="forgot" class="secondary" type="button">Olvidé mi contraseña</button>
 <p id="status" role="status" aria-live="polite"></p>
