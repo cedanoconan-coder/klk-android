@@ -124,12 +124,12 @@
   const angle=Math.atan2(right.y-left.y,right.x-left.x)*180/Math.PI;
   const type=klkLooksSelected;
   const isGlasses=type==="😎",isMustache=type==="🥸",isHair=type==="👩‍🦰";
-  const width=Math.max(55,Math.min(340,eyeDistance*(isGlasses?2.05:isMustache?1.25:isHair?3.25:type==="🧢"?3.0:2.75)));
+  const width=Math.max(55,Math.min(340,eyeDistance*(isGlasses?2.05:isMustache?1.25:isHair?3.25:type==="🧢"?1.75:2.75)));
   const x=(left.x+right.x)/2;
-  const y=isGlasses?(left.y+right.y)/2:isMustache?nose.y+eyeDistance*.42:isHair?brow.y-eyeDistance*.47:type==="🧢"?brow.y-eyeDistance*.90:brow.y-eyeDistance*.68;
+  const y=isGlasses?(left.y+right.y)/2:isMustache?nose.y+eyeDistance*.42:isHair?brow.y-eyeDistance*.47:type==="🧢"?brow.y-eyeDistance*.36:brow.y-eyeDistance*.68;
   klkLooksPreview.style.left=x+"px";klkLooksPreview.style.top=y+"px";
   klkLooksPreview.style.width=width+"px";
-  klkLooksPreview.style.height=(width*(isHair?.82:isGlasses?.50:isMustache?.38:type==="🧢"?.56:.54))+"px";
+  klkLooksPreview.style.height=(width*(isHair?.82:isGlasses?.50:isMustache?.38:type==="🧢"?.62:.54))+"px";
   const yaw=(type==="😎"||type==="🧢")?Math.max(-28,Math.min(28,(nose.x-x)/Math.max(1,eyeDistance)*75)):0;
   klkLooksPreview.style.transform="translate(-50%,-50%) perspective(520px) rotateZ("+angle.toFixed(1)+"deg) rotateY("+yaw.toFixed(1)+"deg)";
   if(type==="🧢"&&klkCap3D&&klkCap3D.canvas.isConnected)klkCap3D.render(yaw*Math.PI/180,angle*Math.PI/180);
@@ -163,10 +163,10 @@
   const scale=fit==="cover"?Math.max(rect.width/video.videoWidth,rect.height/video.videoHeight):Math.min(rect.width/video.videoWidth,rect.height/video.videoHeight);
   const renderedW=video.videoWidth*scale,renderedH=video.videoHeight*scale;
   const x=rect.left+(rect.width-renderedW)/2+(f.x+f.width/2)*scale-stage.left;
-  const y=rect.top+(rect.height-renderedH)/2+(f.y+(klkLooksSelected==="😎"?.42:.02)*f.height)*scale-stage.top;
+  const y=rect.top+(rect.height-renderedH)/2+(f.y+(klkLooksSelected==="😎"?.42:klkLooksSelected==="🧢"?.04:.02)*f.height)*scale-stage.top;
   klkLooksPreview.style.left=x+"px";klkLooksPreview.style.top=y+"px";
   klkLooksPreview.style.transform="translate(-50%,-50%)";
-  const width=Math.max(60,Math.min(260,f.width*scale*(klkLooksSelected==="😎"?1.18:1.55)));
+  const width=Math.max(60,Math.min(260,f.width*scale*(klkLooksSelected==="😎"?1.18:klkLooksSelected==="🧢"?1.06:1.55)));
   klkLooksPreview.style.width=width+"px";klkLooksPreview.style.height=(width*(klkLooksSelected==="👩‍🦰"?.95:.55))+"px";
   klkLooksPreview.style.display="block";
  }
@@ -276,7 +276,7 @@
  for(const [emoji,label] of klkLooksOptions){
   const button=document.createElement("button");button.type="button";button.textContent=emoji?emoji+" "+label:label;
   button.style.cssText="border:1px solid #ffffff55;border-radius:14px;padding:8px;background:#ffffff22;color:white;font-size:16px;-webkit-user-select:none;user-select:none";
-  button.addEventListener("click",()=>{klkLooksSelected=emoji;klkLookSetGraphic(klkLooksPreview,emoji);klkLooksPreview.style.display=emoji?"block":"none";if(emoji){klkLooksLoadMesh();if(!klkLooksDetector)klkLooksLoadFallback()}klkLooksTray.style.display="none";klkLooksBroadcast()});
+  button.addEventListener("click",()=>{klkLooksSelected=emoji;klkLookSetGraphic(klkLooksPreview,emoji);klkLooksPreview.style.display="none";if(emoji){klkLooksLoadMesh();if(!klkLooksDetector)klkLooksLoadFallback()}klkLooksTray.style.display="none";klkLooksBroadcast()});
   klkLooksTray.append(button);
  }
  klkLooksButton.addEventListener("click",()=>{klkLooksTray.style.display=klkLooksTray.style.display==="flex"?"none":"flex"});
@@ -287,7 +287,7 @@
   const visible=callMode==="video"&&overlay.classList.contains("visible");
   klkLooksButton.style.display=visible?"inline-block":"none";
   if(!visible)klkLooksTray.style.display="none";
-  klkLooksPreview.style.display=visible&&klkLooksSelected?"block":"none";
+  klkLooksPreview.style.display="none";
   if(visible&&!klkLooksTimer)klkLooksTimer=setInterval(klkLooksTrack,250);
   if(!visible&&klkLooksTimer){clearInterval(klkLooksTimer);klkLooksTimer=null}
  }
