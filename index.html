@@ -1327,6 +1327,7 @@ input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),textarea,se
   <button id="createInvite" type="button">Crear invitación</button>
   <button id="shareInvite" class="secondary" type="button" hidden>Compartir invitación</button>
   <p id="inviteStatus" class="hint" role="status" aria-live="polite"></p>
+  <div id="myInviteTracker" style="margin-top:14px;border-top:1px solid #dde5e2;padding-top:12px"><strong>Mis invitados</strong><p id="myInviteCount" class="hint" aria-live="polite">Cargando invitaciones...</p><div id="myInviteList" style="display:grid;gap:8px"></div></div>
  </section>
  
 <section id="homeProfilePanel" aria-label="Mi perfil y configuración">
@@ -3524,6 +3525,43 @@ if (window.matchMedia("(display-mode: standalone)").matches || window.navigator.
 // Publica el selector para los scripts independientes que siguen a este bloque.
 window.$ = id => document.getElementById(id);
 window.$("inviteMember").addEventListener("click",()=>{ window.$("invitePanel").style.display=window.$("invitePanel").style.display==="block"?"none":"block"; window.$("inviteStatus").textContent=""; });
+let klkInviteUnsubscribe=null;
+let klkInviteSeen=new Set();
+let klkInviteLoaded=false;
+function klkTrackInvites(user){
+ if(klkInviteUnsubscribe){klkInviteUnsubscribe();klkInviteUnsubscribe=null;}
+ klkInviteSeen=new Set();klkInviteLoaded=false;
+ const list=document.getElementById("myInviteList"),count=document.getElementById("myInviteCount");
+ if(!list||!count)return;
+ list.replaceChildren();
+ if(!user){count.textContent="Inicia sesión para consultar tus invitaciones.";return;}
+ count.textContent="Cargando invitaciones...";
+ klkInviteUnsubscribe=db.collection("invitations").where("createdBy","==",user.uid).onSnapshot(snapshot=>{
+  const items=snapshot.docs.map(doc=>({code:doc.id,...doc.data()})).sort((a,b)=>(b.createdAt?.toMillis?.()||0)-(a.createdAt?.toMillis?.()||0));
+  const redeemed=items.filter(item=>Boolean(item.redeemedBy));
+  count.textContent=redeemed.length+" registrados de "+items.length+" invitaciones creadas";
+  list.replaceChildren();
+  if(!items.length){const p=document.createElement("p");p.className="hint";p.textContent="Todavía no has creado invitaciones.";list.append(p);}
+  for(const item of items){
+   const used=Boolean(item.redeemedBy);
+   const row=document.createElement("div");
+   row.style.cssText="padding:10px;border-radius:10px;background:#f3f7f5;font-size:13px";
+   const title=document.createElement("strong");title.textContent=used?"✓ Registro confirmado":"○ Pendiente";
+   const detail=document.createElement("div");
+   const date=used?item.redeemedAt:item.expiresAt;
+   const dateText=date?.toDate?.().toLocaleString("es-DO")||"Sin fecha";
+   detail.textContent="Código: "+item.code+" · "+(used?"Registrado: ":"Vence: ")+dateText;
+   row.append(title,detail);list.append(row);
+   if(used&&klkInviteLoaded&&!klkInviteSeen.has(item.code)){
+    const status=document.getElementById("inviteStatus");
+    if(status)status.textContent="🎉 ¡Un nuevo usuario se registró con tu invitación!";
+   }
+  }
+  klkInviteSeen=new Set(redeemed.map(item=>item.code));klkInviteLoaded=true;
+ },error=>{count.textContent="No se pudo consultar tus invitados: "+(error.code||error.message);});
+}
+auth.onAuthStateChanged(klkTrackInvites);
+
 let latestInviteCode = "";
 window.$("createInvite").addEventListener("click",async()=>{
  const user=auth&&auth.currentUser;
