@@ -1934,7 +1934,7 @@ $("verifyInviteEmail").addEventListener("click",async()=>{
  if (klkInviteVerificationBusy) return;
  klkInviteVerificationBusy = true;
  const status=$("status");status.textContent="";
- if(!auth?.currentUser){status.textContent="Inicia sesión con el correo y la contraseña que creaste para KLK.";return}
+ if(!auth?.currentUser){status.textContent="Inicia sesión con el correo y la contraseña que creaste para KLK.";klkInviteVerificationBusy=false;return}
  const user=auth.currentUser;
  try{
   await user.reload();
@@ -2050,7 +2050,7 @@ auth && auth.onAuthStateChanged(async user => {
    }
   }catch(error){console.warn("No se pudo comprobar el perfil al iniciar sesión:",error)}
  }
- if (user && invitationActivationInProgress) { $("login").style.display="none"; $("chat").style.display="none"; return; }
+ if (user && invitationActivationInProgress) { $("login").style.display="block"; $("chat").style.display="none"; return; }
  $("login").style.display = user ? "none" : "block";
  $("chat").style.display = user ? "block" : "none";
  updateProfileOnlineStatus();
@@ -2072,7 +2072,7 @@ auth && auth.onAuthStateChanged(async user => {
    if (!profileSnapshot.exists) {
     // Conservar la sesion autenticada; no saltar la proteccion por invitacion.
     $("login").style.display="block"; $("chat").style.display="none";
-    $("status").textContent="Tu cuenta se autentico, pero falta tu perfil de KLK. No hemos cerrado tu sesion. Contacta al administrador para recuperar el perfil o activar una invitacion valida.";
+    $("status").textContent="Tu cuenta se autenticó, pero falta activar tu perfil. Introduce un código de invitación válido y pulsa «Ya confirmé mi correo». Si no tienes un código vigente, solicita uno nuevo al administrador.";
     console.warn("Perfil KLK ausente para usuario autenticado:",user.uid);
     return;
    }
