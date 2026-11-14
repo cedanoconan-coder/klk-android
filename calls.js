@@ -46,7 +46,7 @@
  function klkAttachReactionChannel(channel){
   klkReactionChannel=channel;
   channel.addEventListener("open",()=>{klkLooksBroadcast()});
-  channel.onmessage=event=>{try{const data=JSON.parse(event.data);if(data?.type==="klk-reaction"&&klkReactionChoices.includes(data.emoji))klkShowReaction(data.emoji,true);if(data?.type==="klk-look"&&["","😎","🧢","👩‍🦰","👑","🤠","🥸"].includes(data.emoji)){klkLooksRemote.textContent=data.emoji;klkLooksRemote.style.display=data.emoji?"block":"none"}}catch(e){}};
+  channel.onmessage=event=>{try{const data=JSON.parse(event.data);if(data?.type==="klk-reaction"&&klkReactionChoices.includes(data.emoji))klkShowReaction(data.emoji,true);if(data?.type==="klk-look"&&["","😎","🧢","👩‍🦰","👑","🤠","🥸"].includes(data.emoji)){klkLookSetGraphic(klkLooksRemote,data.emoji);klkLooksRemote.style.display=data.emoji?"block":"none"}}catch(e){}};
   channel.onclose=()=>{if(klkReactionChannel===channel){klkReactionChannel=null;klkStopReactionRepeat()}};
  }
  // A held reaction repeats until the finger/mouse is released; keyboard activation sends once.
@@ -125,7 +125,8 @@
   const y=rect.top+(rect.height-renderedH)/2+(f.y+(klkLooksSelected==="😎"?.42:.02)*f.height)*scale-stage.top;
   klkLooksPreview.style.left=x+"px";klkLooksPreview.style.top=y+"px";
   klkLooksPreview.style.transform="translate(-50%,-50%)";
-  klkLooksPreview.style.fontSize=Math.max(28,Math.min(125,f.width*scale*1.1))+"px";
+  const width=Math.max(60,Math.min(260,f.width*scale*(klkLooksSelected==="😎"?1.18:1.55)));
+  klkLooksPreview.style.width=width+"px";klkLooksPreview.style.height=(width*(klkLooksSelected==="👩‍🦰"?.95:.55))+"px";
   klkLooksPreview.style.display="block";
  }
 
@@ -157,12 +158,27 @@
  function klkLooksBroadcast(){
   if(klkReactionChannel?.readyState==="open"){try{klkReactionChannel.send(JSON.stringify({type:"klk-look",emoji:klkLooksSelected}))}catch(e){}}
  }
+ const klkLookArtwork={
+  "😎":'<svg viewBox="0 0 240 105" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="lens" x2=".3" y2="1"><stop stop-color="#162f48"/><stop offset="1" stop-color="#050b18"/></linearGradient></defs><path d="M9 28 Q60 9 108 27 Q120 33 132 27 Q181 9 231 28" fill="none" stroke="#c8a66d" stroke-width="9" stroke-linecap="round"/><path d="M18 31 Q25 87 70 88 Q107 86 108 35 Q66 23 18 31ZM132 35 Q133 86 170 88 Q215 87 222 31 Q174 23 132 35Z" fill="url(#lens)" stroke="#e5bd75" stroke-width="7"/><path d="M29 37 L72 32" stroke="#ffffff" opacity=".32" stroke-width="6" stroke-linecap="round"/></svg>',
+  "🧢":'<svg viewBox="0 0 240 130" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="cap" x2="1" y2="1"><stop stop-color="#7153ba"/><stop offset="1" stop-color="#2e185e"/></linearGradient></defs><path d="M32 94 Q25 17 119 12 Q217 17 210 94Z" fill="url(#cap)" stroke="#21183b" stroke-width="5"/><path d="M30 91 Q112 69 211 91 Q242 98 232 112 Q109 133 10 111 Q-1 99 30 91Z" fill="#442883" stroke="#241648" stroke-width="5"/><path d="M118 16 L118 81" stroke="#ffffff" opacity=".15" stroke-width="4"/></svg>',
+  "👩‍🦰":'<svg viewBox="0 0 240 180" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="hair" x2="1" y2="1"><stop stop-color="#f5ad4d"/><stop offset=".55" stop-color="#9c4328"/><stop offset="1" stop-color="#57221d"/></linearGradient></defs><path d="M26 176 Q-1 91 31 41 Q65 -7 122 9 Q190 -8 214 52 Q244 115 213 176 L177 166 Q205 78 158 48 Q117 18 78 50 Q33 80 62 168Z" fill="url(#hair)" stroke="#72351e" stroke-width="5"/><path d="M47 49 Q111 88 193 44" fill="none" stroke="#f6bf77" opacity=".45" stroke-width="8"/></svg>',
+  "👑":'<svg viewBox="0 0 240 120" xmlns="http://www.w3.org/2000/svg"><path d="M16 25 L68 65 L120 6 L172 65 L224 25 L207 103 L33 103Z" fill="#e8b643" stroke="#9d6a17" stroke-width="7"/><path d="M35 88 H206 V110 H35Z" fill="#f8d56a" stroke="#9d6a17" stroke-width="5"/><circle cx="120" cy="75" r="12" fill="#a94acb"/><circle cx="69" cy="77" r="8" fill="#4a9ee8"/><circle cx="173" cy="77" r="8" fill="#e64f64"/></svg>',
+  "🤠":'<svg viewBox="0 0 240 130" xmlns="http://www.w3.org/2000/svg"><path d="M48 93 Q58 9 118 12 Q183 10 192 93" fill="#b87535" stroke="#603b1c" stroke-width="6"/><path d="M46 79 Q120 101 194 79 L193 98 Q120 120 47 98Z" fill="#6b3b20"/><path d="M11 90 Q49 112 117 102 Q189 112 228 89 Q242 118 198 121 Q113 133 35 120 Q-1 117 11 90Z" fill="#a8662f" stroke="#603b1c" stroke-width="5"/></svg>',
+  "🥸":'<svg viewBox="0 0 240 90" xmlns="http://www.w3.org/2000/svg"><path d="M119 30 Q85 -2 45 21 Q19 42 40 66 Q65 83 119 49 Q175 83 201 66 Q223 42 195 21 Q156 -2 119 30Z" fill="#3b261c" stroke="#1b1513" stroke-width="5"/><path d="M48 30 Q78 17 107 38 M131 38 Q162 17 192 30" fill="none" stroke="#9a7456" opacity=".5" stroke-width="5"/></svg>'
+ };
+ function klkLookSetGraphic(target,emoji){
+  target.replaceChildren();
+  if(!emoji)return;
+  const svg=klkLookArtwork[emoji];
+  if(svg){const img=document.createElement("img");img.alt="";img.draggable=false;img.src="data:image/svg+xml;charset=utf-8,"+encodeURIComponent(svg);img.style.cssText="display:block;width:100%;height:100%;object-fit:contain";target.append(img)}
+  else target.textContent=emoji;
+ }
  const klkLooksOptions=[["","Sin efecto"],["😎","Gafas"],["🧢","Gorra"],["👩‍🦰","Peluca"],["👑","Corona"],["🤠","Sombrero"],["🥸","Bigote"]];
  let klkLooksSelected="";
  for(const [emoji,label] of klkLooksOptions){
   const button=document.createElement("button");button.type="button";button.textContent=emoji?emoji+" "+label:label;
   button.style.cssText="border:1px solid #ffffff55;border-radius:14px;padding:8px;background:#ffffff22;color:white;font-size:16px;-webkit-user-select:none;user-select:none";
-  button.addEventListener("click",()=>{klkLooksSelected=emoji;klkLooksPreview.textContent=emoji;klkLooksPreview.style.display=emoji?"block":"none";if(emoji&&!klkLooksDetector)klkLooksLoadFallback();klkLooksTray.style.display="none";klkLooksBroadcast()});
+  button.addEventListener("click",()=>{klkLooksSelected=emoji;klkLookSetGraphic(klkLooksPreview,emoji);klkLooksPreview.style.display=emoji?"block":"none";if(emoji&&!klkLooksDetector)klkLooksLoadFallback();klkLooksTray.style.display="none";klkLooksBroadcast()});
   klkLooksTray.append(button);
  }
  klkLooksButton.addEventListener("click",()=>{klkLooksTray.style.display=klkLooksTray.style.display==="flex"?"none":"flex"});
@@ -354,7 +370,7 @@
   $("localVideo").style.display=callMode==="video"?"block":"none";klkUpdateMirrorPreview();
  }
  function cleanup(){
-  if(klkLooksTimer){clearInterval(klkLooksTimer);klkLooksTimer=null}klkLooksRemote.style.display="none";klkLooksRemote.textContent="";klkLooksSelected="";klkLooksTray.style.display="none";klkLooksPreview.style.display="none";klkLooksButton.style.display="none";klkStopReactionRepeat();klkReactionBar.style.display="none";klkReactionLayer.replaceChildren();klkReactionChannel=null;
+  if(klkLooksTimer){clearInterval(klkLooksTimer);klkLooksTimer=null}klkLooksRemote.style.display="none";klkLooksRemote.replaceChildren();klkLooksSelected="";klkLooksTray.style.display="none";klkLooksPreview.style.display="none";klkLooksButton.style.display="none";klkStopReactionRepeat();klkReactionBar.style.display="none";klkReactionLayer.replaceChildren();klkReactionChannel=null;
   klkSetIncomingSwipe(false);klkStopOutgoingRing();klkPeerUid=null;klkResetVideoLayout();callStarting=false;
   if(window.klkStopIncomingCallSound)window.klkStopIncomingCallSound();
   if(activeCallUnsub){activeCallUnsub();activeCallUnsub=null;}
