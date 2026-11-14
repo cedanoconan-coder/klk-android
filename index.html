@@ -1880,7 +1880,7 @@ $("register").addEventListener("click", async () => {
   const newUser = credential.user;
   if(!newUser.emailVerified){
     $("status").textContent = "Enviando correo de verificación…";
-    sessionStorage.setItem("klkPendingInvite",code);
+    sessionStorage.setItem("klkPendingInvite",code);localStorage.setItem("klkPendingInvite",code);
     await newUser.sendEmailVerification({url:window.location.origin+window.location.pathname});
     invitationActivationInProgress=false;
     $("status").textContent="Te enviamos un enlace de confirmación a "+email+". Abre tu correo, confirma y vuelve a KLK para pulsar «Ya confirmé mi correo». No necesitas la contraseña de tu correo para crear la de KLK.";
@@ -1914,13 +1914,13 @@ $("register").addEventListener("click", async () => {
 let klkInviteVerificationBusy = false;
 async function klkAutoActivateVerifiedInvite(user) {
  if (!user || invitationActivationInProgress || klkInviteVerificationBusy) return false;
- const code = (sessionStorage.getItem("klkPendingInvite") || $("invitationCode").value || "").trim().toUpperCase();
+ const code = (sessionStorage.getItem("klkPendingInvite") || localStorage.getItem("klkPendingInvite") || $("invitationCode").value || "").trim().toUpperCase();
  if (!/^[A-Z0-9]{8,16}$/.test(code)) return false;
  try {
   await user.reload();
   if (!user.emailVerified) return false;
   const profile = await db.collection("users").doc(user.uid).get({source:"server"});
-  if (profile.exists) { sessionStorage.removeItem("klkPendingInvite"); return false; }
+  if (profile.exists) { sessionStorage.removeItem("klkPendingInvite");localStorage.removeItem("klkPendingInvite"); return false; }
   $("status").textContent = "Correo confirmado. Activando invitación automáticamente…";
   $("verifyInviteEmail").click();
   return true;
@@ -1934,12 +1934,12 @@ $("verifyInviteEmail").addEventListener("click",async()=>{
  if (klkInviteVerificationBusy) return;
  klkInviteVerificationBusy = true;
  const status=$("status");status.textContent="";
- if(!auth?.currentUser){status.textContent="Inicia sesión con el correo y la contraseña que creaste para KLK.";return}
+ if(!auth?.currentUser){status.textContent="Inicia sesión con el correo y la contraseña que creaste para KLK.";klkInviteVerificationBusy=false;return}
  const user=auth.currentUser;
  try{
   await user.reload();
   if(!auth.currentUser.emailVerified){status.textContent="Todavía no se confirmó el correo. Abre el enlace que recibiste y vuelve a intentarlo.";return}
-  const code=(sessionStorage.getItem("klkPendingInvite")||$("invitationCode").value).trim().toUpperCase();
+  const code=(sessionStorage.getItem("klkPendingInvite")||localStorage.getItem("klkPendingInvite")||$("invitationCode").value).trim().toUpperCase();
   if(!/^[A-Z0-9]{8,16}$/.test(code)){status.textContent="Introduce tu código de invitación para activar la cuenta.";return}
   const invitationRef=db.collection("invitations").doc(code),profileRef=db.collection("users").doc(user.uid);
   await db.runTransaction(async tx=>{
@@ -1949,7 +1949,7 @@ $("verifyInviteEmail").addEventListener("click",async()=>{
    tx.update(invitationRef,{redeemedBy:user.uid,redeemedAt:firebase.firestore.FieldValue.serverTimestamp()});
    tx.set(profileRef,{uid:user.uid,email:user.email,displayName:user.displayName||user.email.split("@")[0],inviteCode:code,invitedBy:invitation.data().createdBy,directoryVisible:true,updatedAt:firebase.firestore.FieldValue.serverTimestamp()});
   });
-  sessionStorage.removeItem("klkPendingInvite");status.textContent="Correo confirmado e invitación activada.";window.location.reload();
+  sessionStorage.removeItem("klkPendingInvite");localStorage.removeItem("klkPendingInvite");status.textContent="Correo confirmado e invitación activada.";window.location.reload();
  }catch(e){status.textContent=e.message||"No se pudo activar la invitación."}
  finally { klkInviteVerificationBusy = false; }
 });
