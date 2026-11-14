@@ -476,6 +476,7 @@
   if(ringTimeout){window.clearTimeout(ringTimeout);ringTimeout=null;}
   if(remoteCandidatesUnsub){remoteCandidatesUnsub();remoteCandidatesUnsub=null;}
   if(localCandidatesUnsub){localCandidatesUnsub();localCandidatesUnsub=null;}
+  klkStopNetworkMonitor();
   if(peer){try{peer.ontrack=null;peer.onicecandidate=null;peer.close();}catch(e){}peer=null;}
   if(localStream){localStream.getTracks().forEach(t=>t.stop());localStream=null;}
   $("remoteVideo").srcObject=null;$("localVideo").srcObject=null;$("remoteAudio").srcObject=null;
@@ -485,6 +486,50 @@
  function klkCallVideoConstraints(facing){return {facingMode:{ideal:facing},width:{ideal:1280},height:{ideal:720},frameRate:{ideal:24,max:30},resizeMode:"crop-and-scale"};}
  async function klkTuneCallVideo(track){if(!track)return;try{const caps=typeof track.getCapabilities==="function"?track.getCapabilities():{};const extras={};if(caps.frameRate&&caps.frameRate.max>=24)extras.frameRate={ideal:24,max:30};if(caps.width&&caps.width.max>=640)extras.width={ideal:Math.min(1280,caps.width.max)};if(caps.height&&caps.height.max>=480)extras.height={ideal:Math.min(720,caps.height.max)};if(Object.keys(extras).length)await track.applyConstraints(extras)}catch(e){console.warn("Ajustes opcionales de cámara no disponibles",e)}}
  async function klkTuneCallSender(sender){if(!sender||!sender.getParameters||!sender.setParameters)return;try{const params=sender.getParameters();if(!params.encodings||!params.encodings.length)return;params.degradationPreference="maintain-framerate";params.encodings.forEach(encoding=>{encoding.maxBitrate=1200000;encoding.maxFramerate=24});await sender.setParameters(params)}catch(e){console.warn("Ajustes WebRTC no disponibles",e)}}
+ // Conservative video adaptation: audio remains enabled on weak connections.
+ let klkNetworkMonitor=null,klkPreviousStats=null,klkLastVideoQuality=null;
+ async function klkSetVideoQuality(current,weak){
+  if(!current||current!==peer||callMode!=="video"||klkLastVideoQuality===weak)return;
+  for(const sender of current.getSenders()){
+   if(sender.track?.kind!=="video"||!sender.getParameters||!sender.setParameters)continue;
+   try{
+    const params=sender.getParameters();
+    if(!params.encodings?.length)continue;
+    params.degradationPreference="maintain-framerate";
+    params.encodings.forEach(e=>{e.maxBitrate=weak?180000:850000;e.maxFramerate=weak?12:24});
+    await sender.setParameters(params);
+    klkLastVideoQuality=weak;
+   }catch(e){console.warn("No se pudo adaptar el vídeo",e)}
+  }
+ }
+ function klkStopNetworkMonitor(){
+  if(klkNetworkMonitor!==null)clearInterval(klkNetworkMonitor);
+  klkNetworkMonitor=null;klkPreviousStats=null;klkLastVideoQuality=null;
+ }
+ function klkStartNetworkMonitor(current){
+  klkStopNetworkMonitor();
+  if(!current?.getStats)return;
+  klkNetworkMonitor=setInterval(async()=>{
+   if(peer!==current||current.connectionState==="closed"){klkStopNetworkMonitor();return}
+   try{
+    let packetsLost=0,packetsReceived=0,rtt=null;
+    const reports=await current.getStats();
+    reports.forEach(report=>{
+     if(report.type==="inbound-rtp"&&!report.isRemote&&report.kind==="audio"){
+      packetsLost+=report.packetsLost||0;packetsReceived+=report.packetsReceived||0;
+     }
+     if(report.type==="candidate-pair"&&report.state==="succeeded"&&typeof report.currentRoundTripTime==="number")rtt=report.currentRoundTripTime;
+    });
+    const previous=klkPreviousStats;
+    klkPreviousStats={packetsLost,packetsReceived};
+    if(!previous||current.connectionState!=="connected")return;
+    const lost=Math.max(0,packetsLost-previous.packetsLost);
+    const received=Math.max(0,packetsReceived-previous.packetsReceived);
+    const weak=(lost+received>=15&&lost/(lost+received)>0.08)||(rtt!==null&&rtt>0.45);
+    await klkSetVideoQuality(current,weak);
+   }catch(e){console.warn("Medición de conexión no disponible",e)}
+  },5000);
+ }
  async function getLocalMedia(mode){
   if(!window.isSecureContext)throw new Error("Las llamadas requieren una conexión segura HTTPS. Abre klk desde su enlace oficial.");
   if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia||!window.RTCPeerConnection)throw new Error("Este navegador no admite llamadas WebRTC. Actualiza Chrome y vuelve a intentarlo.");
@@ -493,6 +538,7 @@
  }
  function createPeer(){
   peer=new RTCPeerConnection(ICE_CONFIG);
+  klkStartNetworkMonitor(peer);
   peer.ondatachannel=event=>{if(event.channel.label==="klk-reactions")klkAttachReactionChannel(event.channel)};
   if(callRole==="caller"&&callMode==="video")klkAttachReactionChannel(peer.createDataChannel("klk-reactions"));
   localStream.getTracks().forEach(track=>{const sender=peer.addTrack(track,localStream);if(track.kind==="video"){klkTuneCallVideo(track);klkTuneCallSender(sender)}});
@@ -510,6 +556,7 @@
    const state=current.connectionState;
    if(state==="connected"){clearConnectionWarning();$("callStatus").textContent=callMode==="video"?"Videollamada conectada":"Llamada conectada";return;}
    if(state==="disconnected"){
+    klkSetVideoQuality(current,true);
     $("callStatus").textContent="Conexión interrumpida. Esperando recuperación de la red...";
     clearConnectionWarning();
     connectionWarningTimer=setTimeout(()=>{connectionWarningTimer=null;if(peer===current&&current.connectionState==="disconnected")$("callStatus").textContent="La conexión sigue interrumpida. Revisa Internet; la llamada se recuperará si vuelve la señal.";},12000);
