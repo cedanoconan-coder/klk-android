@@ -154,11 +154,11 @@
  const klkMirrorStyle=document.createElement("style");
  klkMirrorStyle.textContent="#callOverlay .klkMirrorPreviewButton{position:absolute;top:calc(72px + env(safe-area-inset-top));right:16px;z-index:25;border:1px solid #ffffff55;border-radius:20px;background:#39235fcf;color:white;padding:9px 13px;font:600 13px system-ui;box-shadow:0 3px 12px #0004}#callOverlay .klkMirrorPreviewButton[hidden]{display:none!important}#callOverlay #localVideo.klkPreviewMirrored{transform:scaleX(-1)!important}";
  document.head.appendChild(klkMirrorStyle);
- overlay.appendChild(klkMirrorButton);
+ // No mirror selector is mounted in the call interface.
  function klkUpdateMirrorPreview(){
   const video=$("localVideo");
   if(video)video.classList.toggle("klkPreviewMirrored",klkMirrorPreview&&cameraFacingMode==="user");
-  klkMirrorButton.hidden=true; // Vista normal fija: ocultar el selector de espejo.
+  klkMirrorButton.hidden=true; // Kept detached from DOM.
   klkMirrorButton.textContent=klkMirrorPreview?"Espejo: sí":"Espejo: no";
   klkMirrorButton.setAttribute("aria-label",klkMirrorPreview?"Desactivar efecto espejo":"Activar efecto espejo");
   klkMirrorButton.setAttribute("aria-pressed",String(klkMirrorPreview));
