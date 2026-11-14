@@ -95,6 +95,45 @@
  klkLooksRemote.style.cssText="display:none;position:absolute;top:10%;left:50%;transform:translateX(-50%);font-size:clamp(60px,18vw,110px);pointer-events:none;z-index:17;filter:drop-shadow(0 5px 8px #0008)";
  $("callVideoStage")?.append(klkLooksRemote);
  let klkLooksDetector=null,klkLooksTimer=null,klkLooksBusy=false,klkLooksFallbackLoading=null,klkLooksFallback=null,klkLooksFace=null;
+ let klkLooksMesh=null,klkLooksMeshLoading=null,klkLooksLandmarks=null;
+ function klkLooksLoadMesh(){
+  if(klkLooksMeshLoading)return klkLooksMeshLoading;
+  klkLooksMeshLoading=new Promise((resolve,reject)=>{
+   if(window.FaceMesh){resolve(window.FaceMesh);return}
+   const script=document.createElement("script");
+   script.src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/face_mesh.js";
+   script.crossOrigin="anonymous";
+   script.onload=()=>window.FaceMesh?resolve(window.FaceMesh):reject(new Error("FaceMesh no disponible"));
+   script.onerror=()=>reject(new Error("No se pudo cargar FaceMesh"));
+   document.head.append(script);
+  }).then(Mesh=>{
+   klkLooksMesh=new Mesh({locateFile:file=>"https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/"+file});
+   klkLooksMesh.setOptions({maxNumFaces:1,refineLandmarks:true,minDetectionConfidence:0.5,minTrackingConfidence:0.5});
+   klkLooksMesh.onResults(results=>{klkLooksLandmarks=results.multiFaceLandmarks?.[0]||null});
+  }).catch(error=>{console.warn("KLK Looks: FaceMesh no disponible",error);klkLooksMesh=null});
+  return klkLooksMeshLoading;
+ }
+ function klkLooksPositionMesh(points,video){
+  const rect=video.getBoundingClientRect(),stage=$("callVideoStage").getBoundingClientRect();
+  if(!rect.width||!rect.height||!video.videoWidth||!video.videoHeight)return;
+  const scale=getComputedStyle(video).objectFit==="cover"?Math.max(rect.width/video.videoWidth,rect.height/video.videoHeight):Math.min(rect.width/video.videoWidth,rect.height/video.videoHeight);
+  const renderW=video.videoWidth*scale,renderH=video.videoHeight*scale;
+  const map=p=>({x:rect.left+(rect.width-renderW)/2+p.x*renderW-stage.left,y:rect.top+(rect.height-renderH)/2+p.y*renderH-stage.top});
+  const left=map(points[33]),right=map(points[263]),brow=map(points[10]),chin=map(points[152]),nose=map(points[1]);
+  const eyeDistance=Math.hypot(right.x-left.x,right.y-left.y);
+  const angle=Math.atan2(right.y-left.y,right.x-left.x)*180/Math.PI;
+  const type=klkLooksSelected;
+  const isGlasses=type==="😎",isMustache=type==="🥸",isHair=type==="👩‍🦰";
+  const width=Math.max(55,Math.min(340,eyeDistance*(isGlasses?1.95:isMustache?1.25:isHair?3.25:2.75)));
+  const x=(left.x+right.x)/2;
+  const y=isGlasses?(left.y+right.y)/2:isMustache?nose.y+eyeDistance*.42:isHair?brow.y-eyeDistance*.47:brow.y-eyeDistance*.68;
+  klkLooksPreview.style.left=x+"px";klkLooksPreview.style.top=y+"px";
+  klkLooksPreview.style.width=width+"px";
+  klkLooksPreview.style.height=(width*(isHair?.82:isGlasses?.45:isMustache?.38:.54))+"px";
+  klkLooksPreview.style.transform="translate(-50%,-50%) rotate("+angle.toFixed(1)+"deg)";
+  klkLooksPreview.style.display="block";
+ }
+
  function klkLooksLoadFallback(){
   if(klkLooksFallbackLoading)return klkLooksFallbackLoading;
   klkLooksFallbackLoading=new Promise((resolve,reject)=>{
@@ -136,6 +175,11 @@
   if(klkLooksBusy||!klkLooksSelected||!video||video.readyState<2||!overlay.classList.contains("visible"))return;
   klkLooksBusy=true;
   try{
+   if(klkLooksMesh){
+    klkLooksLandmarks=null;
+    await klkLooksMesh.send({image:video});
+    if(klkLooksLandmarks){klkLooksPositionMesh(klkLooksLandmarks,video);return}
+   }
    let face=null;
    if(klkLooksDetector){
     try{const faces=await klkLooksDetector.detect(video);face=faces[0]?.boundingBox||null}
@@ -178,7 +222,7 @@
  for(const [emoji,label] of klkLooksOptions){
   const button=document.createElement("button");button.type="button";button.textContent=emoji?emoji+" "+label:label;
   button.style.cssText="border:1px solid #ffffff55;border-radius:14px;padding:8px;background:#ffffff22;color:white;font-size:16px;-webkit-user-select:none;user-select:none";
-  button.addEventListener("click",()=>{klkLooksSelected=emoji;klkLookSetGraphic(klkLooksPreview,emoji);klkLooksPreview.style.display=emoji?"block":"none";if(emoji&&!klkLooksDetector)klkLooksLoadFallback();klkLooksTray.style.display="none";klkLooksBroadcast()});
+  button.addEventListener("click",()=>{klkLooksSelected=emoji;klkLookSetGraphic(klkLooksPreview,emoji);klkLooksPreview.style.display=emoji?"block":"none";if(emoji){klkLooksLoadMesh();if(!klkLooksDetector)klkLooksLoadFallback()}klkLooksTray.style.display="none";klkLooksBroadcast()});
   klkLooksTray.append(button);
  }
  klkLooksButton.addEventListener("click",()=>{klkLooksTray.style.display=klkLooksTray.style.display==="flex"?"none":"flex"});
