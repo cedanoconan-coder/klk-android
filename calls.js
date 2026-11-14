@@ -132,7 +132,7 @@
   klkLooksPreview.style.height=(width*(isHair?.82:isGlasses?.50:isMustache?.38:type==="🧢"?.56:.54))+"px";
   const yaw=(type==="😎"||type==="🧢")?Math.max(-28,Math.min(28,(nose.x-x)/Math.max(1,eyeDistance)*75)):0;
   klkLooksPreview.style.transform="translate(-50%,-50%) perspective(520px) rotateZ("+angle.toFixed(1)+"deg) rotateY("+yaw.toFixed(1)+"deg)";
-  if(type==="🧢"&&klkCap3D)klkCap3D.render(yaw*Math.PI/180,angle*Math.PI/180);
+  if(type==="🧢"&&klkCap3D&&klkCap3D.canvas.isConnected)klkCap3D.render(yaw*Math.PI/180,angle*Math.PI/180);
   klkLooksPreview.style.display="block";
  }
 
@@ -255,12 +255,23 @@
  function klkLookSetGraphic(target,emoji){
   target.replaceChildren();
   if(!emoji)return;
-  if(emoji==="🧢"){klkCapEnsure().then(model=>{if(model&&klkLooksSelected==="🧢"&&target===klkLooksPreview){target.replaceChildren(model.canvas);model.render()}});return}
-  const svg=klkLookArtwork[emoji];
-  if(svg){const img=document.createElement("img");img.alt="";img.draggable=false;img.src="data:image/svg+xml;charset=utf-8,"+encodeURIComponent(svg);img.style.cssText="display:block;width:100%;height:100%;object-fit:contain";target.append(img)}
-  else target.textContent=emoji;
+  const photographic={"😎":"./assets/klk_gafas_aviator_fotograficas.webp","🧢":"./assets/klk_gorra_fotografica.webp"};
+  const fallback=()=>{
+   if(emoji==="🧢"){klkCapEnsure().then(model=>{if(model&&klkLooksSelected==="🧢"&&target===klkLooksPreview){target.replaceChildren(model.canvas);model.render()}});return}
+   const svg=klkLookArtwork[emoji];
+   if(svg){const img=document.createElement("img");img.alt="";img.draggable=false;img.src="data:image/svg+xml;charset=utf-8,"+encodeURIComponent(svg);img.style.cssText="display:block;width:100%;height:100%;object-fit:contain";target.append(img)}
+   else target.textContent=emoji;
+  };
+  if(photographic[emoji]){
+   const img=document.createElement("img");
+   img.alt="";img.draggable=false;img.decoding="async";
+   img.style.cssText="display:block;width:100%;height:100%;object-fit:contain";
+   img.onerror=()=>{if(img.isConnected)fallback()};
+   img.src=photographic[emoji];target.append(img);return;
+  }
+  fallback();
  }
- const klkLooksOptions=[["","Sin efecto"],["😎","Aviator 3D"],["🧢","Gorra 3D negra"],["👩‍🦰","Peluca"],["👑","Corona"],["🤠","Sombrero"],["🥸","Bigote"]];
+ const klkLooksOptions=[["","Sin efecto"],["😎","Aviator fotográficas"],["🧢","Gorra fotográfica"],["👩‍🦰","Peluca"],["👑","Corona"],["🤠","Sombrero"],["🥸","Bigote"]];
  let klkLooksSelected="";
  for(const [emoji,label] of klkLooksOptions){
   const button=document.createElement("button");button.type="button";button.textContent=emoji?emoji+" "+label:label;
