@@ -696,7 +696,13 @@ service cloud.firestore {
           && request.resource.data.toUid != request.auth.uid
           && request.resource.data.type in ['offer','answer','candidate']
           && request.resource.data.payload is map
-          && ((request.resource.data.type in ['offer','answer']\n            && request.resource.data.payload.keys().hasOnly(['type','sdp'])\n            && request.resource.data.payload.type == request.resource.data.type\n            && request.resource.data.payload.sdp is string\n            && request.resource.data.payload.sdp.size() <= 200000)\n          || (request.resource.data.type == 'candidate'\n            && request.resource.data.payload.candidate is string\n            && request.resource.data.payload.candidate.size() <= 2048))
+          && ((request.resource.data.type in ['offer','answer']
+            && request.resource.data.payload.keys().hasOnly(['type','sdp'])
+            && request.resource.data.payload.type == request.resource.data.type
+            && request.resource.data.payload.sdp is string
+            && request.resource.data.payload.sdp.size() <= 200000)\n          || (request.resource.data.type == 'candidate'
+            && request.resource.data.payload.candidate is string
+            && request.resource.data.payload.candidate.size() <= 2048))
           && request.resource.data.createdAt == request.time;
         allow update, delete: if false;
       }
