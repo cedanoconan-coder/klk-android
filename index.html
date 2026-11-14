@@ -1850,7 +1850,8 @@ if (inviteFromUrl) {
  $("invitationCode").scrollIntoView({behavior:"smooth",block:"center"});
 }
 $("register").addEventListener("click", async () => {
- $("status").textContent = "";
+ if ($("register").disabled) return;
+ $("status").textContent = "Validando invitación…";
  if (!auth || !db) { $("status").textContent = "Firebase no está disponible. Comprueba tu conexión e inténtalo de nuevo."; return; }
  const email = $("email").value.trim(), password = $("password").value;
  const code = $("invitationCode").value.trim().toUpperCase();
@@ -1860,11 +1861,12 @@ $("register").addEventListener("click", async () => {
  setBusy(true);
  try {
   const invitationRef = db.collection("invitations").doc(code);
-  const invitationSnapshot = await invitationRef.get();
+  const invitationSnapshot = await invitationRef.get({source:"server"});
   if (!invitationSnapshot.exists) throw new Error("El código de invitación no existe.");
   const invitation = invitationSnapshot.data();
   if (invitation.redeemedBy || !invitation.expiresAt || invitation.expiresAt.toDate() <= new Date()) throw new Error("Este código ya se utilizó o ha caducado. Pide otra invitación.");
   invitationActivationInProgress = true;
+  $("status").textContent = "Creando cuenta en Firebase…";
   await authPersistenceReady;
   let credential;
   try {
@@ -1877,6 +1879,7 @@ $("register").addEventListener("click", async () => {
   }
   const newUser = credential.user;
   if(!newUser.emailVerified){
+    $("status").textContent = "Enviando correo de verificación…";
     sessionStorage.setItem("klkPendingInvite",code);
     await newUser.sendEmailVerification({url:window.location.origin+window.location.pathname});
     invitationActivationInProgress=false;
@@ -1905,7 +1908,7 @@ $("register").addEventListener("click", async () => {
   // Si la activación falla, cerrar la sesión temporal para volver al formulario
   // y evitar que el estado de autenticación deje la interfaz bloqueada.
   if (auth.currentUser) await auth.signOut().catch(() => {});
-  $("status").textContent = error.message || "No se pudo completar el registro. Revisa el código e inténtalo de nuevo.";
+  $("status").textContent = error.code === "auth/too-many-requests" ? "Firebase bloqueó temporalmente los intentos. Espera antes de volver a registrarte." : (error.message || "No se pudo completar el registro. Revisa el código e inténtalo de nuevo.");
  } finally { setBusy(false); }
 });
 $("verifyInviteEmail").addEventListener("click",async()=>{
