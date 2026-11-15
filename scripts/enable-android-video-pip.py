@@ -5,7 +5,7 @@ import re
 
 manifest = Path("android/app/src/main/AndroidManifest.xml")
 xml = manifest.read_text()
-xml, count = re.subn(r'(<activity\\b[^>]*android:name="\\.MainActivity"[^>]*)(>)',
+xml, count = re.subn(r'(<activity\b[^>]*android:name="\.MainActivity"[^>]*)(>)',
     lambda m: m.group(1) + ' android:supportsPictureInPicture="true" android:resizeableActivity="true" android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|uiMode|keyboardHidden|keyboard"' + m.group(2)
     if 'supportsPictureInPicture' not in m.group(1) else m.group(0), xml, count=1, flags=re.S)
 if count != 1:
