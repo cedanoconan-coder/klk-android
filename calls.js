@@ -450,6 +450,23 @@
   const observer=new MutationObserver(()=>{if(!overlay.classList.contains("klkIncoming")){completed=false;reset()}});
   observer.observe(overlay,{attributes:true,attributeFilter:["class"]});
  }
+
+ // Minimize the call UI without touching the RTCPeerConnection or media tracks.
+ const floatingStyle=document.createElement("style");
+ floatingStyle.textContent=`#callOverlay.klkFloating{display:flex!important;position:fixed!important;inset:auto 12px calc(80px + env(safe-area-inset-bottom)) auto!important;width:min(42vw,190px)!important;height: min(56vw,250px)!important;min-height:150px!important;padding:0!important;border-radius:19px!important;overflow:hidden!important;z-index:9999!important;box-shadow:0 8px 32px #0009!important;touch-action:none}#callOverlay.klkFloating>div:first-child,#callOverlay.klkFloating #callControls,#callOverlay.klkFloating #klkReactionBar,#callOverlay.klkFloating #klkIncomingSwipe{display:none!important}#callOverlay.klkFloating #callVideoStage{position:absolute!important;inset:0!important;width:100%!important;height:100%!important}#callOverlay.klkFloating #remoteVideo{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;object-fit:cover!important}#callOverlay.klkFloating #localVideo{position:absolute!important;inset:auto 5px 5px auto!important;width:28%!important;height:32%!important;object-fit:cover!important}#klkMinimizeCall{position:absolute;top:calc(12px + env(safe-area-inset-top));left:12px;z-index:80;background:#151923cc;color:white;border:1px solid #fff7;border-radius:16px;padding:10px 14px;font-size:15px}#callOverlay.klkFloating #klkMinimizeCall{display:none!important}#klkRestoreCall{display:none;position:absolute;inset:0;border:0;background:transparent;z-index:81}#callOverlay.klkFloating #klkRestoreCall{display:block!important}`;
+ document.head.append(floatingStyle);
+ const minimizeButton=document.createElement("button");minimizeButton.id="klkMinimizeCall";minimizeButton.type="button";minimizeButton.textContent="↙ Minimizar";
+ const restoreButton=document.createElement("button");restoreButton.id="klkRestoreCall";restoreButton.type="button";restoreButton.setAttribute("aria-label","Ampliar videollamada");
+ overlay.append(minimizeButton,restoreButton);
+ function klkCanFloat(){return overlay.classList.contains("visible")&&callMode==="video"&&!!callRef&&!ending&&!incomingCall;}
+ function klkMinimize(){if(!klkCanFloat())return false;overlay.classList.add("klkFloating");return true;}
+ function klkRestore(){overlay.classList.remove("klkFloating");}
+ minimizeButton.addEventListener("click",klkMinimize);
+ restoreButton.addEventListener("click",klkRestore);
+ window.addEventListener("popstate",event=>{if(klkCanFloat()&&!overlay.classList.contains("klkFloating")){event.stopImmediatePropagation();klkMinimize();try{history.pushState({klkView:"floating-call"},"",location.href)}catch(e){}}},true);
+ // Capacitor native back button, if the Android bridge is present.
+ document.addEventListener("backbutton",event=>{if(klkCanFloat()&&!overlay.classList.contains("klkFloating")){event.preventDefault();klkMinimize();}},true);
+
  function showOverlay(name,status){
   klkReactionBar.style.display="none";
   klkSetIncomingSwipe(false);$("callPeerName").textContent=name||"Contacto";klkResetVideoLayout();klkCallAvatar(klkPeerUid);
@@ -472,6 +489,7 @@
   $("localVideo").style.display=callMode==="video"?"block":"none";klkUpdateMirrorPreview();
  }
  function cleanup(){
+  klkRestore();
   if(klkLooksTimer){clearInterval(klkLooksTimer);klkLooksTimer=null}klkLooksRemote.style.display="none";klkLooksRemote.replaceChildren();klkLooksSelected="";klkLooksTray.style.display="none";klkLooksPreview.style.display="none";klkLooksButton.style.display="none";klkStopReactionRepeat();klkReactionBar.style.display="none";klkReactionLayer.replaceChildren();klkReactionChannel=null;
   klkSetIncomingSwipe(false);klkStopOutgoingRing();klkPeerUid=null;klkResetVideoLayout();callStarting=false;
   if(window.klkStopIncomingCallSound)window.klkStopIncomingCallSound();
