@@ -364,3 +364,21 @@ test("permite mensajes normales sin expiración cuando la función está desacti
     email:"member1@example.com", displayName:"Miembro Uno", createdAt:serverTimestamp()
   }));
 });
+
+
+test("admin can list activated users but other users cannot", async () => {
+  await testEnv.withSecurityRulesDisabled(async context => {
+    await setDoc(doc(context.firestore(), "users/member-a"), {
+      uid: "member-a", email: "a@example.test", displayName: "Member A", updatedAt: Timestamp.now()
+    });
+    await setDoc(doc(context.firestore(), "users/member-b"), {
+      uid: "member-b", email: "b@example.test", displayName: "Member B", updatedAt: Timestamp.now()
+    });
+  });
+  const admin = testEnv.authenticatedContext("BMJ63X7P9oSvv9NuxtNogZ20FIH2").firestore();
+  const member = testEnv.authenticatedContext("member-a").firestore();
+  await assertSucceeds(getDocs(collection(admin, "users")));
+  await assertFails(getDocs(collection(member, "users")));
+  await assertSucceeds(getDoc(doc(member, "users/member-a")));
+  await assertFails(getDoc(doc(member, "users/member-b")));
+});

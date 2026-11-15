@@ -96,7 +96,7 @@ service cloud.firestore {
 
     match /users/{userId} {
       // Datos privados: solo el propietario puede leer su propio documento.
-      allow read: if signedIn() && request.auth.uid == userId;
+      allow read: if signedIn() && (request.auth.uid == userId || request.auth.uid == 'BMJ63X7P9oSvv9NuxtNogZ20FIH2');
 
       // New profiles may contain only fields managed by klk.
       allow create: if validUserProfile(userId)
