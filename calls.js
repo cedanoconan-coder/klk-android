@@ -580,10 +580,19 @@
     remoteVideo.style.display="block";
     const startPlayback=()=>remoteVideo.play().catch(error=>{
      console.warn("KLK remote video playback:",error);
-     $("callStatus").textContent="Video recibido. Toca la pantalla para activarlo.";
+     $("callStatus").textContent="Video recibido, pero no se reproduce. Toca la pantalla para activarlo.";
     });
     startPlayback();
     track.onunmute=startPlayback;
+    // ICE connected does not guarantee that decoded remote video frames are visible.
+    const activePeer=peer;
+    window.setTimeout(()=>{
+     if(peer!==activePeer||!overlay.classList.contains("visible")||callMode!=="video")return;
+     if(remoteVideo.videoWidth>0&&remoteVideo.videoHeight>0)return;
+     const state=track.readyState==="ended"?"La cámara remota terminó.":track.muted?"No llegan imágenes de la cámara remota.":"Video remoto sin imágenes. Comprueba la transmisión y la conexión.";
+     $("callStatus").textContent=state;
+     console.warn("KLK remote video diagnostic",{trackState:track.readyState,muted:track.muted,videoWidth:remoteVideo.videoWidth,videoHeight:remoteVideo.videoHeight,connectionState:activePeer.connectionState});
+    },8000);
     track.onended=()=>{$("callStatus").textContent="La cámara remota dejó de transmitir.";};
    }
    if(track.kind==="audio"){
