@@ -1201,6 +1201,16 @@ html,body{overscroll-behavior-y:contain}
 #statusViewer.klkViewsDesign #statusViewerContent span{font-size:12px;color:#e4cffa}
 #statusViewer.klkViewsDesign #closeStatusViewer{background:linear-gradient(135deg,#a45af8,#7335d4);border:1px solid #c39cf8;color:#fff;border-radius:30px;padding:14px 26px;font-weight:750;box-shadow:0 8px 24px #17002e66}
 </style><style id="klk-hide-status-floating-actions">#updatesPanel #statusTextFab,#updatesPanel #statusPhotoFab{display:none!important}</style><style id="klk-contacts-fab-chats-only">#chat:not(.room-open) #homeView:not([data-klk-tab="chats"]) #openUsersFab{display:none!important}#chat:not(.room-open) #homeView[data-klk-tab="chats"] #openUsersFab{display:grid}</style><style id="klk-chat-search-only">#homeView[data-klk-tab="calls"] .homeSearch,#homeView[data-klk-tab="updates"] .homeSearch,#homeView[data-klk-tab="tools"] .homeSearch,#homeView[data-klk-tab="calls"] #klkChatFiltersToggle,#homeView[data-klk-tab="updates"] #klkChatFiltersToggle,#homeView[data-klk-tab="tools"] #klkChatFiltersToggle,#homeView[data-klk-tab="calls"] #klkChatFilters,#homeView[data-klk-tab="updates"] #klkChatFilters,#homeView[data-klk-tab="tools"] #klkChatFilters{display:none!important}</style>
+
+<style id="klk-tab-floating-controls-isolation">
+/* Keep floating controls confined to their intended tab, even with legacy CSS overrides. */
+#chat #homeView #openUsersFab{display:none!important}
+#chat:not(.room-open):not(.profile-open) #homeView[data-klk-tab="chats"] #openUsersFab{display:grid!important}
+#chat #homeView #statusTextFab,#chat #homeView #statusPhotoFab{display:none!important}
+#chat:not(.room-open):not(.profile-open) #homeView[data-klk-tab="updates"] #updatesPanel:not([hidden]) #statusTextFab,
+#chat:not(.room-open):not(.profile-open) #homeView[data-klk-tab="updates"] #updatesPanel:not([hidden]) #statusPhotoFab{display:grid!important}
+#homeView[data-klk-tab="calls"] #openUsersFab,#homeView[data-klk-tab="tools"] #openUsersFab,#homeView[data-klk-tab="updates"] #openUsersFab{pointer-events:none!important}
+</style>
 <style id="klk-white-chat-profile-header">
 /* Encabezado blanco para que nombre y presencia del contacto sean legibles. */
 #chat.room-open .chatTop{background:#fff!important;color:#172126!important;border-bottom:1px solid #e6e8eb!important}
@@ -3682,6 +3692,7 @@ function setHomeTab(tab){
  const validTabs=["chats","contacts","calls","updates","tools"];
  if(!validTabs.includes(tab)) return;
  const invitePanel=window.$("invitePanel"); if(invitePanel)invitePanel.style.display="none";
+ const homeView=window.$("homeView"); if(homeView)homeView.dataset.klkTab=tab;
  const panelIds=["chatsPanel","requestsPanel","peopleList","callsPanel","updatesPanel","toolsPanel","assistantPanel"];
  panelIds.forEach(id=>{const el=window.$(id);if(el){el.hidden=false;el.style.display="none";}});
  const isChats=tab==="chats";
