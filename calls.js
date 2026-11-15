@@ -562,10 +562,36 @@
   peer.ondatachannel=event=>{if(event.channel.label==="klk-reactions")klkAttachReactionChannel(event.channel)};
   if(callRole==="caller"&&callMode==="video")klkAttachReactionChannel(peer.createDataChannel("klk-reactions"));
   localStream.getTracks().forEach(track=>{const sender=peer.addTrack(track,localStream);if(track.kind==="video"){klkTuneCallVideo(track);klkTuneCallSender(sender)}});
+  // Keep a persistent remote stream: some Android WebViews deliver tracks
+  // without event.streams, or deliver audio and video in separate events.
+  const receivedStream=new MediaStream();
   peer.ontrack=event=>{
-   const stream=event.streams&&event.streams[0];
-   if(stream){$("remoteVideo").srcObject=stream;$("remoteAudio").srcObject=stream;}
-   $("callStatus").textContent=callMode==="video"?"Videollamada conectada":"Llamada conectada";
+   if(!peer||peer.signalingState==="closed")return;
+   const track=event.track;
+   if(!receivedStream.getTracks().some(existing=>existing.id===track.id)){
+    receivedStream.addTrack(track);
+   }
+   const remoteVideo=$("remoteVideo"),remoteAudio=$("remoteAudio");
+   if(track.kind==="video"){
+    remoteVideo.srcObject=receivedStream;
+    remoteVideo.autoplay=true;
+    remoteVideo.playsInline=true;
+    remoteVideo.muted=true; // Audio is played separately to avoid echo.
+    remoteVideo.style.display="block";
+    const startPlayback=()=>remoteVideo.play().catch(error=>{
+     console.warn("KLK remote video playback:",error);
+     $("callStatus").textContent="Video recibido. Toca la pantalla para activarlo.";
+    });
+    startPlayback();
+    track.onunmute=startPlayback;
+    track.onended=()=>{$("callStatus").textContent="La cámara remota dejó de transmitir.";};
+   }
+   if(track.kind==="audio"){
+    remoteAudio.srcObject=receivedStream;
+    remoteAudio.autoplay=true;
+    remoteAudio.play().catch(error=>console.warn("KLK remote audio playback:",error));
+   }
+   $("callStatus").textContent=callMode==="video"?"Conectando video remoto...":"Llamada conectada";
   };
   // A short network drop should not immediately end an established call.
   // WebRTC can recover transient ICE disconnections without renegotiation.
