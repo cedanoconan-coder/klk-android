@@ -1320,16 +1320,7 @@ input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),textarea,se
 <div id="homeView" class="homeView">
  <div class="homeTitle"><h1 class="klkHeaderBrand"><img class="klkHeaderLogo" src="./assets/file_0000000058e88212afea8bb7c50b88ef.png?v=148" alt="Logo KLK" onerror="this.onerror=null;this.src='./icon.svg'"> <span>Klk manin</span></h1><div class="homeActions"><button type="button" id="inviteMember" aria-label="Invitar a klk" title="Invitar a klk">＋</button><button type="button" id="profileButton" class="profileButton" aria-label="Cambiar foto de perfil"><img id="myProfilePhoto" alt="Foto de perfil"><span>Mi perfil</span></button><button type="button" id="quickLogout" class="quickLogout" aria-label="Cerrar sesión" title="Cerrar sesión">↪ Salir</button><input id="profilePhotoInput" type="file" accept="image/*" hidden><button type="button" id="homeMenu" aria-label="Ajustes" title="Ajustes"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg></button></div></div>
  
- <section id="invitePanel" class="card" style="display:none;margin:0 16px 14px;padding:14px">
-  <strong>Invitar a klk</strong>
-  <p class="hint">Crea un código de un solo uso, válido durante 7 días. Compártelo solo con la persona que deseas agregar.</p>
-  <p id="inviteCodeDisplay" style="font-size:22px;font-weight:700;letter-spacing:2px;text-align:center"></p>
-  <div id="inviteQr" aria-label="Código QR de invitación" style="display:none;margin:12px auto;width:200px;min-height:200px;padding:10px;background:#fff;border-radius:12px"></div>
-  <p id="inviteQrHint" class="hint" style="text-align:center">Escanea este QR para abrir la invitación.</p>
-  <button id="createInvite" type="button">Crear invitación</button>
-  <button id="shareInvite" class="secondary" type="button" hidden>Compartir invitación</button>
-  <p id="inviteStatus" class="hint" role="status" aria-live="polite"></p>
- </section>
+
  
 <section id="homeProfilePanel" aria-label="Mi perfil y configuración">
  <div class="klkProfileTopbar"><button id="profileClose" class="secondary" type="button" aria-label="Volver">‹</button><h2>Perfil</h2></div>
@@ -1410,6 +1401,16 @@ input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),textarea,se
  </section>
  <section id="toolsPanel" class="homeUtilityPanel klkSettingsHome" aria-label="Herramientas y configuración" hidden>
 <div class="klkSettingsIntro"><h2>Configuración</h2><p>Administra tu cuenta y personaliza Klk manin.</p></div>
+ <section id="invitePanel" class="card" style="display:none;margin:0 16px 14px;padding:14px">
+  <strong>Invitar a klk</strong>
+  <p class="hint">Crea un código de un solo uso, válido durante 7 días. Compártelo solo con la persona que deseas agregar.</p>
+  <p id="inviteCodeDisplay" style="font-size:22px;font-weight:700;letter-spacing:2px;text-align:center"></p>
+  <div id="inviteQr" aria-label="Código QR de invitación" style="display:none;margin:12px auto;width:200px;min-height:200px;padding:10px;background:#fff;border-radius:12px"></div>
+  <p id="inviteQrHint" class="hint" style="text-align:center">Escanea este QR para abrir la invitación.</p>
+  <button id="createInvite" type="button">Crear invitación</button>
+  <button id="shareInvite" class="secondary" type="button" hidden>Compartir invitación</button>
+  <p id="inviteStatus" class="hint" role="status" aria-live="polite"></p>
+ </section>
 <div class="klkSettingsList"><details class="klkSettingsItem"><summary><span class="klkSettingsGlyph" aria-hidden="true">👤</span><span class="klkSettingsLabels"><strong>Cuenta y perfil</strong><small>Foto, datos personales y acceso</small></span><span class="klkSettingsChevron" aria-hidden="true">⌄</span></summary><div class="klkSettingsDetail"><button type="button" data-tool-action="profile">Abrir mi perfil</button><button type="button" data-tool-action="settings">Configuración de la cuenta</button></div></details><details class="klkSettingsItem"><summary><span class="klkSettingsGlyph" aria-hidden="true">🔒</span><span class="klkSettingsLabels"><strong>Privacidad y seguridad</strong><small>Bloqueo, protección y mensajes temporales</small></span><span class="klkSettingsChevron" aria-hidden="true">⌄</span></summary><div class="klkSettingsDetail"><p>Revisa las opciones de seguridad disponibles en la configuración.</p><button type="button" data-tool-action="settings">Abrir privacidad y seguridad</button></div></details><details class="klkSettingsItem"><summary><span class="klkSettingsGlyph" aria-hidden="true">💬</span><span class="klkSettingsLabels"><strong>Chats</strong><small>Mensajes, fondos y tamaño de letra</small></span><span class="klkSettingsChevron" aria-hidden="true">⌄</span></summary><div class="klkSettingsDetail"><p>Personaliza la apariencia y el comportamiento de tus conversaciones.</p><button type="button" data-tool-action="settings">Configurar chats</button><button type="button" data-go-tab="chats">Ir a mis chats</button></div></details><details class="klkSettingsItem"><summary><span class="klkSettingsGlyph" aria-hidden="true">🔔</span><span class="klkSettingsLabels"><strong>Notificaciones</strong><small>Sonidos, vibración y avisos</small></span><span class="klkSettingsChevron" aria-hidden="true">⌄</span></summary><div class="klkSettingsDetail"><p>Configura las alertas y los sonidos disponibles.</p><button type="button" data-tool-action="settings">Configurar notificaciones</button></div></details><details class="klkSettingsItem"><summary><span class="klkSettingsGlyph" aria-hidden="true">📞</span><span class="klkSettingsLabels"><strong>Llamadas</strong><small>Historial, audio y videollamadas</small></span><span class="klkSettingsChevron" aria-hidden="true">⌄</span></summary><div class="klkSettingsDetail"><button type="button" data-go-tab="calls">Ver historial de llamadas</button></div></details><details class="klkSettingsItem"><summary><span class="klkSettingsGlyph" aria-hidden="true">🎨</span><span class="klkSettingsLabels"><strong>Apariencia</strong><small>Tema claro u oscuro y fondos</small></span><span class="klkSettingsChevron" aria-hidden="true">⌄</span></summary><div class="klkSettingsDetail"><button type="button" data-tool-action="settings">Personalizar apariencia</button><div class="klkDimmerSettings"><label for="klkDimmerRange"><strong>🌙 Atenuador de pantalla</strong></label><p>Reduce la luminosidad dentro de KLK, especialmente por la noche.</p><div class="klkDimmerRow"><input id="klkDimmerEnabled" type="checkbox" aria-label="Activar atenuador"><label for="klkDimmerEnabled">Activar</label><output id="klkDimmerValue" for="klkDimmerRange">0%</output></div><input id="klkDimmerRange" type="range" min="0" max="60" step="5" value="30" aria-label="Intensidad del atenuador"></div></div></details><details class="klkSettingsItem"><summary><span class="klkSettingsGlyph" aria-hidden="true">👥</span><span class="klkSettingsLabels"><strong>Contactos e invitaciones</strong><small>Invitar personas a KLK</small></span><span class="klkSettingsChevron" aria-hidden="true">⌄</span></summary><div class="klkSettingsDetail"><button type="button" data-tool-action="invite">Invitar a un contacto</button></div></details><details class="klkSettingsItem"><summary><span class="klkSettingsGlyph" aria-hidden="true">🤖</span><span class="klkSettingsLabels"><strong>León</strong><small>Ayuda y diagnóstico de la aplicación</small></span><span class="klkSettingsChevron" aria-hidden="true">⌄</span></summary><div class="klkSettingsDetail"><button type="button" data-tool-action="assistant">Abrir asistente IA</button></div></details></div>
 </section>
  <section id="assistantPanel" class="homeUtilityPanel" aria-label="Asistente inteligente" hidden>
@@ -3583,7 +3584,7 @@ if (window.matchMedia("(display-mode: standalone)").matches || window.navigator.
 
 // Publica el selector para los scripts independientes que siguen a este bloque.
 window.$ = id => document.getElementById(id);
-window.$("inviteMember").addEventListener("click",()=>{ window.$("invitePanel").style.display=window.$("invitePanel").style.display==="block"?"none":"block"; window.$("inviteStatus").textContent=""; });
+window.$("inviteMember").addEventListener("click",()=>{ setHomeTab("tools"); const panel=window.$("invitePanel"); panel.style.display=panel.style.display==="block"?"none":"block"; window.$("inviteStatus").textContent=""; if(panel.style.display==="block")panel.scrollIntoView({behavior:"smooth",block:"nearest"}); });
 let latestInviteCode = "";
 window.$("createInvite").addEventListener("click",async()=>{
  const user=auth&&auth.currentUser;
@@ -3754,7 +3755,7 @@ document.querySelectorAll("[data-tool-action]").forEach(button=>button.addEventL
  }
  if(action==="assistant"){setHomeTab("tools");window.$("toolsPanel").style.display="none";window.$("assistantPanel").hidden=false;window.$("assistantPanel").style.display="block";window.$("assistantPanel").scrollIntoView({behavior:"smooth",block:"start"});}
  if(action==="back-tools"){setHomeTab("tools");window.$("toolsPanel").scrollIntoView({behavior:"smooth",block:"start"});}
- if(action==="invite"){window.$("inviteMember").click();window.scrollTo({top:0,behavior:"smooth"});}
+ if(action==="invite"){window.$("inviteMember").click();}
  if(action==="profile")window.$("profileButton").click();
  if(action==="top")window.scrollTo({top:0,behavior:"smooth"});
 }));
