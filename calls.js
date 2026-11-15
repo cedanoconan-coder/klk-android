@@ -665,6 +665,9 @@
   if(incomingDocUnsub){incomingDocUnsub();incomingDocUnsub=null;}
   if(ringTimeout){window.clearTimeout(ringTimeout);ringTimeout=null;}
   const data=incomingCall.data;callRef=incomingCall.ref;callRole="callee";callMode=data.mode==="video"?"video":"audio";
+  // Once answered, this is an active call, not an unanswered incoming invitation.
+  // The floating-video guard must work identically for caller and callee.
+  incomingCall=null;
   try{
    $("callStatus").textContent=callMode==="video"?"Activando cámara y micrófono...":"Activando micrófono...";
    localStream=await getLocalMedia(callMode);createPeer();
