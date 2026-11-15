@@ -822,7 +822,7 @@ main,#chat,.homeView{overscroll-behavior-y:contain}
 @media(min-width:761px){.klkUpdates{max-width:760px;margin:0 auto}.klkUpdates .statusFab{position:absolute;right:20px}}
 @media(max-width:420px){.klkUpdates .updatesTopbar{padding:0 18px}.klkUpdates .updatesHeading{margin:25px 18px 18px}.klkUpdates .myStatusRow{padding-left:18px;padding-right:18px}.klkUpdates .statusAvatar{width:76px;height:76px;flex-basis:76px}.klkUpdates .myStatusAvatar{width:76px;height:76px;flex-basis:76px}.klkUpdates .statusCard{min-height:100px}.klkUpdates .statusCardBody strong{font-size:18px}.klkUpdates .statusCardBody p{font-size:15px}}
 
-</style>
+#toolsPanel #invitePanel{position:relative;max-width:100%;margin:12px 0 18px!important;box-shadow:none;border:1px solid #dce6e1}\n#toolsPanel .klkInviteHeader{display:flex;align-items:center;justify-content:space-between;gap:12px}\n</style>
 <style>
 /* Perfil compacto y selector de foto mediante cámara */
 .profileIdentityCard{padding:12px 14px 14px!important;margin-bottom:12px!important;border-radius:18px!important}
@@ -1402,7 +1402,7 @@ input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),textarea,se
  <section id="toolsPanel" class="homeUtilityPanel klkSettingsHome" aria-label="Herramientas y configuración" hidden>
 <div class="klkSettingsIntro"><h2>Configuración</h2><p>Administra tu cuenta y personaliza Klk manin.</p></div>
  <section id="invitePanel" class="card" style="display:none;margin:0 16px 14px;padding:14px">
-  <strong>Invitar a klk</strong>
+  <div class="klkInviteHeader"><strong>Invitar a klk</strong><button id="closeInvitePanel" type="button" class="secondary" aria-label="Cerrar invitación" style="width:42px;min-width:42px;margin:0;padding:8px">×</button></div>
   <p class="hint">Crea un código de un solo uso, válido durante 7 días. Compártelo solo con la persona que deseas agregar.</p>
   <p id="inviteCodeDisplay" style="font-size:22px;font-weight:700;letter-spacing:2px;text-align:center"></p>
   <div id="inviteQr" aria-label="Código QR de invitación" style="display:none;margin:12px auto;width:200px;min-height:200px;padding:10px;background:#fff;border-radius:12px"></div>
@@ -3584,7 +3584,8 @@ if (window.matchMedia("(display-mode: standalone)").matches || window.navigator.
 
 // Publica el selector para los scripts independientes que siguen a este bloque.
 window.$ = id => document.getElementById(id);
-window.$("inviteMember").addEventListener("click",()=>{ setHomeTab("tools"); const panel=window.$("invitePanel"); panel.style.display=panel.style.display==="block"?"none":"block"; window.$("inviteStatus").textContent=""; if(panel.style.display==="block")panel.scrollIntoView({behavior:"smooth",block:"nearest"}); });
+window.$("inviteMember").addEventListener("click",()=>{ setHomeTab("tools"); const panel=window.$("invitePanel"); panel.style.display="block"; window.$("inviteStatus").textContent=""; panel.scrollIntoView({behavior:"smooth",block:"nearest"}); });
+window.$("closeInvitePanel").addEventListener("click",()=>{window.$("invitePanel").style.display="none";});
 let latestInviteCode = "";
 window.$("createInvite").addEventListener("click",async()=>{
  const user=auth&&auth.currentUser;
@@ -3680,6 +3681,7 @@ window.$("chatsPanel").style.display="block";window.$("requestsPanel").style.dis
 function setHomeTab(tab){
  const validTabs=["chats","contacts","calls","updates","tools"];
  if(!validTabs.includes(tab)) return;
+ const invitePanel=window.$("invitePanel"); if(invitePanel)invitePanel.style.display="none";
  const panelIds=["chatsPanel","requestsPanel","peopleList","callsPanel","updatesPanel","toolsPanel","assistantPanel"];
  panelIds.forEach(id=>{const el=window.$(id);if(el){el.hidden=false;el.style.display="none";}});
  const isChats=tab==="chats";
