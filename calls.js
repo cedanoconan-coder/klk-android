@@ -453,12 +453,13 @@
 
  // Minimize the call UI without touching the RTCPeerConnection or media tracks.
  const floatingStyle=document.createElement("style");
- floatingStyle.textContent=`#callOverlay.klkFloating{display:flex!important;position:fixed!important;inset:auto 12px calc(80px + env(safe-area-inset-bottom)) auto!important;width:min(42vw,190px)!important;height: min(56vw,250px)!important;min-height:150px!important;padding:0!important;border-radius:19px!important;overflow:hidden!important;z-index:9999!important;box-shadow:0 8px 32px #0009!important;touch-action:none}#callOverlay.klkFloating>div:first-child,#callOverlay.klkFloating #callControls,#callOverlay.klkFloating #klkReactionBar,#callOverlay.klkFloating #klkIncomingSwipe{display:none!important}#callOverlay.klkFloating #callVideoStage{position:absolute!important;inset:0!important;width:100%!important;height:100%!important}#callOverlay.klkFloating #remoteVideo{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;object-fit:cover!important}#callOverlay.klkFloating #localVideo{position:absolute!important;inset:auto 5px 5px auto!important;width:28%!important;height:32%!important;object-fit:cover!important}#klkMinimizeCall{position:absolute;top:calc(12px + env(safe-area-inset-top));left:12px;z-index:80;background:#151923cc;color:white;border:1px solid #fff7;border-radius:16px;padding:10px 14px;font-size:15px}#callOverlay.klkFloating #klkMinimizeCall{display:none!important}#klkRestoreCall{display:none;position:absolute;inset:0;border:0;background:transparent;z-index:81}#callOverlay.klkFloating #klkRestoreCall{display:block!important}`;
+ floatingStyle.textContent=`#callOverlay.klkFloating{display:flex!important;position:fixed!important;inset:auto 12px calc(80px + env(safe-area-inset-bottom)) auto!important;width:min(42vw,190px)!important;height: min(56vw,250px)!important;min-height:150px!important;padding:0!important;border-radius:19px!important;overflow:hidden!important;z-index:9999!important;box-shadow:0 8px 32px #0009!important;touch-action:none}#callOverlay.klkFloating>div:first-child,#callOverlay.klkFloating #callControls,#callOverlay.klkFloating #klkReactionBar,#callOverlay.klkFloating #klkIncomingSwipe{display:none!important}#callOverlay.klkFloating #callVideoStage{position:absolute!important;inset:0!important;width:100%!important;height:100%!important}#callOverlay.klkFloating #remoteVideo{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;object-fit:cover!important}#callOverlay.klkFloating #localVideo{position:absolute!important;inset:auto 5px 5px auto!important;width:28%!important;height:32%!important;object-fit:cover!important}#callOverlay.visible #klkMinimizeCall:not([hidden]){display:block!important;visibility:visible!important;opacity:1!important;position:absolute!important;top:calc(12px + env(safe-area-inset-top))!important;left:12px!important;right:auto!important;width:auto!important;height:auto!important;z-index:99999!important;background:#151923ee!important;color:white!important;border:1px solid #fff7!important;border-radius:16px!important;padding:10px 14px!important;font-size:15px!important;pointer-events:auto!important}#callOverlay.klkFloating #klkMinimizeCall{display:none!important}#klkRestoreCall{display:none;position:absolute;inset:0;border:0;background:transparent;z-index:81}#callOverlay.klkFloating #klkRestoreCall{display:block!important}`;
  document.head.append(floatingStyle);
- const minimizeButton=document.createElement("button");minimizeButton.id="klkMinimizeCall";minimizeButton.type="button";minimizeButton.textContent="↙ Minimizar";
+ const minimizeButton=$("klkMinimizeCall")||document.createElement("button");minimizeButton.id="klkMinimizeCall";minimizeButton.type="button";minimizeButton.textContent="↙ Minimizar";
  const restoreButton=document.createElement("button");restoreButton.id="klkRestoreCall";restoreButton.type="button";restoreButton.setAttribute("aria-label","Ampliar videollamada");
- overlay.append(minimizeButton,restoreButton);
- function klkCanFloat(){return overlay.classList.contains("visible")&&callMode==="video"&&!!callRef&&!ending&&!incomingCall;}
+ if(!minimizeButton.isConnected)overlay.append(minimizeButton);overlay.append(restoreButton);
+ function klkCanFloat(){return overlay.classList.contains("visible")&&callMode==="video"&&!ending&&!incomingCall;}
+ window.klkMinimizeVideoCall=()=>klkMinimize();
  function klkMinimize(){if(!klkCanFloat())return false;overlay.classList.add("klkFloating");return true;}
  function klkRestore(){overlay.classList.remove("klkFloating");}
  minimizeButton.addEventListener("click",klkMinimize);
@@ -472,7 +473,7 @@
   klkSetIncomingSwipe(false);$("callPeerName").textContent=name||"Contacto";klkResetVideoLayout();klkCallAvatar(klkPeerUid);
   // Keep the hang-up control available while browser permissions are pending.
   $("callStatus").textContent=status||"";
-  overlay.classList.add("visible");klkUpdateMirrorPreview();
+  overlay.classList.add("visible");minimizeButton.hidden=callMode!=="video";klkUpdateMirrorPreview();
   $("answerCall").hidden=true;$("rejectCall").hidden=true;$("muteCall").hidden=true;$("cameraCall").hidden=true;$("switchCameraCall").hidden=true;$("endCall").hidden=false;
   $("callAvatar").style.display="grid";$("remoteVideo").style.display="none";$("localVideo").style.display="none";
   $("remoteAudio").srcObject=null;$("remoteVideo").srcObject=null;$("remoteVideo").muted=true;$("localVideo").srcObject=null;
@@ -502,7 +503,7 @@
   if(localStream){localStream.getTracks().forEach(t=>t.stop());localStream=null;}
   $("remoteVideo").srcObject=null;$("localVideo").srcObject=null;$("remoteAudio").srcObject=null;
   callRef=null;callRole=null;callState=null;incomingCall=null;queuedCandidates=[];pendingLocalCandidates=[];muted=false;cameraOff=false;cameraFacingMode="user";ending=false;
-  overlay.classList.remove("visible");klkMirrorPreview=false;klkUpdateMirrorPreview();
+  overlay.classList.remove("visible");minimizeButton.hidden=true;klkMirrorPreview=false;klkUpdateMirrorPreview();
  }
  function klkCallVideoConstraints(facing){return {facingMode:{ideal:facing},width:{ideal:1280},height:{ideal:720},frameRate:{ideal:24,max:30},resizeMode:"crop-and-scale"};}
  async function klkTuneCallVideo(track){if(!track)return;try{const caps=typeof track.getCapabilities==="function"?track.getCapabilities():{};const extras={};if(caps.frameRate&&caps.frameRate.max>=24)extras.frameRate={ideal:24,max:30};if(caps.width&&caps.width.max>=640)extras.width={ideal:Math.min(1280,caps.width.max)};if(caps.height&&caps.height.max>=480)extras.height={ideal:Math.min(720,caps.height.max)};if(Object.keys(extras).length)await track.applyConstraints(extras)}catch(e){console.warn("Ajustes opcionales de cámara no disponibles",e)}}
