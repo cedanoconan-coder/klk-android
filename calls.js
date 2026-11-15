@@ -454,6 +454,7 @@
  // Minimize the call UI without touching the RTCPeerConnection or media tracks.
  const floatingStyle=document.createElement("style");
  floatingStyle.textContent=`#callOverlay.klkFloating{display:flex!important;position:fixed!important;inset:auto 12px calc(80px + env(safe-area-inset-bottom)) auto!important;width:min(42vw,190px)!important;height: min(56vw,250px)!important;min-height:150px!important;padding:0!important;border-radius:19px!important;overflow:hidden!important;z-index:9999!important;box-shadow:0 8px 32px #0009!important;touch-action:none}#callOverlay.klkFloating>div:first-child,#callOverlay.klkFloating #callControls,#callOverlay.klkFloating #klkReactionBar,#callOverlay.klkFloating #klkIncomingSwipe{display:none!important}#callOverlay.klkFloating #callVideoStage{position:absolute!important;inset:0!important;width:100%!important;height:100%!important}#callOverlay.klkFloating #remoteVideo{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;object-fit:cover!important}#callOverlay.klkFloating #localVideo{position:absolute!important;inset:auto 5px 5px auto!important;width:28%!important;height:32%!important;object-fit:cover!important}#callOverlay.visible #klkMinimizeCall:not([hidden]){display:block!important;visibility:visible!important;opacity:1!important;position:absolute!important;top:calc(12px + env(safe-area-inset-top))!important;left:12px!important;right:auto!important;width:auto!important;height:auto!important;z-index:99999!important;background:#151923ee!important;color:white!important;border:1px solid #fff7!important;border-radius:16px!important;padding:10px 14px!important;font-size:15px!important;pointer-events:auto!important}#callOverlay.klkFloating #klkMinimizeCall{display:none!important}#klkRestoreCall{display:none;position:absolute;inset:0;border:0;background:transparent;z-index:81}#callOverlay.klkFloating #klkRestoreCall{display:block!important;touch-action:none!important;cursor:grab}`;
+ floatingStyle.textContent+="#callOverlay #klkMinimizeCall{display:none!important}";
  document.head.append(floatingStyle);
  const minimizeButton=$("klkMinimizeCall")||document.createElement("button");minimizeButton.id="klkMinimizeCall";minimizeButton.type="button";minimizeButton.textContent="↙ Minimizar";
  const restoreButton=document.createElement("button");restoreButton.id="klkRestoreCall";restoreButton.type="button";restoreButton.setAttribute("aria-label","Ampliar videollamada");
@@ -515,7 +516,7 @@
   klkSetIncomingSwipe(false);$("callPeerName").textContent=name||"Contacto";klkResetVideoLayout();klkCallAvatar(klkPeerUid);
   // Keep the hang-up control available while browser permissions are pending.
   $("callStatus").textContent=status||"";
-  overlay.classList.add("visible");minimizeButton.hidden=callMode!=="video";klkUpdateMirrorPreview();
+  overlay.classList.add("visible");minimizeButton.hidden=true;klkUpdateMirrorPreview();
   $("answerCall").hidden=true;$("rejectCall").hidden=true;$("muteCall").hidden=true;$("cameraCall").hidden=true;$("switchCameraCall").hidden=true;$("endCall").hidden=false;
   $("callAvatar").style.display="grid";$("remoteVideo").style.display="none";$("localVideo").style.display="none";
   $("remoteAudio").srcObject=null;$("remoteVideo").srcObject=null;$("remoteVideo").muted=true;$("localVideo").srcObject=null;
