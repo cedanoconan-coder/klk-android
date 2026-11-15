@@ -4727,10 +4727,10 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
  const android=!!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform());
  let pendingVersion=0, checking=false, notice=null;
  function busy(){
-  const callSelectors=['#incomingCallOverlay','#activeCallOverlay','#groupCallOverlay'];
+  const callSelectors=['#callOverlay','#klkGroupOverlay'];
   const visible=el=>el&&getComputedStyle(el).display!=='none'&&getComputedStyle(el).visibility!=='hidden';
   if(callSelectors.some(s=>visible(document.querySelector(s))))return true;
-  if(document.querySelector('video[srcObject]'))return true;
+  if([...document.querySelectorAll('video')].some(v=>v.srcObject&&v.srcObject.getTracks().some(t=>t.readyState==='live')))return true;
   if(window.klkCallActive===true||window.klkGroupCallActive===true)return true;
   const focused=document.activeElement;
   if(focused&&(focused.isContentEditable||/^(INPUT|TEXTAREA)$/.test(focused.tagName)))return true;
