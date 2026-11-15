@@ -586,12 +586,26 @@
     track.onunmute=startPlayback;
     // ICE connected does not guarantee that decoded remote video frames are visible.
     const activePeer=peer;
-    window.setTimeout(()=>{
+    window.setTimeout(async()=>{
      if(peer!==activePeer||!overlay.classList.contains("visible")||callMode!=="video")return;
      if(remoteVideo.videoWidth>0&&remoteVideo.videoHeight>0)return;
-     const state=track.readyState==="ended"?"La cámara remota terminó.":track.muted?"No llegan imágenes de la cámara remota.":"Video remoto sin imágenes. Comprueba la transmisión y la conexión.";
+     const report={trackState:track.readyState,muted:track.muted,videoWidth:remoteVideo.videoWidth,videoHeight:remoteVideo.videoHeight,connectionState:activePeer.connectionState};
+     let state=track.readyState==="ended"?"La cámara remota terminó.":track.muted?"No llegan imágenes de la cámara remota.":"Video remoto sin imágenes. Comprueba la transmisión y la conexión.";
+     try{
+      const stats=await activePeer.getStats();
+      let inboundVideo=null,transport=null;
+      stats.forEach(item=>{if(item.type==="inbound-rtp"&&item.kind==="video"&&!item.isRemote)inboundVideo=item;if(item.type==="transport")transport=item;});
+      if(inboundVideo){
+       report.bytesReceived=inboundVideo.bytesReceived||0;report.framesDecoded=inboundVideo.framesDecoded||0;report.framesReceived=inboundVideo.framesReceived||0;report.packetsLost=inboundVideo.packetsLost||0;
+       if(report.bytesReceived===0)state="No se reciben datos de video del otro teléfono. Revisa su cámara y la red.";
+       else if(report.framesDecoded===0)state="Llegan datos de video, pero Android no puede mostrar las imágenes.";
+       else state="El video se recibe, pero la pantalla no lo reproduce. Toca la pantalla.";
+      }
+      if(transport)report.iceState=activePeer.iceConnectionState;
+     }catch(error){report.statsError=error.message;}
+     if(peer!==activePeer||remoteVideo.videoWidth>0)return;
      $("callStatus").textContent=state;
-     console.warn("KLK remote video diagnostic",{trackState:track.readyState,muted:track.muted,videoWidth:remoteVideo.videoWidth,videoHeight:remoteVideo.videoHeight,connectionState:activePeer.connectionState});
+     console.warn("KLK remote video diagnostic",report);
     },8000);
     track.onended=()=>{$("callStatus").textContent="La cámara remota dejó de transmitir.";};
    }
