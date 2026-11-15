@@ -660,11 +660,12 @@ service cloud.firestore {
       }
       allow get, list: if member();
       allow create: if signedIn()
-        && request.resource.data.keys().hasOnly(['hostUid','memberUids','activeUids','status','createdAt'])
+        && request.resource.data.keys().hasOnly(['hostUid','memberUids','activeUids','status','createdAt','scheduledAt'])
         && request.resource.data.hostUid == request.auth.uid
         && validMembers(request.resource.data)
         && request.resource.data.activeUids == []
-        && request.resource.data.status == 'active'
+        && (request.resource.data.status == 'active' && !('scheduledAt' in request.resource.data)
+          || request.resource.data.status == 'scheduled' && request.resource.data.scheduledAt is timestamp && request.resource.data.scheduledAt > request.time)
         && request.resource.data.createdAt == request.time;
       allow update: if member()
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['activeUids','status'])
@@ -679,6 +680,11 @@ service cloud.firestore {
           (request.resource.data.status == resource.data.status
             && request.resource.data.activeUids.toSet().difference(resource.data.activeUids.toSet()).hasOnly([request.auth.uid])
             && resource.data.activeUids.toSet().difference(request.resource.data.activeUids.toSet()).hasOnly([request.auth.uid]))
+          || (request.auth.uid == resource.data.hostUid
+            && resource.data.status == 'scheduled'
+            && request.resource.data.status == 'active'
+            && request.time >= resource.data.scheduledAt
+            && request.resource.data.activeUids == [])
           || (request.auth.uid == resource.data.hostUid
             && resource.data.status == 'active'
             && request.resource.data.status == 'ended'
