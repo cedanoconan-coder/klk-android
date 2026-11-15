@@ -1,0 +1,106 @@
+name: Publicar APK firmada de KLK
+on:
+  workflow_dispatch:
+    inputs:
+      version_name:
+        description: 'Versión (por ejemplo 1.0.1)'
+        required: true
+      version_code:
+        description: 'Número entero creciente (por ejemplo 2)'
+        required: true
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: npm ci --no-audit --no-fund
+      - run: npm run test:rules
+      - name: Preparar web
+        run: |
+          mkdir -p www
+          cp index.html calls.js group-calls.js chat-camera.js qr-contacts.js icon.svg manifest.webmanifest sw.js www/
+          if [ -d assets ]; then cp -R assets www/; fi
+      - run: npx cap add android
+      - name: Configurar Firebase y versión
+        env:
+          VERSION_NAME: ${{ inputs.version_name }}
+          VERSION_CODE: ${{ inputs.version_code }}
+        run: |
+          test -s google-services.json
+          cp google-services.json android/app/google-services.json
+          python3 - <<'PY'
+          import os,re
+          from pathlib import Path
+          code=os.environ['VERSION_CODE']
+          name=os.environ['VERSION_NAME']
+          if not code.isdigit() or int(code)<1 or not re.fullmatch(r'[0-9]+(?:\.[0-9]+){1,3}',name):
+              raise SystemExit('Versión inválida')
+          p=Path('android/app/build.gradle')
+          s=p.read_text()
+          s=re.sub(r'versionCode\s+\d+', 'versionCode '+code,s,count=1)
+          s=re.sub(r'versionName\s+"[^"]+"','versionName "'+name+'"',s,count=1)
+          s += "\napply plugin: 'com.google.gms.google-services'\n"
+          p.write_text(s)
+          p=Path('android/build.gradle')
+          s=p.read_text().replace('dependencies {',"dependencies {\n        classpath 'com.google.gms:google-services:4.4.2'",1)
+          p.write_text(s)
+          PY
+      - name: Preparar permisos y PIP
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('android/app/src/main/AndroidManifest.xml')
+          s=p.read_text().replace('<application','<uses-permission android:name="android.permission.CAMERA" />\n<uses-permission android:name="android.permission.RECORD_AUDIO" />\n<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />\n<application',1)
+          p.write_text(s)
+          PY
+          python3 scripts/enable-android-video-pip.py
+      - run: npx cap sync android
+      - name: Firmar con clave de publicación persistente
+        env:
+          KEYSTORE_B64: ${{ secrets.KLK_RELEASE_KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.KLK_RELEASE_STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KLK_RELEASE_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KLK_RELEASE_KEY_PASSWORD }}
+        run: |
+          test -n "$KEYSTORE_B64" && test -n "$STORE_PASSWORD" && test -n "$KEY_ALIAS" && test -n "$KEY_PASSWORD"
+          printf '%s' "$KEYSTORE_B64" | base64 --decode > android/klk-release.jks
+          cat >> android/app/build.gradle <<'GRADLE'
+          android {
+            signingConfigs {
+              klkRelease {
+                storeFile file('../klk-release.jks')
+                storePassword System.getenv('KLK_STORE_PASSWORD')
+                keyAlias System.getenv('KLK_KEY_ALIAS')
+                keyPassword System.getenv('KLK_KEY_PASSWORD')
+              }
+            }
+            buildTypes {
+              release {
+                signingConfig signingConfigs.klkRelease
+              }
+            }
+          }
+          GRADLE
+          echo "KLK_STORE_PASSWORD=$STORE_PASSWORD" >> "$GITHUB_ENV"
+          echo "KLK_KEY_ALIAS=$KEY_ALIAS" >> "$GITHUB_ENV"
+          echo "KLK_KEY_PASSWORD=$KEY_PASSWORD" >> "$GITHUB_ENV"
+      - name: Compilar APK de publicación
+        working-directory: android
+        run: chmod +x gradlew && ./gradlew assembleRelease
+      - name: Publicar archivo APK directo
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION_NAME: ${{ inputs.version_name }}
+        run: |
+          test -s android/app/build/outputs/apk/release/app-release.apk
+          cp android/app/build/outputs/apk/release/app-release.apk klk-manin.apk
+          gh release create "v$VERSION_NAME" klk-manin.apk --title "KLK Manin v$VERSION_NAME" --notes "Actualización Android firmada." --latest
