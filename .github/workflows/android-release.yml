@@ -6,7 +6,7 @@ on:
         description: 'Versión (por ejemplo 1.0.1)'
         required: true
       version_code:
-        description: 'Número entero creciente (por ejemplo 2)'
+        description: 'Número entero creciente mayor que 157 (por ejemplo 158)'
         required: true
 permissions:
   contents: write
@@ -22,7 +22,14 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-      - run: npm ci --no-audit --no-fund
+      - name: Instalar dependencias de Node
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci --no-audit --no-fund
+          else
+            echo 'package-lock.json ausente; usando npm install para esta compilación'
+            npm install --no-audit --no-fund
+          fi
       - run: npm run test:rules
       - name: Preparar web
         run: |
