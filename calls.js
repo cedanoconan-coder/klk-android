@@ -453,7 +453,7 @@
 
  // Minimize the call UI without touching the RTCPeerConnection or media tracks.
  const floatingStyle=document.createElement("style");
- floatingStyle.textContent=`#callOverlay.klkFloating{display:flex!important;position:fixed!important;inset:auto 12px calc(80px + env(safe-area-inset-bottom)) auto!important;width:min(42vw,190px)!important;height: min(56vw,250px)!important;min-height:150px!important;padding:0!important;border-radius:19px!important;overflow:hidden!important;z-index:9999!important;box-shadow:0 8px 32px #0009!important;touch-action:none}#callOverlay.klkFloating>div:first-child,#callOverlay.klkFloating #callControls,#callOverlay.klkFloating #klkReactionBar,#callOverlay.klkFloating #klkIncomingSwipe{display:none!important}#callOverlay.klkFloating #callVideoStage{position:absolute!important;inset:0!important;width:100%!important;height:100%!important}#callOverlay.klkFloating #remoteVideo{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;object-fit:cover!important}#callOverlay.klkFloating #localVideo{position:absolute!important;inset:auto 5px 5px auto!important;width:28%!important;height:32%!important;object-fit:cover!important}#callOverlay.visible #klkMinimizeCall:not([hidden]){display:block!important;visibility:visible!important;opacity:1!important;position:absolute!important;top:calc(12px + env(safe-area-inset-top))!important;left:12px!important;right:auto!important;width:auto!important;height:auto!important;z-index:99999!important;background:#151923ee!important;color:white!important;border:1px solid #fff7!important;border-radius:16px!important;padding:10px 14px!important;font-size:15px!important;pointer-events:auto!important}#callOverlay.klkFloating #klkMinimizeCall{display:none!important}#klkRestoreCall{display:none;position:absolute;inset:0;border:0;background:transparent;z-index:81}#callOverlay.klkFloating #klkRestoreCall{display:block!important}`;
+ floatingStyle.textContent=`#callOverlay.klkFloating{display:flex!important;position:fixed!important;inset:auto 12px calc(80px + env(safe-area-inset-bottom)) auto!important;width:min(42vw,190px)!important;height: min(56vw,250px)!important;min-height:150px!important;padding:0!important;border-radius:19px!important;overflow:hidden!important;z-index:9999!important;box-shadow:0 8px 32px #0009!important;touch-action:none}#callOverlay.klkFloating>div:first-child,#callOverlay.klkFloating #callControls,#callOverlay.klkFloating #klkReactionBar,#callOverlay.klkFloating #klkIncomingSwipe{display:none!important}#callOverlay.klkFloating #callVideoStage{position:absolute!important;inset:0!important;width:100%!important;height:100%!important}#callOverlay.klkFloating #remoteVideo{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;object-fit:cover!important}#callOverlay.klkFloating #localVideo{position:absolute!important;inset:auto 5px 5px auto!important;width:28%!important;height:32%!important;object-fit:cover!important}#callOverlay.visible #klkMinimizeCall:not([hidden]){display:block!important;visibility:visible!important;opacity:1!important;position:absolute!important;top:calc(12px + env(safe-area-inset-top))!important;left:12px!important;right:auto!important;width:auto!important;height:auto!important;z-index:99999!important;background:#151923ee!important;color:white!important;border:1px solid #fff7!important;border-radius:16px!important;padding:10px 14px!important;font-size:15px!important;pointer-events:auto!important}#callOverlay.klkFloating #klkMinimizeCall{display:none!important}#klkRestoreCall{display:none;position:absolute;inset:0;border:0;background:transparent;z-index:81}#callOverlay.klkFloating #klkRestoreCall{display:block!important;touch-action:none!important;cursor:grab}`;
  document.head.append(floatingStyle);
  const minimizeButton=$("klkMinimizeCall")||document.createElement("button");minimizeButton.id="klkMinimizeCall";minimizeButton.type="button";minimizeButton.textContent="↙ Minimizar";
  const restoreButton=document.createElement("button");restoreButton.id="klkRestoreCall";restoreButton.type="button";restoreButton.setAttribute("aria-label","Ampliar videollamada");
@@ -461,9 +461,51 @@
  function klkCanFloat(){return overlay.classList.contains("visible")&&callMode==="video"&&!ending&&!incomingCall;}
  window.klkMinimizeVideoCall=()=>klkMinimize();
  function klkMinimize(){if(!klkCanFloat())return false;overlay.classList.add("klkFloating");return true;}
- function klkRestore(){overlay.classList.remove("klkFloating");}
+ function klkRestore(){overlay.classList.remove("klkFloating");overlay.style.removeProperty("left");overlay.style.removeProperty("top");overlay.style.removeProperty("right");overlay.style.removeProperty("bottom");}
  minimizeButton.addEventListener("click",klkMinimize);
- restoreButton.addEventListener("click",klkRestore);
+ restoreButton.addEventListener("click",event=>{if(klkDragSuppressed){event.preventDefault();klkDragSuppressed=false;return;}klkRestore();});
+ // Swipe down on the full-screen video to minimize, avoiding call controls.
+ let klkSwipeStart=null;
+ overlay.addEventListener("touchstart",event=>{
+  if(overlay.classList.contains("klkFloating")||!klkCanFloat()||event.touches.length!==1||event.target.closest("button,#callControls,#klkReactionBar,#klkLooksTray,#klkIncomingSwipe"))return;
+  const t=event.touches[0];klkSwipeStart={x:t.clientX,y:t.clientY};
+ },{passive:true});
+ overlay.addEventListener("touchend",event=>{
+  if(!klkSwipeStart)return;
+  const start=klkSwipeStart;klkSwipeStart=null;
+  if(event.changedTouches.length!==1||!klkCanFloat()||overlay.classList.contains("klkFloating"))return;
+  const t=event.changedTouches[0],dy=t.clientY-start.y,dx=t.clientX-start.x;
+  if(dy>85&&Math.abs(dx)<Math.max(100,dy*.7)){event.preventDefault();klkMinimize();}
+ },{passive:false});
+ overlay.addEventListener("touchcancel",()=>{klkSwipeStart=null;},{passive:true});
+ // Move the floating video freely, constrained to the visible viewport.
+ let klkDrag=null,klkDragSuppressed=false;
+ const klkClamp=(n,lo,hi)=>Math.max(lo,Math.min(n,hi));
+ restoreButton.addEventListener("pointerdown",event=>{
+  if(!overlay.classList.contains("klkFloating")||!event.isPrimary)return;
+  const rect=overlay.getBoundingClientRect();
+  klkDrag={id:event.pointerId,x:event.clientX,y:event.clientY,left:rect.left,top:rect.top,moved:false};
+  restoreButton.setPointerCapture?.(event.pointerId);
+ });
+ restoreButton.addEventListener("pointermove",event=>{
+  const d=klkDrag;if(!d||d.id!==event.pointerId)return;
+  const dx=event.clientX-d.x,dy=event.clientY-d.y;
+  if(!d.moved&&Math.hypot(dx,dy)<7)return;
+  d.moved=true;event.preventDefault();
+  const w=overlay.offsetWidth,h=overlay.offsetHeight;
+  overlay.style.setProperty("left",klkClamp(d.left+dx,0,Math.max(0,window.innerWidth-w))+"px","important");
+  overlay.style.setProperty("top",klkClamp(d.top+dy,0,Math.max(0,window.innerHeight-h))+"px","important");
+  overlay.style.setProperty("right","auto","important");
+  overlay.style.setProperty("bottom","auto","important");
+ });
+ const klkFinishDrag=event=>{
+  if(!klkDrag||klkDrag.id!==event.pointerId)return;
+  if(klkDrag.moved){klkDragSuppressed=true;window.setTimeout(()=>{klkDragSuppressed=false},350);}
+  klkDrag=null;
+ };
+ restoreButton.addEventListener("pointerup",klkFinishDrag);
+ restoreButton.addEventListener("pointercancel",klkFinishDrag);
+
  window.addEventListener("popstate",event=>{if(klkCanFloat()&&!overlay.classList.contains("klkFloating")){event.stopImmediatePropagation();klkMinimize();try{history.pushState({klkView:"floating-call"},"",location.href)}catch(e){}}},true);
  // Capacitor native back button, if the Android bridge is present.
  document.addEventListener("backbutton",event=>{if(klkCanFloat()&&!overlay.classList.contains("klkFloating")){event.preventDefault();klkMinimize();}},true);
