@@ -1,0 +1,46 @@
+name: Preparar clave privada de firma KLK
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  create-key:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Comprobar contraseña de respaldo
+        env:
+          BACKUP_PASSWORD: ${{ secrets.KLK_SIGNING_BACKUP_PASSWORD }}
+        run: |
+          if [ "${#BACKUP_PASSWORD}" -lt 20 ]; then
+            echo "::error::Configura KLK_SIGNING_BACKUP_PASSWORD (20 caracteres o más) en Repository secrets."
+            exit 1
+          fi
+      - name: Generar firma y respaldo cifrado
+        shell: bash
+        env:
+          BACKUP_PASSWORD: ${{ secrets.KLK_SIGNING_BACKUP_PASSWORD }}
+        run: |
+          set -euo pipefail
+          umask 077
+          mkdir -p private
+          STORE_PASS="$(openssl rand -hex 32)"
+          KEY_PASS="$STORE_PASS"
+          ALIAS="klk-release"
+          keytool -genkeypair -v -keystore private/klk-release.jks \
+            -storetype PKCS12 -storepass "$STORE_PASS" -keypass "$KEY_PASS" \
+            -alias "$ALIAS" -keyalg RSA -keysize 3072 -validity 10000 \
+            -dname "CN=KLK Manin, OU=Android, O=KLK, C=DO"
+          printf '%s' "$STORE_PASS" > private/store-password.txt
+          printf '%s' "$KEY_PASS" > private/key-password.txt
+          printf '%s' "$ALIAS" > private/key-alias.txt
+          base64 -w 0 private/klk-release.jks > private/keystore-base64.txt
+          tar -czf - -C private . | openssl enc -aes-256-cbc -pbkdf2 -salt -iter 200000 \
+            -pass env:BACKUP_PASSWORD -out klk-signing-backup.tar.gz.enc
+          rm -rf private
+      - name: Subir únicamente el respaldo cifrado
+        uses: actions/upload-artifact@v4
+        with:
+          name: klk-signing-backup-encrypted
+          path: klk-signing-backup.tar.gz.enc
+          retention-days: 1
+          if-no-files-found: error
