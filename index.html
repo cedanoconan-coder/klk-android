@@ -4727,7 +4727,7 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
 /* KLK: actualizaciones web automáticas al volver a abrir la aplicación.
    Nunca recargar mientras hay una llamada o una edición en curso. */
 (function(){
- const installedVersion=156;
+ const installedVersion=157;
  const android=!!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform());
  let pendingVersion=0, checking=false, notice=null;
  function busy(){
@@ -4745,9 +4745,13 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
   notice=document.createElement('div');notice.id='klkUpdateNotice';notice.setAttribute('role','status');
   notice.style.cssText='position:fixed;bottom:76px;left:12px;right:12px;z-index:99999;background:#25154b;color:white;padding:14px;border:2px solid #a75cff;border-radius:16px;box-shadow:0 8px 28px #0008;font:15px system-ui';
   const title=document.createElement('div');title.textContent='Nueva versión de KLK disponible';
-  const action=document.createElement('button');action.type='button';action.textContent='Ver actualización de Android';
-  action.addEventListener('click',()=>window.open(info.androidDownload||'https://github.com/cedanoconan-coder/klk-android/releases','_blank'));
-  notice.append(title,action);document.body.appendChild(notice);
+  const description=document.createElement('div');description.style.marginTop='8px';
+  const direct=typeof info.androidApkUrl==='string'&&/^https:\/\//.test(info.androidApkUrl)?info.androidApkUrl:null;
+  description.textContent=direct?'Descarga la nueva versión. Android te pedirá confirmar su instalación.':'La actualización Android todavía no tiene un archivo APK directo publicado. Puedes continuar usando KLK; no se abrirá GitHub.';
+  notice.append(title,description);
+  if(direct){const action=document.createElement('button');action.type='button';action.textContent='Descargar APK';action.style.marginTop='10px';action.onclick=()=>{window.location.href=direct;};notice.append(action);}
+  const dismiss=document.createElement('button');dismiss.type='button';dismiss.textContent='Más tarde';dismiss.style.marginTop='10px';dismiss.onclick=()=>{notice.remove();notice=null;};notice.append(dismiss);
+  document.body.appendChild(notice);
  }
  function applyIfSafe(){
   if(android||!pendingVersion||document.hidden||busy())return;
@@ -4769,7 +4773,7 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
     if(registration)await registration.update();
    }
    // Aplicar al reabrir o regresar a KLK; no interrumpir uso activo.
-   if(document.visibilityState==='visible'&&!busy()&&document.hasFocus()===false)applyIfSafe();
+   if(document.visibilityState==='visible'&&!busy())applyIfSafe();
   }catch(error){console.warn('KLK actualización:',error);}
   finally{checking=false;}
  }
