@@ -71,7 +71,7 @@ public class MainActivity extends BridgeActivity {
         }
     }
 
-    @Override protected void onDestroy() {
+    @Override public void onDestroy() {
         handler.removeCallbacks(monitor);
         super.onDestroy();
     }
