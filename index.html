@@ -4727,7 +4727,7 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
 /* KLK: actualizaciones web automáticas al volver a abrir la aplicación.
    Nunca recargar mientras hay una llamada o una edición en curso. */
 (function(){
- const installedVersion=157;
+ const installedVersion=157; // KLK_NATIVE_VERSION_CODE: reemplazado en compilaciones release
  const android=!!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform());
  let pendingVersion=0, checking=false, notice=null;
  function busy(){
@@ -4746,10 +4746,10 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
   notice.style.cssText='position:fixed;bottom:76px;left:12px;right:12px;z-index:99999;background:#25154b;color:white;padding:14px;border:2px solid #a75cff;border-radius:16px;box-shadow:0 8px 28px #0008;font:15px system-ui';
   const title=document.createElement('div');title.textContent='Nueva versión de KLK disponible';
   const description=document.createElement('div');description.style.marginTop='8px';
-  const direct=typeof info.androidApkUrl==='string'&&/^https:\/\//.test(info.androidApkUrl)?info.androidApkUrl:null;
+  const direct=typeof info.androidApkUrl==='string'&&/^https:\/\/github\.com\/cedanoconan-coder\/klk-android\/releases\/download\//.test(info.androidApkUrl)?info.androidApkUrl:null;
   description.textContent=direct?'Descarga la nueva versión. Android te pedirá confirmar su instalación.':'La actualización Android todavía no tiene un archivo APK directo publicado. Puedes continuar usando KLK; no se abrirá GitHub.';
   notice.append(title,description);
-  if(direct){const action=document.createElement('button');action.type='button';action.textContent='Descargar APK';action.style.marginTop='10px';action.onclick=()=>{window.location.href=direct;};notice.append(action);}
+  if(direct){const action=document.createElement('button');action.type='button';action.textContent='Actualizar KLK';action.style.marginTop='10px';action.onclick=()=>{window.location.href=direct;};notice.append(action);}
   const dismiss=document.createElement('button');dismiss.type='button';dismiss.textContent='Más tarde';dismiss.style.marginTop='10px';dismiss.onclick=()=>{notice.remove();notice=null;};notice.append(dismiss);
   document.body.appendChild(notice);
  }
@@ -4765,8 +4765,17 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
    const response=await fetch('./version.json?t='+Date.now(),{cache:'no-store'});
    if(!response.ok)return;
    const info=await response.json();
+   if(android){
+    // La APK no se actualiza mediante el service worker: consultar la última release firmada.
+    const releaseResponse=await fetch('https://api.github.com/repos/cedanoconan-coder/klk-android/releases/latest',{cache:'no-store',headers:{Accept:'application/vnd.github+json'}});
+    if(!releaseResponse.ok)return;
+    const release=await releaseResponse.json();
+    const match=String(release.body||'').match(/KLK_VERSION_CODE=(\d+)/);
+    const apk=(release.assets||[]).find(a=>a.name==='klk-manin.apk');
+    if(!match||!apk||Number(match[1])<=installedVersion)return;
+    androidNotice({androidApkUrl:apk.browser_download_url});return;
+   }
    if(Number(info.version)<=installedVersion)return;
-   if(android){androidNotice(info);return;}
    pendingVersion=Number(info.version);
    if('serviceWorker' in navigator){
     const registration=await navigator.serviceWorker.getRegistration();
