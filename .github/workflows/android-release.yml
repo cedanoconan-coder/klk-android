@@ -34,7 +34,7 @@ jobs:
       - name: Preparar web
         run: |
           mkdir -p www
-          cp index.html calls.js group-calls.js chat-camera.js qr-contacts.js icon.svg manifest.webmanifest sw.js www/
+          cp index.html calls.js group-calls.js chat-camera.js qr-contacts.js sticker-studio.js icon.svg manifest.webmanifest sw.js www/
           if [ -d assets ]; then cp -R assets www/; fi
       - name: Incrustar versión instalada en la aplicación Android
         env:
