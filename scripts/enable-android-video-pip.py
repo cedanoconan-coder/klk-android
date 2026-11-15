@@ -32,10 +32,13 @@ public class MainActivity extends BridgeActivity {
         @Override public void run() {
             if (getBridge() != null && getBridge().getWebView() != null) {
                 getBridge().getWebView().evaluateJavascript(
-                    "(function(){var o=document.getElementById('callOverlay');" +
-                    "return !!(o && o.classList.contains('visible') && " +
-                    "(document.querySelector('#remoteVideo') || document.querySelector('#localVideo') || " +
-                    "o.querySelector('video')) && Array.from(o.querySelectorAll('video')).some(v=>v.srcObject && v.srcObject.getVideoTracks().some(t=>t.readyState==='live'));})()",
+                    "(function(){var individual=document.getElementById('callOverlay');" +
+                    "var group=document.getElementById('klkGroupOverlay');" +
+                    "var individualVisible=individual && individual.classList.contains('visible');" +
+                    "var groupVisible=group && getComputedStyle(group).display!=='none';" +
+                    "var active=individualVisible?individual:(groupVisible?group:null);" +
+                    "return !!(active && Array.from(active.querySelectorAll('video')).some(v=>" +
+                    "v.srcObject && v.srcObject.getVideoTracks().some(t=>t.readyState==='live')));})()",
                     result -> {
                         videoCallVisible = "true".equals(result);
                         if (Build.VERSION.SDK_INT >= 26) {
