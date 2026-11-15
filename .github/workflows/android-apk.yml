@@ -45,6 +45,10 @@ jobs:
           test -s www/chat-camera.js
           test -s www/qr-contacts.js
           test -s www/index.html
+          # El menú y su módulo deben estar presentes en cada APK.
+          grep -q 'id="roomGroupVideoCall"' www/index.html
+          grep -q 'group-calls.js?v=193' www/index.html
+          grep -q 'window.klkStartGroupVideo=start' www/group-calls.js
 
       - name: Verificar sintaxis JavaScript
         run: |
