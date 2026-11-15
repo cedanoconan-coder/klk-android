@@ -156,6 +156,9 @@ jobs:
           p.write_text(s)
           PY
 
+      - name: Habilitar ventana flotante de videollamadas Android
+        run: python3 scripts/enable-android-video-pip.py
+
       - name: Sincronizar archivos
         run: npx cap sync android
 
