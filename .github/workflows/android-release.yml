@@ -29,6 +29,23 @@ jobs:
           mkdir -p www
           cp index.html calls.js group-calls.js chat-camera.js qr-contacts.js icon.svg manifest.webmanifest sw.js www/
           if [ -d assets ]; then cp -R assets www/; fi
+      - name: Incrustar versión instalada en la aplicación Android
+        env:
+          VERSION_CODE: ${{ inputs.version_code }}
+        run: |
+          python3 - <<'PY'
+          import os,re
+          from pathlib import Path
+          code=int(os.environ['VERSION_CODE'])
+          if code <= 157:
+              raise SystemExit('version_code debe ser mayor que 157 para actualizar KLK')
+          p=Path('www/index.html')
+          s=p.read_text()
+          old='const installedVersion=157; // KLK_NATIVE_VERSION_CODE: reemplazado en compilaciones release'
+          if old not in s:
+              raise SystemExit('No se encontró marcador de versión Android')
+          p.write_text(s.replace(old,f'const installedVersion={code}; // KLK_NATIVE_VERSION_CODE: reemplazado en compilaciones release',1))
+          PY
       - run: npx cap add android
       - name: Configurar Firebase y versión
         env:
@@ -103,4 +120,4 @@ jobs:
         run: |
           test -s android/app/build/outputs/apk/release/app-release.apk
           cp android/app/build/outputs/apk/release/app-release.apk klk-manin.apk
-          gh release create "v$VERSION_NAME" klk-manin.apk --title "KLK Manin v$VERSION_NAME" --notes "Actualización Android firmada." --latest
+          gh release create "v$VERSION_NAME" klk-manin.apk --title "KLK Manin v$VERSION_NAME" --notes "Actualización Android firmada. KLK_VERSION_CODE=${{ inputs.version_code }}" --latest
