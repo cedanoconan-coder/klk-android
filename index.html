@@ -1745,7 +1745,7 @@ function klkWatchActivity(){
 }
 let activeConversationId = null, activeConversationName = null, activeConversationPeerUid = null, peopleUnsubscribe = null, incomingRequestsUnsubscribe = null, outgoingRequestsUnsubscribe = null, conversationListUnsubscribe = null;
 const incomingRequests = new Map(), outgoingRequests = new Map(), peopleCache = new Map(), conversationSubscriptions = new Map(), conversationCache = new Map();
-window.klkGetCallInviteContacts=()=>[...peopleCache.entries()].filter(([id])=>id!==auth.currentUser?.uid&&!blockedUsers.has(id)).map(([uid,p])=>({uid,name:p.displayName||p.name||'Contacto'}));
+window.klkGetCallInviteContacts=()=>[...peopleCache.entries()].filter(([id])=>id!==auth.currentUser?.uid&&!blockedUsers.has(id)).map(([uid,p])=>({uid,name:p.displayName||p.name||'Contacto',photoURL:p.photoURL||p.photoUrl||p.avatarUrl||p.profilePhotoURL||p.profilePhoto||'',photoPath:p.photoPath||''}));
 const blockedUsers = new Set();
 let blockedUsersUnsubscribe = null;
 function blockedUsersRef(uid=(auth&&auth.currentUser&&auth.currentUser.uid)){return db.collection("userBlocks").doc(uid).collection("blocked");}
@@ -3359,7 +3359,7 @@ function klkConfirmDeleteStatus(){
 
 <script src="./chat-camera.js"></script>
 <script src="./calls.js?v=183"></script>
-<script src="./group-calls.js?v=1" defer></script>
+<script src="./group-calls.js?v=2" defer></script>
 <script>
 // Configuración compartida explícitamente entre scripts independientes.
 window.KLK_SUPABASE_URL = "https://nrnqzzhhvjramxkahkqs.supabase.co";
