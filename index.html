@@ -1743,6 +1743,7 @@ function klkWatchActivity(){
 }
 let activeConversationId = null, activeConversationName = null, activeConversationPeerUid = null, peopleUnsubscribe = null, incomingRequestsUnsubscribe = null, outgoingRequestsUnsubscribe = null, conversationListUnsubscribe = null;
 const incomingRequests = new Map(), outgoingRequests = new Map(), peopleCache = new Map(), conversationSubscriptions = new Map(), conversationCache = new Map();
+window.klkGetCallInviteContacts=()=>[...peopleCache.entries()].filter(([id])=>id!==auth.currentUser?.uid&&!blockedUsers.has(id)).map(([uid,p])=>({uid,name:p.displayName||p.name||'Contacto'}));
 const blockedUsers = new Set();
 let blockedUsersUnsubscribe = null;
 function blockedUsersRef(uid=(auth&&auth.currentUser&&auth.currentUser.uid)){return db.collection("userBlocks").doc(uid).collection("blocked");}
