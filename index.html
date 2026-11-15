@@ -1719,7 +1719,7 @@ let auth, db, firebaseInitError = null, unsubscribe = null, sending = false, med
 let authPersistenceReady = Promise.resolve(), firestorePersistenceReady = Promise.resolve(true);
 // Inicializar antes de cualquier apertura de chat que pueda llamar loadMessages().
 let messagesLoadingTimeout = null, disappearingExpiryTimer = null;
-let klkActivityUnsubscribe=null,klkActivityTimeout=null,klkLastActivitySent=0,klkPresenceInterval=null,klkPeerActivityState=null,klkPresenceError=false;setInterval(()=>{if(activeConversationId)klkRenderPeerPresence()},3000);
+let klkActivityUnsubscribe=null,klkActivityTimeout=null,klkLastActivitySent=0,klkPresenceInterval=null,klkPeerActivityState=null,klkPresenceError=false;setInterval(()=>{if(activeConversationId&&document.visibilityState==="visible"&&document.getElementById("chat")?.classList.contains("room-open"))klkRenderPeerPresence()},10000);
 async function klkPublishActivity(kind){
  if(!db||!auth?.currentUser||!activeConversationId)return;
  const conversation=activeConversationId,uid=auth.currentUser.uid;
@@ -1730,10 +1730,11 @@ function klkRenderPeerPresence(){
  const data=klkPeerActivityState,stamp=data?.updatedAt?.toMillis?.()||0,age=Date.now()-stamp;
  const busy=age<8500&&(data?.kind==="typing"||data?.kind==="recording");
  const online=age<65000&&data?.kind!=="offline";
- display.textContent=busy?(data.kind==="recording"?"🎙 Grabando audio…":"Escribiendo…"):online?"● En línea":klkPresenceError?"Estado no disponible":data?.kind==="offline"?"Desconectado":stamp?"Última actividad hace "+Math.max(1,Math.floor(age/60000))+" min":"Estado no disponible";
- display.hidden=false;
+ const nextText=busy?(data.kind==="recording"?"🎙 Grabando audio…":"Escribiendo…"):online?"● En línea":klkPresenceError?"Estado no disponible":data?.kind==="offline"?"Desconectado":stamp?"Última actividad hace "+Math.max(1,Math.floor(age/60000))+" min":"Estado no disponible";
+ if(display.textContent!==nextText)display.textContent=nextText;
+ if(display.hidden)display.hidden=false;
  display.classList.toggle("klkPresenceOffline",!busy&&!online);
- who.hidden=true;who.textContent="";
+ if(!who.hidden)who.hidden=true;if(who.textContent)who.textContent="";
 }
 function klkStartPresence(){
  if(klkPresenceInterval)clearInterval(klkPresenceInterval);
