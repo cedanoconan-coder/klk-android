@@ -64,9 +64,30 @@ async function verifyConversationMember(conversationId: string, token: string, u
   }
 }
 
-async function verifyStatusVisible(statusOwnerUid: string, _token: string, requesterUid: string): Promise<boolean> {
-  return /^[A-Za-z0-9_-]{1,128}$/.test(statusOwnerUid)
-    && /^[A-Za-z0-9_-]{1,128}$/.test(requesterUid);
+async function verifyStatusVisible(statusOwnerUid: string, token: string, requesterUid: string): Promise<boolean> {
+  if (!/^[A-Za-z0-9_-]{1,128}$/.test(statusOwnerUid) ||
+      !/^[A-Za-z0-9_-]{1,128}$/.test(requesterUid) || !token) return false;
+  try {
+    const response = await fetch(`https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents:runQuery`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ structuredQuery: {
+        from: [{ collectionId: "statuses" }],
+        where: { fieldFilter: {
+          field: { fieldPath: "uid" }, op: "EQUAL",
+          value: { stringValue: statusOwnerUid }
+        }},
+        limit: 1
+      }})
+    });
+    if (!response.ok) return false;
+    const rows = await response.json();
+    return Array.isArray(rows) && rows.some((row: any) =>
+      row.document?.fields?.uid?.stringValue === statusOwnerUid);
+  } catch (error) {
+    console.error("media status authorization failed:", String(error));
+    return false;
+  }
 }
 
 async function verifyPublicProfileVisible(profileUid: string, token: string, requesterUid: string): Promise<boolean> {
@@ -181,7 +202,7 @@ Deno.serve(async (request) => {
       if (!(await verifyStatusVisible(statusMatch[1], firebaseToken, uid))) {
         return reply(403, { error: "Este estado solo está disponible para los contactos del usuario." });
       }
-    } else if (!/^[^/]{1,128}\/[A-Za-z0-9-]{16,64}\.[a-z0-9]{1,8}$/i.test(path)) {
+    } else if (path.split("/")[0] !== uid || !/^[^/]{1,128}\/[A-Za-z0-9-]{16,64}\.[a-z0-9]{1,8}$/i.test(path)) {
       return reply(403, { error: "Ruta de archivo no válida o sin permiso." });
     }
     const { data, error } = await admin.storage.from(BUCKET).createSignedUrl(path, 60 * 60);
