@@ -14,7 +14,7 @@
   const theme=document.createElement("link");
   theme.id="klkPurpleCallTheme";
   theme.rel="stylesheet";
-  theme.href="./klk-call-theme.css?v=1";
+  theme.href="./klk-call-theme.css?v=2";
   document.head.appendChild(theme);
  }
 
