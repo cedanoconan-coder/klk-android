@@ -1387,6 +1387,7 @@ input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),textarea,se
    <div class="profileNameWrap"><strong id="profilePanelName" class="profileUserName">Mi perfil</strong><span id="profileOnlineStatus" class="profileOnlineStatus" role="status" aria-live="polite">Desconectado</span></div>
   </div>
  </div>
+ <div id="klkDeveloperClipsLink" style="display:none;margin:14px 16px"><a href="./klk-clips-preview.html" style="display:block;padding:14px 16px;border-radius:14px;background:#eee4f8;color:#5b2586;font-weight:700;text-decoration:none">🎬 KLK Clips · Laboratorio del desarrollador</a><small style="display:block;padding:6px;color:#6c5c79">Solo disponible en tu perfil autorizado. No se publica para otros usuarios.</small></div>
  <div id="klkAdminRegistrationLink" style="display:none;margin:14px 16px"><a href="https://cedanoconan-coder.github.io/klk-android/admin-registros.html" target="_blank" rel="noopener noreferrer" style="display:block;padding:14px 16px;border-radius:14px;background:#e4f3eb;color:#075e54;font-weight:700;text-decoration:none">🛡️ Administración · Usuarios registrados</a></div>
  <details class="profileSettingsAccordion"><summary><span class="profileSettingsIcon">⚙️</span><span><strong>Cuenta y ajustes</strong><small>Consulta y modifica tu información</small></span><b class="profileSettingsChevron">⌄</b></summary><div class="profileSettingsBody">
   <details class="profileSubmenu" open><summary><span>👤 Información de la cuenta</span><b>⌄</b></summary><div class="profileSubmenuBody">
@@ -1895,7 +1896,7 @@ try {
 } catch (error) { firebaseInitError = error; $("klkSessionLoading").style.display="none"; $("login").style.display="block"; $("status").textContent = "No se pudo iniciar Firebase. Comprueba la conexión a Internet y vuelve a abrir klk. Detalle: " + error.message; }
 // Compartir Firebase con los módulos externos de KLK.
 window.auth = auth || null;
-if(auth)auth.onAuthStateChanged(user=>{const el=document.getElementById("klkAdminRegistrationLink");if(el)el.style.display=user?.uid==="BMJ63X7P9oSvv9NuxtNogZ20FIH2"?"block":"none";});
+if(auth)auth.onAuthStateChanged(user=>{const allowed=user?.uid==="BMJ63X7P9oSvv9NuxtNogZ20FIH2";for(const id of ["klkAdminRegistrationLink","klkDeveloperClipsLink"]){const el=document.getElementById(id);if(el)el.style.display=allowed?"block":"none";}});
 window.db = db || null;
 $("authForm").addEventListener("submit", async event => {
  event.preventDefault(); $("status").textContent = "";
