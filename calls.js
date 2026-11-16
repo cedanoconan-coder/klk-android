@@ -415,17 +415,17 @@
  klkMirrorStyle.textContent="#callOverlay .klkMirrorPreviewButton{position:absolute;top:calc(72px + env(safe-area-inset-top));right:16px;z-index:25;border:1px solid #ffffff55;border-radius:20px;background:#39235fcf;color:white;padding:9px 13px;font:600 13px system-ui;box-shadow:0 3px 12px #0004}#callOverlay .klkMirrorPreviewButton[hidden]{display:none!important}#callOverlay #localVideo.klkPreviewMirrored{transform:scaleX(-1)!important}";
  document.head.appendChild(klkMirrorStyle);
  // No mirror selector is mounted in the call interface.
- // Mirror both displayed call videos; WebRTC media tracks remain unchanged.
+ // Mirror only the self-preview for the front camera, as in a physical mirror.
+ // Never flip the remote participant or the outgoing WebRTC media track.
  const klkNaturalCameraStyle=document.createElement("style");
- klkNaturalCameraStyle.textContent="#callOverlay #localVideo,#callOverlay.visible #localVideo{transform:none!important;scale:1 1!important;rotate:none!important}#callOverlay #remoteVideo,#callOverlay.visible #remoteVideo{transform:scaleX(-1)!important;scale:1 1!important;rotate:none!important}";
+ klkNaturalCameraStyle.textContent="#callOverlay #localVideo,#callOverlay.visible #localVideo{scale:1 1!important;rotate:none!important}#callOverlay #remoteVideo,#callOverlay.visible #remoteVideo{transform:none!important;scale:1 1!important;rotate:none!important}";
  document.head.appendChild(klkNaturalCameraStyle);
  function klkUpdateMirrorPreview(){
-  // Mirror both rendered views, including swapped/fullscreen/PiP layouts.
-  // CSS-only presentation: never modify the transmitted WebRTC tracks.
+  // CSS-only preview; rear camera remains unmirrored, even after switching.
   for(const id of ["localVideo","remoteVideo"]){
    const video=$(id);
    if(!video)continue;
-   video.style.setProperty("transform",id==="localVideo"?"none":"scaleX(-1)","important");
+   video.style.setProperty("transform",id==="localVideo"&&cameraFacingMode==="user"?"scaleX(-1)":"none","important");
    video.style.setProperty("scale","1 1","important");
    video.style.setProperty("rotate","none","important");
   }
