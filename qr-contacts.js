@@ -110,11 +110,10 @@ async function startScanner(){
  }catch(e){stopScanner();notify("No se pudo abrir la cámara: "+e.message);}
 }
 function addChatsEntry(){
- const chats=document.querySelector('.homeBottom button[data-tab="chats"]');
- if(!chats||$("qrChatsScanEntry"))return;
+ if($("qrChatsScanEntry"))return;
  const entry=document.createElement("button");entry.id="qrChatsScanEntry";entry.type="button";entry.textContent="▦ Escanear QR";entry.className="secondary";entry.style.cssText="width:auto;padding:9px 14px;margin:8px;border-radius:20px;font-size:13px";
  entry.onclick=async()=>{await open();await startScanner();};
- const home=$("homeView");if(home)home.prepend(entry);
+ const panel=$("chatsPanel");if(panel)panel.prepend(entry);
 }
 function init(){
  const style=document.createElement("style");style.textContent="#qrContactOverlay[hidden]{display:none!important}#qrContactOverlay{position:fixed;inset:0;z-index:10000;background:#fff;color:#17211e;overflow:auto;padding:22px;max-width:760px;margin:auto}#qrContactOverlay button{max-width:100%}#qrContactCode{width:200px;min-height:200px;margin:12px auto;padding:10px;background:white}";document.head.append(style);
