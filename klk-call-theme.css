@@ -1,0 +1,17 @@
+/* KLK Manin · purple call experience. Visual-only; WebRTC and swipe handlers untouched. */
+#callOverlay.visible:not(.klkFloating){background:radial-gradient(ellipse at 50% 46%,#36085c 0%,#170722 42%,#090610 100%)!important;color:#fff;isolation:isolate}
+#callOverlay.visible:not(.klkFloating)::before{content:"";position:absolute;pointer-events:none;inset:auto 0 0;height:22%;z-index:-1;background:radial-gradient(ellipse at 12% 110%,#8f09f5a8,transparent 58%),radial-gradient(ellipse at 90% 120%,#8f09f5a8,transparent 58%);border-top:2px solid #9e32ec;border-radius:55% 55% 0 0}
+#callOverlay.visible:not(.klkFloating)>div:first-of-type{text-align:center;width:100%;padding-top:clamp(8px,3vh,30px)}
+#callOverlay.visible:not(.klkFloating) #callPeerName{font-size:clamp(28px,8vw,39px);font-weight:800;color:white;text-shadow:0 2px 14px #7c27c955}
+#callOverlay.visible:not(.klkFloating) #callStatus{font-size:16px;color:#e9d7fa}
+#callOverlay.visible:not(.klkFloating) #callAvatar{width:clamp(170px,53vw,270px);height:clamp(170px,53vw,270px);border:5px solid #a829ee;border-radius:50%;box-shadow:0 0 0 9px #7b18b63b,0 0 0 17px #7b18b620,0 0 35px #a929f5a0;background:#34144e;overflow:hidden;flex-shrink:0}
+#callOverlay.visible:not(.klkFloating) #callAvatar img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+#callOverlay.visible:not(.klkFloating) #callControls{width:100%;max-width:480px;gap:10px;align-items:center;justify-content:center;z-index:3}
+#callOverlay.visible:not(.klkFloating) #callControls button:not([hidden]){background:#24132f!important;border:1px solid #a85cc3!important;color:white!important;box-shadow:0 4px 18px #0005;min-height:54px;border-radius:999px;font-weight:650;touch-action:manipulation}
+#callOverlay.visible:not(.klkFloating) #callControls #endCall:not([hidden]),#callOverlay.visible:not(.klkFloating) #callControls #rejectCall:not([hidden]){background:linear-gradient(145deg,#ff4c56,#e00024)!important;border:2px solid #ff9198!important;min-width:100px;min-height:64px}
+#callOverlay.visible:not(.klkFloating) #callControls #answerCall:not([hidden]){background:#168f50!important;border-color:#4dde8d!important}
+#callOverlay.visible:not(.klkFloating) #callControls #muteCall.muted{background:#7a2bb3!important}
+#callOverlay.visible:not(.klkFloating) #callVideoStage{min-height:120px}
+#callOverlay.visible.klkIncoming #callAvatar{width:clamp(130px,40vw,180px);height:clamp(130px,40vw,180px)}
+@media(max-height:700px){#callOverlay.visible:not(.klkFloating) #callAvatar{width:150px;height:150px;margin:10px auto}#callOverlay.visible:not(.klkFloating) #callControls{padding:8px 0}}
+@media(prefers-reduced-motion:no-preference){#callOverlay.visible:not(.klkFloating) #callAvatar{animation:klkPurplePulse 2.8s ease-in-out infinite}@keyframes klkPurplePulse{50%{box-shadow:0 0 0 13px #7b18b648,0 0 0 24px #7b18b618,0 0 46px #b42affaa}}}
