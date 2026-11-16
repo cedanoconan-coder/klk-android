@@ -417,7 +417,7 @@
  // No mirror selector is mounted in the call interface.
  // Mirror both displayed call videos; WebRTC media tracks remain unchanged.
  const klkNaturalCameraStyle=document.createElement("style");
- klkNaturalCameraStyle.textContent="#callOverlay #localVideo,#callOverlay #remoteVideo,#callOverlay.visible #localVideo,#callOverlay.visible #remoteVideo{transform:scaleX(-1)!important;scale:1 1!important;rotate:none!important}";
+ klkNaturalCameraStyle.textContent="#callOverlay #localVideo,#callOverlay.visible #localVideo{transform:none!important;scale:1 1!important;rotate:none!important}#callOverlay #remoteVideo,#callOverlay.visible #remoteVideo{transform:scaleX(-1)!important;scale:1 1!important;rotate:none!important}";
  document.head.appendChild(klkNaturalCameraStyle);
  function klkUpdateMirrorPreview(){
   // Mirror both rendered views, including swapped/fullscreen/PiP layouts.
@@ -425,7 +425,7 @@
   for(const id of ["localVideo","remoteVideo"]){
    const video=$(id);
    if(!video)continue;
-   video.style.setProperty("transform","scaleX(-1)","important");
+   video.style.setProperty("transform",id==="localVideo"?"none":"scaleX(-1)","important");
    video.style.setProperty("scale","1 1","important");
    video.style.setProperty("rotate","none","important");
   }
