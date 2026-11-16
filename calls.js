@@ -442,6 +442,22 @@
  const klkSwipeFixStyle=document.createElement("style");
  klkSwipeFixStyle.textContent="#callOverlay.visible.klkIncoming #klkIncomingSwipe{display:flex!important;position:absolute!important;left:0!important;right:0!important;bottom:calc(100px + env(safe-area-inset-bottom))!important;z-index:20!important;pointer-events:auto!important;touch-action:none!important;margin:0!important;order:unset!important;justify-content:center!important}#callOverlay.visible.klkIncoming .klkSwipeTrack{pointer-events:auto!important;touch-action:none!important}#callOverlay.visible.klkIncoming #klkSwipeHandle{position:relative!important;z-index:22!important;pointer-events:auto!important;touch-action:none!important;user-select:none!important}#callOverlay.visible.klkIncoming #callVideoStage{pointer-events:none!important}#callOverlay.visible.klkIncoming #callControls{z-index:19!important}";
  document.head.appendChild(klkSwipeFixStyle);
+  // Runtime stylesheet is appended after index.html CSS; keep the new incoming UI
+  // above the video layer and avoid legacy bottom/height overrides.
+  const klkIncomingRuntimeStyle=document.createElement("style");
+  klkIncomingRuntimeStyle.id="klk-incoming-runtime-layout-v216";
+  klkIncomingRuntimeStyle.textContent=`
+#callOverlay.visible.klkIncoming{background:radial-gradient(ellipse at 50% 35%,#35115c 0%,#150a28 48%,#080b16 100%)!important}
+#callOverlay.visible.klkIncoming #klkIncomingSwipe{bottom:calc(32px + env(safe-area-inset-bottom))!important;left:12px!important;right:12px!important;width:auto!important;z-index:35!important}
+#callOverlay.visible.klkIncoming .klkSwipeTrack{height:74px!important;min-height:74px!important;width:min(92vw,410px)!important;flex-direction:row!important;align-items:center!important;justify-content:flex-start!important;padding:7px!important;border-radius:45px!important}
+#callOverlay.visible.klkIncoming .klkSwipeHint{top:50%!important;left:75px!important;right:16px!important;transform:translateY(-50%)!important}
+#callOverlay.visible.klkIncoming .klkSwipeArrow{top:50%!important;right:15px!important;transform:translateY(-50%)!important}
+#callOverlay.visible.klkIncoming #klkSwipeHandle{height:58px!important;width:58px!important;min-height:58px!important;flex:0 0 58px!important}
+#callOverlay.visible.klkIncoming #callControls{bottom:calc(166px + env(safe-area-inset-bottom))!important;z-index:30!important}
+#callOverlay.visible.klkIncoming #callControls #answerCall:not([hidden]),#callOverlay.visible.klkIncoming #callControls #rejectCall:not([hidden]){height:90px!important;width:90px!important;min-height:90px!important;min-width:90px!important}
+@media(max-height:690px){#callOverlay.visible.klkIncoming #callControls{bottom:calc(132px + env(safe-area-inset-bottom))!important}#callOverlay.visible.klkIncoming #klkIncomingSwipe{bottom:calc(18px + env(safe-area-inset-bottom))!important}}
+`;
+  document.head.appendChild(klkIncomingRuntimeStyle);
  function klkInitIncomingSwipe(){
   const handle=$("klkSwipeHandle"),track=handle&&handle.closest(".klkSwipeTrack");
   if(!handle||!track)return;
