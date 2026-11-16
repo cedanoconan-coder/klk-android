@@ -28,7 +28,7 @@
    const constraints={audio:wantsAudio?{echoCancellation:true,noiseSuppression:true,autoGainControl:true}:false,video:{facingMode:{ideal:facing},width:{ideal:1280},height:{ideal:720},frameRate:{ideal:30,max:30}}};
    const next=await navigator.mediaDevices.getUserMedia(constraints);
    if(request!==cameraRequest){next.getTracks().forEach(t=>t.stop());return;}
-   stream=next;video.srcObject=stream;video.style.transform="none";await video.play().catch(()=>{});
+   stream=next;video.srcObject=stream;video.style.transform=facing==="user"?"scaleX(-1)":"none";/* Mirror the front preview only; photo and video files retain their original orientation. */await video.play().catch(()=>{});
    const track=stream.getVideoTracks()[0],caps=track&&track.getCapabilities?track.getCapabilities():{};
    if(track&&track.applyConstraints){
     const advanced={};
