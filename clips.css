@@ -60,3 +60,35 @@ html,body{min-height:100%;background:#08050f}
 #clipsPanel .clipsNext{top:auto;bottom:calc(14px + env(safe-area-inset-bottom));right:14px;background:#160d24b5}
 #clipsPanel .clipsFooter{position:fixed;z-index:30;left:50%;bottom:calc(10px + env(safe-area-inset-bottom));transform:translateX(-50%);width:max-content;max-width:90vw;text-align:center;border-radius:15px;background:#271238df;padding:8px 12px;font-size:11px;pointer-events:none}
 #clipsPanel .clipsModal{z-index:100}
+
+/* KLK Clips v4 — cinematic, edge-to-edge mobile layout */
+html,body{margin:0!important;padding:0!important;height:100%!important;overflow:hidden!important;background:#050309!important}
+body>main{margin:0!important;padding:0!important;max-width:none!important}
+#clipsPanel{position:fixed!important;inset:0!important;width:100vw!important;height:100dvh!important;min-height:100dvh!important;max-width:none!important;margin:0!important;padding:0!important;overflow:hidden!important;background:#050309!important;font-family:system-ui,-apple-system,Arial,sans-serif}
+#clipsPanel .clipsStage{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;max-width:none!important;min-height:0!important;margin:0!important;border-radius:0!important;background:radial-gradient(circle at 50% 45%,#2c1545,#08050d 75%)!important}
+#clipsPanel .clipsMedia{position:absolute!important;inset:0!important;width:100%!important;height:100%!important}
+#clipsPanel .clipsMedia video{display:block!important;width:100%!important;height:100%!important;max-height:none!important;object-fit:cover!important;background:#000!important}
+#clipsPanel .clipsStage::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(180deg,#0008 0%,transparent 19%,transparent 54%,#000b 100%)}
+#clipsPanel .clipsHead{position:absolute!important;top:0!important;left:0!important;right:0!important;z-index:12!important;background:transparent!important;box-shadow:none!important;padding:calc(20px + env(safe-area-inset-top)) 16px 0!important}
+#clipsPanel .clipsHead strong{font-size:19px!important;letter-spacing:-.5px;font-weight:800}
+#clipsPanel .clipsHead small{font-size:9px!important;letter-spacing:1px;background:#8b37db80!important}
+#clipsPanel .clipsHead button{border-radius:999px!important;background:linear-gradient(135deg,#b52cf7,#7626e9)!important;font-size:14px!important;font-weight:750!important;padding:10px 17px!important;margin:0!important}
+#clipsPanel .clipsTabs{position:absolute!important;z-index:12!important;top:calc(74px + env(safe-area-inset-top))!important;left:0!important;right:0!important;display:flex!important;justify-content:center!important;gap:6px!important;background:none!important;padding:0 10px!important}
+#clipsPanel .clipsTabs button{background:#120a1c8c!important;border:1px solid #ffffff22!important;border-radius:999px!important;padding:8px 13px!important;font-size:13px!important;color:white!important;margin:0!important;backdrop-filter:blur(12px)}
+#clipsPanel .clipsTabs button[aria-pressed=true]{background:#9b28e9e8!important;border-color:#e0a6ff77!important}
+#clipsPanel .clipsNotice{position:absolute!important;top:auto!important;bottom:calc(8px + env(safe-area-inset-bottom))!important;left:12px!important;right:auto!important;width:auto!important;max-width:55vw!important;border-radius:12px!important;padding:4px 8px!important;background:#120c1a80!important;font-size:9px!important;color:#ddd0ea!important;z-index:8!important;opacity:.75}
+#clipsPanel .clipsActions{position:absolute!important;right:12px!important;bottom:calc(120px + env(safe-area-inset-bottom))!important;z-index:8!important;gap:13px!important}
+#clipsPanel .clipsActions button{width:44px!important;height:44px!important;margin:0!important;padding:0!important;border-radius:50%!important;border:1px solid #ffffff29!important;background:#130d1c85!important;color:#fff!important;font-size:21px!important;box-shadow:0 4px 18px #0003!important;backdrop-filter:blur(12px)}
+#clipsPanel .clipsActions button:active{transform:scale(.93)}
+#clipsPanel .clipsCaption{position:absolute!important;z-index:8!important;bottom:calc(66px + env(safe-area-inset-bottom))!important;left:18px!important;right:75px!important;color:white!important;font-size:15px!important;text-shadow:0 2px 8px #000!important}
+#clipsPanel .clipsCaption strong{font-size:17px!important}
+#clipsPanel .clipsCaption p{margin:7px 0!important;line-height:1.35}
+#clipsPanel .clipsCounter{font-size:12px;color:#ddd}
+#clipsPanel .clipsNext{position:absolute!important;z-index:9!important;right:14px!important;bottom:calc(20px + env(safe-area-inset-bottom))!important;top:auto!important;background:#170e25aa!important;border-radius:18px!important;width:auto!important;font-size:12px!important;padding:9px 12px!important}
+#clipsPanel .clipsEmpty{z-index:3!important;background:#140b2280;padding:30px!important;border-radius:24px!important;backdrop-filter:blur(8px)}
+#clipsPanel .clipsFooter{position:fixed!important;z-index:30!important;top:calc(145px + env(safe-area-inset-top))!important;bottom:auto!important;left:50%!important;transform:translateX(-50%)!important;width:max-content!important;max-width:85vw!important;padding:8px 12px!important;border-radius:18px!important;background:#22132ccc!important;box-shadow:0 5px 20px #0005!important;color:#fff!important;font-size:12px!important;opacity:0!important;visibility:hidden!important;transition:opacity .25s,visibility .25s}
+#clipsPanel .clipsFooter.is-visible{opacity:1!important;visibility:visible!important}
+#clipsPanel .clipsModal{z-index:100!important}
+#clipsPanel .clipsDialog{background:#1a1027!important;border:1px solid #ffffff1c!important;box-shadow:0 25px 75px #0009!important;border-radius:26px!important}
+#clipsPanel .clipsDialog button:not(.secondary){background:linear-gradient(135deg,#ad35fa,#7521dc)!important;border-radius:16px!important}
+@media(min-width:700px){#clipsPanel .clipsStage{max-width:520px!important;left:50%!important;right:auto!important;transform:translateX(-50%)}#clipsPanel .clipsHead,#clipsPanel .clipsTabs{max-width:520px;margin:auto}#clipsPanel .clipsActions{right:max(12px,calc((100vw - 520px)/2 + 12px))!important}#clipsPanel .clipsCaption{left:max(18px,calc((100vw - 520px)/2 + 18px))!important}}
