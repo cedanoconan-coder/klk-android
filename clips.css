@@ -92,3 +92,20 @@ body>main{margin:0!important;padding:0!important;max-width:none!important}
 #clipsPanel .clipsDialog{background:#1a1027!important;border:1px solid #ffffff1c!important;box-shadow:0 25px 75px #0009!important;border-radius:26px!important}
 #clipsPanel .clipsDialog button:not(.secondary){background:linear-gradient(135deg,#ad35fa,#7521dc)!important;border-radius:16px!important}
 @media(min-width:700px){#clipsPanel .clipsStage{max-width:520px!important;left:50%!important;right:auto!important;transform:translateX(-50%)}#clipsPanel .clipsHead,#clipsPanel .clipsTabs{max-width:520px;margin:auto}#clipsPanel .clipsActions{right:max(12px,calc((100vw - 520px)/2 + 12px))!important}#clipsPanel .clipsCaption{left:max(18px,calc((100vw - 520px)/2 + 18px))!important}}
+
+/* v5 creator studio + compact modern player */
+#clipsPanel .clipsTopActions{display:flex;gap:7px;align-items:center}
+#clipsPanel .clipsTopActions button{font-size:12px!important;padding:9px 11px!important}
+#clipsPanel #clipsStudio{background:#21132fae!important;border:1px solid #ffffff38!important;backdrop-filter:blur(10px)}
+#clipsPanel .clipsActions{gap:8px!important;bottom:calc(110px + env(safe-area-inset-bottom))!important}
+#clipsPanel .clipsActions button{width:39px!important;height:39px!important;font-size:19px!important;color:#fff!important;background:#130c1f91!important}
+#clipsPanel .clipsProgress{position:absolute;bottom:calc(3px + env(safe-area-inset-bottom));left:0;right:0;height:3px;z-index:11;background:#ffffff40;pointer-events:none}
+#clipsPanel .clipsProgress span{display:block;height:100%;width:0;background:#b83aff;transition:width .12s linear}
+#clipsPanel .clipsStudioDialog{width:min(100%,460px)!important}
+#clipsPanel .clipsStudioDialog select,#clipsPanel .clipsStudioDialog input,#clipsPanel .clipsStudioDialog textarea{display:block;width:100%;box-sizing:border-box;border:1px solid #ffffff30;background:#130a1d;color:white;border-radius:12px;padding:10px;margin-top:5px;font:inherit}
+#clipsPanel .clipsStudioDialog label{font-size:13px;color:#e6d6f0}
+#clipsPanel .clipsStudioDialog p{font-size:13px;color:#d2c2df}
+#clipsPanel .clipsStudioStats{background:#301744;border-radius:14px;padding:12px;font-size:13px}
+#clipsPanel .clipsStudioButtons{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+#clipsPanel .clipsStudioButtons button{width:100%;font-size:13px;margin:0!important}
+#clipsPanel .clipsStudioHelp{line-height:1.4}
