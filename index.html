@@ -1489,11 +1489,9 @@ input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),textarea,se
   </div>
  </section>
 
- <section id="clipsPanel" aria-label="KLK Clips" style="display:none" hidden></section>
  <nav class="homeBottom" aria-label="Navegación principal" role="navigation">
   <button type="button" class="active" data-tab="chats" aria-current="page"><span class="navIcon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v9a2.5 2.5 0 0 1-2.5 2.5H9l-5 4V5.5Z"/><path d="M8 8h8M8 12h6"/></svg></span><span class="navLabel">Chats</span></button>
   <button type="button" data-tab="calls"><span class="navIcon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 3.8 10 7l-2 2.2a15 15 0 0 0 6.8 6.8l2.2-2 3.2 3-.9 3a2 2 0 0 1-2.2 1.4A18.5 18.5 0 0 1 3.6 7a2 2 0 0 1 1.4-2.2L7 3.8Z"/></svg></span><span class="navLabel">Llamadas</span></button>
-  <button type="button" data-tab="clips"><span class="navIcon" aria-hidden="true">▶</span><span class="navLabel">Clips</span></button>
   <button type="button" data-tab="updates"><span class="navIcon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><path d="M12 3.5v2M20.5 12h-2"/></svg></span><span class="navLabel">Novedades</span></button>
   <button type="button" data-tab="tools"><span class="navIcon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></svg></span><span class="navLabel">Herramientas</span></button>
  </nav>
@@ -3741,11 +3739,11 @@ document.querySelectorAll(".homeFilters button").forEach(button=>button.addEvent
 }));
 window.$("chatsPanel").style.display="block";window.$("requestsPanel").style.display="none";window.$("peopleList").style.display="none";
 function setHomeTab(tab){
- const validTabs=["chats","contacts","calls","clips","updates","tools"];
+ const validTabs=["chats","contacts","calls","updates","tools"];
  if(!validTabs.includes(tab)) return;
  const invitePanel=window.$("invitePanel"); if(invitePanel)invitePanel.style.display="none";
  const homeView=window.$("homeView"); if(homeView)homeView.dataset.klkTab=tab;
- const panelIds=["chatsPanel","requestsPanel","peopleList","callsPanel","clipsPanel","updatesPanel","toolsPanel","assistantPanel"];
+ const panelIds=["chatsPanel","requestsPanel","peopleList","callsPanel","updatesPanel","toolsPanel","assistantPanel"];
  panelIds.forEach(id=>{const el=window.$(id);if(el){el.hidden=false;el.style.display="none";}});
  const isChats=tab==="chats";
  const isContacts=tab==="contacts";
@@ -3758,7 +3756,7 @@ function setHomeTab(tab){
   window.$("requestsPanel").style.display="none";window.$("peopleList").style.display="block";
   const filter=document.querySelector('.homeFilters button[data-filter="people"]');if(filter)filter.click();
  }else{
-  const panel=window.$(tab==="calls"?"callsPanel":tab==="clips"?"clipsPanel":tab==="updates"?"updatesPanel":"toolsPanel");
+  const panel=window.$(tab==="calls"?"callsPanel":tab==="updates"?"updatesPanel":"toolsPanel");
   if(panel){panel.hidden=false;panel.style.display="block";}
  }
  document.querySelectorAll(".homeBottom button").forEach(b=>{
@@ -5101,5 +5099,4 @@ html body #chat.room-open .chatTop .muted,html body #chat.room-open .chatTop .kl
 <style>#callsPanel .klk-group-join-slot{position:static!important;margin:12px 0 18px;z-index:auto}#callsPanel .klk-group-join-slot button{position:static!important;inset:auto!important;transform:none!important;max-width:100%;box-shadow:0 3px 12px #0002}#homeView:not([data-klk-tab="calls"]) .klk-group-join-slot{display:none!important}</style>
 <script>(()=>{const calls=document.getElementById('callsPanel');if(!calls)return;const slot=document.createElement('div');slot.className='klk-group-join-slot';slot.hidden=true;(calls.querySelector('.klkCallsHeading')||calls).insertAdjacentElement('afterend',slot);function relocate(){for(const el of document.querySelectorAll('button,[role="button"]')){if(slot.contains(el)||el.closest('#callsPanel'))continue;const label=(el.textContent||'').replace(/\s+/g,' ').trim().toLowerCase();if(!label.includes('unirse a video grupal'))continue;slot.appendChild(el);slot.hidden=false;}}relocate();new MutationObserver(relocate).observe(document.body,{childList:true,subtree:true});})();</script>
 <script>window.klkSendCustomSticker=(file,type)=>uploadMedia(file,type);</script><script src="./sticker-studio.js?v=2"></script>
-<link rel="stylesheet" href="./clips.css?v=1"><script defer src="./clips.js?v=1"></script>
 </body></html>
