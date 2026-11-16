@@ -54,8 +54,8 @@ messaging.onBackgroundMessage(payload => {
     vibrate: [180, 80, 180]
   });
 });
-const CACHE_NAME = "klk-shell-stickers-v1-purple-call-v2";
-const APP_SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon.svg", "./calls.js?v=205", "./klk-call-theme.css?v=2", "./navigation.js", "./chat-camera.js", "./sticker-studio.js", "./version.json"];
+const CACHE_NAME = "klk-shell-stickers-v1-purple-call-v3";
+const APP_SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon.svg", "./calls.js?v=206", "./klk-call-theme.css?v=3", "./navigation.js", "./chat-camera.js", "./sticker-studio.js", "./version.json"];
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => Promise.allSettled(APP_SHELL.map(path => cache.add(path)))));
   self.skipWaiting();
