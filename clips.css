@@ -1,0 +1,25 @@
+/* KLK Clips — isolated public-video interface, no access to private chats */
+#clipsPanel{padding:0!important;background:#0d0916!important;color:#fff;min-height:calc(100dvh - 160px)}
+#clipsPanel .clipsHead{display:flex;align-items:center;justify-content:space-between;padding:15px 18px;background:#170b28}
+#clipsPanel .clipsHead strong{font-size:20px}
+#clipsPanel .clipsHead button{width:auto;margin:0;padding:9px 14px;border-radius:18px;background:#9226e7;color:#fff}
+#clipsPanel .clipsTabs{display:flex;justify-content:center;gap:8px;padding:10px}
+#clipsPanel .clipsTabs button{width:auto;margin:0;padding:9px 18px;border-radius:20px;background:#2d2340;color:#fff}
+#clipsPanel .clipsTabs button[aria-selected=true]{background:#9c29ed}
+#clipsPanel .clipsStage{position:relative;margin:0 auto;max-width:460px;min-height:58dvh;background:linear-gradient(145deg,#31144f,#100d20 55%,#411c58);display:flex;align-items:center;justify-content:center;overflow:hidden}
+#clipsPanel .clipsStage video{width:100%;max-height:68dvh;object-fit:contain;background:#000}
+#clipsPanel .clipsEmpty{text-align:center;padding:28px;max-width:330px;line-height:1.5}
+#clipsPanel .clipsEmpty .symbol{font-size:55px;display:block}
+#clipsPanel .clipsActions{position:absolute;right:12px;bottom:64px;display:flex;flex-direction:column;gap:9px}
+#clipsPanel .clipsActions button{width:48px;height:48px;border-radius:50%;padding:0;margin:0;background:#231432cc;font-size:22px}
+#clipsPanel .clipsCaption{position:absolute;bottom:12px;left:14px;right:70px;font-size:14px}
+#clipsPanel .clipsFooter{padding:15px;text-align:center;color:#d7c4e5;font-size:13px}
+#clipsPanel .clipsModal{position:fixed;inset:0;z-index:200;background:#0d0916f5;display:flex;align-items:center;justify-content:center;padding:20px}
+#clipsPanel .clipsModal[hidden]{display:none}
+#clipsPanel .clipsDialog{width:min(100%,450px);background:#21112f;padding:22px;border-radius:20px}
+#clipsPanel .clipsDialog h3{margin:0 0 14px}
+#clipsPanel .clipsDialog label{display:block;margin:12px 0}
+#clipsPanel .clipsDialog input,#clipsPanel .clipsDialog textarea{width:100%;background:#fff;color:#151515}
+#clipsPanel .clipsDialog button{margin:8px 0}
+#clipsPanel .clipsNotice{padding:10px 16px;background:#291638;color:#f2dfff;font-size:12px}
+@media(max-width:380px){.homeBottom button{min-width:0!important}.homeBottom .navLabel{font-size:9px!important}}
