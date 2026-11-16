@@ -81,7 +81,12 @@ async function add(uid){
  }catch(e){notify("No se pudo agregar: "+e.message);}
 }
 function parseContact(raw){
- try{const u=new URL(raw);if(u.origin!==location.origin||!u.pathname.replace(/\\/$/,"").endsWith(location.pathname.replace(/\\/$/,"").replace(/\\/$/,"")))return null;return u.searchParams.get("contact");}catch(e){return /^[a-zA-Z0-9_-]{6,128}$/.test(raw)?raw:null;}
+ try{
+  const u=new URL(raw);
+  const normalize=path=>path.endsWith("/")?path.slice(0,-1):path;
+  if(u.origin!==location.origin||normalize(u.pathname)!==normalize(location.pathname))return null;
+  return u.searchParams.get("contact");
+ }catch(e){return /^[a-zA-Z0-9_-]{6,128}$/.test(raw)?raw:null;}
 }
 async function scanContact(raw){
  const uid=parseContact(raw);if(!uid){notify("Este QR no pertenece a un contacto KLK válido");return;}
