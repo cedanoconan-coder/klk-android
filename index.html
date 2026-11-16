@@ -1303,7 +1303,31 @@ input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),textarea,se
 .klkSharedContactOpen{background:linear-gradient(180deg,#bd20ff,#5d009b)!important;border:2px solid #efb4ff!important;border-radius:18px!important;box-shadow:0 3px 0 #420070,0 0 9px #c425ff88!important;font-size:15px!important}
 .klkSharedContactOpen:active{transform:translateY(2px);box-shadow:0 1px 0 #420070!important}
 </style>
-<link rel="stylesheet" href="./klk-call-theme.css?v=3"></head>
+<link rel="stylesheet" href="./klk-call-theme.css?v=3"><style id="klk-outgoing-waiting-heading-fix">
+/* Keep the contact identity visible above the avatar on outgoing video calls. */
+#callOverlay.visible.klkOutgoingVideoWaiting > div:first-of-type {
+ position:absolute!important;top:clamp(78px,12vh,150px)!important;left:16px!important;right:16px!important;
+ z-index:12!important;display:flex!important;flex-direction:column!important;align-items:center!important;
+ gap:9px!important;visibility:visible!important;opacity:1!important;pointer-events:none!important;
+ transform:none!important;text-align:center!important;
+}
+#callOverlay.visible.klkOutgoingVideoWaiting #callPeerName {
+ display:block!important;visibility:visible!important;opacity:1!important;
+ position:static!important;color:#fff!important;font-size:clamp(24px,6vw,34px)!important;
+ line-height:1.2!important;margin:0!important;max-width:100%!important;
+ overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;
+ text-shadow:0 2px 10px #0009!important;
+}
+#callOverlay.visible.klkOutgoingVideoWaiting #callStatus {
+ display:block!important;visibility:visible!important;opacity:1!important;
+ position:static!important;color:#d9c7f5!important;font-size:16px!important;
+ line-height:1.4!important;margin:0!important;min-height:22px!important;
+}
+@media(max-height:650px){
+ #callOverlay.visible.klkOutgoingVideoWaiting > div:first-of-type{top:64px!important}
+}
+</style>
+</head>
 <body>
 
 <main>
