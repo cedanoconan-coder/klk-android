@@ -3085,7 +3085,7 @@ async function uploadMedia(file, type, durationSeconds = null) {
  }
 }
 $("pickPhoto").onclick = () => { const panel=$("attachmentPanel"); const opening=!panel.classList.contains("open"); panel.classList.toggle("open",opening); panel.setAttribute("aria-hidden",String(!opening)); $("pickPhoto").setAttribute("aria-expanded",String(opening)); closeStickersPanel(); };
-$("takePhoto").addEventListener("click",()=>{closeStickersPanel();closeAttachmentPanel();openAttachmentFilePicker("cameraInput");});
+$("takePhoto").addEventListener("click",()=>{closeStickersPanel();closeAttachmentPanel();if(typeof window.klkOpenChatCamera==="function")window.klkOpenChatCamera();else $("chatStatus").textContent="La cámara KLK todavía no está lista. Recarga la página.";});
 
 $("galleryInput").addEventListener("change", async event => { const file = event.target.files && event.target.files[0]; if (file) await uploadMedia(file,getMediaMimeType(file).startsWith("video/")?"file":"image"); event.target.value = ""; });
 $("cameraInput").addEventListener("change", async event => { const file = event.target.files && event.target.files[0]; if (file) await uploadMedia(file,getMediaMimeType(file).startsWith("video/")?"file":"image"); event.target.value = ""; });
@@ -3103,7 +3103,7 @@ function openAttachmentFilePicker(inputId){
 $("shareDocument").addEventListener("click",()=>{closeAttachmentPanel();openAttachmentFilePicker("documentInput");});$("documentInput").addEventListener("change",async event=>{const file=event.target.files&&event.target.files[0];if(file)await uploadMedia(file,"file");event.target.value="";});
 
 $("shareGallery").addEventListener("click",()=>{closeAttachmentPanel();openAttachmentFilePicker("galleryInput");});
-$("shareCamera").addEventListener("click",()=>{closeAttachmentPanel();openAttachmentFilePicker("cameraInput");});
+$("shareCamera").addEventListener("click",()=>{closeAttachmentPanel();if(typeof window.klkOpenChatCamera==="function")window.klkOpenChatCamera();else $("chatStatus").textContent="La cámara KLK todavía no está lista. Recarga la página.";});
 $("shareMusic").addEventListener("click",()=>{closeAttachmentPanel();openAttachmentFilePicker("musicInput");});
 $("musicInput").addEventListener("change",async event=>{const file=event.target.files&&event.target.files[0];if(file)await uploadMedia(file,"audio");event.target.value="";});
 function closeAttachmentPanel(){const panel=$("attachmentPanel");if(panel){panel.classList.remove("open");panel.setAttribute("aria-hidden","true");}if($("pickPhoto"))$("pickPhoto").setAttribute("aria-expanded","false");}
@@ -5110,6 +5110,7 @@ function init(){
  function close(){clearTimeout(hold);clearTimeout(limit);pressed=false;discard=true;if(recorder&&recorder.state==='recording')recorder.stop();stop();overlay.classList.remove('open')}
  async function start(){stop();if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia)throw new Error('La cámara no está disponible en este navegador');stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:front?'user':'environment',width:{ideal:1280},height:{ideal:720}},audio:false});video.srcObject=stream;video.style.transform=front?'scaleX(-1)':'none';await video.play()}
  async function open(){overlay.classList.add('open');info.textContent='Abriendo cámara de KLK...';try{await start();info.textContent='Toca para foto · Mantén pulsado para video'}catch(e){info.textContent='No se pudo abrir la cámara: '+e.message+'. Revisa los permisos de Chrome.'}}
+ window.klkOpenChatCamera=open;
  function attach(file){try{const dt=new DataTransfer();dt.items.add(file);input.files=dt.files;input.dispatchEvent(new Event('change',{bubbles:true}));close()}catch(e){info.textContent='No se pudo adjuntar: '+e.message}}
  function photo(){if(!stream||!video.videoWidth)return;const c=document.createElement('canvas');c.width=video.videoWidth;c.height=video.videoHeight;c.getContext('2d').drawImage(video,0,0);c.toBlob(b=>{if(b)attach(new File([b],'klk-foto.jpg',{type:'image/jpeg'}))},'image/jpeg',.86)}
  function record(){if(!pressed||!stream||typeof MediaRecorder==='undefined'){info.textContent='Grabación no disponible';return}try{const types=['video/mp4','video/webm;codecs=vp8,opus','video/webm'];const mime=types.find(t=>MediaRecorder.isTypeSupported(t));chunks=[];discard=false;const audioStream=stream;recorder=new MediaRecorder(audioStream,mime?{mimeType:mime}:{});recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};recorder.onstop=()=>{clearTimeout(limit);recording=false;shutter.classList.remove('recording');if(discard)return;const blob=new Blob(chunks,{type:recorder.mimeType||'video/webm'});if(blob.size)attach(new File([blob],'klk-video.'+(blob.type.includes('mp4')?'mp4':'webm'),{type:blob.type}))};recorder.start();recording=true;shutter.classList.add('recording');info.textContent='Grabando · Suelta para enviar (máximo 30 segundos)';limit=setTimeout(()=>{if(recorder&&recorder.state==='recording')recorder.stop()},30000)}catch(e){info.textContent='No se pudo grabar: '+e.message}}
@@ -5118,7 +5119,7 @@ function init(){
  shutter.addEventListener('pointercancel',()=>{pressed=false;clearTimeout(hold);discard=true;if(recorder&&recorder.state==='recording')recorder.stop()});
  overlay.querySelector('[data-action="close"]').addEventListener('click',close);
  overlay.querySelector('[data-action="flip"]').addEventListener('click',async()=>{front=!front;try{await start();info.textContent='Toca para foto · Mantén pulsado para video'}catch(e){info.textContent='No se pudo cambiar de cámara: '+e.message}});
- document.addEventListener('click',e=>{const button=e.target.closest&&e.target.closest('#takePhoto,#shareCamera');if(!button)return;e.preventDefault();e.stopImmediatePropagation();open()},true);
+ 
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
