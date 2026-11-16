@@ -420,6 +420,15 @@
  klkNaturalCameraStyle.textContent="#callOverlay #localVideo,#callOverlay #remoteVideo,#callOverlay.visible #localVideo,#callOverlay.visible #remoteVideo{transform:scaleX(-1)!important;scale:1 1!important;rotate:none!important}";
  document.head.appendChild(klkNaturalCameraStyle);
  function klkUpdateMirrorPreview(){
+  // Mirror both rendered views, including swapped/fullscreen/PiP layouts.
+  // CSS-only presentation: never modify the transmitted WebRTC tracks.
+  for(const id of ["localVideo","remoteVideo"]){
+   const video=$(id);
+   if(!video)continue;
+   video.style.setProperty("transform","scaleX(-1)","important");
+   video.style.setProperty("scale","1 1","important");
+   video.style.setProperty("rotate","none","important");
+  }
   const video=$("localVideo");
   if(video)video.classList.remove("klkPreviewMirrored");
   klkMirrorButton.hidden=true; // Kept detached from DOM.
@@ -427,7 +436,7 @@
   klkMirrorButton.setAttribute("aria-label",klkMirrorPreview?"Desactivar efecto espejo":"Activar efecto espejo");
   klkMirrorButton.setAttribute("aria-pressed",String(klkMirrorPreview));
  }
- // Mirror toggle intentionally disabled; local preview keeps natural orientation.
+ // Mirror toggle intentionally hidden; both call views stay mirrored.
  function klkResetVideoLayout(){const stage=$("callVideoStage");if(stage)stage.classList.remove("klkCallSwapped")}
  let klkRingContext=null,klkRingInterval=null;
  function klkStopOutgoingRing(){if(klkRingInterval){clearInterval(klkRingInterval);klkRingInterval=null}if(klkRingContext){klkRingContext.close().catch(()=>{});klkRingContext=null}}
