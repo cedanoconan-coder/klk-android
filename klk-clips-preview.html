@@ -67,8 +67,8 @@ $('exportMusic').onclick=async()=>{
   recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:2200000});
   const chunks=[];recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};
   const done=new Promise((resolve,reject)=>{recorder.onerror=()=>reject(Error('Error al grabar el archivo.'));recorder.onstop=()=>resolve();});
-  video.currentTime=videoStart;audio.currentTime=audioStart;
-  await Promise.all([new Promise(resolve=>video.addEventListener('seeked',resolve,{once:true})),new Promise(resolve=>audio.addEventListener('seeked',resolve,{once:true}))]);
+  const seek=(el,t)=>new Promise(resolve=>{if(Math.abs(el.currentTime-t)<.02)return resolve();el.addEventListener('seeked',resolve,{once:true});el.currentTime=t;});
+  await Promise.all([seek(video,videoStart),seek(audio,audioStart)]);
   const draw=()=>{if(finished)return;try{drawCtx.drawImage(video,0,0,canvas.width,canvas.height);}catch(e){}raf=requestAnimationFrame(draw);};draw();
   recorder.start(250);await audio.play();await video.play();
   const started=performance.now();status.textContent='Exportando hasta '+Math.ceil(duration)+' segundos de video…';
