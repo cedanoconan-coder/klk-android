@@ -5096,4 +5096,43 @@ html body #chat.room-open .chatTop .muted,html body #chat.room-open .chatTop .kl
 <style>.klkQuotedMessage{cursor:pointer}.klk-reply-highlight{outline:2px solid #9854c9;outline-offset:3px;transition:outline .2s}</style>
 <style>#callsPanel .klk-group-join-slot{position:static!important;margin:12px 0 18px;z-index:auto}#callsPanel .klk-group-join-slot button{position:static!important;inset:auto!important;transform:none!important;max-width:100%;box-shadow:0 3px 12px #0002}#homeView:not([data-klk-tab="calls"]) .klk-group-join-slot{display:none!important}</style>
 <script>(()=>{const calls=document.getElementById('callsPanel');if(!calls)return;const slot=document.createElement('div');slot.className='klk-group-join-slot';slot.hidden=true;(calls.querySelector('.klkCallsHeading')||calls).insertAdjacentElement('afterend',slot);function relocate(){for(const el of document.querySelectorAll('button,[role="button"]')){if(slot.contains(el)||el.closest('#callsPanel'))continue;const label=(el.textContent||'').replace(/\s+/g,' ').trim().toLowerCase();if(!label.includes('unirse a video grupal'))continue;slot.appendChild(el);slot.hidden=false;}}relocate();new MutationObserver(relocate).observe(document.body,{childList:true,subtree:true});})();</script>
-<script>window.klkSendCustomSticker=(file,type)=>uploadMedia(file,type);</script><script src="./sticker-studio.js?v=1"></script></body></html>
+<script>window.klkSendCustomSticker=(file,type)=>uploadMedia(file,type);</script><script src="./sticker-studio.js?v=1"></script><script id="klk-chat-camera-script">
+(function(){
+function init(){
+ const input=document.getElementById('cameraInput');
+ if(!input||document.getElementById('klkChatCamera'))return;
+ const overlay=document.createElement('div');overlay.id='klkChatCamera';
+ overlay.innerHTML='<div class="klkChatCamTop"><button type="button" data-action="close">✕ Cerrar</button><strong>Cámara KLK</strong><button type="button" data-action="flip">↻ Girar</button></div><video autoplay muted playsinline></video><div class="klkChatCamBottom"><p class="klkChatCamInfo" role="status">Toca para foto · Mantén pulsado para video</p><button type="button" data-action="shutter" aria-label="Tomar foto o mantener para grabar video"><span></span></button></div>';
+ document.body.appendChild(overlay);
+ const video=overlay.querySelector('video'),info=overlay.querySelector('.klkChatCamInfo'),shutter=overlay.querySelector('[data-action="shutter"]');
+ let stream=null,front=false,recorder=null,chunks=[],hold=null,pressed=false,recording=false,limit=null,discard=false;
+ function stop(){if(stream){stream.getTracks().forEach(track=>track.stop());stream=null}video.srcObject=null}
+ function close(){clearTimeout(hold);clearTimeout(limit);pressed=false;discard=true;if(recorder&&recorder.state==='recording')recorder.stop();stop();overlay.classList.remove('open')}
+ async function start(){stop();if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia)throw new Error('La cámara no está disponible en este navegador');stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:front?'user':'environment',width:{ideal:1280},height:{ideal:720}},audio:false});video.srcObject=stream;video.style.transform=front?'scaleX(-1)':'none';await video.play()}
+ async function open(){overlay.classList.add('open');info.textContent='Abriendo cámara de KLK...';try{await start();info.textContent='Toca para foto · Mantén pulsado para video'}catch(e){info.textContent='No se pudo abrir la cámara: '+e.message+'. Revisa los permisos de Chrome.'}}
+ function attach(file){try{const dt=new DataTransfer();dt.items.add(file);input.files=dt.files;input.dispatchEvent(new Event('change',{bubbles:true}));close()}catch(e){info.textContent='No se pudo adjuntar: '+e.message}}
+ function photo(){if(!stream||!video.videoWidth)return;const c=document.createElement('canvas');c.width=video.videoWidth;c.height=video.videoHeight;c.getContext('2d').drawImage(video,0,0);c.toBlob(b=>{if(b)attach(new File([b],'klk-foto.jpg',{type:'image/jpeg'}))},'image/jpeg',.86)}
+ function record(){if(!pressed||!stream||typeof MediaRecorder==='undefined'){info.textContent='Grabación no disponible';return}try{const types=['video/mp4','video/webm;codecs=vp8,opus','video/webm'];const mime=types.find(t=>MediaRecorder.isTypeSupported(t));chunks=[];discard=false;const audioStream=stream;recorder=new MediaRecorder(audioStream,mime?{mimeType:mime}:{});recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};recorder.onstop=()=>{clearTimeout(limit);recording=false;shutter.classList.remove('recording');if(discard)return;const blob=new Blob(chunks,{type:recorder.mimeType||'video/webm'});if(blob.size)attach(new File([blob],'klk-video.'+(blob.type.includes('mp4')?'mp4':'webm'),{type:blob.type}))};recorder.start();recording=true;shutter.classList.add('recording');info.textContent='Grabando · Suelta para enviar (máximo 30 segundos)';limit=setTimeout(()=>{if(recorder&&recorder.state==='recording')recorder.stop()},30000)}catch(e){info.textContent='No se pudo grabar: '+e.message}}
+ shutter.addEventListener('pointerdown',e=>{if(!stream||e.button!==0)return;e.preventDefault();pressed=true;try{shutter.setPointerCapture(e.pointerId)}catch(_){}hold=setTimeout(record,500)});
+ shutter.addEventListener('pointerup',e=>{if(!pressed)return;e.preventDefault();pressed=false;clearTimeout(hold);if(recording){if(recorder&&recorder.state==='recording')recorder.stop()}else photo()});
+ shutter.addEventListener('pointercancel',()=>{pressed=false;clearTimeout(hold);discard=true;if(recorder&&recorder.state==='recording')recorder.stop()});
+ overlay.querySelector('[data-action="close"]').addEventListener('click',close);
+ overlay.querySelector('[data-action="flip"]').addEventListener('click',async()=>{front=!front;try{await start();info.textContent='Toca para foto · Mantén pulsado para video'}catch(e){info.textContent='No se pudo cambiar de cámara: '+e.message}});
+ document.addEventListener('click',e=>{const button=e.target.closest&&e.target.closest('#takePhoto,#shareCamera');if(!button)return;e.preventDefault();e.stopImmediatePropagation();open()},true);
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
+</script>
+<style id="klk-chat-camera-style">
+#klkChatCamera{display:none;position:fixed;inset:0;z-index:2147483000;background:#101014;color:white;flex-direction:column}
+#klkChatCamera.open{display:flex}
+#klkChatCamera .klkChatCamTop{display:flex;align-items:center;justify-content:space-between;padding:18px 16px;gap:10px}
+#klkChatCamera button{color:white;background:#272330;border:0;border-radius:22px;padding:10px 15px}
+#klkChatCamera video{width:100%;flex:1;min-height:0;object-fit:contain}
+#klkChatCamera .klkChatCamBottom{padding:12px 12px 28px;display:flex;align-items:center;flex-direction:column;gap:12px}
+#klkChatCamera .klkChatCamInfo{text-align:center;margin:0;font-size:14px}
+#klkChatCamera [data-action="shutter"]{width:78px;height:78px;border-radius:50%;border:5px solid white;background:transparent;display:grid;place-items:center;padding:5px;touch-action:none}
+#klkChatCamera [data-action="shutter"] span{display:block;background:#fff;width:54px;height:54px;border-radius:50%}
+#klkChatCamera [data-action="shutter"].recording span{background:#f34c60;border-radius:12px;width:34px;height:34px}
+</style>
+</body></html>
