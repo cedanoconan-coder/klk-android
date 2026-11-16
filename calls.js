@@ -9,6 +9,15 @@
  let callRole=null, callMode="audio", callState=null, callStarting=false, remoteCandidatesUnsub=null, localCandidatesUnsub=null, queuedCandidates=[];
  let incomingCall=null, incomingDocUnsub=null, ringTimeout=null, muted=false, cameraOff=false, cameraFacingMode="user", ending=false, pendingLocalCandidates=[];
  const overlay=$("callOverlay");
+ // Keep the visual theme separate from call signaling and media handling.
+ if(!document.getElementById("klkPurpleCallTheme")){
+  const theme=document.createElement("link");
+  theme.id="klkPurpleCallTheme";
+  theme.rel="stylesheet";
+  theme.href="./klk-call-theme.css?v=1";
+  document.head.appendChild(theme);
+ }
+
  // Prevent Android's native Copy/Select all toolbar inside the active call screen.
  // Scoped to the call overlay so chat message selection remains available.
  const klkCallSelectionStyle=document.createElement("style");
