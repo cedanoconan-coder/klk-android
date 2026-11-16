@@ -54,7 +54,7 @@ messaging.onBackgroundMessage(payload => {
     vibrate: [180, 80, 180]
   });
 });
-const CACHE_NAME = "klk-shell-stickers-v1-purple-call-v3";
+const CACHE_NAME = "klk-shell-chat-mirror-v224";
 const APP_SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon.svg", "./calls.js?v=206", "./klk-call-theme.css?v=3", "./navigation.js", "./chat-camera.js", "./sticker-studio.js", "./version.json"];
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => Promise.allSettled(APP_SHELL.map(path => cache.add(path)))));
@@ -79,6 +79,10 @@ self.addEventListener("fetch", event => {
       try{const fresh=await fetch(request,{cache:"no-store"});if(fresh.ok)await cache.put(request,fresh.clone());return fresh;}catch(error){return (await cache.match(request))||(await cache.match("./index.html"))||Response.error();}
     }
     const cached=await cache.match(request);
+    if(url.pathname.endsWith("/chat-camera.js")){
+      try{const fresh=await fetch(request,{cache:"no-store"});if(fresh.ok){await cache.put(request,fresh.clone());return fresh;}}catch(error){}
+      return cached||Response.error();
+    }
     const update=fetch(request).then(async fresh=>{if(fresh.ok)await cache.put(request,fresh.clone());return fresh;});
     if(cached){event.waitUntil(update.catch(()=>{}));return cached;}
     try{return await update;}catch(error){return Response.error();}
