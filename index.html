@@ -2337,21 +2337,11 @@ function renderPeople() {
  if (!people.length) {
   const empty = document.createElement("div"); empty.className = "hint";
   empty.style.cssText = "padding:14px 20px;line-height:1.5";
-  empty.textContent = "Todavía no hay perfiles visibles. Las personas aparecen cuando activan la opción de mostrarse en el directorio desde su perfil.";
+  empty.textContent = "Todavía no tienes contactos agregados. Escanea un QR de KLK para agregar uno.";
   const refresh = document.createElement("button"); refresh.type = "button"; refresh.className = "secondary";
   refresh.style.cssText = "width:calc(100% - 40px);margin:0 20px 14px";
   refresh.textContent = "Actualizar personas";
-  refresh.onclick = async () => {
-   refresh.disabled = true; refresh.textContent = "Actualizando...";
-   try {
-    const snapshot = await db.collection("publicProfiles").where("directoryVisible","==",true).get();
-    peopleCache.clear(); snapshot.docs.forEach(doc => peopleCache.set(doc.id, doc.data()));
-     const own = await db.collection("publicProfiles").doc(auth.currentUser.uid).get(); if(own.exists)peopleCache.set(own.id,own.data());
-    $("homeStatus").textContent = "";
-    renderPeople();
-   } catch(error) { showError("homeStatus", error); }
-   finally { refresh.disabled = false; refresh.textContent = "Actualizar personas"; }
-  };
+  refresh.onclick = () => loadPeople();
   list.append(empty,refresh); syncConversationListeners(); return;
  }
  for (const [uid, person] of people) {
@@ -2504,21 +2494,33 @@ function loadContactRequests() {
 }
 function loadPeople() {
  loadBlockedUsers();
- if (peopleUnsubscribe) peopleUnsubscribe();
- const user = auth && auth.currentUser;
- if (!user || !db) { $("peopleList").textContent = "Inicia sesión para cargar las personas."; return; }
- $("peopleList").textContent = "Conectando con el directorio de klk...";
- // El directorio no debe borrar conversaciones ya cargadas ni reiniciar su estado visual.
- peopleUnsubscribe = db.collection("publicProfiles").where("directoryVisible","==",true).onSnapshot(async snapshot => {
-  peopleCache.clear(); snapshot.docs.forEach(d => peopleCache.set(d.id,d.data()));
-  try { const own=await db.collection("publicProfiles").doc(user.uid).get(); if(own.exists)peopleCache.set(own.id,own.data()); } catch(error) { console.warn("No se pudo cargar tu proyección pública:",error); }
-  $("homeStatus").textContent = "";
-  renderPeople();
- },error => {
-  showError("peopleList",error);
-  showError("chatStatus",error);
-  $("homeStatus").textContent = "No se pudo cargar el directorio público. Revisa las reglas de publicProfiles y la conexión.";
- });
+ if (peopleUnsubscribe) { peopleUnsubscribe(); peopleUnsubscribe=null; }
+ const user=auth&&auth.currentUser;
+ if (!user||!db) { $("peopleList").textContent="Inicia sesión para ver tus contactos."; return; }
+ // QR contacts are scoped to the signed-in user's own members subcollection.
+ // Never populate the Chats contact list from the global public directory.
+ peopleCache.clear();
+ $("peopleList").textContent="Cargando tus contactos...";
+ const ownerUid=user.uid;
+ let generation=0;
+ peopleUnsubscribe=db.collection("qrContacts").doc(ownerUid).collection("members").onSnapshot(async snapshot=>{
+  const currentGeneration=++generation;
+  const ids=snapshot.docs.map(doc=>doc.id).filter(uid=>uid!==ownerUid);
+  const entries=await Promise.all(ids.map(async uid=>{
+   try {
+    const profile=await db.collection("publicProfiles").doc(uid).get();
+    return [uid,profile.exists?profile.data():{displayName:"Contacto KLK"}];
+   } catch(error) {
+    return [uid,{displayName:"Contacto KLK"}];
+   }
+  }));
+  if(auth?.currentUser?.uid!==ownerUid||currentGeneration!==generation)return;
+  peopleCache.clear();
+  entries.forEach(([uid,profile])=>peopleCache.set(uid,profile));
+  $("homeStatus").textContent="";
+  renderPeople();renderConversations();
+ },error=>showError("peopleList",error));
+ syncConversationListeners();
 }
 async function sendContactRequest(otherUid, person) {
  if(!otherUid)return;
