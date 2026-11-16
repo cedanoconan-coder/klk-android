@@ -15,3 +15,16 @@
 #callOverlay.visible.klkIncoming #callAvatar{width:clamp(130px,40vw,180px);height:clamp(130px,40vw,180px)}
 @media(max-height:700px){#callOverlay.visible:not(.klkFloating) #callAvatar{width:150px;height:150px;margin:10px auto}#callOverlay.visible:not(.klkFloating) #callControls{padding:8px 0}}
 @media(prefers-reduced-motion:no-preference){#callOverlay.visible:not(.klkFloating) #callAvatar{animation:klkPurplePulse 2.8s ease-in-out infinite}@keyframes klkPurplePulse{50%{box-shadow:0 0 0 13px #7b18b648,0 0 0 24px #7b18b618,0 0 46px #b42affaa}}}
+
+/* Outgoing video waiting: preserve the avatar until the remote party answers. */
+#callOverlay.visible.klkOutgoingVideoWaiting:not(.klkFloating){justify-content:space-between!important;padding-top:calc(22px + env(safe-area-inset-top));padding-bottom:calc(26px + env(safe-area-inset-bottom))}
+#callOverlay.visible.klkOutgoingVideoWaiting>div:first-of-type{order:0;flex:0 0 auto!important;display:flex;flex-direction:column;gap:9px;align-items:center}
+#callOverlay.visible.klkOutgoingVideoWaiting #callPeerName{order:0!important;display:block!important;visibility:visible!important;margin:4px 0!important;line-height:1.2}
+#callOverlay.visible.klkOutgoingVideoWaiting #callStatus{order:1!important;display:block!important;visibility:visible!important;opacity:1!important;min-height:24px;color:#e8cafa!important}
+#callOverlay.visible.klkOutgoingVideoWaiting #callVideoStage{order:1;flex:1 1 auto!important;min-height:180px!important;max-height:none!important;display:flex!important;align-items:center!important;justify-content:center!important}
+#callOverlay.visible.klkOutgoingVideoWaiting #callAvatar{margin:0 auto!important;display:grid!important;place-items:center!important}
+#callOverlay.visible.klkOutgoingVideoWaiting #callControls{order:3;flex:0 0 auto!important;padding:14px 0!important;background:transparent!important}
+#callOverlay.visible.klkOutgoingVideoWaiting #callControls button[hidden]{display:none!important}
+#callOverlay.visible.klkOutgoingVideoWaiting #callControls button:not(#endCall){display:none!important}
+#callOverlay.visible.klkOutgoingVideoWaiting #endCall{display:inline-flex!important;align-items:center;justify-content:center;min-width:110px!important}
+@media(max-height:650px){#callOverlay.visible.klkOutgoingVideoWaiting #callAvatar{width:145px!important;height:145px!important}}
