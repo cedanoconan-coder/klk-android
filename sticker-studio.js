@@ -47,7 +47,7 @@ const editActions=sheet.querySelector("#klkEmoji").closest(".actions");
 const packLabel=sheet.querySelector("#klkPack").closest("label");
 const actionRow=sheet.querySelector("#klkSave").closest(".actions");
 const newPack=sheet.querySelector("#klkNewPack");
-const notice=sheet.querySelector("#klkStickerNotice");
+const noticeElement=sheet.querySelector("#klkStickerNotice");
 const savedTitle=sheet.querySelector("h4");
 const savedGrid=sheet.querySelector("#klkSaved");
 sections.create.append(fileLabel,preview,textLabel,editActions,packLabel,newPack);
@@ -56,7 +56,7 @@ const importHelp=document.createElement("p");importHelp.className="klk-studio-hi
 const importPack=document.createElement("p");importPack.className="klk-studio-hint";importPack.textContent="Elige el paquete en la pestaña Crear antes de importar.";sections.import.append(importPack);
 sections.saved.append(savedTitle,savedGrid);
 tabs.after(sections.create,sections.import,sections.saved);
-const footer=document.createElement("footer");footer.className="klk-studio-footer";footer.append(notice,actionRow);sheet.append(footer);
+const footer=document.createElement("footer");footer.className="klk-studio-footer";footer.append(noticeElement,actionRow);sheet.append(footer);
 const extraStyle=document.createElement("style");extraStyle.textContent=`
 #klkStudio .klk-organized{display:flex;flex-direction:column;overflow:hidden;padding:0;max-height:92dvh;font-size:14px}
 #klkStudio .klk-studio-header{display:flex;align-items:center;gap:12px;margin:0;padding:16px;background:#743bb0;color:white;flex-shrink:0}
