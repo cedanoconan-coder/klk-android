@@ -1206,9 +1206,9 @@ html,body{overscroll-behavior-y:contain}
 /* Keep floating controls confined to their intended tab, even with legacy CSS overrides. */
 #chat #homeView #openUsersFab{display:none!important}
 #chat:not(.room-open):not(.profile-open) #homeView[data-klk-tab="chats"] #openUsersFab{display:grid!important}
-#chat #homeView #statusTextFab,#chat #homeView #statusPhotoFab{display:none!important}
-#chat:not(.room-open):not(.profile-open) #homeView[data-klk-tab="updates"] #updatesPanel:not([hidden]) #statusTextFab,
-#chat:not(.room-open):not(.profile-open) #homeView[data-klk-tab="updates"] #updatesPanel:not([hidden]) #statusPhotoFab{display:none!important}
+/* Novedades uses the inline composer; legacy floating actions stay hidden on every tab. */
+#chat #homeView #statusTextFab,
+#chat #homeView #statusPhotoFab{display:none!important}
 #homeView[data-klk-tab="calls"] #openUsersFab,#homeView[data-klk-tab="tools"] #openUsersFab,#homeView[data-klk-tab="updates"] #openUsersFab{pointer-events:none!important}
 </style>
 <style id="klk-white-chat-profile-header">
