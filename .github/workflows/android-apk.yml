@@ -38,7 +38,7 @@ jobs:
         run: |
           set -e
           mkdir -p www
-          cp index.html calls.js group-calls.js chat-camera.js qr-contacts.js sticker-studio.js icon.svg manifest.webmanifest sw.js www/
+          cp index.html klk-call-theme.css calls.js group-calls.js chat-camera.js qr-contacts.js sticker-studio.js icon.svg manifest.webmanifest sw.js www/
           if [ -d assets ]; then cp -R assets www/; fi
           # Evitar generar una APK incompleta si falta un recurso esencial.
           test -s www/group-calls.js
