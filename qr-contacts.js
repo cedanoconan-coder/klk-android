@@ -47,6 +47,7 @@ async function add(uid){
   if(direct){
    await db.collection("qrContacts").doc(current().uid).collection("members").doc(uid).set({uid,addedAt:serverTime()});
    notify("Contacto agregado correctamente");
+   return "added";
   }else{
    const id=current().uid+"_"+uid;
    const ref=db.collection("qrContactRequests").doc(id);
@@ -55,6 +56,7 @@ async function add(uid){
    try{
     await ref.set({from:current().uid,to:uid,status:"pending",createdAt:serverTime(),updatedAt:serverTime()});
     notify("Solicitud enviada. Espera su aprobación.");
+    return "pending";
    }catch(writeError){
     // An existing request is intentionally immutable to the sender.
     // Fetch its status only after the create attempt has failed.
@@ -65,9 +67,11 @@ async function add(uid){
       const member=db.collection("qrContacts").doc(current().uid).collection("members").doc(uid);
       const linked=await member.get();
       if(!linked.exists)await member.set({uid,addedAt:serverTime()});
-      return notify("Contacto agregado");
+      notify("Contacto agregado");
+      return "added";
      }
-     return notify("Esta solicitud ya existe: "+existing.data().status);
+     notify("Esta solicitud ya existe: "+existing.data().status);
+     return existing.data().status==="pending"?"pending":null;
     }
     throw writeError;
    }
@@ -85,7 +89,39 @@ function init(){
  $("qrContactSave").onclick=async()=>{try{await db.collection("contactPrivacy").doc(current().uid).set({mode:$("qrContactMode").value,updatedAt:serverTime()});notify("Privacidad guardada");}catch(e){notify(e.message);}};
  $("qrContactShare").onclick=async()=>{const url=$("qrContactLink").value;try{if(navigator.share)await navigator.share({title:"Mi contacto KLK",url});else{await navigator.clipboard.writeText(url);notify("Enlace copiado");}}catch(e){notify("Comparte este enlace manualmente");}};
  $("qrContactAdd").onclick=()=>{let val=$("qrContactTarget").value.trim();try{const url=new URL(val);val=url.searchParams.get("contact")||"";}catch(e){}void add(val);};
- const incoming=new URLSearchParams(location.search).get("contact");if(incoming){$("qrContactTarget").value=incoming;const timer=setInterval(()=>{if(current()){clearInterval(timer);void open();}},800);setTimeout(()=>clearInterval(timer),30000);}
+ // QR deep links should complete contact creation, not strand users in QR settings.
+ const incoming=new URLSearchParams(location.search).get("contact");
+ if(incoming){
+  $("qrContactTarget").value=incoming;
+  let timer=null;
+  let processing=false;
+  const finish=async()=>{
+   if(processing||!current()||!store())return;
+   processing=true;
+   if(timer!==null)clearInterval(timer);
+   await open();
+   const result=await add(incoming);
+   if(result==="added"||result==="pending"){
+    const url=new URL(location.href);
+    url.searchParams.delete("contact");
+    history.replaceState(history.state,"",url.pathname+url.search+url.hash);
+    close();
+    const chats=document.querySelector('.homeBottom button[data-tab="chats"]');
+    if(chats)chats.click();
+    const notice=document.createElement("div");
+    notice.setAttribute("role","status");
+    notice.textContent=result==="added"?"Contacto agregado a KLK":"Solicitud de contacto enviada; pendiente de aprobación";
+    notice.style.cssText="position:fixed;bottom:95px;left:16px;right:16px;z-index:10001;padding:14px;border-radius:12px;background:#075e54;color:#fff;text-align:center;box-shadow:0 4px 18px #0003";
+    document.body.append(notice);
+    setTimeout(()=>notice.remove(),4500);
+   }else{
+    processing=false; // Leave the QR panel visible with the actionable error.
+   }
+  };
+  timer=setInterval(()=>{if(current()&&store())void finish();},500);
+  setTimeout(()=>{if(timer!==null)clearInterval(timer);},30000);
+  void finish();
+ }
  window.addEventListener("popstate",()=>{if(!$("qrContactOverlay").hidden)close();});
 }
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init);else init();
