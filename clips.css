@@ -23,3 +23,22 @@
 #clipsPanel .clipsDialog button{margin:8px 0}
 #clipsPanel .clipsNotice{padding:10px 16px;background:#291638;color:#f2dfff;font-size:12px}
 @media(max-width:380px){.homeBottom button{min-width:0!important}.homeBottom .navLabel{font-size:9px!important}}
+
+/* v2 interactive standalone demo */
+#clipsPanel .clipsHead small{font-size:10px;background:#5c287a;border-radius:9px;padding:3px 6px;vertical-align:middle}
+#clipsPanel .clipsTabs{flex-wrap:wrap}
+#clipsPanel .clipsTabs button[aria-pressed=true]{background:#9c29ed}
+#clipsPanel .clipsStage{height:min(72dvh,780px);min-height:430px;touch-action:pan-y}
+#clipsPanel .clipsMedia{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+#clipsPanel .clipsMedia video{height:100%;max-height:100%;object-fit:contain}
+#clipsPanel .clipsEmpty[hidden],#clipsPanel .clipsActions[hidden],#clipsPanel .clipsCaption[hidden],#clipsPanel .clipsNext[hidden]{display:none!important}
+#clipsPanel .clipsEmpty{position:relative;z-index:1}
+#clipsPanel .clipsActions{z-index:2}
+#clipsPanel .clipsCaption{z-index:2;text-shadow:0 2px 5px #000}
+#clipsPanel .clipsCaption p{margin:5px 0}
+#clipsPanel .clipsNext{position:absolute;z-index:3;top:12px;right:12px;width:auto;padding:7px 12px;margin:0;background:#301d45d9;font-size:12px}
+#clipsPanel .clipsModal{overflow-y:auto}
+#clipsPanel .clipsDialog{max-height:90dvh;overflow-y:auto}
+#clipsPanel #clipsFormError{color:#ffb6c1}
+#clipsPanel #clipsCommentsList{max-height:25dvh;overflow:auto;overflow-wrap:anywhere}
+#clipsPanel button:focus-visible{outline:3px solid #e0b6ff;outline-offset:2px}
