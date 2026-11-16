@@ -5,10 +5,10 @@ function init(){
  const root=document.getElementById('clipsPanel');if(!root||root.dataset.ready)return;root.dataset.ready='1';
  root.innerHTML=`<header class="clipsHead"><strong>▶ KLK Clips <small>DEMO</small></strong><button id="clipsCreate" type="button">＋ Crear</button></header>
  <nav class="clipsTabs" aria-label="Explorar videos"><button data-feed="foryou" aria-pressed="true">Para ti</button><button data-feed="following" aria-pressed="false">Siguiendo</button><button data-feed="mine" aria-pressed="false">Mis clips</button></nav>
- <div class="clipsNotice">Prototipo privado: tus videos solo se muestran en este dispositivo durante esta sesión. No se publican.</div>
+ <div class="clipsNotice" role="note">DEMO PRIVADA · Sin publicaciones públicas</div>
  <div class="clipsStage" tabindex="0" aria-label="Visor de clips. Usa flechas arriba y abajo para cambiar">
  <div class="clipsMedia"></div><div class="clipsEmpty"><span class="symbol">🎬</span><h2>KLK Clips</h2><p>Selecciona «Crear» para probar un video de tu teléfono. Desliza hacia arriba para cambiar entre tus clips.</p></div>
- <div class="clipsActions"><button data-action="like" aria-label="Me gusta">♡</button><button data-action="comment" aria-label="Comentarios">💬</button><button data-action="follow" aria-label="Seguir creador">＋</button><button data-action="share" aria-label="Compartir">↗</button><button data-action="report" aria-label="Denunciar">⚑</button></div>
+ <div class="clipsActions"><button type="button" data-action="sound" aria-label="Activar sonido">🔇</button><button data-action="like" aria-label="Me gusta">♡</button><button data-action="comment" aria-label="Comentarios">💬</button><button data-action="follow" aria-label="Seguir creador">＋</button><button data-action="share" aria-label="Compartir">↗</button><button data-action="report" aria-label="Denunciar">⚑</button></div>
  <div class="clipsCaption"><strong class="clipsAuthor">@KLKManin</strong><p class="clipsDescription">Tu espacio para crear y descubrir.</p><span class="clipsCounter"></span></div>
  <button class="clipsNext" type="button" aria-label="Siguiente video">↓ Siguiente</button></div>
  <div class="clipsFooter" id="clipsFeedback" role="status" aria-live="polite">Tus chats y contactos no se utilizan en esta demostración.</div>
@@ -22,9 +22,9 @@ function init(){
   const {items,clip}=current();media.replaceChildren();empty.hidden=!!clip;
   $(root,'.clipsActions').hidden=!clip;$(root,'.clipsCaption').hidden=!clip;$(root,'.clipsNext').hidden=items.length<2;
   if(!clip){empty.querySelector('p').textContent=feed==='following'?'Aún no tienes clips de creadores seguidos.':'Añade un video con «Crear» para probar el reproductor.';return;}
-  const video=document.createElement('video');video.src=clip.url;video.controls=true;video.playsInline=true;video.loop=true;video.preload='metadata';video.setAttribute('aria-label','Video de '+clip.author);media.append(video);
+  const video=document.createElement('video');video.src=clip.url;video.controls=false;video.muted=true;video.playsInline=true;video.loop=true;video.preload='auto';video.autoplay=true;video.addEventListener('click',()=>{if(video.paused)video.play().catch(()=>{});else video.pause();});video.addEventListener('loadeddata',()=>video.play().catch(()=>notify('Toca el video para reproducirlo.')));video.setAttribute('aria-label','Video de '+clip.author);media.append(video);video.play().catch(()=>{});
   $(root,'.clipsAuthor').textContent='@'+clip.author;$(root,'.clipsDescription').textContent=clip.description||'Mi nuevo clip';$(root,'.clipsCounter').textContent=(index+1)+' de '+items.length;
-  $(root,'[data-action="like"]').textContent=clip.liked?'♥':'♡';$(root,'[data-action="follow"]').textContent=following.has(clip.author)?'✓':'＋';
+  $(root,'[data-action="sound"]').textContent='🔇';$(root,'[data-action="like"]').textContent=clip.liked?'♥':'♡';$(root,'[data-action="follow"]').textContent=following.has(clip.author)?'✓':'＋';
  }
  function next(delta){const {items}=current();if(items.length<2)return;index=(index+delta+items.length)%items.length;render();}
  $(root,'#clipsCreate').addEventListener('click',()=>{modal.hidden=false;$(root,'#clipsFormError').textContent='';$(root,'#clipsFile').focus();});
@@ -49,6 +49,7 @@ function init(){
  stage.addEventListener('keydown',e=>{if(e.key==='ArrowDown'){e.preventDefault();next(1);}if(e.key==='ArrowUp'){e.preventDefault();next(-1);}});
  root.querySelectorAll('[data-action]').forEach(b=>b.addEventListener('click',()=>{
   const clip=current().clip;if(!clip)return;switch(b.dataset.action){
+   case 'sound':{const v=media.querySelector('video');if(v){v.muted=!v.muted;b.textContent=v.muted?'🔇':'🔊';notify(v.muted?'Sonido desactivado.':'Sonido activado.');}break;}
    case 'like':clip.liked=!clip.liked;render();notify(clip.liked?'Me gusta guardado solo en la demo.':'Me gusta retirado.');break;
    case 'follow':if(following.has(clip.author))following.delete(clip.author);else following.add(clip.author);render();notify('Seguimiento de prueba actualizado.');break;
    case 'comment':commentsModal.hidden=false;renderComments(clip);$(root,'#clipsCommentInput').focus();break;
