@@ -6,8 +6,10 @@ const current=()=>typeof auth!=="undefined"&&auth?.currentUser;
 const store=()=>typeof db!=="undefined"&&db;
 let unsubs=[];
 let opening=false;
+let scannerStream=null,scannerTimer=null,scannerBusy=false;
 function notify(message){$("qrContactNotice").textContent=message;}
-function close(){ $("qrContactOverlay").hidden=true;unsubs.forEach(fn=>fn());unsubs=[];opening=false;}
+function stopScanner(){if(scannerTimer){clearInterval(scannerTimer);scannerTimer=null;}if(scannerStream){scannerStream.getTracks().forEach(t=>t.stop());scannerStream=null;}const video=$("qrScannerVideo");if(video){video.pause();video.srcObject=null;}const area=$("qrScannerArea");if(area)area.hidden=true;scannerBusy=false;}
+function close(){stopScanner(); $("qrContactOverlay").hidden=true;unsubs.forEach(fn=>fn());unsubs=[];opening=false;}
 function qrLink(uid){return new URL("./?contact="+encodeURIComponent(uid),location.href).href;}
 async function open(){
  if(!current()||!store()||opening)return;
@@ -78,17 +80,50 @@ async function add(uid){
   }
  }catch(e){notify("No se pudo agregar: "+e.message);}
 }
+function parseContact(raw){
+ try{const u=new URL(raw);if(u.origin!==location.origin||!u.pathname.replace(/\\/$/,"").endsWith(location.pathname.replace(/\\/$/,"").replace(/\\/$/,"")))return null;return u.searchParams.get("contact");}catch(e){return /^[a-zA-Z0-9_-]{6,128}$/.test(raw)?raw:null;}
+}
+async function scanContact(raw){
+ const uid=parseContact(raw);if(!uid){notify("Este QR no pertenece a un contacto KLK válido");return;}
+ stopScanner();$("qrContactTarget").value=uid;const result=await add(uid);
+ if(result==="added"||result==="pending"){close();document.querySelector('.homeBottom button[data-tab="chats"]')?.click();const message=document.createElement("div");message.textContent=result==="added"?"Contacto agregado":"Solicitud de contacto enviada";message.setAttribute("role","status");message.style.cssText="position:fixed;bottom:90px;left:16px;right:16px;z-index:10002;padding:14px;border-radius:12px;background:#075e54;color:white;text-align:center";document.body.append(message);setTimeout(()=>message.remove(),4000);}
+}
+async function startScanner(){
+ if(!current())return notify("Inicia sesión para escanear contactos");
+ if(!navigator.mediaDevices?.getUserMedia)return notify("La cámara no está disponible en este dispositivo");
+ if(!("BarcodeDetector" in window))return notify("Este dispositivo no admite lectura QR integrada. Puedes abrir el QR con la cámara del teléfono o pegar el enlace.");
+ stopScanner();const area=$("qrScannerArea");area.hidden=false;notify("Apunta la cámara al código QR de KLK");
+ try{
+  scannerStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:"environment"}},audio:false});
+  const video=$("qrScannerVideo");video.srcObject=scannerStream;await video.play();
+  const detector=new BarcodeDetector({formats:["qr_code"]});
+  scannerTimer=setInterval(async()=>{
+   if(scannerBusy||video.readyState<2)return;scannerBusy=true;
+   try{const codes=await detector.detect(video);if(codes.length){await scanContact(codes[0].rawValue);}}catch(e){notify("No se pudo leer el QR: "+e.message);stopScanner();}
+   finally{scannerBusy=false;}
+  },300);
+ }catch(e){stopScanner();notify("No se pudo abrir la cámara: "+e.message);}
+}
+function addChatsEntry(){
+ const chats=document.querySelector('.homeBottom button[data-tab="chats"]');
+ if(!chats||$("qrChatsScanEntry"))return;
+ const entry=document.createElement("button");entry.id="qrChatsScanEntry";entry.type="button";entry.textContent="▦ Escanear QR";entry.className="secondary";entry.style.cssText="width:auto;padding:9px 14px;margin:8px;border-radius:20px;font-size:13px";
+ entry.onclick=async()=>{await open();await startScanner();};
+ const home=$("homeView");if(home)home.prepend(entry);
+}
 function init(){
  const style=document.createElement("style");style.textContent="#qrContactOverlay[hidden]{display:none!important}#qrContactOverlay{position:fixed;inset:0;z-index:10000;background:#fff;color:#17211e;overflow:auto;padding:22px;max-width:760px;margin:auto}#qrContactOverlay button{max-width:100%}#qrContactCode{width:200px;min-height:200px;margin:12px auto;padding:10px;background:white}";document.head.append(style);
  const panel=document.createElement("section");panel.id="qrContactOverlay";panel.hidden=true;
- panel.innerHTML='<button type="button" id="qrContactClose" class="secondary">← Volver</button><h2>Contactos KLK por QR</h2><p>Comparte tu QR personal con quien quieras agregar.</p><div id="qrContactCode"></div><input id="qrContactLink" readonly aria-label="Enlace de contacto"><button type="button" id="qrContactShare">Compartir enlace</button><h3>Privacidad</h3><label for="qrContactMode">Cuando escanean mi QR</label><select id="qrContactMode" style="width:100%;padding:12px"><option value="approval">Solicitar mi aprobación (predeterminado)</option><option value="direct">Agregar directamente</option></select><button type="button" id="qrContactSave">Guardar privacidad</button><h3>Agregar contacto</h3><p>Pega el enlace o identificador recibido. También puedes escanear el QR con la cámara del teléfono para abrir el enlace.</p><input id="qrContactTarget" placeholder="Enlace o identificador KLK"><button type="button" id="qrContactAdd">Agregar contacto</button><h3>Solicitudes recibidas</h3><div id="qrContactPending"></div><p id="qrContactNotice" role="status"></p>';
+ panel.innerHTML='<button type="button" id="qrContactClose" class="secondary">← Volver</button><h2>Contactos KLK por QR</h2><p>Comparte tu QR personal con quien quieras agregar.</p><div id="qrContactCode"></div><input id="qrContactLink" readonly aria-label="Enlace de contacto"><button type="button" id="qrContactShare">Compartir enlace</button><h3>Privacidad</h3><label for="qrContactMode">Cuando escanean mi QR</label><select id="qrContactMode" style="width:100%;padding:12px"><option value="approval">Solicitar mi aprobación (predeterminado)</option><option value="direct">Agregar directamente</option></select><button type="button" id="qrContactSave">Guardar privacidad</button><h3>Agregar contacto</h3><button type="button" id="qrScanStart">▦ Escanear código QR</button><div id="qrScannerArea" hidden><video id="qrScannerVideo" autoplay muted playsinline style="width:100%;max-height:55vh;background:#111;border-radius:14px"></video><button type="button" id="qrScanStop" class="secondary">Cerrar cámara</button></div><p>Pega el enlace o identificador recibido. También puedes escanear el QR con la cámara del teléfono para abrir el enlace.</p><input id="qrContactTarget" placeholder="Enlace o identificador KLK"><button type="button" id="qrContactAdd">Agregar contacto</button><h3>Solicitudes recibidas</h3><div id="qrContactPending"></div><p id="qrContactNotice" role="status"></p>';
  document.body.append(panel);
  const entry=document.createElement("button");entry.type="button";entry.textContent="▦ Contactos por QR";entry.className="secondary";entry.id="qrContactEntry";entry.onclick=open;
  const target=$("homeProfilePanel")||$("homeView");if(target)target.prepend(entry);
  $("qrContactClose").onclick=close;
+ $("qrScanStart").onclick=startScanner;$("qrScanStop").onclick=stopScanner;
+ addChatsEntry();
  $("qrContactSave").onclick=async()=>{try{await db.collection("contactPrivacy").doc(current().uid).set({mode:$("qrContactMode").value,updatedAt:serverTime()});notify("Privacidad guardada");}catch(e){notify(e.message);}};
  $("qrContactShare").onclick=async()=>{const url=$("qrContactLink").value;try{if(navigator.share)await navigator.share({title:"Mi contacto KLK",url});else{await navigator.clipboard.writeText(url);notify("Enlace copiado");}}catch(e){notify("Comparte este enlace manualmente");}};
- $("qrContactAdd").onclick=()=>{let val=$("qrContactTarget").value.trim();try{const url=new URL(val);val=url.searchParams.get("contact")||"";}catch(e){}void add(val);};
+ $("qrContactAdd").onclick=()=>{let val=$("qrContactTarget").value.trim();try{val=parseContact(val)||"";}catch(e){}void add(val);};
  // QR deep links should complete contact creation, not strand users in QR settings.
  const incoming=new URLSearchParams(location.search).get("contact");
  if(incoming){
