@@ -2719,7 +2719,7 @@ function loadMessages() {
      placeholder.remove();
      if (data.type === "image") {
       if((data.mimeType||"").startsWith("video/")){const video=document.createElement("video");video.src=url;video.controls=true;video.preload="metadata";video.playsInline=true;item.appendChild(video);}
-      else { const img = document.createElement("img"); img.src = url; img.alt = "Foto compartida"; img.loading = "lazy"; item.appendChild(img); }
+      else { const img = document.createElement("img"); img.src = url; img.alt = "Foto compartida"; img.loading = "lazy"; img.decoding = "async"; item.appendChild(img); }
      }
      else if(data.type==="file"&&(data.mimeType||"").startsWith("video/")){const video=document.createElement("video");video.src=url;video.controls=true;video.preload="metadata";video.playsInline=true;item.appendChild(video);} else if(data.type==="file"){const link=document.createElement("a");link.href=url;link.target="_blank";link.rel="noopener";link.textContent="📄 "+(data.fileName||"Abrir documento");item.appendChild(link);}
      else {
@@ -3374,7 +3374,7 @@ function klkConfirmDeleteStatus(){
    const photoPath=cachedProfile?.photoPath;
    if(!avatarUrl&&photoPath){try{avatarUrl=await getMediaUrl(photoPath)}catch(e){console.warn("No se pudo cargar la foto de perfil del estado",e)}}
    if(!avatarUrl&&item.uid===user.uid)avatarUrl=user.photoURL||"";
-   if(avatarUrl){const im=document.createElement("img");im.src=avatarUrl;im.alt="Foto de perfil de "+(item.uid===user.uid?"mi cuenta":item.displayName||"contacto");im.onerror=()=>{avatar.replaceChildren();avatar.textContent=(item.uid===user.uid?"YO":(item.displayName||"?").slice(0,1).toUpperCase())};avatar.replaceChildren(im)}
+   if(avatarUrl){const im=document.createElement("img");im.src=avatarUrl;im.decoding="async";im.alt="Foto de perfil de "+(item.uid===user.uid?"mi cuenta":item.displayName||"contacto");im.onerror=()=>{avatar.replaceChildren();avatar.textContent=(item.uid===user.uid?"YO":(item.displayName||"?").slice(0,1).toUpperCase())};avatar.replaceChildren(im)}
    else avatar.textContent=item.uid===user.uid?"YO":(item.displayName||"?").slice(0,1).toUpperCase();
    const body=document.createElement("div");body.className="statusCardBody";const title=document.createElement("strong");title.textContent=(item.uid===user.uid?"Mi estado":item.displayName||"Contacto");
    const desc=document.createElement("p");desc.textContent=age(preview.createdAt)+(group.length>1?" · "+group.length+" estados":"");body.append(title,desc);card.append(avatar,body);
@@ -4039,7 +4039,7 @@ window.$("assistantQuestion").addEventListener("keydown",event=>{
     try{
      entry.url=await getMediaUrl(entry.data.storagePath,activeConversationId);
      if((entry.data.mimeType||"").startsWith("video/")){const video=document.createElement("video");video.src=entry.url;video.muted=true;video.playsInline=true;video.preload="metadata";card.append(video);const mark=document.createElement("span");mark.className="roomMediaVideoMark";mark.textContent="▶ Video";card.append(mark);}
-     else{const img=document.createElement("img");img.src=entry.url;img.alt=entry.data.fileName||"Foto del chat";img.loading="lazy";card.append(img);}
+     else{const img=document.createElement("img");img.src=entry.url;img.alt=entry.data.fileName||"Foto del chat";img.loading="lazy";img.decoding="async";card.append(img);}
      const check=document.createElement("input");check.type="checkbox";check.setAttribute("aria-label","Seleccionar "+(entry.data.fileName||"archivo"));check.addEventListener("change",()=>{if(check.checked){selected.add(entry.id);card.classList.add("selected");}else{selected.delete(entry.id);card.classList.remove("selected");}syncActions();});card.append(check);grid.append(card);
     }catch(error){console.warn("No se pudo cargar un elemento de la galería",error);}
    }
