@@ -445,17 +445,17 @@
  function klkInitIncomingSwipe(){
   const handle=$("klkSwipeHandle"),track=handle&&handle.closest(".klkSwipeTrack");
   if(!handle||!track)return;
-  let startY=0,startX=0,active=false,completed=false,pointerId=null,lastY=0;
-  const distance=()=>Math.max(80,Math.min(160,track.getBoundingClientRect().height-70));
+  let startY=0,startX=0,active=false,completed=false,pointerId=null,lastX=0;
+  const distance=()=>Math.max(85,Math.min(220,track.getBoundingClientRect().width-95));
   const reset=()=>{active=false;pointerId=null;handle.style.transition="transform .25s cubic-bezier(.2,.8,.2,1)";handle.style.transform="translate3d(0,0,0)";handle.setAttribute("aria-valuenow","0");};
-  const finish=()=>{if(completed||!overlay.classList.contains("klkIncoming")||!incomingCall)return;completed=true;active=false;handle.style.transition="transform .16s ease-out";handle.style.transform="translate3d(0,"+(-distance())+"px,0)";if(navigator.vibrate)try{navigator.vibrate(35)}catch(_){};const answer=$("answerCall");if(answer&&!answer.disabled)answer.click();};
+  const finish=()=>{if(completed||!overlay.classList.contains("klkIncoming")||!incomingCall)return;completed=true;active=false;handle.style.transition="transform .16s ease-out";handle.style.transform="translate3d("+distance()+"px,0,0)";if(navigator.vibrate)try{navigator.vibrate(35)}catch(_){};const answer=$("answerCall");if(answer&&!answer.disabled)answer.click();};
   handle.setAttribute("aria-valuemin","0");handle.setAttribute("aria-valuemax","100");handle.setAttribute("aria-valuenow","0");
-  handle.addEventListener("pointerdown",event=>{if(!overlay.classList.contains("klkIncoming")||completed)return;if(event.button!==undefined&&event.button!==0)return;active=true;pointerId=event.pointerId;startY=event.clientY;startX=event.clientX;lastY=startY;handle.style.transition="none";try{handle.setPointerCapture(pointerId)}catch(_){}event.preventDefault()});
-  handle.addEventListener("pointermove",event=>{if(!active||event.pointerId!==pointerId)return;lastY=event.clientY;const dy=Math.max(-distance(),Math.min(0,lastY-startY));handle.style.transform="translate3d(0,"+dy+"px,0)";handle.setAttribute("aria-valuenow",String(Math.round(-dy/distance()*100)));event.preventDefault()});
-  handle.addEventListener("pointerup",event=>{if(!active||event.pointerId!==pointerId)return;const dy=event.clientY-startY,dx=event.clientX-startX;active=false;if(dy<=-distance()*.55&&Math.abs(dx)<Math.max(110,distance()))finish();else reset();event.preventDefault()});
+  handle.addEventListener("pointerdown",event=>{if(!overlay.classList.contains("klkIncoming")||completed)return;if(event.button!==undefined&&event.button!==0)return;active=true;pointerId=event.pointerId;startY=event.clientY;startX=event.clientX;lastX=startX;handle.style.transition="none";try{handle.setPointerCapture(pointerId)}catch(_){}event.preventDefault()});
+  handle.addEventListener("pointermove",event=>{if(!active||event.pointerId!==pointerId)return;lastX=event.clientX;const dx=Math.max(0,Math.min(distance(),lastX-startX));handle.style.transform="translate3d("+dx+"px,0,0)";handle.setAttribute("aria-valuenow",String(Math.round(dx/distance()*100)));event.preventDefault()});
+  handle.addEventListener("pointerup",event=>{if(!active||event.pointerId!==pointerId)return;const dy=event.clientY-startY,dx=event.clientX-startX;active=false;if(dx>=distance()*.55&&Math.abs(dy)<Math.max(110,distance()))finish();else reset();event.preventDefault()});
   handle.addEventListener("pointercancel",reset);
   handle.addEventListener("lostpointercapture",()=>{if(active)reset()});
-  handle.addEventListener("keydown",event=>{if((event.key==="Enter"||event.key===" "||event.key==="ArrowUp")&&overlay.classList.contains("klkIncoming")){event.preventDefault();finish()}});
+  handle.addEventListener("keydown",event=>{if((event.key==="Enter"||event.key===" "||event.key==="ArrowRight")&&overlay.classList.contains("klkIncoming")){event.preventDefault();finish()}});
   const observer=new MutationObserver(()=>{if(!overlay.classList.contains("klkIncoming")){completed=false;reset()}});
   observer.observe(overlay,{attributes:true,attributeFilter:["class"]});
  }
