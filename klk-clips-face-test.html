@@ -32,9 +32,9 @@ document.getElementById('faceStart').onclick=async()=>{
  faceStatus.textContent='Cargando detector facial…';
  try{
   if(!navigator.mediaDevices){throw Error('Se necesita HTTPS y permiso de cámara');}
-  let vision;try{vision=await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/+esm');}catch(primaryError){faceStatus.textContent='Probando servidor alternativo…';vision=await import('https://esm.sh/@mediapipe/tasks-vision@0.10.22');}
-  let files;try{files=await vision.FilesetResolver.forVisionTasks('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/wasm');}catch(wasmError){files=await vision.FilesetResolver.forVisionTasks('https://unpkg.com/@mediapipe/tasks-vision@0.10.22/wasm');}
-  tracker=await vision.FaceLandmarker.createFromOptions(files,{baseOptions:{modelAssetPath:'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task',delegate:'CPU'},runningMode:'VIDEO',numFaces:1,refineLandmarks:true});
+  let vision;try{vision=await import('./klk-face-assets/vision_bundle.mjs');}catch(localError){faceStatus.textContent='Detector local no disponible; probando respaldo…';try{vision=await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/+esm');}catch(primaryError){vision=await import('https://esm.sh/@mediapipe/tasks-vision@0.10.22');}}
+  let files;try{files=await vision.FilesetResolver.forVisionTasks('./klk-face-assets/wasm');}catch(localWasmError){files=await vision.FilesetResolver.forVisionTasks('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/wasm');}
+  tracker=await vision.FaceLandmarker.createFromOptions(files,{baseOptions:{modelAssetPath:'./klk-face-assets/face_landmarker.task',delegate:'CPU'},runningMode:'VIDEO',numFaces:1,refineLandmarks:true});
   enabled=true;lastTime=-1;faceStatus.textContent='Seguimiento activo. Activa la cámara si está apagada.';tick();
  }catch(e){faceStatus.textContent='No se pudo activar: '+e.message;}
 };
