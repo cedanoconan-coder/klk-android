@@ -32,7 +32,19 @@ $('save').href=parsed.href;
 $('save').download='klk-clip.'+(type==='video'?'webm':'jpg');
 $('save').textContent='Guardar '+(type==='video'?'video':'foto');status('Archivo preparado en tu dispositivo.');}$('gallery').onclick=()=>$('file').click();
 $('file').onchange=e=>{const f=e.target.files[0];if(f&&(f.type.startsWith('video/')||f.type.startsWith('image/')))showResult(f,f.type.startsWith('video/')?'video':'photo');};
-$('music').onchange=e=>{const f=e.target.files[0];if(f){$('audio').src=URL.createObjectURL(f);status('Música cargada para escucha.');}};
+let musicObjectUrl=null;
+$('music').onchange=e=>{
+ const f=e.target.files?.[0];
+ if(!f||!f.type.startsWith('audio/')){status('Selecciona un archivo de audio válido.');return;}
+ if(musicObjectUrl){$('audio').pause();$('audio').removeAttribute('src');$('audio').load();URL.revokeObjectURL(musicObjectUrl);}
+ const candidate=URL.createObjectURL(f);
+ const parsed=new URL(candidate,document.baseURI);
+ if(parsed.protocol!=='blob:'||!candidate.startsWith('blob:'+location.origin+'/')){URL.revokeObjectURL(candidate);status('Archivo de audio no válido.');return;}
+ musicObjectUrl=candidate;
+ $('audio').src=parsed.href;
+ status('Música cargada para escucha.');
+};
+window.addEventListener('pagehide',()=>{if(musicObjectUrl)URL.revokeObjectURL(musicObjectUrl);});
 $('makeText').onclick=()=>{const c=document.createElement('canvas');c.width=720;c.height=1280;const x=c.getContext('2d');x.fillStyle='#29163f';x.fillRect(0,0,c.width,c.height);x.fillStyle='white';x.font='bold 46px sans-serif';const words=$('textContent').value.split(/\s+/),lines=[];let line='';for(const w of words){if(x.measureText(line+' '+w).width>620){lines.push(line);line=w;}else line+=(line?' ':'')+w;}lines.push(line);lines.slice(0,14).forEach((l,i)=>x.fillText(l,45,300+i*65));c.toBlob(b=>{if(b)showResult(b,'photo');});};window.addEventListener('pagehide',closeCamera);</script>
 <script type="module">
 
