@@ -16,11 +16,19 @@ $('camera').style.filter=({none:'none',warm:'sepia(.35) saturate(1.3)',mono:'gra
 $('capture').onclick=async()=>{if(mode==='text'){status('Escribe tu texto y pulsa Crear tarjeta.');return;}if(!stream){status('Primero activa la cámara.');return;}if(delay){status('Capturando en '+delay+' segundos…');await new Promise(r=>setTimeout(r,delay*1000));if(!stream)return;}if(mode==='photo'){const video=$('camera'),canvas=document.createElement('canvas');canvas.width=video.videoWidth;canvas.height=video.videoHeight;if(!canvas.width){status('La cámara aún no está lista.');return;}const ctx=canvas.getContext('2d');if(facing==='user'){ctx.translate(canvas.width,0);ctx.scale(-1,1);}ctx.drawImage(video,0,0);canvas.toBlob(blob=>{if(!blob)return;showResult(blob,'photo');},'image/jpeg',.9);return;}if(!window.MediaRecorder){status('Grabación no compatible con este navegador.');return;}chunks=[];try{recorder=new MediaRecorder(stream);recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};recorder.onstop=()=>{const blob=new Blob(chunks,{type:recorder.mimeType||'video/webm'});showResult(blob,'video');
 $('stop').disabled=true;};recorder.start();
 $('stop').disabled=false;status('Grabando video…');recordTimer=setTimeout(()=>{if(recorder.state==='recording')recorder.stop();},Number(mode)*1000);}catch(e){status('No se pudo iniciar grabación: '+e.message);}};
-$('stop').onclick=()=>{if(recordTimer)clearTimeout(recordTimer);if(recorder?.state==='recording')recorder.stop();};function showResult(blob,type){if(!(blob instanceof Blob)||!['photo','video'].includes(type))return;if(recordUrl)URL.revokeObjectURL(recordUrl);const url=URL.createObjectURL(blob);recordUrl=url;
+$('stop').onclick=()=>{if(recordTimer)clearTimeout(recordTimer);if(recorder?.state==='recording')recorder.stop();};function showResult(blob,type){
+ if(!(blob instanceof Blob)||!['photo','video'].includes(type))return;
+ const safeType=type==='video'?'video':'photo';
+ if(recordUrl)URL.revokeObjectURL(recordUrl);
+ const url=URL.createObjectURL(blob);
+ // Accept only browser-generated object URLs from this document, never external schemes.
+ const parsed=new URL(url,document.baseURI);
+ if(parsed.protocol!=='blob:'||!url.startsWith('blob:'+location.origin+'/')){URL.revokeObjectURL(url);status('Vista previa no válida.');return;}
+ recordUrl=url;
 $('preview').hidden=type!=='video';
-$('resultPhoto').hidden=type!=='photo';if(type==='video')$('preview').src=url;else $('resultPhoto').src=url;
+$('resultPhoto').hidden=type!=='photo';if(safeType==='video')$('preview').src=parsed.href;else $('resultPhoto').src=parsed.href;
 $('save').hidden=false;
-$('save').href=url;
+$('save').href=parsed.href;
 $('save').download='klk-clip.'+(type==='video'?'webm':'jpg');
 $('save').textContent='Guardar '+(type==='video'?'video':'foto');status('Archivo preparado en tu dispositivo.');}$('gallery').onclick=()=>$('file').click();
 $('file').onchange=e=>{const f=e.target.files[0];if(f&&(f.type.startsWith('video/')||f.type.startsWith('image/')))showResult(f,f.type.startsWith('video/')?'video':'photo');};
