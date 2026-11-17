@@ -1477,6 +1477,17 @@ input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),textarea,se
 <p class="hint">Desglose de transferencias medidas en este teléfono. No representa el tráfico global de Supabase ni permite identificar usuarios externos.</p>
 <div id="klkDataBreakdown" aria-live="polite"><p>Sin transferencias registradas todavía.</p></div>
 <p class="hint" id="klkDataLastCheck">Actualización local cada 15 minutos mientras el panel esté abierto.</p>
+<div style="margin:14px 0;padding:14px;border:1px solid #b9ccc5;border-radius:14px">
+<h4>💵 Simulador de factura · Supabase</h4>
+<p class="hint">Estimación orientativa del plan Pro en USD y pesos dominicanos. No consulta facturación ni modifica tu plan.</p>
+<label for="klkBillGb">Transferencia normal estimada (GB/mes)</label>
+<input id="klkBillGb" type="number" min="0" max="1000000" step="1" value="50" inputmode="decimal" style="width:100%">
+<label for="klkBillRate">Cambio ilustrativo (RD$ por US$1)</label>
+<input id="klkBillRate" type="number" min="0" max="1000" step=".01" value="63" inputmode="decimal" style="width:100%">
+<p><strong id="klkBillUsd">US$25.00</strong> · <strong id="klkBillDop">RD$1,575.00</strong></p>
+<p id="klkBillDetails" class="hint">Plan Pro base: US$25.00. Hasta 250 GB de transferencia normal incluidos; exceso ilustrativo a US$0.09/GB.</p>
+<p class="hint">No incluye impuestos, cómputo adicional, almacenamiento, transferencia de caché, otros proyectos ni Firebase. Consulta siempre la factura oficial antes de pagar.</p>
+</div>
 <strong>🛡️ Prevención de bloqueos</strong>
 <p class="hint">Alertas recomendadas: 60 %, 80 %, 90 % y 95 % de la cuota oficial. Para activarlas con datos reales se necesita una integración segura con métricas de Supabase. No se bloquean chats ni llamadas por datos históricos.</p>
 </div><div style="margin:12px 0;padding:12px;border-radius:12px;background:var(--klk-message-bg,#eef5f2)">
@@ -2721,6 +2732,19 @@ function klkRenderDataBreakdown(){
 const klkOriginalRenderDataUsage=klkRenderDataUsage;
 klkRenderDataUsage=function(){klkOriginalRenderDataUsage();klkRenderDataBreakdown();};
 setInterval(()=>{const panel=document.getElementById("klkDataPanel");if(panel&&!panel.hidden&&!document.hidden)klkRenderDataUsage();},15*60*1000);
+function klkUpdateBillEstimate(){
+ const gbInput=document.getElementById("klkBillGb"),rateInput=document.getElementById("klkBillRate");
+ if(!gbInput||!rateInput)return;
+ const gb=Math.max(0,Math.min(1000000,Number(gbInput.value)||0));
+ const rate=Math.max(0,Math.min(1000,Number(rateInput.value)||0));
+ const excess=Math.max(0,gb-250),usd=25+excess*0.09;
+ const usdEl=document.getElementById("klkBillUsd"),dopEl=document.getElementById("klkBillDop"),details=document.getElementById("klkBillDetails");
+ if(usdEl)usdEl.textContent="US$"+usd.toFixed(2);
+ if(dopEl)dopEl.textContent="RD$"+(usd*rate).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
+ if(details)details.textContent="Pro base US$25.00 + "+excess.toFixed(1)+" GB sobre 250 GB × US$0.09 = US$"+usd.toFixed(2)+". Simulación, no factura real.";
+}
+for(const id of ["klkBillGb","klkBillRate"])document.getElementById(id)?.addEventListener("input",klkUpdateBillEstimate);
+klkUpdateBillEstimate();
 document.getElementById("klkDataRefresh")?.addEventListener("click",klkRenderDataUsage);
 document.getElementById("klkDataReset")?.addEventListener("click",()=>{if(auth?.currentUser?.uid!==KLK_DATA_OWNER||!confirm("¿Reiniciar las estadísticas locales?"))return;localStorage.removeItem(klkDataKey());klkRenderDataUsage();});
 window.klkResolveProfilePhoto = (path) => getMediaUrl(path); const mediaUrlPending = new Map();
