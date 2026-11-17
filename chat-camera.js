@@ -1,13 +1,13 @@
 /* KLK Chat Camera: foto, video, nota de video, galería, flash y cámara frontal/trasera */
 (function(){
  "use strict";
- let overlay=null,video=null,stream=null,facing="environment",mode="photo",recorder=null,chunks=[],recordStarted=0,timer=null,filterIndex=0,torchOn=false,cameraRequest=0,cameraBusy=false,beautyOn=false;
+ let pendingPhoto=null,pendingPhotoUrl=null,previewImage=null,previewActions=null;let overlay=null,video=null,stream=null,facing="environment",mode="photo",recorder=null,chunks=[],recordStarted=0,timer=null,filterIndex=0,torchOn=false,cameraRequest=0,cameraBusy=false,beautyOn=false;
  const filters=["none","grayscale(1)","sepia(.7)","contrast(1.2) saturate(1.4)","brightness(1.12) saturate(.8)"];
  const filterNames=["Original","B/N","Cálido","Vivo","Suave"];
  const $=id=>overlay&&overlay.querySelector("#"+id);
  function status(message){const el=$("klkCameraStatus");if(el)el.textContent=message||"";}
  function stopStream(){if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}if(video)video.srcObject=null;torchOn=false;}
- function close(){if(recorder&&recorder.state!=="inactive"){try{recorder.stop();}catch(e){}}if(timer){clearInterval(timer);timer=null;}stopStream();if(overlay){overlay.remove();overlay=null;}document.body.style.overflow="";}
+ function clearPendingPhoto(){if(pendingPhotoUrl)URL.revokeObjectURL(pendingPhotoUrl);pendingPhotoUrl=null;pendingPhoto=null;if(previewImage){previewImage.remove();previewImage=null;}if(previewActions){previewActions.remove();previewActions=null;}if(video)video.style.display="";}function close(){clearPendingPhoto();if(recorder&&recorder.state!=="inactive"){try{recorder.stop();}catch(e){}}if(timer){clearInterval(timer);timer=null;}stopStream();if(overlay){overlay.remove();overlay=null;}document.body.style.overflow="";}
  function build(){
   if(overlay)return;
   overlay=document.createElement("section");overlay.id="klkChatCamera";overlay.setAttribute("role","dialog");overlay.setAttribute("aria-modal","true");overlay.setAttribute("aria-label","Cámara del chat");
@@ -50,6 +50,7 @@
  function toggleBeauty(){beautyOn=!beautyOn;applyPreviewLook();const b=$("klkCameraBeauty");b.classList.toggle("active",beautyOn);b.setAttribute("aria-pressed",String(beautyOn));b.textContent=beautyOn?"✨ Belleza activada":"✨ Belleza desactivada";status(beautyOn?"Belleza suave activada":"Belleza desactivada");}
  async function setMode(next){if(recorder&&recorder.state!=="inactive")return;mode=next;overlay.querySelectorAll("[data-mode]").forEach(b=>b.classList.toggle("active",b.dataset.mode===mode));$("klkCameraShutter").classList.remove("recording");$("klkCameraShutter").setAttribute("aria-label",mode==="photo"?"Capturar foto":"Iniciar grabación");await startStream();status(mode==="photo"?"Modo Foto":mode==="video"?"Modo Vídeo":"Nota de video · máximo 60 segundos");}
  async function shutter(){
+  if(pendingPhoto){status("Revisa la foto y elige Enviar o Repetir.");return;}
   if(!stream){await startStream();if(!stream)return;}
   if(mode==="photo"){capturePhoto();return;}
   if(recorder&&recorder.state==="recording"){recorder.stop();return;}
@@ -58,8 +59,36 @@
   try{chunks=[];recorder=new MediaRecorder(stream,mime?{mimeType:mime}:undefined);recorder.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data);};recorder.onerror=()=>status("La grabación se interrumpió.");recorder.onstop=async()=>{if(timer){clearInterval(timer);timer=null;}const seconds=Math.max(1,Math.round((Date.now()-recordStarted)/1000));const blob=new Blob(chunks,{type:recorder.mimeType||"video/webm"});const file=new File([blob],(mode==="note"?"nota-video-":"video-")+Date.now()+".webm",{type:blob.type,lastModified:Date.now()});$("klkCameraShutter").classList.remove("recording");$("klkCameraTimer").classList.remove("on");status("Preparando envío…");await sendFile(file,seconds);};recorder.start(250);recordStarted=Date.now();$("klkCameraShutter").classList.add("recording");$("klkCameraTimer").classList.add("on");status(mode==="note"?"Grabando nota de video…":"Grabando video…");timer=setInterval(()=>{const sec=Math.floor((Date.now()-recordStarted)/1000);$("klkCameraTimer").textContent="● "+String(Math.floor(sec/60)).padStart(2,"0")+":"+String(sec%60).padStart(2,"0");if(mode==="note"&&sec>=60&&recorder&&recorder.state==="recording")recorder.stop();},250);}
   catch(e){status("No se pudo iniciar la grabación: "+(e.message||"error"));}
  }
- function capturePhoto(){const w=video.videoWidth,h=video.videoHeight;if(!w||!h){status("La cámara todavía está enfocando. Inténtalo de nuevo.");return;}const canvas=document.createElement("canvas");canvas.width=w;canvas.height=h;const ctx=canvas.getContext("2d");ctx.filter=filters[filterIndex]+(beautyOn?" blur(.22px) brightness(1.045) saturate(1.06)":"");ctx.drawImage(video,0,0,w,h);canvas.toBlob(async blob=>{if(!blob){status("No se pudo capturar la foto.");return;}const file=new File([blob],"klk-foto-"+Date.now()+".jpg",{type:"image/jpeg",lastModified:Date.now()});const thumb=$("klkCameraThumb");thumb.src=URL.createObjectURL(blob);thumb.hidden=false;status("");await sendFile(file);}, "image/jpeg",.92);}
- async function sendFile(file,seconds=null){try{if(typeof window.uploadMedia!=="function")throw new Error("El envío multimedia no está disponible. Recarga KLK.");await window.uploadMedia(file,file.type.startsWith("image/")?"image":"file",seconds);if(!document.body.contains(overlay))return;if(!file.type.startsWith("image/"))status("Archivo enviado al chat");if(file.type.startsWith("image/")){close();return;}if(mode==="note"||mode==="video")close();}catch(e){status(e.message||"No se pudo enviar el archivo.");}}
+ function capturePhoto(){
+  if(pendingPhoto)return;
+  const w=video.videoWidth,h=video.videoHeight;
+  if(!w||!h){status("La cámara todavía está enfocando. Inténtalo de nuevo.");return;}
+  try{
+   const canvas=document.createElement("canvas");canvas.width=w;canvas.height=h;
+   const ctx=canvas.getContext("2d");if(!ctx)throw new Error("No se pudo preparar la fotografía.");
+   ctx.filter=filters[filterIndex]+(beautyOn?" blur(.22px) brightness(1.045) saturate(1.06)":"");
+   ctx.drawImage(video,0,0,w,h);
+   canvas.toBlob(blob=>{
+    if(!overlay)return;
+    if(!blob){status("No se pudo capturar la foto.");return;}
+    pendingPhoto=new File([blob],"klk-foto-"+Date.now()+".jpg",{type:"image/jpeg",lastModified:Date.now()});
+    pendingPhotoUrl=URL.createObjectURL(blob);
+    previewImage=document.createElement("img");previewImage.src=pendingPhotoUrl;previewImage.alt="Fotografía capturada";
+    Object.assign(previewImage.style,{position:"absolute",inset:"0",width:"100%",height:"100%",objectFit:"contain",background:"#000",zIndex:"3"});
+    $("klkCameraStage").appendChild(previewImage);
+    previewActions=document.createElement("div");
+    Object.assign(previewActions.style,{position:"absolute",bottom:"126px",left:"0",right:"0",display:"flex",justifyContent:"center",gap:"18px",zIndex:"9",padding:"12px"});
+    const repeat=document.createElement("button");repeat.type="button";repeat.textContent="↻ Repetir";
+    const send=document.createElement("button");send.type="button";send.textContent="➤ Enviar";
+    for(const b of [repeat,send])Object.assign(b.style,{border:"0",borderRadius:"24px",padding:"13px 22px",background:"#fff",color:"#111",fontSize:"16px",fontWeight:"600"});
+    repeat.onclick=()=>{clearPendingPhoto();status("Cámara lista");};
+    send.onclick=async()=>{if(!pendingPhoto)return;send.disabled=true;repeat.disabled=true;status("Enviando foto…");const ok=await sendFile(pendingPhoto);if(!ok&&overlay){send.disabled=false;repeat.disabled=false;status("No se pudo enviar. Puedes reintentar o repetir la foto.");}};
+    previewActions.append(repeat,send);overlay.appendChild(previewActions);
+    status("Foto lista para enviar");
+   },"image/jpeg",.92);
+  }catch(e){status("No se pudo capturar la foto: "+(e.message||"error"));}
+}
+ async function sendFile(file,seconds=null){try{if(typeof window.uploadMedia!=="function")throw new Error("El envío multimedia no está disponible. Recarga KLK.");await window.uploadMedia(file,file.type.startsWith("image/")?"image":"file",seconds);if(!document.body.contains(overlay))return;if(!file.type.startsWith("image/"))status("Archivo enviado al chat");if(file.type.startsWith("image/")){close();return;}if(mode==="note"||mode==="video")close();return true;}catch(e){status(e.message||"No se pudo enviar el archivo.");return false;}}
  document.addEventListener("click",function(event){const button=event.target.closest&&event.target.closest("#takePhoto,#shareCamera");if(!button)return;event.preventDefault();event.stopImmediatePropagation();close();build();startStream();},{capture:true});
  window.klkOpenChatCamera=function(){close();build();startStream();};
  window.addEventListener("pagehide",()=>{if(stream)stopStream();});
