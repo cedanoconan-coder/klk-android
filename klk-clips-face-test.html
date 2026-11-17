@@ -1,4 +1,4 @@
-<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>KLK Clips · Crear clip</title><style>*{box-sizing:border-box}body{margin:0;background:#110d18;color:white;font:16px system-ui}header{padding:14px;background:#261831;display:flex;justify-content:space-between;align-items:center}a{color:#edc8ff}main{max-width:560px;margin:auto;padding:12px}.camera{position:relative;background:#050407;border-radius:22px;overflow:hidden;aspect-ratio:9/13;max-height:70vh;display:grid;place-items:center}.camera video,.camera img{position:absolute;width:100%;height:100%;object-fit:cover}.camera video.front{transform:scaleX(-1)}.overlay{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:space-between;padding:12px;pointer-events:none}.top,.bottom{display:flex;justify-content:space-between;gap:6px;pointer-events:auto}.tools{display:flex;flex-direction:column;gap:8px;align-items:flex-end;pointer-events:auto}button,select,input,textarea{font:inherit}button{border:0;border-radius:20px;padding:10px 12px;background:#453352;color:#fff;cursor:pointer}button.active{background:#aa56dd}button:disabled{opacity:.5}.capture{width:75px;height:75px;border-radius:50%;border:5px solid #fff;background:#efecf2;color:#241333}.modes,.nav{display:flex;gap:7px;justify-content:center;flex-wrap:wrap;margin:12px 0}.panel{background:#261831;border-radius:15px;padding:12px;margin:12px 0}.panel label{display:block;margin:8px 0}.panel input,.panel textarea,.panel select{max-width:100%;width:100%;padding:8px;border-radius:8px}#effects{display:flex;gap:8px;overflow-x:auto}#effects button{white-space:nowrap}#preview{width:100%;max-height:250px}#msg{color:#e5d3ed}small{color:#d8c6df}#faceLayer{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}.facePanel{background:#301d43;border:1px solid #72538d;border-radius:14px;padding:12px;margin:12px 0}.facePanel button{margin:4px}.facePanel button.active{background:#a750d4}#eyeColors{display:flex;gap:8px;overflow-x:auto;padding:12px 0}#eyeColors button{min-width:88px;white-space:nowrap;border:2px solid transparent}#eyeColors button.active{border-color:white}</style></head><body><header><strong>✦ KLK Clips · Crear clip</strong><a href="./klk-clips-editor-test.html">Editor de fotos</a></header><main><div class="camera"><video id="camera" autoplay playsinline muted></video><canvas id="faceLayer" aria-hidden="true"></canvas><img id="snapshot" hidden alt="Foto capturada"><div class="overlay"><div class="top"><button id="close">Cerrar cámara</button><button id="flip">↻ Girar</button></div><div class="tools"><button id="flash">Flash: no</button><button id="timer">Temporizador: 0 s</button><button id="mic">Micrófono: sí</button></div><div class="bottom"><button id="gallery">Galería</button><button id="capture" class="capture" aria-label="Capturar foto o video">●</button><button id="stop" disabled>■</button></div></div></div><div class="modes"><button data-mode="photo" class="active">FOTO</button><button data-mode="15">15 s</button><button data-mode="60">60 s</button><button data-mode="600">10 min</button><button data-mode="text">TEXTO</button></div><div class="panel"><label>Música local (para escuchar mientras preparas el clip)<input type="file" id="music" accept="audio/*"></label><audio id="audio" controls style="width:100%"></audio><small>La música de prueba no se incorpora al archivo grabado.</small></div><div class="facePanel"><strong>Seguimiento facial · laboratorio</strong><p id="faceStatus" role="status">Desactivado. Pulsa activar para detectar el rostro.</p><button id="faceStart">Activar seguimiento facial</button><button id="faceOff">Desactivar</button><div id="eyeColors"><button data-eye="none" class="active">Natural</button><button data-eye="#42a5f5">Azul</button><button data-eye="#4cdb85">Verde</button><button data-eye="#ad83e8">Violeta</button><button data-eye="#b5b8bf">Gris</button></div><div id="hairStyles"><strong>Cabello virtual</strong><div><button data-hair="none" class="active">Sin filtro</button><button data-hair="short">Corto</button><button data-hair="waves">Ondulado</button><button data-hair="long">Largo</button></div><label>Color de pelo <input id="hairColor" type="color" value="#302019"></label></div><small>Vista previa experimental. No se incorpora todavía al archivo grabado. El detector se descarga al activarlo; no se envían fotos a KLK.</small></div><div class="panel"><strong>Efectos de cámara</strong><div id="effects"><button data-effect="none" class="active">Normal</button><button data-effect="warm">Cálido</button><button data-effect="mono">B/N</button><button data-effect="vivid">Vivo</button></div><small>Los filtros son solo para la vista previa.</small></div><div class="panel" id="textPanel" hidden><label>Texto del clip<textarea id="textContent" rows="3" placeholder="Escribe tu mensaje"></textarea></label><button id="makeText">Crear tarjeta de texto</button></div><div class="panel"><strong>Resultado local</strong><p id="msg" role="status">Pulsa «Activar cámara» para comenzar.</p><button id="start">Activar cámara</button><video id="preview" controls hidden></video><img id="resultPhoto" hidden style="width:100%" alt="Foto tomada"><a id="save" hidden download="klk-clip">Guardar archivo</a></div><div class="nav"><a href="./klk-clips-editor-test.html">Montaje de fotos</a></div><input id="file" type="file" accept="image/*,video/*" hidden></main><script>
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>KLK Clips · Crear clip</title><style>*{box-sizing:border-box}body{margin:0;background:#110d18;color:white;font:16px system-ui}header{padding:14px;background:#261831;display:flex;justify-content:space-between;align-items:center}a{color:#edc8ff}main{max-width:560px;margin:auto;padding:12px}.camera{position:relative;background:#050407;border-radius:22px;overflow:hidden;aspect-ratio:9/13;max-height:70vh;display:grid;place-items:center}.camera video,.camera img{position:absolute;width:100%;height:100%;object-fit:cover}.camera video.front{transform:scaleX(-1)}.overlay{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:space-between;padding:12px;pointer-events:none}.top,.bottom{display:flex;justify-content:space-between;gap:6px;pointer-events:auto}.tools{display:flex;flex-direction:column;gap:8px;align-items:flex-end;pointer-events:auto}button,select,input,textarea{font:inherit}button{border:0;border-radius:20px;padding:10px 12px;background:#453352;color:#fff;cursor:pointer}button.active{background:#aa56dd}button:disabled{opacity:.5}.capture{width:75px;height:75px;border-radius:50%;border:5px solid #fff;background:#efecf2;color:#241333}.modes,.nav{display:flex;gap:7px;justify-content:center;flex-wrap:wrap;margin:12px 0}.panel{background:#261831;border-radius:15px;padding:12px;margin:12px 0}.panel label{display:block;margin:8px 0}.panel input,.panel textarea,.panel select{max-width:100%;width:100%;padding:8px;border-radius:8px}#effects{display:flex;gap:8px;overflow-x:auto}#effects button{white-space:nowrap}#preview{width:100%;max-height:250px}#msg{color:#e5d3ed}small{color:#d8c6df}#camera.face-synced{visibility:hidden}#faceLayer{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}.facePanel{background:#301d43;border:1px solid #72538d;border-radius:14px;padding:12px;margin:12px 0}.facePanel button{margin:4px}.facePanel button.active{background:#a750d4}#eyeColors{display:flex;gap:8px;overflow-x:auto;padding:12px 0}#eyeColors button{min-width:88px;white-space:nowrap;border:2px solid transparent}#eyeColors button.active{border-color:white}</style></head><body><header><strong>✦ KLK Clips · Crear clip</strong><a href="./klk-clips-editor-test.html">Editor de fotos</a></header><main><div class="camera"><video id="camera" autoplay playsinline muted></video><canvas id="faceLayer" aria-hidden="true"></canvas><img id="snapshot" hidden alt="Foto capturada"><div class="overlay"><div class="top"><button id="close">Cerrar cámara</button><button id="flip">↻ Girar</button></div><div class="tools"><button id="flash">Flash: no</button><button id="timer">Temporizador: 0 s</button><button id="mic">Micrófono: sí</button></div><div class="bottom"><button id="gallery">Galería</button><button id="capture" class="capture" aria-label="Capturar foto o video">●</button><button id="stop" disabled>■</button></div></div></div><div class="modes"><button data-mode="photo" class="active">FOTO</button><button data-mode="15">15 s</button><button data-mode="60">60 s</button><button data-mode="600">10 min</button><button data-mode="text">TEXTO</button></div><div class="panel"><label>Música local (para escuchar mientras preparas el clip)<input type="file" id="music" accept="audio/*"></label><audio id="audio" controls style="width:100%"></audio><small>La música de prueba no se incorpora al archivo grabado.</small></div><div class="facePanel"><strong>Seguimiento facial · fotograma sincronizado</strong><p id="faceStatus" role="status">Desactivado. Pulsa activar para detectar el rostro.</p><button id="faceStart">Activar seguimiento facial</button><button id="faceOff">Desactivar</button><div id="eyeColors"><button data-eye="none" class="active">Natural</button><button data-eye="#42a5f5">Azul</button><button data-eye="#4cdb85">Verde</button><button data-eye="#ad83e8">Violeta</button><button data-eye="#b5b8bf">Gris</button></div><div id="hairStyles"><strong>Cabello virtual</strong><div><button data-hair="none" class="active">Sin filtro</button><button data-hair="short">Corto</button><button data-hair="waves">Ondulado</button><button data-hair="long">Largo</button></div><label>Color de pelo <input id="hairColor" type="color" value="#302019"></label></div><small>Vista previa experimental. No se incorpora todavía al archivo grabado. El detector se descarga al activarlo; no se envían fotos a KLK.</small></div><div class="panel"><strong>Efectos de cámara</strong><div id="effects"><button data-effect="none" class="active">Normal</button><button data-effect="warm">Cálido</button><button data-effect="mono">B/N</button><button data-effect="vivid">Vivo</button></div><small>Los filtros son solo para la vista previa.</small></div><div class="panel" id="textPanel" hidden><label>Texto del clip<textarea id="textContent" rows="3" placeholder="Escribe tu mensaje"></textarea></label><button id="makeText">Crear tarjeta de texto</button></div><div class="panel"><strong>Resultado local</strong><p id="msg" role="status">Pulsa «Activar cámara» para comenzar.</p><button id="start">Activar cámara</button><video id="preview" controls hidden></video><img id="resultPhoto" hidden style="width:100%" alt="Foto tomada"><a id="save" hidden download="klk-clip">Guardar archivo</a></div><div class="nav"><a href="./klk-clips-editor-test.html">Montaje de fotos</a></div><input id="file" type="file" accept="image/*,video/*" hidden></main><script>
 'use strict';
 const $=id=>document.getElementById(id);let stream=null,recorder=null,chunks=[],mode='photo',facing='user',delay=0,mic=true,recordTimer=null,recordUrl=null;const status=t=>$('msg').textContent=t;async function closeCamera(){if(recordTimer)clearTimeout(recordTimer);recordTimer=null;if(recorder&&recorder.state==='recording')recorder.stop();if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}$('camera').srcObject=null;}async function startCamera(){await closeCamera();try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:facing}},audio:mic});
 $('camera').srcObject=stream;
@@ -50,10 +50,16 @@ $('makeText').onclick=()=>{const c=document.createElement('canvas');c.width=720;
 
 const camera=document.getElementById('camera'),layer=document.getElementById('faceLayer'),ctx=layer.getContext('2d'),faceStatus=document.getElementById('faceStatus');
 let tracker=null,enabled=false,eyeColor='none',hairStyle='none',hairColor='#302019',raf=0,lastTime=-1;
+// Freeze each input frame so detection and compositing cannot use different video frames.
+const inputFrame=document.createElement('canvas'),inputCtx=inputFrame.getContext('2d');
+function restoreLivePreview(){
+ camera.classList.remove('face-synced');
+ ctx.clearRect(0,0,layer.width,layer.height);
+ smoothedEyes.fill(null);
+}
 const irisGroups=[[468,469,470,471,472],[473,474,475,476,477]];
 const smoothedEyes=[null,null];
-let missedFrames=0,lastGoodFace=null,lastGoodAt=0;
-const RESET_MS=900;
+
 
 const irisTextures=new Map();
 function irisTexture(color){
@@ -134,13 +140,21 @@ function drawHair(landmarks,pt){
  }
  ctx.restore();
 }
-function paint(landmarks){
+function paint(landmarks,frame=null){
  const box=layer.getBoundingClientRect(),w=Math.round(box.width),h=Math.round(box.height);
  if(layer.width!==w||layer.height!==h){layer.width=w;layer.height=h;smoothedEyes.fill(null);}
  ctx.clearRect(0,0,w,h);
- if(!landmarks||!camera.videoWidth||(eyeColor==='none'&&hairStyle==='none'))return;
- const vw=camera.videoWidth,vh=camera.videoHeight,scale=Math.max(w/vw,h/vh),offsetX=(w-vw*scale)/2,offsetY=(h-vh*scale)/2;
+ if(!frame||!w||!h)return;
+ const vw=frame.width,vh=frame.height,scale=Math.max(w/vw,h/vh),offsetX=(w-vw*scale)/2,offsetY=(h-vh*scale)/2;
  const mirror=camera.classList.contains('front');
+ // Draw the exact pixels passed to detectForVideo, not the independently advancing video.
+ ctx.save();
+ if(mirror){ctx.translate(w,0);ctx.scale(-1,1);}
+ ctx.filter=camera.style.filter||'none';
+ ctx.drawImage(frame,offsetX,offsetY,vw*scale,vh*scale);
+ ctx.restore();
+ camera.classList.add('face-synced');
+ if(!landmarks||(eyeColor==='none'&&hairStyle==='none'))return;
  const pt=p=>({x:mirror?w-(p.x*vw*scale+offsetX):p.x*vw*scale+offsetX,y:p.y*vh*scale+offsetY});
  drawHair(landmarks,pt);
  if(eyeColor==='none')return;
@@ -223,8 +237,29 @@ function paint(landmarks){
 function tick(){
  if(!enabled)return;
  if(camera.readyState>=2&&camera.videoWidth){
-  try{if(camera.currentTime!==lastTime){const result=tracker.detectForVideo(camera,performance.now());lastTime=camera.currentTime;const face=result.faceLandmarks?.[0];if(!face){missedFrames++;const age=performance.now()-lastGoodAt;paint(null);smoothedEyes.fill(null);if(age>RESET_MS){smoothedEyes.fill(null);lastGoodFace=null;}}else{missedFrames=0;lastGoodFace=face;lastGoodAt=performance.now();paint(face);}faceStatus.textContent=face?'Rostro detectado · seguimiento activo':'Buscando rostro…';}}
-  catch(err){faceStatus.textContent='Error de seguimiento: '+err.message;enabled=false;return;}
+  try{
+   if(camera.currentTime!==lastTime){
+    const videoTime=camera.currentTime;
+    if(inputFrame.width!==camera.videoWidth||inputFrame.height!==camera.videoHeight){
+     inputFrame.width=camera.videoWidth;inputFrame.height=camera.videoHeight;
+     smoothedEyes.fill(null);
+    }
+    if(!inputCtx)throw Error('No se pudo preparar el fotograma de cámara');
+    inputCtx.drawImage(camera,0,0,inputFrame.width,inputFrame.height);
+    const result=tracker.detectForVideo(inputFrame,performance.now());
+    lastTime=videoTime;
+    const face=result.faceLandmarks?.[0];
+    if(!face){smoothedEyes.fill(null);}
+    paint(face||null,inputFrame);
+    faceStatus.textContent=face?'Rostro detectado · imagen y efecto sincronizados':'Buscando rostro…';
+   }
+  }catch(err){
+   enabled=false;restoreLivePreview();
+   faceStatus.textContent='Error de seguimiento: '+err.message;
+   return;
+  }
+ }else{
+  lastTime=-1;restoreLivePreview();
  }
  raf=requestAnimationFrame(tick);
 }
@@ -236,12 +271,12 @@ document.getElementById('faceStart').onclick=async()=>{
   let vision;try{vision=await import('./klk-face-assets/vision_bundle.mjs');}catch(localError){faceStatus.textContent='Detector local no disponible; probando respaldo…';try{vision=await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/+esm');}catch(primaryError){vision=await import('https://esm.sh/@mediapipe/tasks-vision@0.10.22');}}
   let files;try{files=await vision.FilesetResolver.forVisionTasks('./klk-face-assets/wasm');}catch(localWasmError){files=await vision.FilesetResolver.forVisionTasks('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/wasm');}
   tracker=await vision.FaceLandmarker.createFromOptions(files,{baseOptions:{modelAssetPath:'./klk-face-assets/face_landmarker.task',delegate:'CPU'},runningMode:'VIDEO',numFaces:1,refineLandmarks:true});
-  enabled=true;lastTime=-1;lastGoodFace=null;smoothedEyes.fill(null);faceStatus.textContent='Seguimiento activo. Activa la cámara si está apagada.';tick();
+  enabled=true;lastTime=-1;smoothedEyes.fill(null);faceStatus.textContent='Seguimiento activo. Activa la cámara si está apagada.';tick();
  }catch(e){faceStatus.textContent='No se pudo activar: '+e.message;}
 };
-document.getElementById('faceOff').onclick=()=>{enabled=false;cancelAnimationFrame(raf);paint(null);smoothedEyes.fill(null);lastGoodFace=null;faceStatus.textContent='Seguimiento desactivado.';};
+document.getElementById('faceOff').onclick=()=>{enabled=false;cancelAnimationFrame(raf);restoreLivePreview();faceStatus.textContent='Seguimiento desactivado.';};
 document.querySelectorAll('[data-eye]').forEach(button=>button.onclick=()=>{eyeColor=button.dataset.eye;document.querySelectorAll('[data-eye]').forEach(b=>b.classList.toggle('active',b===button));});
 document.querySelectorAll('[data-hair]').forEach(button=>button.onclick=()=>{hairStyle=button.dataset.hair;document.querySelectorAll('[data-hair]').forEach(b=>b.classList.toggle('active',b===button));});
 document.getElementById('hairColor').oninput=e=>{hairColor=e.target.value;};
-window.addEventListener('pagehide',()=>{enabled=false;cancelAnimationFrame(raf);tracker?.close();});
+window.addEventListener('pagehide',()=>{enabled=false;cancelAnimationFrame(raf);restoreLivePreview();tracker?.close();});
 </script></body></html>
