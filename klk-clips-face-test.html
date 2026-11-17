@@ -5,6 +5,7 @@ const irisGroups=[[468,469,470,471,472],[473,474,475,476,477]];
 const smoothedEyes=[null,null];
 let missedFrames=0,lastGoodFace=null,lastGoodAt=0;
 const HOLD_MS=180,RESET_MS=900;
+// Track gaze relative to each moving eye, rather than smoothing absolute screen pixels.
 function paint(landmarks){
  const box=layer.getBoundingClientRect(),w=Math.round(box.width),h=Math.round(box.height);
  if(layer.width!==w||layer.height!==h){layer.width=w;layer.height=h;smoothedEyes.fill(null);}
@@ -20,20 +21,34 @@ function paint(landmarks){
   if(radius<2||radius>Math.min(w,h)*.12){smoothedEyes[eye]=null;return;}
   const ringX=(Math.max(...ring.map(p=>p.x))-Math.min(...ring.map(p=>p.x)))/2;
   const ringY=(Math.max(...ring.map(p=>p.y))-Math.min(...ring.map(p=>p.y)))/2;
-  const previous=smoothedEyes[eye],next={x:center.x,y:center.y,r:radius,rx:Math.max(1,ringX),ry:Math.max(1,ringY)};
+  const corners=(eye===0?[33,133]:[362,263]).map(i=>pt(landmarks[i]));
+  const upper=pt(landmarks[eye===0?159:386]),lower=pt(landmarks[eye===0?145:374]);
+  const mid={x:(corners[0].x+corners[1].x)/2,y:(upper.y+lower.y)/2};
+  const axis={x:corners[1].x-corners[0].x,y:corners[1].y-corners[0].y};
+  const eyeWidth=Math.hypot(axis.x,axis.y);
+  if(eyeWidth<8){return;}
+  const ux=axis.x/eyeWidth,uy=axis.y/eyeWidth;
+  const vx=-uy,vy=ux;
+  const eyeHeight=Math.max(3,Math.abs(lower.y-upper.y));
+  const dx=center.x-mid.x,dy=center.y-mid.y;
+  const measuredU=Math.max(-.38,Math.min(.38,(dx*ux+dy*uy)/eyeWidth));
+  const measuredV=Math.max(-.35,Math.min(.35,(dx*vx+dy*vy)/eyeHeight));
+  const previous=smoothedEyes[eye];
+  const next={u:measuredU,v:measuredV,r:radius,rx:Math.max(1,ringX),ry:Math.max(1,ringY)};
   if(previous){
-   const jump=Math.hypot(previous.x-next.x,previous.y-next.y);
-   const maxStep=Math.max(2,radius*.65);
-   if(jump>maxStep){const t=maxStep/jump;next.x=previous.x+(next.x-previous.x)*t;next.y=previous.y+(next.y-previous.y)*t;}
-   const alpha=.48;
-   next.x=previous.x*(1-alpha)+next.x*alpha;
-   next.y=previous.y*(1-alpha)+next.y*alpha;
-   next.r=previous.r*(1-alpha)+next.r*alpha;
-   next.rx=previous.rx*(1-alpha)+next.rx*alpha;
-   next.ry=previous.ry*(1-alpha)+next.ry*alpha;
+   // Reject isolated gaze spikes without delaying the movement of the whole face.
+   const du=Math.max(-.10,Math.min(.10,next.u-previous.u));
+   const dv=Math.max(-.12,Math.min(.12,next.v-previous.v));
+   next.u=previous.u+du*.62;
+   next.v=previous.v+dv*.62;
+   next.r=previous.r*.65+next.r*.35;
+   next.rx=previous.rx*.65+next.rx*.35;
+   next.ry=previous.ry*.65+next.ry*.35;
   }
   smoothedEyes[eye]=next;
-  const {x,y,r}=next;
+  const x=mid.x+ux*next.u*eyeWidth+vx*next.v*eyeHeight;
+  const y=mid.y+uy*next.u*eyeWidth+vy*next.v*eyeHeight;
+  const r=next.r;
   ctx.save();
   // Keep eyelids, real pupil, iris texture and highlights visible.
   // Soft elliptical iris avoids the hard, neon-blue contact-lens appearance.
