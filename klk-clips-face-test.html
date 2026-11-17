@@ -2,27 +2,42 @@
 const camera=document.getElementById('camera'),layer=document.getElementById('faceLayer'),ctx=layer.getContext('2d'),faceStatus=document.getElementById('faceStatus');
 let tracker=null,enabled=false,eyeColor='none',raf=0,lastTime=-1;
 const irisGroups=[[468,469,470,471,472],[473,474,475,476,477]];
+const smoothedEyes=[null,null];
+let missedFrames=0;
 function paint(landmarks){
  const box=layer.getBoundingClientRect(),w=Math.round(box.width),h=Math.round(box.height);
- if(layer.width!==w||layer.height!==h){layer.width=w;layer.height=h;}
+ if(layer.width!==w||layer.height!==h){layer.width=w;layer.height=h;smoothedEyes.fill(null);}
  ctx.clearRect(0,0,w,h);
  if(!landmarks||eyeColor==='none'||!camera.videoWidth)return;
  const vw=camera.videoWidth,vh=camera.videoHeight,scale=Math.max(w/vw,h/vh),offsetX=(w-vw*scale)/2,offsetY=(h-vh*scale)/2;
  const mirror=camera.classList.contains('front');
  const pt=p=>({x:mirror?w-(p.x*vw*scale+offsetX):p.x*vw*scale+offsetX,y:p.y*vh*scale+offsetY});
- for(const ids of irisGroups){
-  if(ids.some(i=>!landmarks[i]))continue;
+ irisGroups.forEach((ids,eye)=>{
+  if(ids.some(i=>!landmarks[i])){smoothedEyes[eye]=null;return;}
   const center=pt(landmarks[ids[0]]),ring=ids.slice(1).map(i=>pt(landmarks[i]));
-  const radius=Math.max(2,ring.reduce((sum,p)=>sum+Math.hypot(p.x-center.x,p.y-center.y),0)/ring.length);
-  ctx.save();ctx.beginPath();ctx.arc(center.x,center.y,radius*1.04,0,Math.PI*2);ctx.clip();
-  ctx.globalAlpha=.63;ctx.fillStyle=eyeColor;ctx.beginPath();ctx.arc(center.x,center.y,radius,0,Math.PI*2);ctx.fill();
-  ctx.globalAlpha=1;ctx.fillStyle='#111';ctx.beginPath();ctx.arc(center.x,center.y,radius*.38,0,Math.PI*2);ctx.fill();ctx.restore();
- }
+  const radius=ring.reduce((sum,p)=>sum+Math.hypot(p.x-center.x,p.y-center.y),0)/ring.length;
+  if(radius<2||radius>Math.min(w,h)*.12){smoothedEyes[eye]=null;return;}
+  const previous=smoothedEyes[eye],next={x:center.x,y:center.y,r:radius};
+  if(previous&&Math.hypot(previous.x-next.x,previous.y-next.y)<radius*3){
+   const alpha=.38;
+   next.x=previous.x*(1-alpha)+next.x*alpha;
+   next.y=previous.y*(1-alpha)+next.y*alpha;
+   next.r=previous.r*(1-alpha)+next.r*alpha;
+  }
+  smoothedEyes[eye]=next;
+  const {x,y,r}=next;
+  ctx.save();
+  // Color only the iris ring: preserve the real pupil and natural reflections.
+  ctx.beginPath();ctx.arc(x,y,r*.93,0,Math.PI*2);ctx.arc(x,y,r*.43,0,Math.PI*2,true);ctx.clip('evenodd');
+  const gradient=ctx.createRadialGradient(x,y,r*.42,x,y,r*.94);
+  gradient.addColorStop(0,eyeColor);gradient.addColorStop(.75,eyeColor);gradient.addColorStop(1,'transparent');
+  ctx.globalAlpha=.42;ctx.fillStyle=gradient;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();ctx.restore();
+ });
 }
 function tick(){
  if(!enabled)return;
  if(camera.readyState>=2&&camera.videoWidth){
-  try{if(camera.currentTime!==lastTime){const result=tracker.detectForVideo(camera,performance.now());lastTime=camera.currentTime;const face=result.faceLandmarks?.[0];paint(face);faceStatus.textContent=face?'Rostro detectado · seguimiento activo':'Buscando rostro…';}}
+  try{if(camera.currentTime!==lastTime){const result=tracker.detectForVideo(camera,performance.now());lastTime=camera.currentTime;const face=result.faceLandmarks?.[0];if(!face){missedFrames++;if(missedFrames>=3){smoothedEyes.fill(null);paint(null);}}else{missedFrames=0;paint(face);}faceStatus.textContent=face?'Rostro detectado · seguimiento activo':'Buscando rostro…';}}
   catch(err){faceStatus.textContent='Error de seguimiento: '+err.message;enabled=false;return;}
  }
  raf=requestAnimationFrame(tick);
