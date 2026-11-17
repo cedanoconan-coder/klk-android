@@ -21,7 +21,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p klk-face-assets/wasm
-          npm install --prefix /tmp/klk-vendor --no-save --ignore-scripts @mediapipe/tasks-vision@0.10.22
+          npm install --prefix /tmp/klk-vendor --no-save --ignore-scripts @mediapipe/tasks-vision@0.10.21
           cp /tmp/klk-vendor/node_modules/@mediapipe/tasks-vision/vision_bundle.mjs klk-face-assets/vision_bundle.mjs
           cp /tmp/klk-vendor/node_modules/@mediapipe/tasks-vision/wasm/* klk-face-assets/wasm/
           curl --fail --location --retry 3 'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task' -o klk-face-assets/face_landmarker.task
