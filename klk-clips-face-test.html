@@ -54,14 +54,35 @@ function paint(landmarks){
   // Feather outer boundary; the central pupil remains completely untouched.
   // Normalize gradient to the fitted iris ellipse so it follows eye perspective.
   ctx.translate(x,y);ctx.scale(rx,ry);ctx.translate(-x,-y);
-  const gradient=ctx.createRadialGradient(x,y,.40,x,y,.98);
+  const gradient=ctx.createRadialGradient(x,y,.34,x,y,.99);
   gradient.addColorStop(0,'transparent');
-  gradient.addColorStop(.18,eyeColor);
-  gradient.addColorStop(.65,eyeColor);
+  gradient.addColorStop(.14,eyeColor);
+  gradient.addColorStop(.55,eyeColor);
+  gradient.addColorStop(.87,eyeColor);
   gradient.addColorStop(1,'transparent');
   ctx.globalCompositeOperation='soft-light';
-  ctx.globalAlpha=.46;
+  ctx.globalAlpha=.55;
   ctx.fillStyle=gradient;
+  ctx.beginPath();ctx.arc(x,y,1,0,Math.PI*2);ctx.fill();
+  // Very subtle radial iris fibers, under the natural image highlights.
+  // Avoid an opaque, perfectly uniform colored disc.
+  ctx.globalAlpha=.10;
+  ctx.strokeStyle=eyeColor;
+  ctx.lineWidth=.018;
+  for(let j=0;j<48;j++){
+   const angle=j*Math.PI/24,inner=.43+(j%5)*.012,outer=.79+(j%7)*.019;
+   ctx.beginPath();
+   ctx.moveTo(x+Math.cos(angle)*inner,y+Math.sin(angle)*inner);
+   ctx.lineTo(x+Math.cos(angle)*outer,y+Math.sin(angle)*outer);
+   ctx.stroke();
+  }
+  // Feathered limbal shading adds depth while preserving the original pupil.
+  const rim=ctx.createRadialGradient(x,y,.74,x,y,1);
+  rim.addColorStop(0,'transparent');
+  rim.addColorStop(.7,'rgba(18,12,24,.22)');
+  rim.addColorStop(1,'transparent');
+  ctx.globalAlpha=.25;
+  ctx.fillStyle=rim;
   ctx.beginPath();ctx.arc(x,y,1,0,Math.PI*2);ctx.fill();
   ctx.restore();
  });
