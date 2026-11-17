@@ -3062,8 +3062,9 @@ function getMediaMimeType(file){
 }
 async function uploadMedia(file, type, durationSeconds = null) {
  const user = auth && auth.currentUser;
- if (!user || !activeConversationId) { $("chatStatus").textContent = "Abre una conversación privada antes de compartir archivos."; return; }
- if (!file || sending) return;
+ if (!user || !activeConversationId) { throw new Error("Abre una conversación privada antes de compartir archivos."); }
+ if (!file) throw new Error("Selecciona un archivo para enviar.");
+ if (sending) throw new Error("Espera a que termine el envío anterior.");
  const detectedMime=getMediaMimeType(file);
  const normalizedFile=file.type===detectedMime?file:new File([file],file.name||"archivo",{type:detectedMime,lastModified:file.lastModified||Date.now()});
  const isVideo = type === "file" && detectedMime.startsWith("video/");
@@ -3097,9 +3098,11 @@ async function uploadMedia(file, type, durationSeconds = null) {
   if(type==="audio")void playVoiceFeedbackSound("sent");
   await sendKlkPushForMessage(activeConversationId,sentMessage.id);
   $("chatStatus").textContent = type === "image" ? "Foto enviada." : type==="file"?(isVideo?"Video enviado.":"Documento enviado."):"Audio enviado.";
+  return sentMessage.id;
  } catch(error) {
   console.error("Error al enviar archivo:", error);
   $("chatStatus").textContent = "No se pudo enviar el archivo: " + (error.message || "Error desconocido");
+  throw error;
  } finally {
   sending = false; $("send").disabled = false; $("pickPhoto").disabled = false; $("takePhoto").disabled = false; $("recordAudio").disabled = false; $("sendAudio").disabled = !audioBlob;
  }
