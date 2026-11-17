@@ -53,7 +53,7 @@ let tracker=null,enabled=false,eyeColor='none',raf=0,lastTime=-1;
 const irisGroups=[[468,469,470,471,472],[473,474,475,476,477]];
 const smoothedEyes=[null,null];
 let missedFrames=0,lastGoodFace=null,lastGoodAt=0;
-const HOLD_MS=180,RESET_MS=900;
+const HOLD_MS=0,RESET_MS=900;
 const irisTextures=new Map();
 function irisTexture(color){
  if(irisTextures.has(color))return irisTextures.get(color);
@@ -121,8 +121,9 @@ function paint(landmarks){
    next.ry=previous.ry*.65+next.ry*.35;
   }
   smoothedEyes[eye]=next;
-  const x=mid.x+ux*next.u*eyeWidth+vx*next.v*eyeHeight;
-  const y=mid.y+uy*next.u*eyeWidth+vy*next.v*eyeHeight;
+  // Use the current frame's measured iris center, never a delayed eye-relative center.
+  const x=center.x;
+  const y=center.y;
   const r=next.r;
   ctx.save();
   // Keep eyelids, real pupil, iris texture and highlights visible.
@@ -131,12 +132,13 @@ function paint(landmarks){
   if(eyelidIds.some(i=>!landmarks[i])){ctx.restore();return;}
   const lids=eyelidIds.map(i=>pt(landmarks[i]));
   const opening=Math.abs(lids[2].y-lids[3].y);
-  if(opening<r*.55){ctx.restore();return;}
+  if(opening<r*.85){ctx.restore();return;}
   // Clip the tint to the actual opening between upper and lower eyelids.
   // A small inset keeps the color away from the eyelid edge even when looking sideways.
   const contour=eye===0?[33,160,158,133,153,144]:[362,385,387,263,373,380];
   if(contour.some(i=>!landmarks[i])){ctx.restore();return;}
-  const boundary=contour.map(i=>pt(landmarks[i])).map(p=>({x:x+(p.x-x)*.93,y:y+(p.y-y)*.90}));
+  // Eyelid opening is a separate mask: never shift its landmarks toward the iris.
+  const boundary=contour.map(i=>pt(landmarks[i]));
   ctx.beginPath();
   const first=boundary[0],last=boundary[boundary.length-1];
   ctx.moveTo((last.x+first.x)/2,(last.y+first.y)/2);
@@ -145,9 +147,10 @@ function paint(landmarks){
   // Fit each iris independently to its detected width and height, not a fixed circle.
   // Preserve the natural eye: only tint the iris, not the pupil or eyelids.
   // Shrink the detected ring slightly to avoid an artificial contact-lens rim.
-  const rx=Math.max(1,Math.min(r*1.03,next.rx*.89));
-  const ry=Math.max(1,Math.min(r*1.03,next.ry*.89));
-  ctx.beginPath();ctx.ellipse(x,y,rx,ry,0,0,Math.PI*2);ctx.clip();
+  // Keep the texture inside the actual current-frame iris ring, including perspective.
+  const rx=Math.max(1,Math.min(r*1.03,ringX*.87));
+  const ry=Math.max(1,Math.min(r*1.03,ringY*.87));
+  ctx.beginPath();ctx.ellipse(x,y,rx,ry,Math.atan2(uy,ux),0,Math.PI*2);ctx.clip();
   // Texture follows the eye axis and preserves highlights.
   ctx.translate(x,y);ctx.rotate(Math.atan2(uy,ux));
   ctx.globalCompositeOperation='soft-light';ctx.globalAlpha=.75;
@@ -160,7 +163,7 @@ function paint(landmarks){
 function tick(){
  if(!enabled)return;
  if(camera.readyState>=2&&camera.videoWidth){
-  try{if(camera.currentTime!==lastTime){const result=tracker.detectForVideo(camera,performance.now());lastTime=camera.currentTime;const face=result.faceLandmarks?.[0];if(!face){missedFrames++;const age=performance.now()-lastGoodAt;if(lastGoodFace&&age<HOLD_MS)paint(lastGoodFace);else paint(null);if(age>RESET_MS){smoothedEyes.fill(null);lastGoodFace=null;}}else{missedFrames=0;lastGoodFace=face;lastGoodAt=performance.now();paint(face);}faceStatus.textContent=face?'Rostro detectado · seguimiento activo':'Buscando rostro…';}}
+  try{if(camera.currentTime!==lastTime){const result=tracker.detectForVideo(camera,performance.now());lastTime=camera.currentTime;const face=result.faceLandmarks?.[0];if(!face){missedFrames++;const age=performance.now()-lastGoodAt;paint(null);if(age>RESET_MS){smoothedEyes.fill(null);lastGoodFace=null;}}else{missedFrames=0;lastGoodFace=face;lastGoodAt=performance.now();paint(face);}faceStatus.textContent=face?'Rostro detectado · seguimiento activo':'Buscando rostro…';}}
   catch(err){faceStatus.textContent='Error de seguimiento: '+err.message;enabled=false;return;}
  }
  raf=requestAnimationFrame(tick);
