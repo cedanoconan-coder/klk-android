@@ -2722,17 +2722,17 @@ function loadMessages() {
      const url = data.storagePath ? await getMediaUrl(data.storagePath, data.storagePath.startsWith("dm/") ? (data.conversationId || activeConversationId) : null) : data.mediaUrl;
      placeholder.remove();
      if (data.type === "image") {
-      if((data.mimeType||"").startsWith("video/")){const video=document.createElement("video");video.src=url;video.controls=true;video.preload="metadata";video.playsInline=true;item.appendChild(video);}
+      if((data.mimeType||"").startsWith("video/")){const video=document.createElement("video");video.src=url;video.controls=true;video.preload="none";video.playsInline=true;item.appendChild(video);}
       else { const img = document.createElement("img"); img.src = url; img.alt = "Foto compartida"; img.loading = "lazy"; img.decoding = "async"; item.appendChild(img); }
      }
-     else if(data.type==="file"&&(data.mimeType||"").startsWith("video/")){const video=document.createElement("video");video.src=url;video.controls=true;video.preload="metadata";video.playsInline=true;item.appendChild(video);} else if(data.type==="file"){const link=document.createElement("a");link.href=url;link.target="_blank";link.rel="noopener";link.textContent="📄 "+(data.fileName||"Abrir documento");item.appendChild(link);}
+     else if(data.type==="file"&&(data.mimeType||"").startsWith("video/")){const video=document.createElement("video");video.src=url;video.controls=true;video.preload="none";video.playsInline=true;item.appendChild(video);} else if(data.type==="file"){const link=document.createElement("a");link.href=url;link.target="_blank";link.rel="noopener";link.textContent="📄 "+(data.fileName||"Abrir documento");item.appendChild(link);}
      else {
       const layout=document.createElement("div");layout.className="voiceMessageLayout";
       const avatar=document.createElement("img");avatar.className="voiceMessageAvatar";avatar.alt="Foto de perfil del remitente";
       avatar.src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='32' fill='%23e7eeeb'/%3E%3Ctext x='32' y='44' text-anchor='middle' font-size='34'%3E%F0%9F%91%A4%3C/text%3E%3C/svg%3E";
       if(senderProfile&&senderProfile.photoPath){try{const avatarUrl=await getMediaUrl(senderProfile.photoPath);if(avatarUrl)avatar.src=avatarUrl;}catch(e){console.warn("No se pudo cargar el avatar de la nota de voz:",e);}}
       const player=document.createElement("div");player.className="voicePlayer";
-      const audio=document.createElement("audio");audio.preload="metadata";audio.src=url;
+      const audio=document.createElement("audio");audio.preload="none";audio.src=url;
       const play=document.createElement("button");play.type="button";play.className="voicePlayButton";play.textContent="▶";play.setAttribute("aria-label","Reproducir nota de voz");
       const main=document.createElement("div");main.className="voicePlayerMain";
       const waveform=document.createElement("div");waveform.className="voiceWaveform";waveform.setAttribute("role","slider");waveform.setAttribute("tabindex","0");waveform.setAttribute("aria-label","Progreso de la nota de voz");waveform.setAttribute("aria-valuemin","0");waveform.setAttribute("aria-valuemax","100");waveform.setAttribute("aria-valuenow","0");
