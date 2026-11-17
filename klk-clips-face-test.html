@@ -66,24 +66,39 @@ function irisTexture(color){
  if(irisTextures.has(color))return irisTextures.get(color);
  const c=document.createElement('canvas');c.width=c.height=256;
  const g=c.getContext('2d'),cx=128,cy=128;
- const base=g.createRadialGradient(cx,cy,28,cx,cy,126);
- base.addColorStop(0,'rgba(0,0,0,0)');base.addColorStop(.30,color);
- base.addColorStop(.74,color);base.addColorStop(.90,'rgba(12,14,22,.7)');
- base.addColorStop(1,'rgba(0,0,0,0)');
- g.fillStyle=base;g.beginPath();g.arc(cx,cy,126,0,Math.PI*2);g.fill();
+ const hex=(color.match(/^#([0-9a-f]{6})$/i)||[])[1]||'42a5f5';
+ const channels=[0,2,4].map(i=>parseInt(hex.slice(i,i+2),16));
+ const tint=channels.join(',');
+ const glow=channels.map(n=>Math.round(n+(255-n)*.58)).join(',');
+ const shadow=channels.map(n=>Math.round(n*.42)).join(',');
+ const iris=g.createRadialGradient(cx,cy,28,cx,cy,126);
+ iris.addColorStop(0,'rgba(0,0,0,0)');
+ iris.addColorStop(.29,'rgba(0,0,0,0)');
+ iris.addColorStop(.36,'rgba('+glow+',.94)');
+ iris.addColorStop(.57,'rgba('+tint+',.98)');
+ iris.addColorStop(.82,'rgba('+shadow+',.96)');
+ iris.addColorStop(.94,'rgba(5,10,20,.98)');
+ iris.addColorStop(1,'rgba(0,0,0,0)');
+ g.fillStyle=iris;g.beginPath();g.arc(cx,cy,126,0,Math.PI*2);g.fill();
  let seed=73;const rand=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};
- for(let i=0;i<320;i++){
-  const a=i*Math.PI*2/320+(rand()-.5)*.025;
-  const inner=35+rand()*15,outer=94+rand()*27;
+ // Fine radial fibers create the layered, natural iris shape.
+ for(let i=0;i<420;i++){
+  const a=i*Math.PI*2/420+(rand()-.5)*.02;
+  const inner=39+rand()*17,outer=99+rand()*19;
+  const bend=a+(rand()-.5)*.065;
   g.beginPath();g.moveTo(cx+Math.cos(a)*inner,cy+Math.sin(a)*inner);
-  const bend=a+(rand()-.5)*.08;
   g.quadraticCurveTo(cx+Math.cos(bend)*((inner+outer)/2),cy+Math.sin(bend)*((inner+outer)/2),cx+Math.cos(a)*outer,cy+Math.sin(a)*outer);
-  g.strokeStyle=i%3===0?'rgba(8,12,22,.26)':'rgba(255,255,255,.18)';
-  g.lineWidth=.4+rand()*1.2;g.stroke();
+  const bright=i%5===0;
+  g.strokeStyle=bright?'rgba(224,250,255,.68)':(i%2?'rgba(5,14,28,.4)':'rgba('+glow+',.44)');
+  g.lineWidth=.45+rand()*1.15;g.stroke();
  }
+ // A subtle inner iris ring gives the pupil a clean, defined edge.
+ g.beginPath();g.arc(cx,cy,42,0,Math.PI*2);
+ g.strokeStyle='rgba(4,10,20,.82)';g.lineWidth=4;g.stroke();
+ // Keep the real pupil and its reflections visible beneath the overlay.
  g.globalCompositeOperation='destination-out';
- const pupil=g.createRadialGradient(cx,cy,26,cx,cy,45);
- pupil.addColorStop(0,'rgba(0,0,0,1)');pupil.addColorStop(.7,'rgba(0,0,0,1)');pupil.addColorStop(1,'rgba(0,0,0,0)');
+ const pupil=g.createRadialGradient(cx,cy,29,cx,cy,45);
+ pupil.addColorStop(0,'rgba(0,0,0,1)');pupil.addColorStop(.78,'rgba(0,0,0,1)');pupil.addColorStop(1,'rgba(0,0,0,0)');
  g.fillStyle=pupil;g.beginPath();g.arc(cx,cy,46,0,Math.PI*2);g.fill();
  irisTextures.set(color,c);return c;
 }
@@ -222,14 +237,14 @@ function paint(landmarks,frame=null){
   // Preserve the natural eye: only tint the iris, not the pupil or eyelids.
   // Shrink the detected ring slightly to avoid an artificial contact-lens rim.
   // Keep the texture inside the actual current-frame iris ring, including perspective.
-  const rx=Math.max(1,Math.min(r*1.03,next.rx*.87));
-  const ry=Math.max(1,Math.min(r*1.03,next.ry*.87));
+  const rx=Math.max(1,Math.min(r*.90,next.rx*.78));
+  const ry=Math.max(1,Math.min(r*.90,next.ry*.78));
   ctx.beginPath();ctx.ellipse(x,y,rx,ry,Math.atan2(uy,ux),0,Math.PI*2);ctx.clip();
   // Texture follows the eye axis and preserves highlights.
   ctx.translate(x,y);ctx.rotate(Math.atan2(uy,ux));
-  ctx.globalCompositeOperation='soft-light';ctx.globalAlpha=.75;
+  ctx.globalCompositeOperation='soft-light';ctx.globalAlpha=.85;
   ctx.drawImage(irisTexture(eyeColor),-rx,-ry,rx*2,ry*2);
-  ctx.globalCompositeOperation='source-over';ctx.globalAlpha=.18;
+  ctx.globalCompositeOperation='source-over';ctx.globalAlpha=.24;
   ctx.drawImage(irisTexture(eyeColor),-rx,-ry,rx*2,ry*2);
   ctx.restore();
  });
