@@ -82,13 +82,13 @@
     const send=document.createElement("button");send.type="button";send.textContent="➤ Enviar";
     for(const b of [repeat,send])Object.assign(b.style,{border:"0",borderRadius:"24px",padding:"13px 22px",background:"#fff",color:"#111",fontSize:"16px",fontWeight:"600"});
     repeat.onclick=()=>{clearPendingPhoto();status("Cámara lista");};
-    send.onclick=async()=>{if(!pendingPhoto)return;send.disabled=true;repeat.disabled=true;status("Enviando foto…");const ok=await sendFile(pendingPhoto);if(!ok&&overlay){send.disabled=false;repeat.disabled=false;status("No se pudo enviar. Puedes reintentar o repetir la foto.");}};
+    send.onclick=async()=>{if(!pendingPhoto)return;send.disabled=true;repeat.disabled=true;status("Enviando foto…");const ok=await sendFile(pendingPhoto);if(!ok&&overlay){send.disabled=false;repeat.disabled=false;status("No se pudo enviar. "+(window.klkLastMediaUploadError||"Puedes reintentar o repetir la foto."));}};
     previewActions.append(repeat,send);overlay.appendChild(previewActions);
     status("Foto lista para enviar");
    },"image/jpeg",.92);
   }catch(e){status("No se pudo capturar la foto: "+(e.message||"error"));}
 }
- async function sendFile(file,seconds=null){try{if(typeof window.uploadMedia!=="function")throw new Error("El envío multimedia no está disponible. Recarga KLK.");await window.uploadMedia(file,file.type.startsWith("image/")?"image":"file",seconds);if(!document.body.contains(overlay))return;if(!file.type.startsWith("image/"))status("Archivo enviado al chat");if(file.type.startsWith("image/")){close();return;}if(mode==="note"||mode==="video")close();return true;}catch(e){status(e.message||"No se pudo enviar el archivo.");return false;}}
+ async function sendFile(file,seconds=null){try{if(typeof window.uploadMedia!=="function")throw new Error("El envío multimedia no está disponible. Recarga KLK.");window.klkLastMediaUploadError="";await window.uploadMedia(file,file.type.startsWith("image/")?"image":"file",seconds);if(!document.body.contains(overlay))return;if(!file.type.startsWith("image/"))status("Archivo enviado al chat");if(file.type.startsWith("image/")){close();return;}if(mode==="note"||mode==="video")close();return true;}catch(e){window.klkLastMediaUploadError=e.message||"No se pudo enviar el archivo.";status(window.klkLastMediaUploadError);return false;}}
  document.addEventListener("click",function(event){const button=event.target.closest&&event.target.closest("#takePhoto,#shareCamera");if(!button)return;event.preventDefault();event.stopImmediatePropagation();close();build();startStream();},{capture:true});
  window.klkOpenChatCamera=function(){close();build();startStream();};
  window.addEventListener("pagehide",()=>{if(stream)stopStream();});
