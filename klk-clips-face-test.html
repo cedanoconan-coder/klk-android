@@ -27,11 +27,26 @@ function paint(landmarks){
   smoothedEyes[eye]=next;
   const {x,y,r}=next;
   ctx.save();
-  // Color only the iris ring: preserve the real pupil and natural reflections.
-  ctx.beginPath();ctx.arc(x,y,r*.93,0,Math.PI*2);ctx.arc(x,y,r*.43,0,Math.PI*2,true);ctx.clip('evenodd');
-  const gradient=ctx.createRadialGradient(x,y,r*.42,x,y,r*.94);
-  gradient.addColorStop(0,eyeColor);gradient.addColorStop(.75,eyeColor);gradient.addColorStop(1,'transparent');
-  ctx.globalAlpha=.42;ctx.fillStyle=gradient;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();ctx.restore();
+  // Keep eyelids, real pupil, iris texture and highlights visible.
+  // Soft elliptical iris avoids the hard, neon-blue contact-lens appearance.
+  const eyelidIds=eye===0?[33,133,159,145]:[362,263,386,374];
+  if(eyelidIds.some(i=>!landmarks[i])){ctx.restore();return;}
+  const lids=eyelidIds.map(i=>pt(landmarks[i]));
+  const opening=Math.abs(lids[2].y-lids[3].y);
+  if(opening<r*.55){ctx.restore();return;}
+  const rx=r*.91,ry=r*.88;
+  ctx.beginPath();ctx.ellipse(x,y,rx,ry,0,0,Math.PI*2);ctx.clip();
+  // Feather outer boundary; the central pupil remains completely untouched.
+  const gradient=ctx.createRadialGradient(x,y,r*.40,x,y,r*.95);
+  gradient.addColorStop(0,'transparent');
+  gradient.addColorStop(.18,eyeColor);
+  gradient.addColorStop(.65,eyeColor);
+  gradient.addColorStop(1,'transparent');
+  ctx.globalCompositeOperation='soft-light';
+  ctx.globalAlpha=.46;
+  ctx.fillStyle=gradient;
+  ctx.beginPath();ctx.ellipse(x,y,rx,ry,0,0,Math.PI*2);ctx.fill();
+  ctx.restore();
  });
 }
 function tick(){
