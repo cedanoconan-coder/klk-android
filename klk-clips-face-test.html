@@ -222,8 +222,8 @@ function paint(landmarks,frame=null){
   // Preserve the natural eye: only tint the iris, not the pupil or eyelids.
   // Shrink the detected ring slightly to avoid an artificial contact-lens rim.
   // Keep the texture inside the actual current-frame iris ring, including perspective.
-  const rx=Math.max(1,Math.min(r*1.03,next.rx*.87));
-  const ry=Math.max(1,Math.min(r*1.03,next.ry*.87));
+  const rx=Math.max(1,Math.min(r*.90,next.rx*.78));
+  const ry=Math.max(1,Math.min(r*.90,next.ry*.78));
   ctx.beginPath();ctx.ellipse(x,y,rx,ry,Math.atan2(uy,ux),0,Math.PI*2);ctx.clip();
   // Texture follows the eye axis and preserves highlights.
   ctx.translate(x,y);ctx.rotate(Math.atan2(uy,ux));
