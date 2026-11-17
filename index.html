@@ -1471,6 +1471,7 @@ input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),textarea,se
  </section>
 <div class="klkSettingsList"><details class="klkSettingsItem"><summary><span class="klkSettingsGlyph" aria-hidden="true">👤</span><span class="klkSettingsLabels"><strong>Cuenta y perfil</strong><small>Foto, datos personales y acceso</small></span><span class="klkSettingsChevron" aria-hidden="true">⌄</span></summary><div class="klkSettingsDetail"><button type="button" data-tool-action="profile">Abrir mi perfil</button><button type="button" data-tool-action="settings">Configuración de la cuenta</button></div></details><details class="klkSettingsItem"><summary><span class="klkSettingsGlyph" aria-hidden="true">🔒</span><span class="klkSettingsLabels"><strong>Privacidad y seguridad</strong><small>Bloqueo, protección y mensajes temporales</small></span><span class="klkSettingsChevron" aria-hidden="true">⌄</span></summary><div class="klkSettingsDetail"><p>Revisa las opciones de seguridad disponibles en la configuración.</p><button type="button" data-tool-action="settings">Abrir privacidad y seguridad</button></div></details><details class="klkSettingsItem"><summary><span class="klkSettingsGlyph" aria-hidden="true">💬</span><span class="klkSettingsLabels"><strong>Chats</strong><small>Mensajes, fondos y tamaño de letra</small></span><span class="klkSettingsChevron" aria-hidden="true">⌄</span></summary><div class="klkSettingsDetail"><p>Personaliza la apariencia y el comportamiento de tus conversaciones.</p><button type="button" data-tool-action="settings">Configurar chats</button><button type="button" data-go-tab="chats">Ir a mis chats</button></div></details><details class="klkSettingsItem"><summary><span class="klkSettingsGlyph" aria-hidden="true">🔔</span><span class="klkSettingsLabels"><strong>Notificaciones</strong><small>Sonidos, vibración y avisos</small></span><span class="klkSettingsChevron" aria-hidden="true">⌄</span></summary><div class="klkSettingsDetail"><p>Configura las alertas y los sonidos disponibles.</p><button type="button" data-tool-action="settings">Configurar notificaciones</button></div></details><details class="klkSettingsItem"><summary><span class="klkSettingsGlyph" aria-hidden="true">📞</span><span class="klkSettingsLabels"><strong>Llamadas</strong><small>Historial, audio y videollamadas</small></span><span class="klkSettingsChevron" aria-hidden="true">⌄</span></summary><div class="klkSettingsDetail"><button type="button" data-go-tab="calls">Ver historial de llamadas</button></div></details><details class="klkSettingsItem"><summary><span class="klkSettingsGlyph" aria-hidden="true">🎨</span><span class="klkSettingsLabels"><strong>Apariencia</strong><small>Tema claro u oscuro y fondos</small></span><span class="klkSettingsChevron" aria-hidden="true">⌄</span></summary><div class="klkSettingsDetail"><button type="button" data-tool-action="settings">Personalizar apariencia</button><div class="klkDimmerSettings"><label for="klkDimmerRange"><strong>🌙 Atenuador de pantalla</strong></label><p>Reduce la luminosidad dentro de KLK, especialmente por la noche.</p><div class="klkDimmerRow"><input id="klkDimmerEnabled" type="checkbox" aria-label="Activar atenuador"><label for="klkDimmerEnabled">Activar</label><output id="klkDimmerValue" for="klkDimmerRange">0%</output></div><input id="klkDimmerRange" type="range" min="0" max="60" step="5" value="30" aria-label="Intensidad del atenuador"></div></div></details><details class="klkSettingsItem"><summary><span class="klkSettingsGlyph" aria-hidden="true">👥</span><span class="klkSettingsLabels"><strong>Contactos e invitaciones</strong><small>Invitar personas a KLK</small></span><span class="klkSettingsChevron" aria-hidden="true">⌄</span></summary><div class="klkSettingsDetail"><button type="button" data-tool-action="invite">Invitar a un contacto</button></div></details><details class="klkSettingsItem"><summary><span class="klkSettingsGlyph" aria-hidden="true">🤖</span><span class="klkSettingsLabels"><strong>León</strong><small>Ayuda y diagnóstico de la aplicación</small></span><span class="klkSettingsChevron" aria-hidden="true">⌄</span></summary><div class="klkSettingsDetail"><button type="button" data-tool-action="assistant">Abrir asistente IA</button></div></details></div>
 </section>
+ <section id="klkDataPanel" class="card" hidden style="margin:12px 16px;padding:16px;border-radius:18px" aria-label="Panel privado de consumo de datos"><h3>📊 Control de datos · Desarrollador</h3><p class="hint">Estadísticas locales de este dispositivo, no el consumo total ni la cuota oficial de Supabase.</p><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px"><p>Subidas confirmadas<br><strong id="klkDataUploads">0 MB</strong></p><p>Fotos descargadas<br><strong id="klkDataDownloads">0 MB</strong></p><p>Fotos desde caché<br><strong id="klkDataCacheHits">0</strong></p><p>Archivos subidos<br><strong id="klkDataFiles">0</strong></p></div><p id="klkDataPeriod" class="hint"></p><p class="hint">No incluye el consumo de otros usuarios, videos ni llamadas. Para el total, consulta Supabase.</p><button id="klkDataRefresh" type="button" class="secondary">Actualizar</button><button id="klkDataReset" type="button" class="secondary">Reiniciar contador local</button><a href="https://supabase.com/dashboard/org/nnaozqsizqyggbndfciq/usage" target="_blank" rel="noopener noreferrer">Consumo oficial de Supabase ↗</a></section>
  <section id="assistantPanel" class="homeUtilityPanel" aria-label="Asistente inteligente" hidden>
   <button type="button" class="secondary" data-tool-action="back-tools" aria-label="Volver a herramientas">‹ Volver a herramientas</button>
   <h2>🦁 León · Asistente de KLK</h2>
@@ -1896,7 +1897,7 @@ try {
 } catch (error) { firebaseInitError = error; $("klkSessionLoading").style.display="none"; $("login").style.display="block"; $("status").textContent = "No se pudo iniciar Firebase. Comprueba la conexión a Internet y vuelve a abrir klk. Detalle: " + error.message; }
 // Compartir Firebase con los módulos externos de KLK.
 window.auth = auth || null;
-if(auth)auth.onAuthStateChanged(user=>{const allowed=user?.uid==="BMJ63X7P9oSvv9NuxtNogZ20FIH2";for(const id of ["klkAdminRegistrationLink","klkDeveloperClipsLink"]){const el=document.getElementById(id);if(el)el.style.display=allowed?"block":"none";}});
+if(auth)auth.onAuthStateChanged(user=>{const allowed=user?.uid==="BMJ63X7P9oSvv9NuxtNogZ20FIH2";const panel=document.getElementById("klkDataPanel");if(panel)panel.hidden=!allowed;if(allowed)klkRenderDataUsage();for(const id of ["klkAdminRegistrationLink","klkDeveloperClipsLink"]){const el=document.getElementById(id);if(el)el.style.display=allowed?"block":"none";}});
 window.db = db || null;
 $("authForm").addEventListener("submit", async event => {
  event.preventDefault(); $("status").textContent = "";
@@ -2652,7 +2653,7 @@ async function klkCachedPhotoUrl(path, conversationId, fallbackUrl){
  if(!owner || !path || !fallbackUrl) return fallbackUrl;
  const key=owner+"|"+(conversationId||"")+"|"+path;
  if(klkPhotoCache.has(key)){
-  const entry=klkPhotoCache.get(key);klkPhotoCache.delete(key);klkPhotoCache.set(key,entry);return entry.url;
+  const entry=klkPhotoCache.get(key);klkPhotoCache.delete(key);klkPhotoCache.set(key,entry);klkRecordDataUsage("hits",1);return entry.url;
  }
  try{
   const response=await fetch(fallbackUrl,{credentials:"omit"});
@@ -2664,7 +2665,7 @@ async function klkCachedPhotoUrl(path, conversationId, fallbackUrl){
    const oldest=klkPhotoCache.keys().next().value,entry=klkPhotoCache.get(oldest);
    klkPhotoCache.delete(oldest);klkPhotoCacheBytes-=entry.size;URL.revokeObjectURL(entry.url);
   }
-  klkPhotoCache.set(key,{url,size:blob.size});klkPhotoCacheBytes+=blob.size;
+  klkPhotoCache.set(key,{url,size:blob.size});klkPhotoCacheBytes+=blob.size;klkRecordDataUsage("downloads",blob.size);
   return url;
  }catch(error){return fallbackUrl;} // Browsers may disallow CORS reads; regular image loading still works.
 }
@@ -2675,6 +2676,14 @@ function klkLoadPhotoWhenVisible(img, load){
  },{rootMargin:"150px"});
  observer.observe(img);
 }
+// Local per-device measurements; never represent them as Supabase billing data.
+const KLK_DATA_OWNER="BMJ63X7P9oSvv9NuxtNogZ20FIH2";
+function klkDataKey(){return "klk-owner-usage-v1-"+KLK_DATA_OWNER;}
+function klkReadDataUsage(){try{const d=JSON.parse(localStorage.getItem(klkDataKey())||"{}");return {uploads:Number(d.uploads)||0,downloads:Number(d.downloads)||0,hits:Number(d.hits)||0,files:Number(d.files)||0,since:d.since||new Date().toISOString()};}catch{return {uploads:0,downloads:0,hits:0,files:0,since:new Date().toISOString()};}}
+function klkRenderDataUsage(){if(auth?.currentUser?.uid!==KLK_DATA_OWNER)return;const d=klkReadDataUsage(),format=n=>(n/1048576).toFixed(2)+" MB";for(const [id,value] of Object.entries({klkDataUploads:format(d.uploads),klkDataDownloads:format(d.downloads),klkDataCacheHits:String(d.hits),klkDataFiles:String(d.files),klkDataPeriod:"Contador desde "+new Date(d.since).toLocaleDateString("es-DO")})){const el=document.getElementById(id);if(el)el.textContent=value;}}
+function klkRecordDataUsage(field,amount){if(auth?.currentUser?.uid!==KLK_DATA_OWNER||!["uploads","downloads","hits","files"].includes(field))return;try{const d=klkReadDataUsage();d[field]+=Math.max(0,Number(amount)||0);localStorage.setItem(klkDataKey(),JSON.stringify(d));klkRenderDataUsage();}catch{}}
+document.getElementById("klkDataRefresh")?.addEventListener("click",klkRenderDataUsage);
+document.getElementById("klkDataReset")?.addEventListener("click",()=>{if(auth?.currentUser?.uid!==KLK_DATA_OWNER||!confirm("¿Reiniciar las estadísticas locales?"))return;localStorage.removeItem(klkDataKey());klkRenderDataUsage();});
 window.klkResolveProfilePhoto = (path) => getMediaUrl(path); const mediaUrlPending = new Map();
 const mediaUrlRetryAfter = new Map();
 async function getMediaUrl(path, conversationId = null) {
@@ -3146,6 +3155,7 @@ async function uploadMedia(file, type, durationSeconds = null) {
   $("chatStatus").textContent = type === "image" ? "Subiendo foto..." : type==="audio"?"Subiendo audio...":isVideo?"Subiendo video...":"Subiendo documento...";
   const { error: uploadError } = await getSupabaseClient().storage.from("Chat-media").uploadToSignedUrl(signed.path, signed.token, uploadFile, { contentType: mimeType });
   if (uploadError) throw uploadError;
+  klkRecordDataUsage("uploads",uploadFile.size);klkRecordDataUsage("files",1);
   const sentMessage = await messagesCollection().add({
    type, storagePath: signed.path, ...(activeConversationId ? {conversationId:activeConversationId} : {}), mimeType, fileName: uploadFile.name || (type === "image" ? "foto" : "nota-de-voz"),
    size: uploadFile.size, ...(durationSeconds === null ? {} : {duration:durationSeconds}),
