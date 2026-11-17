@@ -83,30 +83,52 @@ function irisTexture(color){
 }
 // Track gaze relative to each moving eye, rather than smoothing absolute screen pixels.
 function drawHair(landmarks,pt){
- if(hairStyle==='none'||[10,152,234,454,127,356].some(i=>!landmarks[i]))return;
- const top=pt(landmarks[10]),chin=pt(landmarks[152]),left=pt(landmarks[234]),right=pt(landmarks[454]);
- const cx=(left.x+right.x)/2,cy=top.y;
+ if(hairStyle==='none'||[10,152,234,454,127,356,33,263].some(i=>!landmarks[i]))return;
+ const forehead=pt(landmarks[10]),chin=pt(landmarks[152]);
+ const left=pt(landmarks[234]),right=pt(landmarks[454]);
+ const eyeL=pt(landmarks[33]),eyeR=pt(landmarks[263]);
  const width=Math.hypot(right.x-left.x,right.y-left.y);
- const height=Math.hypot(chin.x-top.x,chin.y-top.y);
+ const height=Math.hypot(chin.x-forehead.x,chin.y-forehead.y);
  if(width<25||height<35)return;
  const angle=Math.atan2(right.y-left.y,right.x-left.x);
- ctx.save();ctx.translate(cx,cy);ctx.rotate(angle);
- const rx=width*.60, rise=height*(hairStyle==='short'?.26:.37);
- const gradient=ctx.createLinearGradient(-rx,-rise,rx,rise*.5);
- gradient.addColorStop(0,'#100c0b');gradient.addColorStop(.45,hairColor);gradient.addColorStop(1,'#110e0c');
+ const eyeY=(eyeL.y+eyeR.y)/2;
+ // Landmark 10 is on the forehead, NOT the crown: lift the cap above it.
+ const crownY=forehead.y-height*.23;
+ const hairlineY=forehead.y+height*.035;
+ // Guard against drawing a fringe over the eyes.
+ const safeHairline=Math.min(hairlineY,eyeY-height*.13);
+ const cx=(left.x+right.x)/2;
+ ctx.save();ctx.translate(cx,safeHairline);ctx.rotate(angle);
+ const rx=width*.54, rise=Math.max(height*.24,safeHairline-crownY);
+ const base=hairStyle==='short'?.9:1;
+ const gradient=ctx.createLinearGradient(-rx,-rise,rx,0);
+ gradient.addColorStop(0,'#15100e');gradient.addColorStop(.45,hairColor);gradient.addColorStop(1,'#17100f');
  ctx.fillStyle=gradient;
- ctx.beginPath();ctx.moveTo(-rx*.91,height*.15);
- ctx.bezierCurveTo(-rx*1.15,-rise*.62,-rx*.65,-rise*1.25,0,-rise);
- ctx.bezierCurveTo(rx*.68,-rise*1.3,rx*1.16,-rise*.5,rx*.9,height*.14);
- ctx.quadraticCurveTo(rx*.55,-rise*.16,rx*.25,-rise*.02);
- ctx.quadraticCurveTo(-rx*.2,rise*.4,-rx*.58,rise*.04);
+ ctx.beginPath();
+ ctx.moveTo(-rx*.99,0);
+ ctx.bezierCurveTo(-rx*1.13,-rise*.66,-rx*.65,-rise*1.25,0,-rise*base);
+ ctx.bezierCurveTo(rx*.65,-rise*1.25,rx*1.13,-rise*.68,rx*.99,0);
+ ctx.quadraticCurveTo(rx*.68,-rise*.12,rx*.36,-rise*.06);
+ ctx.quadraticCurveTo(0,-rise*.19,-rx*.36,-rise*.05);
+ ctx.quadraticCurveTo(-rx*.7,-rise*.13,-rx*.99,0);
  ctx.closePath();ctx.fill();
+ // Fine, deterministic strands make the silhouette less like a solid sticker.
+ ctx.lineWidth=Math.max(.5,width*.003);
+ for(let i=0;i<36;i++){
+  const t=(i+.5)/36, x=(t*2-1)*rx*.94;
+  const arch=Math.sqrt(Math.max(0,1-(x/rx)**2));
+  ctx.strokeStyle=i%3===0?'rgba(255,255,255,.13)':'rgba(0,0,0,.22)';
+  ctx.beginPath();ctx.moveTo(x*.72,-rise*(.58+.38*arch));
+  ctx.quadraticCurveTo(x*1.07,-rise*.38,x, -rise*(.03+.10*arch));
+  ctx.stroke();
+ }
  if(hairStyle!=='short'){
-  const length=height*(hairStyle==='long'?.95:.55);
+  const length=height*(hairStyle==='long'?.75:.40);
   for(const side of [-1,1]){
-   ctx.beginPath();ctx.moveTo(side*rx*.78,-rise*.2);
-   ctx.bezierCurveTo(side*rx*1.22,height*.2,side*rx*1.13,length*.7,side*rx*.9,length);
-   ctx.quadraticCurveTo(side*rx*.60,length*.92,side*rx*.72,height*.18);
+   ctx.fillStyle=gradient;ctx.beginPath();
+   ctx.moveTo(side*rx*.83,-rise*.24);
+   ctx.bezierCurveTo(side*rx*1.12,0,side*rx*1.13,length*.7,side*rx*.91,length);
+   ctx.quadraticCurveTo(side*rx*.72,length*.95,side*rx*.78,height*.15);
    ctx.closePath();ctx.fill();
   }
  }
