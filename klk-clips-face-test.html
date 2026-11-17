@@ -53,7 +53,8 @@ let tracker=null,enabled=false,eyeColor='none',raf=0,lastTime=-1;
 const irisGroups=[[468,469,470,471,472],[473,474,475,476,477]];
 const smoothedEyes=[null,null];
 let missedFrames=0,lastGoodFace=null,lastGoodAt=0;
-const HOLD_MS=110,RESET_MS=900;
+const HOLD_MS=150,RESET_MS=900;
+const gazeVelocity=[{u:0,v:0},{u:0,v:0}];
 const irisTextures=new Map();
 function irisTexture(color){
  if(irisTextures.has(color))return irisTextures.get(color);
@@ -112,18 +113,20 @@ function paint(landmarks){
   const next={u:measuredU,v:measuredV,r:radius,rx:Math.max(1,ringX),ry:Math.max(1,ringY)};
   if(previous){
    // Reject isolated gaze spikes without delaying the movement of the whole face.
-   const du=Math.max(-.10,Math.min(.10,next.u-previous.u));
-   const dv=Math.max(-.12,Math.min(.12,next.v-previous.v));
-   next.u=previous.u+du*.62;
-   next.v=previous.v+dv*.62;
+   const du=next.u-previous.u,dv=next.v-previous.v;
+   // Adapt to intentional saccades while damping tiny landmark jitter.
+   const alpha=Math.hypot(du,dv)>.075?.82:.38;
+   next.u=previous.u+Math.max(-.16,Math.min(.16,du))*alpha;
+   next.v=previous.v+Math.max(-.18,Math.min(.18,dv))*alpha;
+   gazeVelocity[eye]={u:next.u-previous.u,v:next.v-previous.v};
    next.r=previous.r*.65+next.r*.35;
    next.rx=previous.rx*.65+next.rx*.35;
    next.ry=previous.ry*.65+next.ry*.35;
   }
   smoothedEyes[eye]=next;
-  // Use the current frame's measured iris center, never a delayed eye-relative center.
-  const x=center.x;
-  const y=center.y;
+  // Reconstruct the iris from eye-local coordinates to suppress screen-space jitter.
+  const x=mid.x+ux*next.u*eyeWidth+vx*next.v*eyeHeight;
+  const y=mid.y+uy*next.u*eyeWidth+vy*next.v*eyeHeight;
   const r=next.r;
   ctx.save();
   // Keep eyelids, real pupil, iris texture and highlights visible.
@@ -132,7 +135,7 @@ function paint(landmarks){
   if(eyelidIds.some(i=>!landmarks[i])){ctx.restore();return;}
   const lids=eyelidIds.map(i=>pt(landmarks[i]));
   const opening=Math.abs(lids[2].y-lids[3].y);
-  if(opening<Math.max(1,r*.18)){ctx.restore();return;}
+  if(opening<Math.max(1,r*.12)){ctx.restore();return;}
   // Clip the tint to the actual opening between upper and lower eyelids.
   // A small inset keeps the color away from the eyelid edge even when looking sideways.
   const contour=eye===0?[33,160,158,133,153,144]:[362,385,387,263,373,380];
@@ -148,8 +151,8 @@ function paint(landmarks){
   // Preserve the natural eye: only tint the iris, not the pupil or eyelids.
   // Shrink the detected ring slightly to avoid an artificial contact-lens rim.
   // Keep the texture inside the actual current-frame iris ring, including perspective.
-  const rx=Math.max(1,Math.min(r*1.03,ringX*.87));
-  const ry=Math.max(1,Math.min(r*1.03,ringY*.87));
+  const rx=Math.max(1,Math.min(r*1.03,next.rx*.87));
+  const ry=Math.max(1,Math.min(r*1.03,next.ry*.87));
   ctx.beginPath();ctx.ellipse(x,y,rx,ry,Math.atan2(uy,ux),0,Math.PI*2);ctx.clip();
   // Texture follows the eye axis and preserves highlights.
   ctx.translate(x,y);ctx.rotate(Math.atan2(uy,ux));
