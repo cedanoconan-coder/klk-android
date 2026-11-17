@@ -34,6 +34,16 @@ function paint(landmarks){
   const lids=eyelidIds.map(i=>pt(landmarks[i]));
   const opening=Math.abs(lids[2].y-lids[3].y);
   if(opening<r*.55){ctx.restore();return;}
+  // Clip the tint to the actual opening between upper and lower eyelids.
+  // A small inset keeps the color away from the eyelid edge even when looking sideways.
+  const contour=eye===0?[33,160,158,133,153,144]:[362,385,387,263,373,380];
+  if(contour.some(i=>!landmarks[i])){ctx.restore();return;}
+  const boundary=contour.map(i=>pt(landmarks[i])).map(p=>({x:x+(p.x-x)*.93,y:y+(p.y-y)*.90}));
+  ctx.beginPath();
+  const first=boundary[0],last=boundary[boundary.length-1];
+  ctx.moveTo((last.x+first.x)/2,(last.y+first.y)/2);
+  boundary.forEach((p,i)=>{const next=boundary[(i+1)%boundary.length];ctx.quadraticCurveTo(p.x,p.y,(p.x+next.x)/2,(p.y+next.y)/2);});
+  ctx.closePath();ctx.clip();
   const rx=r*.91,ry=r*.88;
   ctx.beginPath();ctx.ellipse(x,y,rx,ry,0,0,Math.PI*2);ctx.clip();
   // Feather outer boundary; the central pupil remains completely untouched.
