@@ -3,7 +3,17 @@ const camera=document.getElementById('camera'),layer=document.getElementById('fa
 let tracker=null,enabled=false,eyeColor='none',raf=0,lastTime=-1;
 const irisGroups=[[468,469,470,471,472],[473,474,475,476,477]];
 const smoothedEyes=[null,null];
-let missedFrames=0;
+let missedFrames=0,filteredLandmarks=null;
+function smoothFace(points){
+ if(!filteredLandmarks||filteredLandmarks.length!==points.length){filteredLandmarks=points.map(p=>({...p}));return filteredLandmarks;}
+ const alpha=.43;
+ for(let i=0;i<points.length;i++){
+  const old=filteredLandmarks[i],p=points[i];
+  if(!p)continue;
+  old.x+=(p.x-old.x)*alpha;old.y+=(p.y-old.y)*alpha;
+ }
+ return filteredLandmarks;
+}
 function paint(landmarks){
  const box=layer.getBoundingClientRect(),w=Math.round(box.width),h=Math.round(box.height);
  if(layer.width!==w||layer.height!==h){layer.width=w;layer.height=h;smoothedEyes.fill(null);}
@@ -21,7 +31,7 @@ function paint(landmarks){
   const ringY=(Math.max(...ring.map(p=>p.y))-Math.min(...ring.map(p=>p.y)))/2;
   const previous=smoothedEyes[eye],next={x:center.x,y:center.y,r:radius,rx:Math.max(1,ringX),ry:Math.max(1,ringY)};
   if(previous&&Math.hypot(previous.x-next.x,previous.y-next.y)<radius*3){
-   const alpha=.38;
+   const alpha=.58;
    next.x=previous.x*(1-alpha)+next.x*alpha;
    next.y=previous.y*(1-alpha)+next.y*alpha;
    next.r=previous.r*(1-alpha)+next.r*alpha;
@@ -37,7 +47,7 @@ function paint(landmarks){
   if(eyelidIds.some(i=>!landmarks[i])){ctx.restore();return;}
   const lids=eyelidIds.map(i=>pt(landmarks[i]));
   const opening=Math.abs(lids[2].y-lids[3].y);
-  if(opening<r*.55){ctx.restore();return;}
+  if(opening<r*.32){ctx.restore();return;}
   // Clip the tint to the actual opening between upper and lower eyelids.
   // A small inset keeps the color away from the eyelid edge even when looking sideways.
   const contour=eye===0?[33,160,158,133,153,144]:[362,385,387,263,373,380];
@@ -83,7 +93,7 @@ function paint(landmarks){
 function tick(){
  if(!enabled)return;
  if(camera.readyState>=2&&camera.videoWidth){
-  try{if(camera.currentTime!==lastTime){const result=tracker.detectForVideo(camera,performance.now());lastTime=camera.currentTime;const face=result.faceLandmarks?.[0];if(!face){missedFrames++;if(missedFrames>=3){smoothedEyes.fill(null);paint(null);}}else{missedFrames=0;paint(face);}faceStatus.textContent=face?'Rostro detectado · seguimiento activo':'Buscando rostro…';}}
+  try{if(camera.currentTime!==lastTime){const result=tracker.detectForVideo(camera,performance.now());lastTime=camera.currentTime;const face=result.faceLandmarks?.[0];if(!face){missedFrames++;if(missedFrames>=9){smoothedEyes.fill(null);filteredLandmarks=null;paint(null);}}else{missedFrames=0;paint(smoothFace(face));}faceStatus.textContent=face?'Rostro detectado · seguimiento activo':'Buscando rostro…';}}
   catch(err){faceStatus.textContent='Error de seguimiento: '+err.message;enabled=false;return;}
  }
  raf=requestAnimationFrame(tick);
