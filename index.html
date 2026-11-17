@@ -2637,6 +2637,44 @@ const groupButton=$("roomGroupVideoCall");if(groupButton)groupButton.addEventLis
  }catch(error){$("chatStatus").textContent="Video grupal: "+(error.message||error);}
 });
 $("showPeople").onclick = () => { $("chat").classList.remove("room-open"); $("chatSearch").focus(); $("chatStatus").textContent = "Selecciona un miembro para conversar en privado."; };
+// Keep downloaded chat photos in a bounded, per-account memory cache only.
+const klkPhotoCache = new Map();
+let klkPhotoCacheBytes = 0;
+const KLK_PHOTO_CACHE_LIMIT = 20 * 1024 * 1024;
+let klkPhotoCacheOwner = "";
+function klkClearPhotoCache(){
+ for(const entry of klkPhotoCache.values()) URL.revokeObjectURL(entry.url);
+ klkPhotoCache.clear(); klkPhotoCacheBytes = 0;
+}
+async function klkCachedPhotoUrl(path, conversationId, fallbackUrl){
+ const owner = (auth && auth.currentUser && auth.currentUser.uid) || "";
+ if(klkPhotoCacheOwner !== owner){klkClearPhotoCache();klkPhotoCacheOwner=owner;}
+ if(!owner || !path || !fallbackUrl) return fallbackUrl;
+ const key=owner+"|"+(conversationId||"")+"|"+path;
+ if(klkPhotoCache.has(key)){
+  const entry=klkPhotoCache.get(key);klkPhotoCache.delete(key);klkPhotoCache.set(key,entry);return entry.url;
+ }
+ try{
+  const response=await fetch(fallbackUrl,{credentials:"omit"});
+  if(!response.ok || !response.headers.get("content-type")?.startsWith("image/")) return fallbackUrl;
+  const blob=await response.blob();
+  if(!blob.size || blob.size>5*1024*1024) return fallbackUrl;
+  const url=URL.createObjectURL(blob);
+  while(klkPhotoCacheBytes+blob.size>KLK_PHOTO_CACHE_LIMIT && klkPhotoCache.size){
+   const oldest=klkPhotoCache.keys().next().value,entry=klkPhotoCache.get(oldest);
+   klkPhotoCache.delete(oldest);klkPhotoCacheBytes-=entry.size;URL.revokeObjectURL(entry.url);
+  }
+  klkPhotoCache.set(key,{url,size:blob.size});klkPhotoCacheBytes+=blob.size;
+  return url;
+ }catch(error){return fallbackUrl;} // Browsers may disallow CORS reads; regular image loading still works.
+}
+function klkLoadPhotoWhenVisible(img, load){
+ if(!("IntersectionObserver" in window)){void load();return;}
+ const observer=new IntersectionObserver(entries=>{
+  if(entries.some(entry=>entry.isIntersecting)){observer.disconnect();void load();}
+ },{rootMargin:"150px"});
+ observer.observe(img);
+}
 window.klkResolveProfilePhoto = (path) => getMediaUrl(path); const mediaUrlPending = new Map();
 const mediaUrlRetryAfter = new Map();
 async function getMediaUrl(path, conversationId = null) {
@@ -2719,7 +2757,24 @@ function loadMessages() {
    if ((data.type === "image" || data.type === "audio" || data.type === "file") && (data.storagePath || data.mediaUrl)) {
     const placeholder = document.createElement("p"); placeholder.textContent = "Cargando archivo..."; item.appendChild(placeholder); $("messages").appendChild(item);
     try {
-     const url = data.storagePath ? await getMediaUrl(data.storagePath, data.storagePath.startsWith("dm/") ? (data.conversationId || activeConversationId) : null) : data.mediaUrl;
+     const mediaConversationId = data.storagePath && data.storagePath.startsWith("dm/") ? (data.conversationId || activeConversationId) : null;
+      const isPhoto = data.type === "image" && !(data.mimeType||"").startsWith("video/");
+      if(isPhoto){
+       placeholder.remove();
+       const img=document.createElement("img");img.alt="Foto compartida";img.loading="lazy";img.decoding="async";
+       img.style.minHeight="80px";item.appendChild(img);
+       const photoPath=data.storagePath,legacyUrl=data.mediaUrl,conversationAtRender=activeConversationId;
+       klkLoadPhotoWhenVisible(img,async()=>{
+        if(!img.isConnected || activeConversationId!==conversationAtRender)return;
+        try{
+         const signed=photoPath?await getMediaUrl(photoPath,mediaConversationId):legacyUrl;
+         if(!img.isConnected || activeConversationId!==conversationAtRender)return;
+         img.src=await klkCachedPhotoUrl(photoPath,mediaConversationId,signed);
+        }catch(error){img.alt="No se pudo cargar la foto";}
+       });
+       continue;
+      }
+      const url = data.storagePath ? await getMediaUrl(data.storagePath,mediaConversationId) : data.mediaUrl;
      placeholder.remove();
      if (data.type === "image") {
       if((data.mimeType||"").startsWith("video/")){const video=document.createElement("video");video.src=url;video.controls=true;video.preload="none";video.playsInline=true;item.appendChild(video);}
@@ -3022,7 +3077,7 @@ stickersToggle.addEventListener("click",()=>{closeAttachmentPanel();const openin
 stickersPanel.addEventListener("click",async event=>{const emoji=event.target.closest("[data-emoji]");if(emoji){const input=$("message"),value=emoji.dataset.emoji,start=input.selectionStart??input.value.length,end=input.selectionEnd??input.value.length;input.value=input.value.slice(0,start)+value+input.value.slice(end);const cursor=start+value.length;input.setSelectionRange(cursor,cursor);input.dispatchEvent(new Event("input",{bubbles:true}));closeStickersPanel();input.focus({preventScroll:true});return;}const choice=event.target.closest("[data-sticker]");if(!choice)return;const sticker=choice.dataset.sticker,user=auth&&auth.currentUser;if(!user||!activeConversationId){$("chatStatus").textContent="Abre una conversación para enviar stickers.";return;}if(sending)return;const conversationId=activeConversationId;sending=true;stickersPanel.querySelectorAll("button").forEach(button=>button.disabled=true);$("chatStatus").textContent="Enviando sticker...";try{const sent=await messagesCollection().add({type:"sticker",text:sticker,email:user.email||"",displayName:(peopleCache.get(user.uid)||{}).displayName||(user.email||"Miembro").split("@")[0],uid:user.uid,createdAt:firebase.firestore.FieldValue.serverTimestamp()});void sendKlkPushForMessage(conversationId,sent.id);$("chatStatus").textContent="Sticker enviado.";closeStickersPanel();}catch(error){showError("chatStatus",error);}finally{sending=false;stickersPanel.querySelectorAll("button").forEach(button=>button.disabled=false);syncComposerMode();}});
 $("message").addEventListener("focus",()=>{closeStickersPanel();closeAttachmentPanel();});
 async function compressImage(file) {
- if (!file || !file.type.startsWith("image/") || file.size < 900 * 1024) return file;
+ if (!file || !file.type.startsWith("image/") || file.type === "image/gif" || file.size < 350 * 1024) return file;
  let bitmap, objectUrl;
  try {
   if ("createImageBitmap" in window) bitmap = await createImageBitmap(file);
@@ -3032,8 +3087,8 @@ async function compressImage(file) {
    await new Promise((resolve, reject) => { img.onload = resolve; img.onerror = reject; img.src = objectUrl; });
    bitmap = img;
   }
-  const maxSide = 1600, scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
-  if (scale === 1 && file.size < 1.5 * 1024 * 1024) return file;
+  const maxSide = 1280, scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
+  if (scale === 1 && file.size < 500 * 1024) return file;
   const canvas = document.createElement("canvas");
   canvas.width = Math.max(1, Math.round(bitmap.width * scale));
   canvas.height = Math.max(1, Math.round(bitmap.height * scale));
@@ -3042,7 +3097,7 @@ async function compressImage(file) {
   ctx.fillStyle = "#fff";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-  const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", 0.78));
+  const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", 0.72));
   if (!blob || blob.size >= file.size) return file;
   const baseName = (file.name || "foto").replace(/\.[^.]+$/, "");
   return new File([blob], baseName + ".jpg", {type:"image/jpeg", lastModified:Date.now()});
