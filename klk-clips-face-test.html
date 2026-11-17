@@ -53,7 +53,7 @@ let tracker=null,enabled=false,eyeColor='none',raf=0,lastTime=-1;
 const irisGroups=[[468,469,470,471,472],[473,474,475,476,477]];
 const smoothedEyes=[null,null];
 let missedFrames=0,lastGoodFace=null,lastGoodAt=0;
-const HOLD_MS=0,RESET_MS=900;
+const HOLD_MS=110,RESET_MS=900;
 const irisTextures=new Map();
 function irisTexture(color){
  if(irisTextures.has(color))return irisTextures.get(color);
@@ -132,7 +132,7 @@ function paint(landmarks){
   if(eyelidIds.some(i=>!landmarks[i])){ctx.restore();return;}
   const lids=eyelidIds.map(i=>pt(landmarks[i]));
   const opening=Math.abs(lids[2].y-lids[3].y);
-  if(opening<r*.85){ctx.restore();return;}
+  if(opening<Math.max(1,r*.18)){ctx.restore();return;}
   // Clip the tint to the actual opening between upper and lower eyelids.
   // A small inset keeps the color away from the eyelid edge even when looking sideways.
   const contour=eye===0?[33,160,158,133,153,144]:[362,385,387,263,373,380];
@@ -163,7 +163,7 @@ function paint(landmarks){
 function tick(){
  if(!enabled)return;
  if(camera.readyState>=2&&camera.videoWidth){
-  try{if(camera.currentTime!==lastTime){const result=tracker.detectForVideo(camera,performance.now());lastTime=camera.currentTime;const face=result.faceLandmarks?.[0];if(!face){missedFrames++;const age=performance.now()-lastGoodAt;paint(null);if(age>RESET_MS){smoothedEyes.fill(null);lastGoodFace=null;}}else{missedFrames=0;lastGoodFace=face;lastGoodAt=performance.now();paint(face);}faceStatus.textContent=face?'Rostro detectado · seguimiento activo':'Buscando rostro…';}}
+  try{if(camera.currentTime!==lastTime){const result=tracker.detectForVideo(camera,performance.now());lastTime=camera.currentTime;const face=result.faceLandmarks?.[0];if(!face){missedFrames++;const age=performance.now()-lastGoodAt;if(lastGoodFace&&age<=HOLD_MS){paint(lastGoodFace);}else{paint(null);}if(age>RESET_MS){smoothedEyes.fill(null);lastGoodFace=null;}}else{missedFrames=0;lastGoodFace=face;lastGoodAt=performance.now();paint(face);}faceStatus.textContent=face?'Rostro detectado · seguimiento activo':'Buscando rostro…';}}
   catch(err){faceStatus.textContent='Error de seguimiento: '+err.message;enabled=false;return;}
  }
  raf=requestAnimationFrame(tick);
