@@ -53,8 +53,8 @@ let tracker=null,enabled=false,eyeColor='none',hairStyle='none',hairColor='#3020
 const irisGroups=[[468,469,470,471,472],[473,474,475,476,477]];
 const smoothedEyes=[null,null];
 let missedFrames=0,lastGoodFace=null,lastGoodAt=0;
-const HOLD_MS=150,RESET_MS=900;
-const gazeVelocity=[{u:0,v:0},{u:0,v:0}];
+const RESET_MS=900;
+
 const irisTextures=new Map();
 function irisTexture(color){
  if(irisTextures.has(color))return irisTextures.get(color);
@@ -149,38 +149,41 @@ function paint(landmarks){
   const center=pt(landmarks[ids[0]]),ring=ids.slice(1).map(i=>pt(landmarks[i]));
   const radius=ring.reduce((sum,p)=>sum+Math.hypot(p.x-center.x,p.y-center.y),0)/ring.length;
   if(radius<2||radius>Math.min(w,h)*.12){smoothedEyes[eye]=null;return;}
-  const ringX=(Math.max(...ring.map(p=>p.x))-Math.min(...ring.map(p=>p.x)))/2;
-  const ringY=(Math.max(...ring.map(p=>p.y))-Math.min(...ring.map(p=>p.y)))/2;
   const corners=(eye===0?[33,133]:[362,263]).map(i=>pt(landmarks[i]));
   const upper=pt(landmarks[eye===0?159:386]),lower=pt(landmarks[eye===0?145:374]);
-  const mid={x:(corners[0].x+corners[1].x)/2,y:(upper.y+lower.y)/2};
+  // A rigid eye-local frame: blinking must not change the gaze coordinate scale.
+  const mid={x:(corners[0].x+corners[1].x)/2,y:(corners[0].y+corners[1].y)/2};
   const axis={x:corners[1].x-corners[0].x,y:corners[1].y-corners[0].y};
   const eyeWidth=Math.hypot(axis.x,axis.y);
-  if(eyeWidth<8){return;}
-  const ux=axis.x/eyeWidth,uy=axis.y/eyeWidth;
-  const vx=-uy,vy=ux;
-  const eyeHeight=Math.max(3,Math.abs(lower.y-upper.y));
+  if(eyeWidth<8){smoothedEyes[eye]=null;return;}
+  const ux=axis.x/eyeWidth,uy=axis.y/eyeWidth,vx=-uy,vy=ux;
+  const opening=Math.abs((lower.x-upper.x)*vx+(lower.y-upper.y)*vy);
+  // Discard unreliable iris locations during blinks; reacquire without old gaze.
+  if(opening/eyeWidth<.10){smoothedEyes[eye]=null;return;}
   const dx=center.x-mid.x,dy=center.y-mid.y;
-  const measuredU=Math.max(-.38,Math.min(.38,(dx*ux+dy*uy)/eyeWidth));
-  const measuredV=Math.max(-.35,Math.min(.35,(dx*vx+dy*vy)/eyeHeight));
-  const previous=smoothedEyes[eye];
-  const next={u:measuredU,v:measuredV,r:radius,rx:Math.max(1,ringX),ry:Math.max(1,ringY)};
-  if(previous){
-   // Reject isolated gaze spikes without delaying the movement of the whole face.
-   const du=next.u-previous.u,dv=next.v-previous.v;
-   // Adapt to intentional saccades while damping tiny landmark jitter.
-   const alpha=Math.hypot(du,dv)>.075?.82:.38;
-   next.u=previous.u+Math.max(-.16,Math.min(.16,du))*alpha;
-   next.v=previous.v+Math.max(-.18,Math.min(.18,dv))*alpha;
-   gazeVelocity[eye]={u:next.u-previous.u,v:next.v-previous.v};
-   next.r=previous.r*.65+next.r*.35;
-   next.rx=previous.rx*.65+next.rx*.35;
-   next.ry=previous.ry*.65+next.ry*.35;
+  const u=(dx*ux+dy*uy)/eyeWidth,v=(dx*vx+dy*vy)/eyeWidth;
+  if(!Number.isFinite(u)||!Number.isFinite(v)||Math.abs(u)>.55||Math.abs(v)>.35){
+   smoothedEyes[eye]=null;return;
+  }
+  const projected=ring.map(p=>({u:(p.x-center.x)*ux+(p.y-center.y)*uy,v:(p.x-center.x)*vx+(p.y-center.y)*vy}));
+  const rxMeasured=Math.max(...projected.map(p=>Math.abs(p.u)));
+  const ryMeasured=Math.max(...projected.map(p=>Math.abs(p.v)));
+  const previous=smoothedEyes[eye],now=performance.now();
+  const next={u,v,r:radius,rx:rxMeasured,ry:ryMeasured,at:now};
+  if(previous&&now-previous.at<100){
+   const distance=Math.hypot(u-previous.u,v-previous.v);
+   // Damp subpixel jitter but immediately follow deliberate gaze changes.
+   const alpha=distance>.025?1:1-Math.exp(-(now-previous.at)/35);
+   const filteredU=previous.u+(u-previous.u)*alpha;
+   const filteredV=previous.v+(v-previous.v)*alpha;
+   const error=Math.hypot(filteredU-u,filteredV-v);
+   const bound=error>.008?.008/error:1;
+   next.u=u+(filteredU-u)*bound;
+   next.v=v+(filteredV-v)*bound;
   }
   smoothedEyes[eye]=next;
-  // Reconstruct the iris from eye-local coordinates to suppress screen-space jitter.
-  const x=mid.x+ux*next.u*eyeWidth+vx*next.v*eyeHeight;
-  const y=mid.y+uy*next.u*eyeWidth+vy*next.v*eyeHeight;
+  const x=mid.x+ux*next.u*eyeWidth+vx*next.v*eyeWidth;
+  const y=mid.y+uy*next.u*eyeWidth+vy*next.v*eyeWidth;
   const r=next.r;
   ctx.save();
   // Keep eyelids, real pupil, iris texture and highlights visible.
@@ -188,8 +191,8 @@ function paint(landmarks){
   const eyelidIds=eye===0?[33,133,159,145]:[362,263,386,374];
   if(eyelidIds.some(i=>!landmarks[i])){ctx.restore();return;}
   const lids=eyelidIds.map(i=>pt(landmarks[i]));
-  const opening=Math.abs(lids[2].y-lids[3].y);
-  if(opening<Math.max(1,r*.12)){ctx.restore();return;}
+  const lidOpening=Math.abs((lids[3].x-lids[2].x)*vx+(lids[3].y-lids[2].y)*vy);
+  if(lidOpening<Math.max(1,r*.12)){ctx.restore();return;}
   // Clip the tint to the actual opening between upper and lower eyelids.
   // A small inset keeps the color away from the eyelid edge even when looking sideways.
   const contour=eye===0?[33,160,158,133,153,144]:[362,385,387,263,373,380];
@@ -220,7 +223,7 @@ function paint(landmarks){
 function tick(){
  if(!enabled)return;
  if(camera.readyState>=2&&camera.videoWidth){
-  try{if(camera.currentTime!==lastTime){const result=tracker.detectForVideo(camera,performance.now());lastTime=camera.currentTime;const face=result.faceLandmarks?.[0];if(!face){missedFrames++;const age=performance.now()-lastGoodAt;if(lastGoodFace&&age<=HOLD_MS){paint(lastGoodFace);}else{paint(null);}if(age>RESET_MS){smoothedEyes.fill(null);lastGoodFace=null;}}else{missedFrames=0;lastGoodFace=face;lastGoodAt=performance.now();paint(face);}faceStatus.textContent=face?'Rostro detectado · seguimiento activo':'Buscando rostro…';}}
+  try{if(camera.currentTime!==lastTime){const result=tracker.detectForVideo(camera,performance.now());lastTime=camera.currentTime;const face=result.faceLandmarks?.[0];if(!face){missedFrames++;const age=performance.now()-lastGoodAt;paint(null);smoothedEyes.fill(null);if(age>RESET_MS){smoothedEyes.fill(null);lastGoodFace=null;}}else{missedFrames=0;lastGoodFace=face;lastGoodAt=performance.now();paint(face);}faceStatus.textContent=face?'Rostro detectado · seguimiento activo':'Buscando rostro…';}}
   catch(err){faceStatus.textContent='Error de seguimiento: '+err.message;enabled=false;return;}
  }
  raf=requestAnimationFrame(tick);
