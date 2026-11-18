@@ -97,10 +97,10 @@
   }
   function beardPlacement(){
    const mouthLeft=eyePoint(61),mouthRight=eyePoint(291),chin=eyePoint(152),upperLip=eyePoint(0),lowerLip=eyePoint(17),jawLeft=eyePoint(172),jawRight=eyePoint(397),centerX=(mouthLeft[0]+mouthRight[0])/2,centerY=(upperLip[1]+lowerLip[1])/2,angle=Math.atan2(mouthRight[1]-mouthLeft[1],mouthRight[0]-mouthLeft[0]),cos=Math.cos(angle),sin=Math.sin(angle);
-   const localX=point=>(point[0]-centerX)*cos+(point[1]-centerY)*sin;
+   const localX=point=>(point[0]-centerX)*cos+(point[1]-centerY)*sin,localY=point=>(point[1]-centerY)*cos-(point[0]-centerX)*sin;
    const chinX=localX(chin),mouthSpan=Math.max(12,Math.hypot(mouthRight[0]-mouthLeft[0],mouthRight[1]-mouthLeft[1])),jawWidth=Math.max(12,Math.hypot(jawRight[0]-jawLeft[0],jawRight[1]-jawLeft[1])),chinDistance=Math.max(8,(chin[0]-centerX)*-sin+(chin[1]-centerY)*cos);
-   const jawXs=[localX(jawLeft),localX(jawRight)],mouthXs=[localX(mouthLeft),localX(mouthRight)];
-   return{centerX,centerY,angle,chinDistance,jawWidth,mouthWidth:mouthSpan,chinX,leftJaw:Math.max(8,-Math.min(...jawXs)),rightJaw:Math.max(8,Math.max(...jawXs)),leftMouth:Math.max(6,-Math.min(...mouthXs)),rightMouth:Math.max(6,Math.max(...mouthXs))};
+   const jawXs=[localX(jawLeft),localX(jawRight)],mouthXs=[localX(mouthLeft),localX(mouthRight)],cheekPoints=[93,132,323,361].map(id=>eyePoint(id)),cheekXs=cheekPoints.map(localX),leftCheekIndex=cheekXs.indexOf(Math.min(...cheekXs)),rightCheekIndex=cheekXs.indexOf(Math.max(...cheekXs)),leftCheek=Math.max(8,-cheekXs[leftCheekIndex]),rightCheek=Math.max(8,cheekXs[rightCheekIndex]),sideburnY=Math.max(-jawWidth*.34,Math.min(-jawWidth*.08,(localY(cheekPoints[leftCheekIndex])+localY(cheekPoints[rightCheekIndex]))/2));
+   return{centerX,centerY,angle,chinDistance,jawWidth,mouthWidth:mouthSpan,chinX,leftJaw:Math.max(8,-Math.min(...jawXs)),rightJaw:Math.max(8,Math.max(...jawXs)),leftMouth:Math.max(6,-Math.min(...mouthXs)),rightMouth:Math.max(6,Math.max(...mouthXs)),leftCheek,rightCheek,sideburnY};
   }
   function drawManLook(){
    const amount=Number(manStrengthInput.value)/100;if(!amount||manLook==='none'||!beardTexture)return;
@@ -118,11 +118,11 @@
    ctx.globalAlpha=amount*(manLook==='stubble'?.34:manLook==='short'?.68:manLook==='goatee'?.86:.9);
    const sourceH=beardTexture.height,sourceW=beardTexture.width;
    const rows=[
-    {source:.12,y:-Math.min(place.jawWidth*.28,place.mouthWidth*.48),left:place.leftJaw*.94,right:place.rightJaw*.94,center:0},
-    {source:.30,y:-Math.min(place.jawWidth*.10,place.mouthWidth*.16),left:place.leftMouth*.78,right:place.rightMouth*.78,center:0},
-    {source:.50,y:0,left:place.leftMouth*.88,right:place.rightMouth*.88,center:0},
-    {source:.72,y:chinDistance*.60,left:place.leftJaw*.90,right:place.rightJaw*.90,center:chinX*.48},
-    {source:.93,y:chinDistance,left:place.leftJaw*.48,right:place.rightJaw*.48,center:chinX*.88},
+    {source:.12,y:place.sideburnY,left:place.leftCheek*.98,right:place.rightCheek*.98,center:0},
+    {source:.30,y:-Math.min(place.jawWidth*.04,place.mouthWidth*.08),left:place.leftCheek*.94,right:place.rightCheek*.94,center:0},
+    {source:.50,y:0,left:place.leftJaw*.98,right:place.rightJaw*.98,center:0},
+    {source:.72,y:chinDistance*.60,left:place.leftJaw*.96,right:place.rightJaw*.96,center:chinX*.48},
+    {source:.93,y:chinDistance,left:place.leftJaw*.50,right:place.rightJaw*.50,center:chinX*.88},
     {source:.99,y:chinDistance+chinDistance*.06,left:place.leftJaw*.14,right:place.rightJaw*.14,center:chinX}
    ];
    for(let i=0;i<rows.length-1;i++){
