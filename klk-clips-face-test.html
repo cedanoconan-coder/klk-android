@@ -20,7 +20,7 @@ main{max-width:560px;padding:10px 14px 28px}
 .nav{display:none}
 @media(max-width:390px){main{padding-inline:10px}.camera{max-height:62vh}.overlay button{font-size:13px;padding:7px 9px}.overlay .capture{width:62px;height:62px}}
 #beardStyles{margin:14px 0}#beardStyles strong{display:block;margin-bottom:7px}#beardStyles>div{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin}#beardStyles button{flex:0 0 auto;font-size:13px;padding:8px 10px}#beardStyles button.active{background:#a750d4}#beardStyles label{display:flex;align-items:center;gap:8px;color:#d8c6df;font-size:13px}#beardColor{width:44px!important;height:36px;padding:2px!important;border-radius:9px}
-</style></head><body><header><strong>✦ León Clips · Crear clip</strong><a href="./klk-clips-editor-test.html">Editor de fotos</a></header><main><div class="camera"><video id="camera" autoplay playsinline muted></video><canvas id="faceLayer" aria-hidden="true"></canvas><img id="snapshot" hidden alt="Foto capturada"><div class="overlay"><div class="top"><button id="close">Cerrar cámara</button><button id="flip">↻ Girar</button></div><div class="tools"><button id="flash">Flash: no</button><button id="timer">Temporizador: 0 s</button><button id="mic">Micrófono: sí</button></div><div class="bottom"><button id="gallery">Galería</button><button id="capture" class="capture" aria-label="Capturar foto o video">●</button><button id="stop" disabled>■</button></div></div></div><div class="modes"><button data-mode="photo" class="active">FOTO</button><button data-mode="15">15 s</button><button data-mode="60">60 s</button><button data-mode="600">10 min</button><button data-mode="text">TEXTO</button></div><details class="panel compact-panel" id="musicOptions"><summary><span>Música del clip</span><small>Opcional</small></summary><div class="option-content"><p>Elige una canción guardada en tu teléfono.</p><label class="file-picker"><span id="musicLabel">Elegir música</span><input type="file" id="music" accept="audio/*" aria-label="Elegir archivo de música"></label><audio id="audio" controls hidden></audio><small>La música es solo para escuchar mientras preparas el clip; no se incorpora a la grabación.</small></div></details><details class="facePanel"><summary>Seguimiento facial y efectos de ojos</summary><div class="option-content"><p id="faceStatus" role="status">Desactivado. Pulsa activar para detectar el rostro.</p><button id="faceStart">Activar seguimiento facial</button><button id="faceOff">Desactivar</button><div id="eyeColors"><button data-eye="none" class="active">Natural</button><button data-eye="#42a5f5">Azul</button><button data-eye="#4cdb85">Verde</button><button data-eye="#ad83e8">Violeta</button><button data-eye="#b5b8bf">Gris</button></div><div id="irisEffects" role="group" aria-label="Estilos de iris"><strong>Efecto:</strong><button data-iris-style="classic" class="active" aria-pressed="true">Clásico</button><button data-iris-style="crystal" aria-pressed="false">Cristal</button><button data-iris-style="galaxy" aria-pressed="false">Galaxia</button><button data-iris-style="neon" aria-pressed="false">Neón</button></div><div id="hairStyles"><strong>Cabello virtual</strong><div><button data-hair="none" class="active">Sin filtro</button><button data-hair="short">Corto</button><button data-hair="waves">Ondulado</button><button data-hair="long">Largo</button></div><label>Color de pelo <input id="hairColor" type="color" value="#302019"></label></div><div id="beardStyles"><strong>Diseños de barba</strong><div><button data-beard="none" class="active">Sin barba</button><button data-beard="full">Perfilada</button><button data-beard="vandyke">Van Dyke</button><button data-beard="goatee">Candado</button><button data-beard="shadow">Sombra</button></div><label>Color de barba <input id="beardColor" type="color" value="#171211"></label></div><small>El efecto se muestra en la vista previa y aún no se incorpora al video grabado. El detector se descarga al activarlo; las fotos no se envían a KLK.</small></div></details><details class="panel compact-panel"><summary><span>Filtros de cámara</span><small>Vista previa</small></summary><div id="effects"><button data-effect="none" class="active">Normal</button><button data-effect="warm">Cálido</button><button data-effect="mono">B/N</button><button data-effect="vivid">Vivo</button></div></details><div class="panel" id="textPanel" hidden><label>Texto del clip<textarea id="textContent" rows="3" placeholder="Escribe tu mensaje"></textarea></label><button id="makeText">Crear tarjeta de texto</button></div><div class="panel"><strong>Resultado local</strong><p id="msg" role="status">Pulsa «Activar cámara» para comenzar.</p><button id="start">Activar cámara</button><video id="preview" controls hidden></video><img id="resultPhoto" hidden style="width:100%" alt="Foto tomada"><a id="save" hidden download="klk-clip">Guardar archivo</a></div><input id="file" type="file" accept="image/*,video/*" hidden></main><script>
+</style></head><body><header><strong>✦ León Clips · Crear clip</strong><a href="./klk-clips-editor-test.html">Editor de fotos</a></header><main><div class="camera"><video id="camera" autoplay playsinline muted></video><canvas id="faceLayer" aria-hidden="true"></canvas><img id="snapshot" hidden alt="Foto capturada"><div class="overlay"><div class="top"><button id="close">Cerrar cámara</button><button id="flip">↻ Girar</button></div><div class="tools"><button id="flash">Flash: no</button><button id="timer">Temporizador: 0 s</button><button id="mic">Micrófono: sí</button></div><div class="bottom"><button id="gallery">Galería</button><button id="capture" class="capture" aria-label="Capturar foto o video">●</button><button id="stop" disabled>■</button></div></div></div><div class="modes"><button data-mode="photo" class="active">FOTO</button><button data-mode="15">15 s</button><button data-mode="60">60 s</button><button data-mode="600">10 min</button><button data-mode="text">TEXTO</button></div><details class="panel compact-panel" id="musicOptions"><summary><span>Música del clip</span><small>Opcional</small></summary><div class="option-content"><p>Elige una canción guardada en tu teléfono.</p><label class="file-picker"><span id="musicLabel">Elegir música</span><input type="file" id="music" accept="audio/*" aria-label="Elegir archivo de música"></label><audio id="audio" controls hidden></audio><small>La música es solo para escuchar mientras preparas el clip; no se incorpora a la grabación.</small></div></details><details class="facePanel"><summary>Seguimiento facial y efectos de ojos</summary><div class="option-content"><p id="faceStatus" role="status">Desactivado. Pulsa activar para detectar el rostro.</p><button id="faceStart">Activar seguimiento facial</button><button id="faceOff">Desactivar</button><div id="eyeColors"><button data-eye="none" class="active">Natural</button><button data-eye="#42a5f5">Azul</button><button data-eye="#4cdb85">Verde</button><button data-eye="#ad83e8">Violeta</button><button data-eye="#b5b8bf">Gris</button></div><div id="irisEffects" role="group" aria-label="Estilos de iris"><strong>Efecto:</strong><button data-iris-style="classic" class="active" aria-pressed="true">Clásico</button><button data-iris-style="crystal" aria-pressed="false">Cristal</button><button data-iris-style="galaxy" aria-pressed="false">Galaxia</button><button data-iris-style="neon" aria-pressed="false">Neón</button></div><div id="hairStyles"><strong>Cabello virtual</strong><div><button data-hair="none" class="active">Sin filtro</button><button data-hair="short">Corto</button><button data-hair="waves">Ondulado</button><button data-hair="long">Largo</button></div><label>Color de pelo <input id="hairColor" type="color" value="#302019"></label></div><div id="beardStyles"><strong>Diseños de barba</strong><div><button data-beard="none" class="active">Sin barba</button><button data-beard="full">Perfilada</button><button data-beard="vandyke">Van Dyke</button><button data-beard="goatee">Candado</button><button data-beard="shadow">Sombra</button><button data-beard="short">Barba corta</button><button data-beard="balbo">Balbo</button><button data-beard="anchor">Ancla</button><button data-beard="mustache">Bigote</button></div><label>Color de barba <input id="beardColor" type="color" value="#171211"></label></div><small>El efecto se muestra en la vista previa y aún no se incorpora al video grabado. El detector se descarga al activarlo; las fotos no se envían a KLK.</small></div></details><details class="panel compact-panel"><summary><span>Filtros de cámara</span><small>Vista previa</small></summary><div id="effects"><button data-effect="none" class="active">Normal</button><button data-effect="warm">Cálido</button><button data-effect="mono">B/N</button><button data-effect="vivid">Vivo</button></div></details><div class="panel" id="textPanel" hidden><label>Texto del clip<textarea id="textContent" rows="3" placeholder="Escribe tu mensaje"></textarea></label><button id="makeText">Crear tarjeta de texto</button></div><div class="panel"><strong>Resultado local</strong><p id="msg" role="status">Pulsa «Activar cámara» para comenzar.</p><button id="start">Activar cámara</button><video id="preview" controls hidden></video><img id="resultPhoto" hidden style="width:100%" alt="Foto tomada"><a id="save" hidden download="klk-clip">Guardar archivo</a></div><input id="file" type="file" accept="image/*,video/*" hidden></main><script>
 'use strict';
 const $=id=>document.getElementById(id);let stream=null,recorder=null,chunks=[],mode='photo',facing='user',delay=0,mic=true,recordTimer=null,recordUrl=null;const status=t=>$('msg').textContent=t;async function closeCamera(){if(recordTimer)clearTimeout(recordTimer);recordTimer=null;if(recorder&&recorder.state==='recording')recorder.stop();if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}$('camera').srcObject=null;}async function startCamera(){await closeCamera();try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:facing}},audio:mic});
 $('camera').srcObject=stream;
@@ -73,7 +73,7 @@ $('makeText').onclick=()=>{const c=document.createElement('canvas');c.width=720;
 <script type="module">
 
 const camera=document.getElementById('camera'),layer=document.getElementById('faceLayer'),ctx=layer.getContext('2d'),faceStatus=document.getElementById('faceStatus');
-let tracker=null,enabled=false,eyeColor='none',irisStyle='classic',hairStyle='none',hairColor='#302019',beardStyle='none',beardColor='#171211',raf=0,lastTime=-1;
+let tracker=null,enabled=false,eyeColor='none',irisStyle='classic',hairStyle='none',hairColor='#302019',beardStyle='none',beardColor='#171211',raf=0,lastTime=-1;let stableBeardLandmarks=null;function stabilizeBeardLandmarks(face){if(!face){stableBeardLandmarks=null;return null;}if(!stableBeardLandmarks||stableBeardLandmarks.length!==face.length){stableBeardLandmarks=face.map(p=>({...p}));return stableBeardLandmarks;}stableBeardLandmarks=face.map((p,i)=>{const old=stableBeardLandmarks[i]||p,move=Math.hypot(p.x-old.x,p.y-old.y,p.z-old.z),alpha=move>.006?.95:.62;return{x:old.x+(p.x-old.x)*alpha,y:old.y+(p.y-old.y)*alpha,z:(old.z||0)+((p.z||0)-(old.z||0))*alpha};});return stableBeardLandmarks;}
 // Freeze each input frame so detection and compositing cannot use different video frames.
 const inputFrame=document.createElement('canvas'),inputCtx=inputFrame.getContext('2d');
 function restoreLivePreview(){
@@ -258,7 +258,10 @@ function drawBeard(landmarks,pt){
   texture(count,minY,maxY);
   ctx.restore();
  };
-  const lipContour=[61,185,40,39,37,0,267,269,270,409,291,375,321,405,314,17,84,181,91,146].map(i=>local(pt(landmarks[i])));
+  // Expanded outer-lip contour leaves a clean margin so hair never paints on the lips.
+  const rawLip=[61,185,40,39,37,0,267,269,270,409,291,375,321,405,314,17,84,181,91,146].map(i=>local(pt(landmarks[i])));
+  const lipCenter=rawLip.reduce((sum,p)=>({x:sum.x+p.x/rawLip.length,y:sum.y+p.y/rawLip.length}),{x:0,y:0});
+  const lipContour=rawLip.map(p=>({x:lipCenter.x+(p.x-lipCenter.x)*1.22,y:lipCenter.y+(p.y-lipCenter.y)*1.22}));
  const drawMoustache=(mouthMask=null)=>{
   const moustache=()=>{
    ctx.moveTo(-width*.29,upper.y-height*.04);
@@ -268,12 +271,12 @@ function drawBeard(landmarks,pt){
    ctx.quadraticCurveTo(0,lower.y+height*.012,-width*.07,lower.y-height*.005);
    ctx.quadraticCurveTo(-width*.23,lower.y+height*.005,-width*.29,upper.y-height*.04);
   };
-  fillHair(moustache,Math.round(width*.85),upper.y-height*.22,upper.y+height*.08,.42,mouthMask);
+  fillHair(moustache,Math.round(width*.85),upper.y-height*.22,upper.y+height*.08,.42,lipContour);
  };
  const drawFullBeard=()=>{
   // Warp the beard across tracked cheek, lip, jaw, and chin points while preserving a clear mouth opening.
   // Dense lower-face contour follows cheek, jaw and chin landmarks on both sides.
-  const contour=[234,93,132,58,172,136,150,149,176,148,152,377,400,378,379,365,397,288,323,454].map(i=>local(pt(landmarks[i])));
+  const contour=[234,93,132,58,172,136,150,149,176,148,152,377,400,378,379,365,397,288,323,454].map(i=>{const p=local(pt(landmarks[i]));return compact?{x:p.x,y:Math.min(p.y,height*.78)}:p;});
   const first=contour[0],last=contour[contour.length-1];
    const beardShape=()=>{
    // A quadratic contour rounds the cheek-to-jaw transition instead of joining sparse points with hard edges.
@@ -287,7 +290,7 @@ function drawBeard(landmarks,pt){
    ctx.quadraticCurveTo((rightMouth.x+leftMouth.x)/2,upper.y-height*.12,leftMouth.x,upper.y-height*.025);
    ctx.quadraticCurveTo(first.x,first.y,first.x,first.y);
   };
-  fillHair(beardShape,Math.min(3000,Math.round(width*7.4)),upper.y-height*.20,height*.92,beardStyle==='shadow'?.19:.34,beardStyle==='full'?lipContour:null);
+  fillHair(beardShape,Math.min(compact?2100:3000,Math.round(width*(compact?5.6:7.4))),upper.y-height*.20,height*(compact?.80:.92),beardStyle==='shadow'?.19:(compact?.30:.34),lipContour);
  };
  const drawSoulPatch=()=>{
   const top=lower.y+height*.025,half=width*.032;
@@ -297,7 +300,7 @@ function drawBeard(landmarks,pt){
    ctx.quadraticCurveTo(half*.92,top+height*.15,half,top);
    ctx.quadraticCurveTo(0,top+height*.045,-half,top);
   };
-  fillHair(patch,Math.round(width*.58),top,top+height*.27,.38);
+  fillHair(patch,Math.round(width*.58),top,top+height*.27,.38,lipContour);
  };
  const drawGoatee=(narrow=false)=>{
   const half=width*(narrow?.15:.20),top=lower.y+height*.07;
@@ -307,14 +310,19 @@ function drawBeard(landmarks,pt){
    ctx.quadraticCurveTo(half*1.05,height*.44,half,top);
    ctx.quadraticCurveTo(0,top+height*.10,-half,top);
   };
-  fillHair(shape,Math.round(width*(narrow?1.05:1.35)),top,height*.92,.40);
+  fillHair(shape,Math.round(width*(narrow?1.05:1.35)),top,height*.92,.40,lipContour);
  };
  ctx.save();ctx.translate(origin.x,origin.y);ctx.rotate(angle);
- if(beardStyle==='full'){drawFullBeard();drawMoustache(lipContour);drawSoulPatch();}
- else if(beardStyle==='shadow'){drawFullBeard();drawMoustache();}
- else if(beardStyle==='vandyke'){drawGoatee(true);drawMoustache();}
- else if(beardStyle==='goatee'){drawGoatee(false);drawMoustache();}
- ctx.restore();
+ ctx.save();ctx.translate(origin.x,origin.y);ctx.rotate(angle);
+  if(beardStyle==='full'){drawFullBeard();drawMoustache(lipContour);drawSoulPatch();}
+  else if(beardStyle==='short'){drawFullBeard(true);drawMoustache(lipContour);drawSoulPatch();}
+  else if(beardStyle==='shadow'){drawFullBeard();drawMoustache(lipContour);}
+  else if(beardStyle==='vandyke'){drawGoatee(true);drawMoustache(lipContour);}
+  else if(beardStyle==='goatee'){drawGoatee(false);drawMoustache(lipContour);drawSoulPatch();}
+  else if(beardStyle==='balbo'){drawGoatee(true);drawMoustache(lipContour);}
+  else if(beardStyle==='anchor'){drawGoatee(true);drawMoustache(lipContour);drawSoulPatch();}
+  else if(beardStyle==='mustache'){drawMoustache(lipContour);}
+  ctx.restore();
 }
 function paint(landmarks,frame=null){
  const box=layer.getBoundingClientRect(),w=Math.round(box.width),h=Math.round(box.height);
@@ -423,7 +431,7 @@ function tick(){
     const result=tracker.detectForVideo(inputFrame,performance.now());
     lastTime=videoTime;
     const face=result.faceLandmarks?.[0];
-    if(!face){smoothedEyes.fill(null);}
+    if(!face){smoothedEyes.fill(null);stableBeardLandmarks=null;}
     paint(face||null,inputFrame);
     faceStatus.textContent=face?'Rostro detectado · imagen y efecto sincronizados':'Buscando rostro…';
    }
@@ -445,7 +453,7 @@ document.getElementById('faceStart').onclick=async()=>{
   let vision;try{vision=await import('./klk-face-assets/vision_bundle.mjs');}catch(localError){faceStatus.textContent='Detector local no disponible; probando respaldo…';try{vision=await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/+esm');}catch(primaryError){vision=await import('https://esm.sh/@mediapipe/tasks-vision@0.10.22');}}
   let files;try{files=await vision.FilesetResolver.forVisionTasks('./klk-face-assets/wasm');}catch(localWasmError){files=await vision.FilesetResolver.forVisionTasks('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/wasm');}
   tracker=await vision.FaceLandmarker.createFromOptions(files,{baseOptions:{modelAssetPath:'./klk-face-assets/face_landmarker.task',delegate:'CPU'},runningMode:'VIDEO',numFaces:1,refineLandmarks:true});
-  enabled=true;lastTime=-1;smoothedEyes.fill(null);faceStatus.textContent='Seguimiento activo. Activa la cámara si está apagada.';tick();
+  enabled=true;lastTime=-1;smoothedEyes.fill(null);stableBeardLandmarks=null;faceStatus.textContent='Seguimiento activo. Activa la cámara si está apagada.';tick();
  }catch(e){faceStatus.textContent='No se pudo activar: '+e.message;}
 };
 document.getElementById('faceOff').onclick=()=>{enabled=false;cancelAnimationFrame(raf);restoreLivePreview();faceStatus.textContent='Seguimiento desactivado.';};
