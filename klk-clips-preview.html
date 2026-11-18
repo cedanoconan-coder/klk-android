@@ -12,6 +12,30 @@
 #creator.editing .editor-sections details[open]{margin:0;max-height:42dvh;overflow-y:auto}
 #creator.editing #clipEditBack{padding:9px 12px;min-height:42px}
 @media(max-width:480px){#creator.editing #clipEditVideo,#creator.editing #clipEditPhoto{height:39dvh;min-height:210px}#creator.editing .clip-edit-tools button{padding:9px 11px}}
+
+#beardCameraModal{position:fixed;inset:0;z-index:1200;display:flex;align-items:center;justify-content:center;padding:14px;background:#08050ff5;color:#fff}
+#beardCameraModal[hidden]{display:none!important}
+.beardCameraDialog{width:min(100%,520px);max-height:94dvh;overflow-y:auto;background:#1a1027;border:1px solid #ffffff24;border-radius:22px;padding:14px;box-shadow:0 22px 70px #000a}
+.beardCameraDialog>header{display:flex;justify-content:space-between;align-items:center;background:none;padding:0 0 10px}
+.beardCameraDialog>header button,.beardCameraActions button{width:auto;margin:0;padding:9px 13px;border:0;border-radius:16px;background:#382746;color:#fff;font:inherit}
+.beardDuration{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:8px 0}
+.beardDuration select{background:#241632;color:white;border:1px solid #ffffff35;border-radius:10px;padding:8px;font:inherit}
+.beardCameraViewport{position:relative;width:100%;height:min(48dvh,480px);min-height:220px;overflow:hidden;border-radius:17px;background:#050407}
+.beardCameraViewport video,.beardCameraViewport canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border:0;border-radius:inherit}
+.beardCameraViewport.has-beard video{opacity:0}.beardCameraViewport canvas{opacity:0;pointer-events:none}.beardCameraViewport.has-beard canvas{opacity:1}
+#beardControls{margin-top:12px;padding:12px;border:1px solid #ffffff20;border-radius:16px;background:#120b1d}
+#beardControls summary{cursor:pointer;font-weight:700;color:#f3dfff}
+#beardControls>p{font-size:12px;line-height:1.4;color:#d9c8e6}
+.beardStyleChoices{display:flex;gap:6px;overflow-x:auto;padding:2px 0 8px}
+.beardStyleChoices button{flex:0 0 auto;margin:0;padding:8px 10px;border:0;border-radius:16px;background:#30213d;color:white}
+.beardStyleChoices button.active{background:#9c29ed;outline:2px solid #edcaff}
+#beardControls .beardColorChoice{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:13px}
+#beardColorPicker{width:52px;height:38px;padding:2px;border:1px solid #ffffff35;border-radius:10px;background:transparent}
+#beardCameraStatus{min-height:18px;margin-bottom:0}
+#beardRecordedPreview{display:block;width:100%;max-height:40dvh;margin-top:10px;border-radius:12px;background:#000}
+#beardRecordedPreview[hidden]{display:none}
+.beardCameraActions{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
+.beardCameraActions #beardRecordStart{background:linear-gradient(135deg,#ad35fa,#7521dc)}
 </style></head><body><div id="klkAccessGate"><div><h2>🔒 KLK Clips · Laboratorio privado</h2><p id="klkGateStatus">Comprobando tu cuenta de desarrollador…</p><a href="./">Volver a KLK Manin</a></div></div><div class="app"><header><b>KLK <span>Clips</span></b><small>Vista de prueba · independiente</small></header><div id="feed" class="panel active" style="padding:0"><div class="stage"><div class="placeholder" id="empty"><strong>🎬 KLK Clips</strong>Selecciona un video o graba uno para comenzar</div><video id="preview" controls playsinline class="hidden"></video><img id="photo" class="hidden" alt="Foto seleccionada"><div class="actions"><button id="like" aria-label="Me gusta">♡</button><button id="comment" aria-label="Comentarios">💬</button><button id="share" aria-label="Compartir">↗</button><button id="save" aria-label="Guardar">☆</button><button id="sound" aria-label="Activar o silenciar">🔊</button></div><button id="playPause" class="play-overlay" aria-label="Reproducir o pausar">▶</button><div class="caption"><b>@creador</b><p id="description">Crea tu primer clip</p><small id="track">♫ Sin música</small></div></div><div class="toolbar"><button id="camera">📷 Cámara</button><button id="gallery">▣ Galería</button><button id="edit">✂ Editar</button><button id="publish">Publicar</button></div></div><section id="creator" class="panel"><h2>Estudio táctil · v256</h2><p class="hint">Toca una tarjeta. Desliza hacia abajo para cerrar su panel.</p><div id="clipEditArea" hidden><video id="clipEditVideo" controls playsinline></video><img id="clipEditPhoto" alt="Foto seleccionada" hidden><div class="clip-edit-tools"><button data-edit-tool="3">✂️ Recortar</button><button data-edit-tool="4">🎨 Filtros</button><button data-edit-tool="5">🎵 Música</button><button data-edit-tool="3">⚡ Velocidad</button><button data-edit-tool="3">✏️ Texto</button><button data-edit-tool="7">⬇️ Exportar</button><button data-edit-tool="6">🚀 Publicar</button></div><button id="clipEditBack">← Volver</button></div><div id="touchScrim" class="touch-scrim" aria-hidden="true"></div><div class="stack editor-sections">
 <details><summary>📷 Cámara y grabación</summary><div class="editor-body"><label>Cámara<select id="cameraFacing"><option value="environment">Trasera</option><option value="user">Frontal</option></select></label><button class="primary" id="record">📹 Grabar video</button><button class="primary" id="takePhoto">📸 Tomar foto</button><p class="hint">Se abre la cámara del teléfono. Las opciones de resolución y duración dependen del dispositivo.</p></div></details>
 <details><summary>🔴 Cámara en directo · prueba local</summary><div class="editor-body"><p class="hint">Vista previa en tiempo real. No transmite a Internet ni muestra espectadores ficticios.</p><video id="livePreview" autoplay playsinline muted style="width:100%;max-height:380px;background:#000;border-radius:14px"></video><label>Micrófono <select id="liveMic"><option value="on">Activado</option><option value="off">Desactivado</option></select></label><button id="liveOpen" class="primary">Activar cámara y micrófono</button><button id="liveFlip">Cambiar cámara</button><button id="liveClose">Cerrar cámara</button><p id="liveStatus" class="hint" role="status">Cámara apagada · Sin emisión pública</p><p class="hint">La transmisión pública necesita servidor de señalización, permisos y controles de moderación. Permanecerá deshabilitada hasta entonces.</p><button disabled>Transmitir públicamente (no disponible)</button></div></details>
@@ -21,7 +45,7 @@
 <details><summary>🎵 Música y sonido</summary><div class="editor-body"><label>Elegir canción del teléfono<input id="audioInput" type="file" accept="audio/*"></label><audio id="audioPreview" controls class="hidden"></audio><div id="waveEditor" class="wave-editor" aria-label="Editor táctil de fragmento musical"><canvas id="waveCanvas" height="100"></canvas><div id="waveRange" class="wave-range"><div id="waveLeft" class="wave-handle" role="slider" tabindex="0" aria-label="Inicio del fragmento">┃</div><div id="waveRight" class="wave-handle" role="slider" tabindex="0" aria-label="Final del fragmento">┃</div></div></div><p class="hint" id="waveHelp">Carga una canción para ver sus ondas reales. Arrastra los extremos para recortar o mueve el centro para cambiar de frase.</p><label class="precise-audio">Ajuste preciso del inicio<input type="range" id="musicStart" min="0" max="0" step=".1" value="0"></label><span id="musicStartValue">Inicio: 0.0 s</span><label class="precise-audio">Ajuste preciso del final<input type="range" id="musicEnd" min="0" max="0" step=".1" value="0"></label><span id="musicEndValue">Final: 0.0 s</span><strong id="musicSelection">Selecciona una canción para recortar</strong><label>Volumen de la música<input type="range" id="musicVolume" min="0" max="1" step=".05" value="0.8"></label><button id="previewMusic" class="primary">▶ Escuchar frase seleccionada</button><button id="stopMusic">■ Detener música</button><button id="removeAudio">Quitar música</button></div></details>
 <details><summary>🚀 Publicación de prueba</summary><div class="editor-body"><button id="publish2" class="primary">Publicar en la prueba</button><p class="hint">No se publica para otros usuarios. Solo se muestra en esta sesión del navegador.</p></div></details>
 <details><summary>⬇️ Exportar y descargar</summary><div class="editor-body"><label>Duración máxima de exportación (segundos)<input id="exportDuration" type="range" min="5" max="60" step="5" value="30"></label><span id="exportDurationValue">30 segundos</span><button id="download" class="primary">Descargar archivo original</button><button id="exportMusic" class="primary">🎵 Exportar video con música</button><p id="exportStatus" class="hint" role="status">Exportación experimental en navegador compatible. No cierres la página durante el proceso.</p></div></details>
-</div></section><section id="profile" class="panel"><h2>Mi perfil de prueba</h2><p id="stats">0 publicaciones locales · 0 me gusta</p><button id="myClips" class="primary">Ver mi último clip</button><button id="reset">Eliminar prueba local</button><p class="hint">Las publicaciones de prueba y los comentarios permanecen solo mientras esta página está abierta. No se suben a un servidor.</p></section><nav class="nav"><button data-tab="feed" class="active">▶ Clips</button><button data-tab="creator">＋ Crear</button><button data-tab="profile">♙ Perfil</button></nav><div id="message" class="notice" role="status" aria-live="polite">Esta interfaz no publica contenido en KLK Manin.</div></div><div class="modal" id="modal"><div class="sheet"><button id="close">✕ Cerrar</button><h2>Comentarios de prueba</h2><div id="comments"></div><input id="commentInput" type="text" placeholder="Escribe un comentario"><button id="sendComment" class="primary">Enviar comentario</button></div></div><input id="videoFile" type="file" accept="video/*,image/*" hidden><input id="captureVideo" type="file" accept="video/*" capture="environment" hidden><input id="capturePhoto" type="file" accept="image/*" capture="environment" hidden><input id="frontVideo" type="file" accept="video/*" capture="user" hidden><input id="frontPhoto" type="file" accept="image/*" capture="user" hidden><script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script><script>
+</div></section><section id="profile" class="panel"><h2>Mi perfil de prueba</h2><p id="stats">0 publicaciones locales · 0 me gusta</p><button id="myClips" class="primary">Ver mi último clip</button><button id="reset">Eliminar prueba local</button><p class="hint">Las publicaciones de prueba y los comentarios permanecen solo mientras esta página está abierta. No se suben a un servidor.</p></section><nav class="nav"><button data-tab="feed" class="active">▶ Clips</button><button data-tab="creator">＋ Crear</button><button data-tab="profile">♙ Perfil</button></nav><div id="message" class="notice" role="status" aria-live="polite">Esta interfaz no publica contenido en KLK Manin.</div></div><div class="modal" id="modal"><div class="sheet"><button id="close">✕ Cerrar</button><h2>Comentarios de prueba</h2><div id="comments"></div><input id="commentInput" type="text" placeholder="Escribe un comentario"><button id="sendComment" class="primary">Enviar comentario</button></div></div><div id="beardCameraModal" hidden><div class="beardCameraDialog" role="dialog" aria-modal="true" aria-label="Cámara de KLK Clips con efectos de barba"><header><strong>KLK Clips · Crear clip</strong><button id="beardCameraClose" type="button">Cerrar</button></header><label class="beardDuration">Duración <select id="beardDuration"><option value="15">15 segundos</option><option value="60">60 segundos</option><option value="600">10 minutos</option></select></label><div class="beardCameraViewport"><video id="beardCameraVideo" autoplay muted playsinline></video><canvas id="beardCameraCanvas" aria-hidden="true"></canvas></div><details id="beardControls" open><summary>Barba adaptativa · seguimiento facial</summary><p>La textura se adapta a mejillas, labios, mandíbula y mentón. La boca queda despejada.</p><div class="beardStyleChoices"><button type="button" data-beard-style="none" class="active">Sin barba</button><button type="button" data-beard-style="full">Perfilada</button><button type="button" data-beard-style="vandyke">Van Dyke</button><button type="button" data-beard-style="goatee">Candado</button><button type="button" data-beard-style="shadow">Sombra</button></div><label class="beardColorChoice">Color de barba <input id="beardColorPicker" type="color" value="#171211"></label><p id="beardCameraStatus" role="status" aria-live="polite">Preparando cámara…</p></details><video id="beardRecordedPreview" controls playsinline hidden></video><div class="beardCameraActions"><button id="beardTakePhoto" type="button">📸 Tomar foto</button><button id="beardRecordStart" type="button">● Grabar video</button><button id="beardRecordStop" type="button" disabled>■ Detener</button><button id="beardCameraFlip" type="button">↻ Cambiar cámara</button><button id="beardUseVideo" type="button" hidden>Usar en el editor</button><button id="beardRetry" type="button" hidden>Repetir</button></div></div></div><input id="videoFile" type="file" accept="video/*,image/*" hidden><input id="captureVideo" type="file" accept="video/*" capture="environment" hidden><input id="capturePhoto" type="file" accept="image/*" capture="environment" hidden><input id="frontVideo" type="file" accept="video/*" capture="user" hidden><input id="frontPhoto" type="file" accept="image/*" capture="user" hidden><script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script><script>
 (()=>{const status=document.getElementById('klkGateStatus');try{
 if(!window.firebase)throw Error('No se pudo cargar la autenticación');
 const config={apiKey:"AIzaSyAgMkDOS77y-jHnzCEteQW1UgC90gShjuU",authDomain:"klk-familia.firebaseapp.com",projectId:"klk-familia",appId:"1:184754934059:web:1d385677b2c7c00699b56e"};
@@ -69,8 +93,168 @@ $('playPause').onclick=()=>{if(kind!=='video')return say('Selecciona un video.')
 $('sound').onclick=()=>{preview.muted=!preview.muted;$('sound').textContent=preview.muted?'🔇':'🔊';say(preview.muted?'Audio del video silenciado':'Audio del video activado');};
 $('camera').onclick=()=>{tab('creator');say('Elige grabar video o tomar foto.');};
 $('gallery').onclick=()=>$('videoFile').click();
-$('record').onclick=()=>$( $('cameraFacing').value==='user'?'frontVideo':'captureVideo').click();
-$('takePhoto').onclick=()=>$( $('cameraFacing').value==='user'?'frontPhoto':'capturePhoto').click();
+
+const beardCameraModal=$('beardCameraModal'),beardCameraVideo=$('beardCameraVideo'),beardCanvas=$('beardCameraCanvas'),beardCtx=beardCanvas.getContext('2d'),beardCameraStatus=$('beardCameraStatus'),beardRecordedPreview=$('beardRecordedPreview');
+const beardInputFrame=document.createElement('canvas'),beardInputCtx=beardInputFrame.getContext('2d'),beardTexture=new Image();beardTexture.src='./klk-face-assets/beard-realistic.png';
+let beardCameraStream=null,beardRecorder=null,beardRecorderChunks=[],beardCanvasStream=null,beardTimer=null,beardTimeout=null,beardTracker=null,beardTrackerPromise=null,beardFrame=0,beardLastVideoTime=-1,beardFace=null,beardMode='none',beardTint='#171211',beardResultFile=null,beardResultUrl=null;
+async function loadBeardTracker(){if(beardTracker)return beardTracker;if(beardTrackerPromise)return beardTrackerPromise;beardTrackerPromise=(async()=>{beardCameraStatus.textContent='Cargando seguimiento facial…';let vision;try{vision=await import('./klk-face-assets/vision_bundle.mjs');}catch(localError){try{vision=await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/+esm');}catch(primaryError){vision=await import('https://esm.sh/@mediapipe/tasks-vision@0.10.22');}}let files;try{files=await vision.FilesetResolver.forVisionTasks('./klk-face-assets/wasm');}catch(localWasmError){files=await vision.FilesetResolver.forVisionTasks('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/wasm');}beardTracker=await vision.FaceLandmarker.createFromOptions(files,{baseOptions:{modelAssetPath:'./klk-face-assets/face_landmarker.task',delegate:'CPU'},runningMode:'VIDEO',numFaces:1,refineLandmarks:true});beardCameraStatus.textContent='Seguimiento facial activo.';return beardTracker;})().catch(error=>{beardTrackerPromise=null;beardCameraStatus.textContent='No se pudo cargar el seguimiento: '+error.message;throw error;});return beardTrackerPromise;}
+function renderBeardCamera(){if(!beardCameraStream||beardCameraModal.hidden)return;if(beardCameraVideo.readyState>=2&&beardCameraVideo.videoWidth){const box=beardCanvas.getBoundingClientRect(),dpr=Math.min(2,window.devicePixelRatio||1),w=Math.max(1,Math.round(box.width*dpr)),h=Math.max(1,Math.round(box.height*dpr)),vw=beardCameraVideo.videoWidth,vh=beardCameraVideo.videoHeight;if(beardCanvas.width!==w||beardCanvas.height!==h){beardCanvas.width=w;beardCanvas.height=h;beardLastVideoTime=-1;}if(beardInputFrame.width!==vw||beardInputFrame.height!==vh){beardInputFrame.width=vw;beardInputFrame.height=vh;beardLastVideoTime=-1;}if(beardCameraVideo.currentTime!==beardLastVideoTime){beardInputCtx.drawImage(beardCameraVideo,0,0,vw,vh);if(beardTracker&&beardMode!=='none'){try{beardFace=beardTracker.detectForVideo(beardInputFrame,performance.now()).faceLandmarks?.[0]||null;}catch(error){beardFace=null;beardCameraStatus.textContent='Seguimiento interrumpido: '+error.message;}}else beardFace=null;beardLastVideoTime=beardCameraVideo.currentTime;}const scale=Math.max(w/vw,h/vh),ox=(w-vw*scale)/2,oy=(h-vh*scale)/2,mirror=$('cameraFacing').value==='user';beardCtx.clearRect(0,0,w,h);beardCtx.save();if(mirror){beardCtx.translate(w,0);beardCtx.scale(-1,1);}beardCtx.drawImage(beardInputFrame,ox,oy,vw*scale,vh*scale);beardCtx.restore();if(beardFace&&beardMode!=='none'){const pt=p=>({x:mirror?w-(p.x*vw*scale+ox):p.x*vw*scale+ox,y:p.y*vh*scale+oy});drawBeard(beardFace,pt);beardCameraStatus.textContent='Rostro detectado · textura adaptada y labios despejados';}else if(beardMode!=='none'&&beardTracker)beardCameraStatus.textContent='Buscando rostro…';}beardFrame=requestAnimationFrame(renderBeardCamera);}
+function chooseBeardStyle(style){beardMode=style;beardCanvas.closest('.beardCameraViewport').classList.toggle('has-beard',style!=='none');document.querySelectorAll('[data-beard-style]').forEach(button=>button.classList.toggle('active',button.dataset.beardStyle===style));if(style==='none'){beardFace=null;beardCameraStatus.textContent='Efecto desactivado.';return;}loadBeardTracker().then(()=>{if(beardCameraStream&&!beardFrame)beardFrame=requestAnimationFrame(renderBeardCamera);}).catch(()=>{});}
+document.querySelectorAll('[data-beard-style]').forEach(button=>button.addEventListener('click',()=>chooseBeardStyle(button.dataset.beardStyle)));$('beardColorPicker').addEventListener('input',event=>{beardTint=event.target.value;});
+function stopBeardCamera(){clearTimeout(beardTimeout);clearInterval(beardTimer);beardTimeout=beardTimer=null;if(beardFrame)cancelAnimationFrame(beardFrame);beardFrame=0;if(beardCanvasStream){beardCanvasStream.getTracks().forEach(track=>track.stop());beardCanvasStream=null;}if(beardCameraStream){beardCameraStream.getTracks().forEach(track=>track.stop());beardCameraStream=null;}beardCameraVideo.srcObject=null;beardCtx.clearRect(0,0,beardCanvas.width,beardCanvas.height);}
+function clearBeardResult(){if(beardResultUrl)URL.revokeObjectURL(beardResultUrl);beardResultUrl=null;beardResultFile=null;beardRecordedPreview.pause();beardRecordedPreview.removeAttribute('src');beardRecordedPreview.load();beardRecordedPreview.hidden=true;$('beardUseVideo').hidden=true;$('beardRetry').hidden=true;beardCameraVideo.hidden=false;}
+async function openBeardCamera(){if(!document.documentElement.classList.contains('klk-clips-authorized'))return say('Acceso no autorizado.');stopBeardCamera();clearBeardResult();beardCameraModal.hidden=false;beardCameraStatus.textContent='Solicitando acceso a cámara y micrófono…';$('beardRecordStart').disabled=true;$('beardRecordStop').disabled=true;$('beardTakePhoto').disabled=false;$('beardCameraFlip').disabled=false;try{beardCameraStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:$('cameraFacing').value}},audio:true});beardCameraVideo.srcObject=beardCameraStream;await beardCameraVideo.play();$('beardRecordStart').disabled=false;beardCameraStatus.textContent=beardMode==='none'?'Cámara lista. Elige un estilo o graba.':'Cámara lista. Buscando rostro…';beardLastVideoTime=-1;beardFrame=requestAnimationFrame(renderBeardCamera);if(beardMode!=='none')loadBeardTracker().catch(()=>{});}catch(error){stopBeardCamera();beardCameraStatus.textContent=error.name==='NotAllowedError'?'Permite el acceso a la cámara y al micrófono.':'No se pudo abrir la cámara: '+error.message;}}
+function closeBeardCamera(){beardCameraModal.hidden=true;if(beardRecorder?.state==='recording'){beardRecorderChunks=[];beardRecorder.stop();}stopBeardCamera();}
+$('beardCameraClose').onclick=closeBeardCamera;$('beardCameraFlip').onclick=()=>{if(beardRecorder?.state==='recording'||beardResultFile)return;$('cameraFacing').value=$('cameraFacing').value==='user'?'environment':'user';openBeardCamera();};
+$('beardRecordStart').onclick=()=>{if(!beardCameraStream||!window.MediaRecorder)return void(beardCameraStatus.textContent='Este navegador no permite grabar desde esta cámara.');try{beardRecorderChunks=[];if(!beardCanvas.captureStream)throw Error('No se puede grabar la vista con efectos en este navegador.');beardCanvasStream=beardCanvas.captureStream(30);const output=new MediaStream([...beardCanvasStream.getVideoTracks(),...beardCameraStream.getAudioTracks()]),mime=['video/webm;codecs=vp8,opus','video/webm','video/mp4'].find(type=>MediaRecorder.isTypeSupported(type));beardRecorder=new MediaRecorder(output,mime?{mimeType:mime}:undefined);beardRecorder.ondataavailable=event=>{if(event.data.size)beardRecorderChunks.push(event.data);};beardRecorder.onerror=()=>{beardCameraStatus.textContent='Ocurrió un error durante la grabación.';stopBeardCamera();};beardRecorder.onstop=()=>{if(beardCameraModal.hidden||!beardRecorderChunks.length)return;const recordedMime=beardRecorder.mimeType||'video/webm',safeMime=recordedMime.includes('mp4')?'video/mp4':'video/webm',ext=safeMime==='video/mp4'?'mp4':'webm';beardResultFile=new File(beardRecorderChunks,'klk-clips-'+Date.now()+'.'+ext,{type:safeMime});beardResultUrl=URL.createObjectURL(beardResultFile);beardRecordedPreview.src=beardResultUrl;beardRecordedPreview.hidden=false;$('beardUseVideo').hidden=false;$('beardRetry').hidden=false;beardCameraStatus.textContent='Video preparado con el efecto de barba aplicado.';stopBeardCamera();};beardRecorder.start(250);$('beardRecordStart').disabled=true;$('beardRecordStop').disabled=false;$('beardTakePhoto').disabled=true;$('beardCameraFlip').disabled=true;const duration=Number($('beardDuration').value)||15,started=Date.now();beardCameraStatus.textContent='Grabando: 0 / '+duration+' s';beardTimer=setInterval(()=>beardCameraStatus.textContent='Grabando: '+Math.min(duration,Math.floor((Date.now()-started)/1000))+' / '+duration+' s',300);beardTimeout=setTimeout(()=>{if(beardRecorder?.state==='recording')beardRecorder.stop();},duration*1000);}catch(error){beardCameraStatus.textContent='No se pudo iniciar la grabación: '+error.message;}};
+$('beardRecordStop').onclick=()=>{clearTimeout(beardTimeout);clearInterval(beardTimer);beardTimeout=beardTimer=null;if(beardRecorder?.state==='recording')beardRecorder.stop();$('beardRecordStop').disabled=true;};
+function useBeardCapture(file){if(!file)return;const transfer=new DataTransfer();transfer.items.add(file);$('videoFile').files=transfer.files;closeBeardCamera();$('videoFile').dispatchEvent(new Event('change',{bubbles:true}));}
+$('beardRetry').onclick=()=>{clearBeardResult();openBeardCamera();};$('beardUseVideo').onclick=()=>useBeardCapture(beardResultFile);$('beardTakePhoto').onclick=()=>{if(!beardCameraStream)return;beardCanvas.toBlob(blob=>{if(!blob){beardCameraStatus.textContent='No se pudo preparar la foto.';return;}useBeardCapture(new File([blob],'klk-clips-foto-'+Date.now()+'.png',{type:'image/png'}));},'image/png');};
+const beardAuthObserver=new MutationObserver(()=>{if(!document.documentElement.classList.contains('klk-clips-authorized'))closeBeardCamera();});beardAuthObserver.observe(document.documentElement,{attributes:true,attributeFilter:['class']});
+window.addEventListener('pagehide',()=>{closeBeardCamera();beardTracker?.close();});
+function drawBeard(landmarks,pt){
+ const required=[13,14,61,132,136,148,149,150,152,172,176,288,291,361,365,377,378,379,397,400,454];
+ if(beardMode==='none'||required.some(i=>!landmarks[i]))return;
+ const left=pt(landmarks[234]),right=pt(landmarks[454]);
+ const mouthLeft=pt(landmarks[61]),mouthRight=pt(landmarks[291]);
+ const upperLip=pt(landmarks[13]),lowerLip=pt(landmarks[14]),chin=pt(landmarks[152]);
+ const origin={x:(mouthLeft.x+mouthRight.x)/2,y:(mouthLeft.y+mouthRight.y)/2};
+ const axisX=right.x-left.x,axisY=right.y-left.y,width=Math.hypot(axisX,axisY);
+ if(width<30)return;
+ const ux=axisX/width,uy=axisY/width,px=-uy,py=ux;
+ const toChinX=chin.x-origin.x,toChinY=chin.y-origin.y;
+ const angle=Math.atan2(uy,ux)+((px*toChinX+py*toChinY)<0?Math.PI:0);
+ const height=Math.abs(-Math.sin(angle)*toChinX+Math.cos(angle)*toChinY);
+ if(height<12)return;
+ const local=p=>({x:(p.x-origin.x)*Math.cos(angle)+(p.y-origin.y)*Math.sin(angle),y:-(p.x-origin.x)*Math.sin(angle)+(p.y-origin.y)*Math.cos(angle)});
+ const upper=local(upperLip),lower=local(lowerLip),leftMouth=local(mouthLeft),rightMouth=local(mouthRight);
+ const rgb=[1,3,5].map(i=>parseInt(beardTint.slice(i,i+2),16));
+ if(rgb.some(Number.isNaN))return;
+ const shade=(factor,alpha)=>'rgba('+rgb.map(n=>Math.round(n*factor)).join(',')+','+alpha+')';
+ const beardFill=beardCtx.createLinearGradient(0,-height*.1,0,height);
+ beardFill.addColorStop(0,shade(1,.12));
+ beardFill.addColorStop(.28,shade(1,.25));
+ beardFill.addColorStop(.72,shade(.82,.38));
+ beardFill.addColorStop(1,shade(.68,.48));
+ const texture=(count,minY,maxY)=>{
+  // Stable, fine strokes read as hair while avoiding the dotted, stamped look.
+  let seed=719;const rand=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};
+  beardCtx.lineCap='round';
+  for(let i=0;i<count;i++){
+   const x=(rand()-.5)*width*.76,y=minY+rand()*(maxY-minY);
+   const len=height*(.012+rand()*.027),dx=(rand()-.5)*width*.009;
+   const light=i%7===0;
+   beardCtx.strokeStyle=light?'rgba(213,184,158,.16)':shade(.48+rand()*.4,.22+rand()*.18);
+   beardCtx.lineWidth=Math.max(.45,width*(.0011+rand()*.0018));
+   beardCtx.beginPath();beardCtx.moveTo(x,y);beardCtx.quadraticCurveTo(x+dx,y+len*.52,x+dx*.45,y+len);beardCtx.stroke();
+  }
+ };
+ const fillHair=(path,count,minY,maxY,opacity,customPainter=null,mouth=null)=>{
+  beardCtx.save();
+  beardCtx.beginPath();path();beardCtx.closePath();
+  if(mouth)beardCtx.ellipse(mouth.x,mouth.y,mouth.rx,mouth.ry,0,0,Math.PI*2);
+  beardCtx.clip(mouth?'evenodd':'nonzero');
+  beardCtx.globalCompositeOperation='source-over';
+  beardCtx.globalAlpha=beardMode==='shadow'?.19:(beardMode==='full'&&beardTexture.complete&&beardTexture.naturalWidth?0.10:opacity);
+  beardCtx.fillStyle=beardFill;beardCtx.fill();
+  beardCtx.globalAlpha=1;
+  if(beardMode==='full'&&beardTexture.complete&&beardTexture.naturalWidth&&customPainter){
+   beardCtx.globalAlpha=.94;
+   beardCtx.save();
+   beardCtx.filter='brightness(.52) contrast(1.1) saturate(.72)';
+   customPainter();
+   beardCtx.restore();
+   beardCtx.globalAlpha=1;
+  }else texture(count,minY,maxY);
+  beardCtx.restore();
+ };
+ const drawMoustache=()=>{
+  if(beardMode==='full'&&beardTexture.complete&&beardTexture.naturalWidth)return;
+  const moustache=()=>{
+   beardCtx.moveTo(-width*.29,upper.y-height*.04);
+   beardCtx.quadraticCurveTo(-width*.15,upper.y-height*.14,0,upper.y-height*.025);
+   beardCtx.quadraticCurveTo(width*.15,upper.y-height*.14,width*.29,upper.y-height*.04);
+   beardCtx.quadraticCurveTo(width*.23,lower.y+height*.005,width*.07,lower.y-height*.005);
+   beardCtx.quadraticCurveTo(0,lower.y+height*.012,-width*.07,lower.y-height*.005);
+   beardCtx.quadraticCurveTo(-width*.23,lower.y+height*.005,-width*.29,upper.y-height*.04);
+  };
+  fillHair(moustache,Math.round(width*.72),upper.y-height*.12,lower.y+height*.008,.42);
+ };
+ const drawFullBeard=()=>{
+  // Warp the beard across tracked cheek, lip, jaw, and chin points while preserving a clear mouth opening.
+  const contour=[132,172,136,150,149,176,148,152,377,400,378,379,365,397,361].map(i=>local(pt(landmarks[i])));
+  const first=contour[0],last=contour[contour.length-1];
+  const drawAdaptiveTexture=()=>{
+   const source={
+    leftTop:{x:140,y:500},topCenter:{x:627,y:390},rightTop:{x:1114,y:500},
+    leftMouth:{x:340,y:600},rightMouth:{x:914,y:600},
+    leftJaw:{x:300,y:890},rightJaw:{x:954,y:890},chin:{x:627,y:1050},lowerCenter:{x:627,y:800}
+   };
+   const target={
+    leftTop:contour[0],topCenter:{x:0,y:upper.y-height*.06},rightTop:contour[contour.length-1],
+    leftMouth,rightMouth,leftJaw:contour[4],rightJaw:contour[10],chin,
+    lowerCenter:{x:0,y:lower.y+(height-lower.y)*.56}
+   };
+   const triangle=(names)=>{
+    const s=names.map(n=>source[n]),t=names.map(n=>target[n]);
+    const [s1,s2,s3]=s,[t1,t2,t3]=t;
+    const den=s1.x*(s2.y-s3.y)+s2.x*(s3.y-s1.y)+s3.x*(s1.y-s2.y);
+    if(Math.abs(den)<1)return;
+    const a=(t1.x*(s2.y-s3.y)+t2.x*(s3.y-s1.y)+t3.x*(s1.y-s2.y))/den;
+    const c=(t1.x*(s3.x-s2.x)+t2.x*(s1.x-s3.x)+t3.x*(s2.x-s1.x))/den;
+    const e=(t1.x*(s2.x*s3.y-s3.x*s2.y)+t2.x*(s3.x*s1.y-s1.x*s3.y)+t3.x*(s1.x*s2.y-s2.x*s1.y))/den;
+    const b=(t1.y*(s2.y-s3.y)+t2.y*(s3.y-s1.y)+t3.y*(s1.y-s2.y))/den;
+    const d=(t1.y*(s3.x-s2.x)+t2.y*(s1.x-s3.x)+t3.y*(s2.x-s1.x))/den;
+    const f=(t1.y*(s2.x*s3.y-s3.x*s2.y)+t2.y*(s3.x*s1.y-s1.x*s3.y)+t3.y*(s1.x*s2.y-s2.x*s1.y))/den;
+    beardCtx.save();beardCtx.beginPath();beardCtx.moveTo(t1.x,t1.y);beardCtx.lineTo(t2.x,t2.y);beardCtx.lineTo(t3.x,t3.y);beardCtx.closePath();beardCtx.clip();
+    beardCtx.transform(a,b,c,d,e,f);beardCtx.drawImage(beardTexture,0,0);beardCtx.restore();
+   };
+   [['leftTop','topCenter','leftMouth'],['topCenter','rightMouth','leftMouth'],['topCenter','rightTop','rightMouth'],
+    ['leftTop','leftJaw','leftMouth'],['leftJaw','lowerCenter','leftMouth'],['leftMouth','lowerCenter','rightMouth'],
+    ['leftJaw','chin','lowerCenter'],['lowerCenter','chin','rightJaw'],['lowerCenter','rightJaw','rightMouth'],['rightMouth','rightJaw','rightTop']]
+    .forEach(triangle);
+  };
+  const beardShape=()=>{
+   beardCtx.moveTo(first.x,first.y);
+   for(let i=1;i<contour.length;i++)beardCtx.lineTo(contour[i].x,contour[i].y);
+   beardCtx.bezierCurveTo(last.x+(rightMouth.x-last.x)*.38,last.y+(rightMouth.y-last.y)*.18,rightMouth.x+width*.025,upper.y-height*.055,rightMouth.x,upper.y-height*.02);
+   beardCtx.quadraticCurveTo(0,upper.y-height*.11,leftMouth.x,upper.y-height*.02);
+   beardCtx.bezierCurveTo(leftMouth.x-width*.025,upper.y-height*.055,first.x+(leftMouth.x-first.x)*.38,first.y+(leftMouth.y-first.y)*.18,first.x,first.y);
+  };
+  fillHair(beardShape,Math.min(560,Math.round(width*2.05)),height*.10,height*.91,beardMode==='shadow'?.19:.34,beardMode==='full'?drawAdaptiveTexture:null,beardMode==='full'?{x:(leftMouth.x+rightMouth.x)/2,y:(upper.y+lower.y)/2,rx:Math.hypot(rightMouth.x-leftMouth.x,rightMouth.y-leftMouth.y)*.52,ry:Math.max(4,Math.abs(lower.y-upper.y)*.8+height*.018)}:null);
+  if(beardMode==='full'){
+   // Soft cheek guides replace the hard black outline that made the filter look painted on.
+   const cheekLine=()=>{
+    const a=contour[0],b=contour[contour.length-1];
+    beardCtx.moveTo(a.x,a.y);beardCtx.quadraticCurveTo(leftMouth.x-width*.025,a.y+height*.07,leftMouth.x,lower.y+height*.045);
+    beardCtx.moveTo(b.x,b.y);beardCtx.quadraticCurveTo(rightMouth.x+width*.025,b.y+height*.07,rightMouth.x,lower.y+height*.045);
+   };
+   beardCtx.save();beardCtx.beginPath();cheekLine();beardCtx.strokeStyle=shade(.5,.16);beardCtx.lineWidth=Math.max(.8,width*.004);beardCtx.lineCap='round';beardCtx.stroke();beardCtx.restore();
+   if(!(beardTexture.complete&&beardTexture.naturalWidth)){
+    const chinPatch=()=>{beardCtx.moveTo(-width*.105,lower.y+height*.13);beardCtx.quadraticCurveTo(-width*.075,height*.70,0,height*.96);beardCtx.quadraticCurveTo(width*.075,height*.70,width*.105,lower.y+height*.13);beardCtx.quadraticCurveTo(0,lower.y+height*.19,-width*.105,lower.y+height*.13);};
+    fillHair(chinPatch,Math.round(width*.72),lower.y+height*.15,height*.91,.30);
+   }
+  }
+ };
+ const drawGoatee=(narrow=false)=>{
+  const half=width*(narrow?.15:.20),top=lower.y+height*.07;
+  const shape=()=>{
+   beardCtx.moveTo(-half,top);
+   beardCtx.quadraticCurveTo(-half*1.05,height*.44,0,height*.97);
+   beardCtx.quadraticCurveTo(half*1.05,height*.44,half,top);
+   beardCtx.quadraticCurveTo(0,top+height*.10,-half,top);
+  };
+  fillHair(shape,Math.round(width*(narrow?1.05:1.35)),top,height*.92,.40);
+ };
+ beardCtx.save();beardCtx.translate(origin.x,origin.y);beardCtx.rotate(angle);
+ if(beardMode==='full'||beardMode==='shadow'){drawFullBeard();drawMoustache();}
+ else if(beardMode==='vandyke'){drawGoatee(true);drawMoustache();}
+ else if(beardMode==='goatee'){drawGoatee(false);drawMoustache();}
+ beardCtx.restore();
+}
+
+$('record').onclick=()=>openBeardCamera();
+$('takePhoto').onclick=()=>openBeardCamera();
 $('upload').onclick=()=>$('videoFile').click();
 $('edit').onclick=()=>{tab('creator');say('Abre las herramientas desplegables para editar.');};
 $('speed').onchange=()=>{preview.playbackRate=Number($('speed').value);say('Velocidad de vista previa: '+$('speed').value+'×');};
