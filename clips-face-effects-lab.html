@@ -1,22 +1,138 @@
-<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Laboratorio de efectos faciales KLK · Seguimiento facial</title><style>*{box-sizing:border-box}body{margin:0;background:#100b19;color:white;font:15px system-ui}.wrap{max-width:560px;margin:auto;padding:14px}h1{font-size:22px}.stage{position:relative;background:#000;border-radius:16px;overflow:hidden;aspect-ratio:9/12}video{display:none}canvas{width:100%;height:100%;object-fit:contain}.tools{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}button,select,input{font:inherit}button{background:#7335b2;color:white;border:0;border-radius:10px;padding:11px;min-height:44px}button:disabled{opacity:.5}label{display:block;margin:10px 0}input[type=range]{width:100%}a{color:#e3b7ff}#status{min-height:38px;color:#f5d4ff}</style></head><body><main class="wrap"><a href="./clips-demo.html">← Volver a León Clips</a><h1>✨ Laboratorio de efectos faciales KLK</h1><p>Espacio independiente para probar barba, ojos y sombrero con seguimiento facial. No crea ni publica videos.</p><div class="stage"><video id="source" autoplay muted playsinline></video><canvas id="view" width="540" height="720"></canvas></div><label>Efecto <select id="effect"><option value="none">Sin efecto</option><option value="beard">Barba</option><option value="eyes">Ojos azules</option><option value="hat">Sombrero</option></select></label><label>Intensidad <input id="strength" type="range" min="0" max="100" value="70"></label><div class="tools"><button id="start">Activar cámara</button><button id="flip">Cambiar cámara</button><button id="stop">Cerrar cámara</button></div><p id="status" role="status">Pulsa Activar cámara y permite el acceso.</p><small>El seguimiento se procesa en tu navegador. La barba usa una textura transparente que se adapta a las mejillas, la mandíbula y el mentón, con mezcla de luz para integrarse mejor con el video. Se necesita conexión para cargar el motor facial.</small></main><script>window.FaceMeshPromise=(async()=>{const urls=["https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js","https://unpkg.com/@mediapipe/face_mesh/face_mesh.js"];let lastError;for(const src of urls){try{await new Promise((resolve,reject)=>{const s=document.createElement("script");s.src=src;s.onload=resolve;s.onerror=()=>reject(new Error("No se pudo descargar el motor facial desde "+new URL(src).host));document.head.appendChild(s)});if(window.FaceMesh)return window.FaceMesh}catch(e){lastError=e}}throw lastError||new Error("Motor facial no disponible")})();</script><script>
-'use strict';const $=id=>document.getElementById(id),video=$('source'),canvas=$('view'),ctx=canvas.getContext('2d');let stream=null,mesh=null,run=0,busy=false,face=null,stableFace=null,missedFaceFrames=0,facing='user';const status=$('status');
-const beardTexture=new Image();beardTexture.src='./klk-face-assets/barba-natural-texture.webp';beardTexture.onload=()=>draw();beardTexture.onerror=()=>{status.textContent='No se pudo cargar la textura de barba.'};
-function dot(p){return [p.x*canvas.width,p.y*canvas.height]}
-function updateFace(raw){
- if(!raw){missedFaceFrames++;face=missedFaceFrames<=5?stableFace:null;if(missedFaceFrames>5)stableFace=null;return}
- const gap=missedFaceFrames;missedFaceFrames=0;
- if(!stableFace||stableFace.length!==raw.length||gap>2){stableFace=raw.map(p=>({x:p.x,y:p.y,z:p.z||0}));}
- else{stableFace=raw.map((p,i)=>{const prev=stableFace[i],distance=Math.hypot(p.x-prev.x,p.y-prev.y),factor=Math.min(.88,.45+distance*8);return{x:prev.x+(p.x-prev.x)*factor,y:prev.y+(p.y-prev.y)*factor,z:(prev.z||0)+((p.z||0)-(prev.z||0))*factor}})}
- face=stableFace;
-}
-function drawTriangle(image,s0,s1,s2,d0,d1,d2,alpha){const ux=s1[0]-s0[0],uy=s1[1]-s0[1],vx=s2[0]-s0[0],vy=s2[1]-s0[1],det=ux*vy-vx*uy;if(Math.abs(det)<.01)return;const dx1=d1[0]-d0[0],dy1=d1[1]-d0[1],dx2=d2[0]-d0[0],dy2=d2[1]-d0[1],a=(dx1*vy-dx2*uy)/det,c=(-dx1*vx+dx2*ux)/det,b=(dy1*vy-dy2*uy)/det,d=(-dy1*vx+dy2*ux)/det;ctx.save();ctx.beginPath();ctx.moveTo(...d0);ctx.lineTo(...d1);ctx.lineTo(...d2);ctx.closePath();ctx.clip();ctx.transform(a,b,c,d,d0[0]-a*s0[0]-c*s0[1],d0[1]-b*s0[0]-d*s0[1]);ctx.globalAlpha=alpha;ctx.globalCompositeOperation='multiply';ctx.drawImage(image,0,0);ctx.restore()}
-function drawBeardTexture(alpha){if(!beardTexture.complete||!beardTexture.naturalWidth)return;const sourceX=[.035,.5,.965],sourceY=[.13,.53,.98],ids=[234,13,454,172,17,397,150,152,365],dest=ids.map(id=>dot(face[id]));for(let row=0;row<2;row++)for(let col=0;col<2;col++){const i=row*3+col,j=i+1,k=i+3,l=k+1,s=(r,c)=>[sourceX[c]*beardTexture.naturalWidth,sourceY[r]*beardTexture.naturalHeight];drawTriangle(beardTexture,s(row,col),s(row,col+1),s(row+1,col),dest[i],dest[j],dest[k],alpha);drawTriangle(beardTexture,s(row,col+1),s(row+1,col+1),s(row+1,col),dest[j],dest[l],dest[k],alpha)}}
-function draw(){ctx.clearRect(0,0,canvas.width,canvas.height);if(video.readyState>=2)ctx.drawImage(video,0,0,canvas.width,canvas.height);if(!face)return;const a=Number($('strength').value)/100,e=$('effect').value;
-if(e==='beard')drawBeardTexture(a*.96);
-if(e==='eyes'&&face.length>477){for(const id of [468,473]){const [x,y]=dot(face[id]);const [lx,ly]=dot(face[id+1]);const r=Math.max(3,Math.hypot(lx-x,ly-y)*1.4);ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fillStyle=`rgba(41,139,235,${a*.7})`;ctx.fill();ctx.beginPath();ctx.arc(x,y,r*.35,0,Math.PI*2);ctx.fillStyle='rgba(12,15,20,.85)';ctx.fill();}} 
-if(e==='hat'){const [lx,ly]=dot(face[127]),[rx,ry]=dot(face[356]),[cx,cy]=dot(face[10]);const w=Math.hypot(rx-lx,ry-ly)*1.4;ctx.save();ctx.translate(cx,cy);ctx.rotate(Math.atan2(ry-ly,rx-lx));ctx.globalAlpha=a;ctx.fillStyle='#17121a';ctx.beginPath();ctx.ellipse(0,-w*.14,w*.63,w*.13,0,0,Math.PI*2);ctx.fill();ctx.fillRect(-w*.34,-w*.52,w*.68,w*.38);ctx.fillStyle='#735329';ctx.fillRect(-w*.34,-w*.2,w*.68,w*.045);ctx.restore();}}
-async function start(){const token=++run;stop(false);status.textContent='Cargando el motor de seguimiento facial…';try{if(!window.FaceMesh)await window.FaceMeshPromise;if(token!==run)return;if(!window.FaceMesh)throw new Error('Motor facial no disponible');status.textContent='Motor listo. Solicitando acceso a la cámara…';if(!mesh){mesh=new FaceMesh({locateFile:file=>`https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`});mesh.setOptions({maxNumFaces:1,refineLandmarks:true,minDetectionConfidence:.55,minTrackingConfidence:.55});mesh.onResults(r=>{const detected=!!r.multiFaceLandmarks?.[0];updateFace(r.multiFaceLandmarks?.[0]||null);draw();status.textContent=detected?'Rostro detectado: seguimiento activo.':'Cámara activa: centra tu rostro y mejora la iluminación.'});}const acquired=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:facing}},audio:false});if(token!==run){acquired.getTracks().forEach(t=>t.stop());return;}stream=acquired;video.srcObject=stream;await video.play();status.textContent='Seguimiento activo. Selecciona un efecto.';loop(token)}catch(e){status.textContent='No se pudo iniciar el seguimiento: '+e.message;stop(false)}}
-async function loop(token){if(token!==run||!stream)return;if(!busy&&video.readyState>=2){busy=true;try{await mesh.send({image:video})}catch(e){status.textContent='Error de seguimiento: '+e.message}finally{busy=false}}if(token===run)requestAnimationFrame(()=>loop(token))}
-function stop(invalidate=true){if(invalidate)++run;if(stream)stream.getTracks().forEach(t=>t.stop());stream=null;video.srcObject=null;face=null;stableFace=null;missedFaceFrames=0;draw()}
-$('start').onclick=start;$('flip').onclick=()=>{facing=facing==='user'?'environment':'user';start()};$('stop').onclick=()=>{stop();status.textContent='Cámara cerrada.'};$('effect').onchange=draw;$('strength').oninput=draw;window.addEventListener('pagehide',()=>stop());
-</script></body></html>
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Laboratorio de efectos faciales KLK · Seguimiento facial</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;background:#100b19;color:white;font:15px system-ui}
+    .wrap{max-width:560px;margin:auto;padding:14px}h1{font-size:22px}
+    .stage{position:relative;background:#000;border-radius:16px;overflow:hidden;aspect-ratio:9/12}
+    video{display:none}canvas{width:100%;height:100%;object-fit:contain}
+    .tools{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}button,select,input{font:inherit}
+    button{background:#7335b2;color:white;border:0;border-radius:10px;padding:11px;min-height:44px}
+    button:disabled{opacity:.5}label{display:block;margin:10px 0}input[type=range]{width:100%}
+    a{color:#e3b7ff}#status{min-height:38px;color:#f5d4ff}
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <a href="./clips-demo.html">← Volver a León Clips</a>
+    <h1>✨ Laboratorio de efectos faciales KLK</h1>
+    <p>Prueba efectos en vivo con seguimiento del rostro y segmentación del cabello.</p>
+    <div class="stage"><video id="source" autoplay muted playsinline></video><canvas id="view" width="540" height="720"></canvas></div>
+    <label>Efecto
+      <select id="effect">
+        <option value="none">Sin efecto</option>
+        <option value="beard">Barba</option>
+        <option value="eyes">Ojos azules</option>
+        <option value="hair">Cabello azul</option>
+        <option value="eyes-hair">Ojos y cabello azul</option>
+        <option value="hat">Sombrero</option>
+      </select>
+    </label>
+    <label>Intensidad <input id="strength" type="range" min="0" max="100" value="70"></label>
+    <div class="tools"><button id="start">Activar cámara</button><button id="flip">Cambiar cámara</button><button id="stop">Cerrar cámara</button></div>
+    <p id="status" role="status">Pulsa Activar cámara y permite el acceso.</p>
+    <small>El efecto de ojos recolorea el iris siguiendo sus puntos faciales. El cabello usa una máscara de segmentación en vivo para teñir el pelo y conservar el fondo. El procesamiento se realiza en el navegador.</small>
+  </main>
+  <script>
+    window.FaceMeshPromise=(async()=>{
+      const urls=['https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js','https://unpkg.com/@mediapipe/face_mesh/face_mesh.js'];
+      let lastError;
+      for(const src of urls){try{await new Promise((resolve,reject)=>{const script=document.createElement('script');script.src=src;script.onload=resolve;script.onerror=()=>reject(new Error('No se pudo descargar el motor facial desde '+new URL(src).host));document.head.appendChild(script)});if(window.FaceMesh)return window.FaceMesh}catch(error){lastError=error}}
+      throw lastError||new Error('Motor facial no disponible');
+    })();
+  </script>
+  <script>
+    'use strict';
+    const $=id=>document.getElementById(id),video=$('source'),canvas=$('view'),ctx=canvas.getContext('2d'),status=$('status');
+    let stream=null,mesh=null,run=0,busy=false,face=null,stableFace=null,missedFaceFrames=0,facing='user';
+    let hairSegmenter=null,hairSegmenterPromise=null,hairMask=null,hairMaskCanvas=null,hairMaskContext=null,hairOverlayCanvas=null,hairOverlayContext=null,hairBusy=false,lastHairFrame=0;
+    const beardTexture=new Image();beardTexture.src='./klk-face-assets/barba-natural-texture.webp';beardTexture.onload=draw;
+    function dot(point){return[point.x*canvas.width,point.y*canvas.height]}
+    function updateFace(raw){
+      if(!raw){missedFaceFrames++;face=missedFaceFrames<=5?stableFace:null;if(missedFaceFrames>5)stableFace=null;return}
+      const gap=missedFaceFrames;missedFaceFrames=0;
+      if(!stableFace||stableFace.length!==raw.length||gap>2)stableFace=raw.map(point=>({x:point.x,y:point.y,z:point.z||0}));
+      else stableFace=raw.map((point,i)=>{const prev=stableFace[i],distance=Math.hypot(point.x-prev.x,point.y-prev.y),factor=Math.min(.88,.45+distance*8);return{x:prev.x+(point.x-prev.x)*factor,y:prev.y+(point.y-prev.y)*factor,z:(prev.z||0)+((point.z||0)-(prev.z||0))*factor}});
+      face=stableFace;
+    }
+    function drawTriangle(image,s0,s1,s2,d0,d1,d2,alpha){
+      const ux=s1[0]-s0[0],uy=s1[1]-s0[1],vx=s2[0]-s0[0],vy=s2[1]-s0[1],det=ux*vy-vx*uy;if(Math.abs(det)<.01)return;
+      const dx1=d1[0]-d0[0],dy1=d1[1]-d0[1],dx2=d2[0]-d0[0],dy2=d2[1]-d0[1],a=(dx1*vy-dx2*uy)/det,c=(-dx1*vx+dx2*ux)/det,b=(dy1*vy-dy2*uy)/det,d=(-dy1*vx+dy2*ux)/det;
+      ctx.save();ctx.beginPath();ctx.moveTo(...d0);ctx.lineTo(...d1);ctx.lineTo(...d2);ctx.closePath();ctx.clip();ctx.transform(a,b,c,d,d0[0]-a*s0[0]-c*s0[1],d0[1]-b*s0[0]-d*s0[1]);ctx.globalAlpha=alpha;ctx.globalCompositeOperation='multiply';ctx.drawImage(image,0,0);ctx.restore();
+    }
+    function drawBeardTexture(alpha){
+      if(!beardTexture.complete||!beardTexture.naturalWidth)return;
+      const sourceX=[.035,.5,.965],sourceY=[.13,.53,.98],ids=[234,13,454,172,17,397,150,152,365],dest=ids.map(id=>dot(face[id]));
+      for(let row=0;row<2;row++)for(let col=0;col<2;col++){const i=row*3+col,j=i+1,k=i+3,l=k+1,s=(r,c)=>[sourceX[c]*beardTexture.naturalWidth,sourceY[r]*beardTexture.naturalHeight];drawTriangle(beardTexture,s(row,col),s(row,col+1),s(row+1,col),dest[i],dest[j],dest[k],alpha);drawTriangle(beardTexture,s(row,col+1),s(row+1,col+1),s(row+1,col),dest[j],dest[l],dest[k],alpha)}
+    }
+    function drawBlueIris(centerId,ringStart,contourIds,alpha){
+      const center=dot(face[centerId]),outer=dot(face[ringStart]),innerPoint=dot(face[ringStart+2]);
+      const radius=Math.max(3,Math.hypot(outer[0]-center[0],outer[1]-center[1]));
+      const pupilRadius=Math.max(radius*.31,Math.hypot(innerPoint[0]-center[0],innerPoint[1]-center[1])*.31);
+      ctx.save();ctx.beginPath();contourIds.forEach((id,index)=>{const[x,y]=dot(face[id]);index?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.closePath();ctx.clip();ctx.translate(...center);ctx.rotate(Math.atan2(outer[1]-center[1],outer[0]-center[0]));ctx.scale(1,.92);ctx.beginPath();ctx.arc(0,0,radius,0,Math.PI*2);ctx.clip();
+      const iris=ctx.createRadialGradient(0,0,pupilRadius*.72,0,0,radius);
+      iris.addColorStop(0,'rgba(5,33,71,.88)');iris.addColorStop(.28,'rgba(20,103,190,.86)');iris.addColorStop(.68,'rgba(71,190,245,.88)');iris.addColorStop(.9,'rgba(12,93,160,.88)');iris.addColorStop(1,'rgba(3,25,52,.92)');
+      ctx.globalAlpha=alpha;ctx.fillStyle=iris;ctx.beginPath();ctx.arc(0,0,radius,0,Math.PI*2);ctx.fill();
+      const spokes=40;for(let i=0;i<spokes;i++){const angle=i*Math.PI*2/spokes,inner=pupilRadius*(.96+((i%4)*.012)),outerR=radius*(.78+((i%5)*.035));ctx.strokeStyle=i%3===0?'rgba(174,235,255,.52)':'rgba(8,59,117,.5)';ctx.lineWidth=Math.max(.55,radius*.025);ctx.beginPath();ctx.moveTo(Math.cos(angle)*inner,Math.sin(angle)*inner);ctx.lineTo(Math.cos(angle+.018)*outerR,Math.sin(angle+.018)*outerR);ctx.stroke()}
+      ctx.strokeStyle='rgba(8,31,58,.9)';ctx.lineWidth=Math.max(1,radius*.09);ctx.beginPath();ctx.arc(0,0,radius*.94,0,Math.PI*2);ctx.stroke();
+      ctx.fillStyle='rgba(2,7,14,.97)';ctx.beginPath();ctx.arc(0,0,pupilRadius,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='rgba(255,255,255,.92)';ctx.beginPath();ctx.ellipse(-radius*.25,-radius*.28,radius*.12,radius*.075,-.45,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='rgba(255,255,255,.55)';ctx.beginPath();ctx.arc(radius*.28,radius*.22,radius*.035,0,Math.PI*2);ctx.fill();ctx.restore();
+    }
+    function tintHair(){
+      if(!hairMask||!hairMaskCanvas)return;
+      const width=hairMask.width,height=hairMask.height,confidence=hairMask.data,pixels=new Uint8ClampedArray(width*height*4);
+      for(let i=0;i<confidence.length;i++){const alpha=Math.max(0,Math.min(255,Math.round(confidence[i]*220)));const p=i*4;pixels[p]=255;pixels[p+1]=255;pixels[p+2]=255;pixels[p+3]=alpha}
+      hairMaskCanvas.width=width;hairMaskCanvas.height=height;hairMaskContext.putImageData(new ImageData(pixels,width,height),0,0);
+      hairOverlayCanvas.width=canvas.width;hairOverlayCanvas.height=canvas.height;hairOverlayContext.clearRect(0,0,canvas.width,canvas.height);hairOverlayContext.fillStyle='#397fd8';hairOverlayContext.fillRect(0,0,canvas.width,canvas.height);hairOverlayContext.globalCompositeOperation='destination-in';hairOverlayContext.drawImage(hairMaskCanvas,0,0,canvas.width,canvas.height);hairOverlayContext.globalCompositeOperation='source-over';
+      ctx.save();ctx.globalAlpha=Number($('strength').value)/100*.86;ctx.globalCompositeOperation='color';ctx.drawImage(hairOverlayCanvas,0,0);ctx.globalAlpha*=.28;ctx.globalCompositeOperation='screen';ctx.drawImage(hairOverlayCanvas,0,0);ctx.restore();hairMask=null;
+    }
+    function draw(){
+      ctx.clearRect(0,0,canvas.width,canvas.height);if(video.readyState>=2)ctx.drawImage(video,0,0,canvas.width,canvas.height);if(!face)return;
+      const alpha=Number($('strength').value)/100,effect=$('effect').value;
+      if(effect==='beard')drawBeardTexture(alpha*.96);
+      if((effect==='eyes'||effect==='eyes-hair')&&face.length>477){drawBlueIris(468,469,[33,160,158,133,153,144],alpha);drawBlueIris(473,474,[362,385,387,263,373,380],alpha)}
+      if((effect==='hair'||effect==='eyes-hair')&&hairMask)tintHair();
+      if(effect==='hat'){
+        const[lx,ly]=dot(face[127]),[rx,ry]=dot(face[356]),[cx,cy]=dot(face[10]),width=Math.hypot(rx-lx,ry-ly)*1.4;
+        ctx.save();ctx.translate(cx,cy);ctx.rotate(Math.atan2(ry-ly,rx-lx));ctx.globalAlpha=alpha;ctx.fillStyle='#17121a';ctx.beginPath();ctx.ellipse(0,-width*.14,width*.63,width*.13,0,0,Math.PI*2);ctx.fill();ctx.fillRect(-width*.34,-width*.52,width*.68,width*.38);ctx.fillStyle='#735329';ctx.fillRect(-width*.34,-width*.2,width*.68,width*.045);ctx.restore();
+      }
+    }
+    async function ensureHairSegmenter(){
+      if(hairSegmenter)return hairSegmenter;if(hairSegmenterPromise)return hairSegmenterPromise;
+      hairSegmenterPromise=(async()=>{
+        const vision=await import('./klk-face-assets/vision_bundle.mjs');
+        const files=await vision.FilesetResolver.forVisionTasks('./klk-face-assets/wasm');
+        hairSegmenter=await vision.ImageSegmenter.createFromOptions(files,{baseOptions:{modelAssetPath:'https://storage.googleapis.com/mediapipe-models/image_segmenter/hair_segmenter/float32/1/hair_segmenter.tflite',delegate:'CPU'},runningMode:'VIDEO',outputCategoryMask:false,outputConfidenceMasks:true});
+        hairMaskCanvas=document.createElement('canvas');hairMaskContext=hairMaskCanvas.getContext('2d',{willReadFrequently:true});hairOverlayCanvas=document.createElement('canvas');hairOverlayContext=hairOverlayCanvas.getContext('2d');return hairSegmenter;
+      })().catch(error=>{hairSegmenterPromise=null;throw error});
+      return hairSegmenterPromise;
+    }
+    function needsHair(){return $('effect').value==='hair'||$('effect').value==='eyes-hair'}
+    function segmentHair(){
+      if(!needsHair()||hairBusy||!hairSegmenter||video.readyState<2)return;
+      const now=performance.now();if(now-lastHairFrame<90)return;lastHairFrame=now;hairBusy=true;
+      try{const result=hairSegmenter.segmentForVideo(video,now),mask=result.confidenceMasks?.[1];hairMask=mask?{width:mask.width,height:mask.height,data:new Float32Array(mask.getAsFloat32Array())}:null;result.close?.()}catch(error){status.textContent='No se pudo segmentar el cabello: '+error.message}finally{hairBusy=false}
+    }
+    async function start(){
+      const token=++run;stop(false);status.textContent='Cargando el seguimiento facial…';
+      try{
+        if(!window.FaceMesh)await window.FaceMeshPromise;if(token!==run)return;if(!window.FaceMesh)throw new Error('Motor facial no disponible');
+        if(!mesh){mesh=new FaceMesh({locateFile:file=>`https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`});mesh.setOptions({maxNumFaces:1,refineLandmarks:true,minDetectionConfidence:.55,minTrackingConfidence:.55});mesh.onResults(result=>{const detected=!!result.multiFaceLandmarks?.[0];updateFace(result.multiFaceLandmarks?.[0]||null);draw();if(detected&&needsHair())segmentHair();status.textContent=detected?'Rostro detectado: seguimiento activo.':'Cámara activa: centra tu rostro y mejora la iluminación.'})}
+        status.textContent='Solicitando acceso a la cámara…';const acquired=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:facing}},audio:false});
+        if(token!==run){acquired.getTracks().forEach(track=>track.stop());return}stream=acquired;video.srcObject=stream;await video.play();
+        if(needsHair()){status.textContent='Preparando la detección del cabello…';await ensureHairSegmenter();if(token!==run)return}
+        status.textContent='Seguimiento activo. Selecciona un efecto.';loop(token);
+      }catch(error){status.textContent='No se pudo iniciar el seguimiento: '+error.message;stop(false)}
+    }
+    async function loop(token){if(token!==run||!stream)return;if(!busy&&video.readyState>=2){busy=true;try{await mesh.send({image:video})}catch(error){status.textContent='Error de seguimiento: '+error.message}finally{busy=false}}if(token===run)requestAnimationFrame(()=>loop(token))}
+    function stop(invalidate=true){if(invalidate)++run;if(stream)stream.getTracks().forEach(track=>track.stop());stream=null;video.srcObject=null;face=null;stableFace=null;missedFaceFrames=0;hairMask?.close?.();hairMask=null;draw()}
+    $('start').onclick=start;$('flip').onclick=()=>{facing=facing==='user'?'environment':'user';start()};$('stop').onclick=()=>{stop();status.textContent='Cámara cerrada.'};
+    $('effect').onchange=async()=>{draw();if(needsHair()&&stream){status.textContent='Preparando la detección del cabello…';try{await ensureHairSegmenter();status.textContent='Seguimiento activo. Cabello detectado en vivo.'}catch(error){status.textContent='No se pudo cargar el detector de cabello: '+error.message}}};
+    $('strength').oninput=draw;window.addEventListener('pagehide',()=>stop());
+  </script>
+</body>
+</html>
