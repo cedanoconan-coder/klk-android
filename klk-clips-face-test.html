@@ -230,12 +230,12 @@ function drawBeard(landmarks,pt){
   ctx.lineCap='round';
   for(let i=0;i<count;i++){
    const x=(rand()-.5)*width*.90,y=minY+rand()*(maxY-minY);
-   const len=height*(.012+rand()*.027),dx=(rand()-.5)*width*.009;
+   const len=height*(.018+rand()*.034),dx=(rand()-.5)*width*.009;
    const light=i%7===0;
    const progression=Math.max(0,Math.min(1,(y-minY)/Math.max(1,maxY-minY)));
-   const hairAlpha=.16+.27*Math.sqrt(progression);
-   ctx.strokeStyle=light?'rgba(213,184,158,.13)':shade(.44+rand()*.38,hairAlpha+rand()*.10);
-   ctx.lineWidth=Math.max(.45,width*(.0011+rand()*.0018));
+   const hairAlpha=.30+.36*Math.sqrt(progression);
+   ctx.strokeStyle=light?'rgba(213,184,158,.17)':shade(.44+rand()*.38,hairAlpha+rand()*.10);
+   ctx.lineWidth=Math.max(.65,width*(.0018+rand()*.0022));
    ctx.beginPath();ctx.moveTo(x,y);ctx.quadraticCurveTo(x+dx,y+len*.52,x+dx*.45,y+len);ctx.stroke();
   }
  };
@@ -287,7 +287,7 @@ function drawBeard(landmarks,pt){
    ctx.quadraticCurveTo((rightMouth.x+leftMouth.x)/2,upper.y-height*.12,leftMouth.x,upper.y-height*.025);
    ctx.quadraticCurveTo(first.x,first.y,first.x,first.y);
   };
-  fillHair(beardShape,Math.min(1800,Math.round(width*5.2)),upper.y-height*.20,height*.92,beardStyle==='shadow'?.19:.34,beardStyle==='full'?lipContour:null);
+  fillHair(beardShape,Math.min(3000,Math.round(width*7.4)),upper.y-height*.20,height*.92,beardStyle==='shadow'?.19:.34,beardStyle==='full'?lipContour:null);
  };
  const drawSoulPatch=()=>{
   const top=lower.y+height*.025,half=width*.032;
