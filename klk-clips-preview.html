@@ -109,10 +109,11 @@ $('beardCameraClose').onclick=closeBeardCamera;$('beardCameraFlip').onclick=()=>
 $('beardRecordStart').onclick=()=>{if(!beardCameraStream||!window.MediaRecorder)return void(beardCameraStatus.textContent='Este navegador no permite grabar desde esta cámara.');try{beardRecorderChunks=[];if(!beardCanvas.captureStream)throw Error('No se puede grabar la vista con efectos en este navegador.');beardCanvasStream=beardCanvas.captureStream(30);const output=new MediaStream([...beardCanvasStream.getVideoTracks(),...beardCameraStream.getAudioTracks()]),mime=['video/webm;codecs=vp8,opus','video/webm','video/mp4'].find(type=>MediaRecorder.isTypeSupported(type));beardRecorder=new MediaRecorder(output,mime?{mimeType:mime}:undefined);beardRecorder.ondataavailable=event=>{if(event.data.size)beardRecorderChunks.push(event.data);};beardRecorder.onerror=()=>{beardCameraStatus.textContent='Ocurrió un error durante la grabación.';stopBeardCamera();};beardRecorder.onstop=()=>{if(beardCameraModal.hidden||!beardRecorderChunks.length)return;const recordedMime=beardRecorder.mimeType||'video/webm',safeMime=recordedMime.includes('mp4')?'video/mp4':'video/webm',ext=safeMime==='video/mp4'?'mp4':'webm';beardResultFile=new File(beardRecorderChunks,'klk-clips-'+Date.now()+'.'+ext,{type:safeMime});beardResultUrl=URL.createObjectURL(beardResultFile);beardRecordedPreview.src=beardResultUrl;beardRecordedPreview.hidden=false;$('beardUseVideo').hidden=false;$('beardRetry').hidden=false;beardCameraStatus.textContent='Video preparado con el efecto de barba aplicado.';stopBeardCamera();};beardRecorder.start(250);$('beardRecordStart').disabled=true;$('beardRecordStop').disabled=false;$('beardCameraFlip').disabled=true;const duration=Number($('beardDuration').value)||15,started=Date.now();beardCameraStatus.textContent='Grabando: 0 / '+duration+' s';beardTimer=setInterval(()=>beardCameraStatus.textContent='Grabando: '+Math.min(duration,Math.floor((Date.now()-started)/1000))+' / '+duration+' s',300);beardTimeout=setTimeout(()=>{if(beardRecorder?.state==='recording')beardRecorder.stop();},duration*1000);}catch(error){beardCameraStatus.textContent='No se pudo iniciar la grabación: '+error.message;}};
 $('beardRecordStop').onclick=()=>{clearTimeout(beardTimeout);clearInterval(beardTimer);beardTimeout=beardTimer=null;if(beardRecorder?.state==='recording')beardRecorder.stop();$('beardRecordStop').disabled=true;};
 $('beardRetry').onclick=()=>{clearBeardResult();openBeardCamera();};$('beardUseVideo').onclick=()=>{if(!beardResultFile)return;const transfer=new DataTransfer();transfer.items.add(beardResultFile);$('videoFile').files=transfer.files;closeBeardCamera();$('videoFile').dispatchEvent(new Event('change',{bubbles:true}));};
+const beardAuthObserver=new MutationObserver(()=>{if(!document.documentElement.classList.contains('klk-clips-authorized'))closeBeardCamera();});beardAuthObserver.observe(document.documentElement,{attributes:true,attributeFilter:['class']});
 window.addEventListener('pagehide',()=>{closeBeardCamera();beardTracker?.close();});
 function drawBeard(landmarks,pt){
  const required=[13,14,61,132,136,148,149,150,152,172,176,288,291,361,365,377,378,379,397,400,454];
- if(beardStyle==='none'||required.some(i=>!landmarks[i]))return;
+ if(beardMode==='none'||required.some(i=>!landmarks[i]))return;
  const left=pt(landmarks[234]),right=pt(landmarks[454]);
  const mouthLeft=pt(landmarks[61]),mouthRight=pt(landmarks[291]);
  const upperLip=pt(landmarks[13]),lowerLip=pt(landmarks[14]),chin=pt(landmarks[152]);
@@ -126,10 +127,10 @@ function drawBeard(landmarks,pt){
  if(height<12)return;
  const local=p=>({x:(p.x-origin.x)*Math.cos(angle)+(p.y-origin.y)*Math.sin(angle),y:-(p.x-origin.x)*Math.sin(angle)+(p.y-origin.y)*Math.cos(angle)});
  const upper=local(upperLip),lower=local(lowerLip),leftMouth=local(mouthLeft),rightMouth=local(mouthRight);
- const rgb=[1,3,5].map(i=>parseInt(beardColor.slice(i,i+2),16));
+ const rgb=[1,3,5].map(i=>parseInt(beardTint.slice(i,i+2),16));
  if(rgb.some(Number.isNaN))return;
  const shade=(factor,alpha)=>'rgba('+rgb.map(n=>Math.round(n*factor)).join(',')+','+alpha+')';
- const beardFill=ctx.createLinearGradient(0,-height*.1,0,height);
+ const beardFill=beardCtx.createLinearGradient(0,-height*.1,0,height);
  beardFill.addColorStop(0,shade(1,.12));
  beardFill.addColorStop(.28,shade(1,.25));
  beardFill.addColorStop(.72,shade(.82,.38));
@@ -137,44 +138,44 @@ function drawBeard(landmarks,pt){
  const texture=(count,minY,maxY)=>{
   // Stable, fine strokes read as hair while avoiding the dotted, stamped look.
   let seed=719;const rand=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};
-  ctx.lineCap='round';
+  beardCtx.lineCap='round';
   for(let i=0;i<count;i++){
    const x=(rand()-.5)*width*.76,y=minY+rand()*(maxY-minY);
    const len=height*(.012+rand()*.027),dx=(rand()-.5)*width*.009;
    const light=i%7===0;
-   ctx.strokeStyle=light?'rgba(213,184,158,.16)':shade(.48+rand()*.4,.22+rand()*.18);
-   ctx.lineWidth=Math.max(.45,width*(.0011+rand()*.0018));
-   ctx.beginPath();ctx.moveTo(x,y);ctx.quadraticCurveTo(x+dx,y+len*.52,x+dx*.45,y+len);ctx.stroke();
+   beardCtx.strokeStyle=light?'rgba(213,184,158,.16)':shade(.48+rand()*.4,.22+rand()*.18);
+   beardCtx.lineWidth=Math.max(.45,width*(.0011+rand()*.0018));
+   beardCtx.beginPath();beardCtx.moveTo(x,y);beardCtx.quadraticCurveTo(x+dx,y+len*.52,x+dx*.45,y+len);beardCtx.stroke();
   }
  };
  const fillHair=(path,count,minY,maxY,opacity,customPainter=null,mouth=null)=>{
-  ctx.save();
-  ctx.beginPath();path();ctx.closePath();
-  if(mouth)ctx.ellipse(mouth.x,mouth.y,mouth.rx,mouth.ry,0,0,Math.PI*2);
-  ctx.clip(mouth?'evenodd':'nonzero');
-  ctx.globalCompositeOperation='source-over';
-  ctx.globalAlpha=beardStyle==='shadow'?.19:(beardStyle==='full'&&beardOverlay.complete&&beardOverlay.naturalWidth?0.10:opacity);
-  ctx.fillStyle=beardFill;ctx.fill();
-  ctx.globalAlpha=1;
-  if(beardStyle==='full'&&beardOverlay.complete&&beardOverlay.naturalWidth&&customPainter){
-   ctx.globalAlpha=.94;
-   ctx.save();
-   ctx.filter='brightness(.52) contrast(1.1) saturate(.72)';
+  beardCtx.save();
+  beardCtx.beginPath();path();beardCtx.closePath();
+  if(mouth)beardCtx.ellipse(mouth.x,mouth.y,mouth.rx,mouth.ry,0,0,Math.PI*2);
+  beardCtx.clip(mouth?'evenodd':'nonzero');
+  beardCtx.globalCompositeOperation='source-over';
+  beardCtx.globalAlpha=beardMode==='shadow'?.19:(beardMode==='full'&&beardTexture.complete&&beardTexture.naturalWidth?0.10:opacity);
+  beardCtx.fillStyle=beardFill;beardCtx.fill();
+  beardCtx.globalAlpha=1;
+  if(beardMode==='full'&&beardTexture.complete&&beardTexture.naturalWidth&&customPainter){
+   beardCtx.globalAlpha=.94;
+   beardCtx.save();
+   beardCtx.filter='brightness(.52) contrast(1.1) saturate(.72)';
    customPainter();
-   ctx.restore();
-   ctx.globalAlpha=1;
+   beardCtx.restore();
+   beardCtx.globalAlpha=1;
   }else texture(count,minY,maxY);
-  ctx.restore();
+  beardCtx.restore();
  };
  const drawMoustache=()=>{
-  if(beardStyle==='full'&&beardOverlay.complete&&beardOverlay.naturalWidth)return;
+  if(beardMode==='full'&&beardTexture.complete&&beardTexture.naturalWidth)return;
   const moustache=()=>{
-   ctx.moveTo(-width*.29,upper.y-height*.04);
-   ctx.quadraticCurveTo(-width*.15,upper.y-height*.14,0,upper.y-height*.025);
-   ctx.quadraticCurveTo(width*.15,upper.y-height*.14,width*.29,upper.y-height*.04);
-   ctx.quadraticCurveTo(width*.23,lower.y+height*.005,width*.07,lower.y-height*.005);
-   ctx.quadraticCurveTo(0,lower.y+height*.012,-width*.07,lower.y-height*.005);
-   ctx.quadraticCurveTo(-width*.23,lower.y+height*.005,-width*.29,upper.y-height*.04);
+   beardCtx.moveTo(-width*.29,upper.y-height*.04);
+   beardCtx.quadraticCurveTo(-width*.15,upper.y-height*.14,0,upper.y-height*.025);
+   beardCtx.quadraticCurveTo(width*.15,upper.y-height*.14,width*.29,upper.y-height*.04);
+   beardCtx.quadraticCurveTo(width*.23,lower.y+height*.005,width*.07,lower.y-height*.005);
+   beardCtx.quadraticCurveTo(0,lower.y+height*.012,-width*.07,lower.y-height*.005);
+   beardCtx.quadraticCurveTo(-width*.23,lower.y+height*.005,-width*.29,upper.y-height*.04);
   };
   fillHair(moustache,Math.round(width*.72),upper.y-height*.12,lower.y+height*.008,.42);
  };
@@ -204,8 +205,8 @@ function drawBeard(landmarks,pt){
     const b=(t1.y*(s2.y-s3.y)+t2.y*(s3.y-s1.y)+t3.y*(s1.y-s2.y))/den;
     const d=(t1.y*(s3.x-s2.x)+t2.y*(s1.x-s3.x)+t3.y*(s2.x-s1.x))/den;
     const f=(t1.y*(s2.x*s3.y-s3.x*s2.y)+t2.y*(s3.x*s1.y-s1.x*s3.y)+t3.y*(s1.x*s2.y-s2.x*s1.y))/den;
-    ctx.save();ctx.beginPath();ctx.moveTo(t1.x,t1.y);ctx.lineTo(t2.x,t2.y);ctx.lineTo(t3.x,t3.y);ctx.closePath();ctx.clip();
-    ctx.transform(a,b,c,d,e,f);ctx.drawImage(beardOverlay,0,0);ctx.restore();
+    beardCtx.save();beardCtx.beginPath();beardCtx.moveTo(t1.x,t1.y);beardCtx.lineTo(t2.x,t2.y);beardCtx.lineTo(t3.x,t3.y);beardCtx.closePath();beardCtx.clip();
+    beardCtx.transform(a,b,c,d,e,f);beardCtx.drawImage(beardTexture,0,0);beardCtx.restore();
    };
    [['leftTop','topCenter','leftMouth'],['topCenter','rightMouth','leftMouth'],['topCenter','rightTop','rightMouth'],
     ['leftTop','leftJaw','leftMouth'],['leftJaw','lowerCenter','leftMouth'],['leftMouth','lowerCenter','rightMouth'],
@@ -213,23 +214,23 @@ function drawBeard(landmarks,pt){
     .forEach(triangle);
   };
   const beardShape=()=>{
-   ctx.moveTo(first.x,first.y);
-   for(let i=1;i<contour.length;i++)ctx.lineTo(contour[i].x,contour[i].y);
-   ctx.bezierCurveTo(last.x+(rightMouth.x-last.x)*.38,last.y+(rightMouth.y-last.y)*.18,rightMouth.x+width*.025,upper.y-height*.055,rightMouth.x,upper.y-height*.02);
-   ctx.quadraticCurveTo(0,upper.y-height*.11,leftMouth.x,upper.y-height*.02);
-   ctx.bezierCurveTo(leftMouth.x-width*.025,upper.y-height*.055,first.x+(leftMouth.x-first.x)*.38,first.y+(leftMouth.y-first.y)*.18,first.x,first.y);
+   beardCtx.moveTo(first.x,first.y);
+   for(let i=1;i<contour.length;i++)beardCtx.lineTo(contour[i].x,contour[i].y);
+   beardCtx.bezierCurveTo(last.x+(rightMouth.x-last.x)*.38,last.y+(rightMouth.y-last.y)*.18,rightMouth.x+width*.025,upper.y-height*.055,rightMouth.x,upper.y-height*.02);
+   beardCtx.quadraticCurveTo(0,upper.y-height*.11,leftMouth.x,upper.y-height*.02);
+   beardCtx.bezierCurveTo(leftMouth.x-width*.025,upper.y-height*.055,first.x+(leftMouth.x-first.x)*.38,first.y+(leftMouth.y-first.y)*.18,first.x,first.y);
   };
-  fillHair(beardShape,Math.min(560,Math.round(width*2.05)),height*.10,height*.91,beardStyle==='shadow'?.19:.34,beardStyle==='full'?drawAdaptiveTexture:null,beardStyle==='full'?{x:(leftMouth.x+rightMouth.x)/2,y:(upper.y+lower.y)/2,rx:Math.hypot(rightMouth.x-leftMouth.x,rightMouth.y-leftMouth.y)*.52,ry:Math.max(4,Math.abs(lower.y-upper.y)*.8+height*.018)}:null);
-  if(beardStyle==='full'){
+  fillHair(beardShape,Math.min(560,Math.round(width*2.05)),height*.10,height*.91,beardMode==='shadow'?.19:.34,beardMode==='full'?drawAdaptiveTexture:null,beardMode==='full'?{x:(leftMouth.x+rightMouth.x)/2,y:(upper.y+lower.y)/2,rx:Math.hypot(rightMouth.x-leftMouth.x,rightMouth.y-leftMouth.y)*.52,ry:Math.max(4,Math.abs(lower.y-upper.y)*.8+height*.018)}:null);
+  if(beardMode==='full'){
    // Soft cheek guides replace the hard black outline that made the filter look painted on.
    const cheekLine=()=>{
     const a=contour[0],b=contour[contour.length-1];
-    ctx.moveTo(a.x,a.y);ctx.quadraticCurveTo(leftMouth.x-width*.025,a.y+height*.07,leftMouth.x,lower.y+height*.045);
-    ctx.moveTo(b.x,b.y);ctx.quadraticCurveTo(rightMouth.x+width*.025,b.y+height*.07,rightMouth.x,lower.y+height*.045);
+    beardCtx.moveTo(a.x,a.y);beardCtx.quadraticCurveTo(leftMouth.x-width*.025,a.y+height*.07,leftMouth.x,lower.y+height*.045);
+    beardCtx.moveTo(b.x,b.y);beardCtx.quadraticCurveTo(rightMouth.x+width*.025,b.y+height*.07,rightMouth.x,lower.y+height*.045);
    };
-   ctx.save();ctx.beginPath();cheekLine();ctx.strokeStyle=shade(.5,.16);ctx.lineWidth=Math.max(.8,width*.004);ctx.lineCap='round';ctx.stroke();ctx.restore();
-   if(!(beardOverlay.complete&&beardOverlay.naturalWidth)){
-    const chinPatch=()=>{ctx.moveTo(-width*.105,lower.y+height*.13);ctx.quadraticCurveTo(-width*.075,height*.70,0,height*.96);ctx.quadraticCurveTo(width*.075,height*.70,width*.105,lower.y+height*.13);ctx.quadraticCurveTo(0,lower.y+height*.19,-width*.105,lower.y+height*.13);};
+   beardCtx.save();beardCtx.beginPath();cheekLine();beardCtx.strokeStyle=shade(.5,.16);beardCtx.lineWidth=Math.max(.8,width*.004);beardCtx.lineCap='round';beardCtx.stroke();beardCtx.restore();
+   if(!(beardTexture.complete&&beardTexture.naturalWidth)){
+    const chinPatch=()=>{beardCtx.moveTo(-width*.105,lower.y+height*.13);beardCtx.quadraticCurveTo(-width*.075,height*.70,0,height*.96);beardCtx.quadraticCurveTo(width*.075,height*.70,width*.105,lower.y+height*.13);beardCtx.quadraticCurveTo(0,lower.y+height*.19,-width*.105,lower.y+height*.13);};
     fillHair(chinPatch,Math.round(width*.72),lower.y+height*.15,height*.91,.30);
    }
   }
@@ -237,18 +238,18 @@ function drawBeard(landmarks,pt){
  const drawGoatee=(narrow=false)=>{
   const half=width*(narrow?.15:.20),top=lower.y+height*.07;
   const shape=()=>{
-   ctx.moveTo(-half,top);
-   ctx.quadraticCurveTo(-half*1.05,height*.44,0,height*.97);
-   ctx.quadraticCurveTo(half*1.05,height*.44,half,top);
-   ctx.quadraticCurveTo(0,top+height*.10,-half,top);
+   beardCtx.moveTo(-half,top);
+   beardCtx.quadraticCurveTo(-half*1.05,height*.44,0,height*.97);
+   beardCtx.quadraticCurveTo(half*1.05,height*.44,half,top);
+   beardCtx.quadraticCurveTo(0,top+height*.10,-half,top);
   };
   fillHair(shape,Math.round(width*(narrow?1.05:1.35)),top,height*.92,.40);
  };
- ctx.save();ctx.translate(origin.x,origin.y);ctx.rotate(angle);
- if(beardStyle==='full'||beardStyle==='shadow'){drawFullBeard();drawMoustache();}
- else if(beardStyle==='vandyke'){drawGoatee(true);drawMoustache();}
- else if(beardStyle==='goatee'){drawGoatee(false);drawMoustache();}
- ctx.restore();
+ beardCtx.save();beardCtx.translate(origin.x,origin.y);beardCtx.rotate(angle);
+ if(beardMode==='full'||beardMode==='shadow'){drawFullBeard();drawMoustache();}
+ else if(beardMode==='vandyke'){drawGoatee(true);drawMoustache();}
+ else if(beardMode==='goatee'){drawGoatee(false);drawMoustache();}
+ beardCtx.restore();
 }
 
 $('record').onclick=()=>openBeardCamera();
