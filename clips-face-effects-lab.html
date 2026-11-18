@@ -88,7 +88,7 @@
       for(let i=0;i<confidence.length;i++){const alpha=Math.max(0,Math.min(255,Math.round(confidence[i]*220)));const p=i*4;pixels[p]=255;pixels[p+1]=255;pixels[p+2]=255;pixels[p+3]=alpha}
       hairMaskCanvas.width=width;hairMaskCanvas.height=height;hairMaskContext.putImageData(new ImageData(pixels,width,height),0,0);
       hairOverlayCanvas.width=canvas.width;hairOverlayCanvas.height=canvas.height;hairOverlayContext.clearRect(0,0,canvas.width,canvas.height);hairOverlayContext.fillStyle='#397fd8';hairOverlayContext.fillRect(0,0,canvas.width,canvas.height);hairOverlayContext.globalCompositeOperation='destination-in';hairOverlayContext.drawImage(hairMaskCanvas,0,0,canvas.width,canvas.height);hairOverlayContext.globalCompositeOperation='source-over';
-      ctx.save();ctx.globalCompositeOperation='multiply';ctx.globalAlpha=Number($('strength').value)/100*.86;ctx.drawImage(hairOverlayCanvas,0,0);ctx.restore();hairMask=null;
+      ctx.save();ctx.globalAlpha=Number($('strength').value)/100*.86;ctx.globalCompositeOperation='color';ctx.drawImage(hairOverlayCanvas,0,0);ctx.globalAlpha*=.28;ctx.globalCompositeOperation='screen';ctx.drawImage(hairOverlayCanvas,0,0);ctx.restore();hairMask=null;
     }
     function draw(){
       ctx.clearRect(0,0,canvas.width,canvas.height);if(video.readyState>=2)ctx.drawImage(video,0,0,canvas.width,canvas.height);if(!face)return;
