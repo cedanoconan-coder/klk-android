@@ -5249,4 +5249,112 @@ html body #chat.room-open .chatTop .muted,html body #chat.room-open .chatTop .kl
 <style>#callsPanel .klk-group-join-slot{position:static!important;margin:12px 0 18px;z-index:auto}#callsPanel .klk-group-join-slot button{position:static!important;inset:auto!important;transform:none!important;max-width:100%;box-shadow:0 3px 12px #0002}#homeView:not([data-klk-tab="calls"]) .klk-group-join-slot{display:none!important}</style>
 <script>(()=>{const calls=document.getElementById('callsPanel');if(!calls)return;const slot=document.createElement('div');slot.className='klk-group-join-slot';slot.hidden=true;(calls.querySelector('.klkCallsHeading')||calls).insertAdjacentElement('afterend',slot);function relocate(){for(const el of document.querySelectorAll('button,[role="button"]')){if(slot.contains(el)||el.closest('#callsPanel'))continue;const label=(el.textContent||'').replace(/\s+/g,' ').trim().toLowerCase();if(!label.includes('unirse a video grupal'))continue;slot.appendChild(el);slot.hidden=false;}}relocate();new MutationObserver(relocate).observe(document.body,{childList:true,subtree:true});})();</script>
 <script>window.klkSendCustomSticker=(file,type)=>uploadMedia(file,type);</script><script src="./sticker-studio.js?v=2"></script>
+
+<style id="klk-composer-stickers-redesign-2026">
+/* KLK Manin · rediseño del chat y bandeja de stickers, aislado de la pantalla de inicio. */
+#chat.room-open.klkComposerV2{--klk-editor-bg:#10111e;--klk-editor-surface:#252635;--klk-editor-line:#39364a;--klk-editor-text:#f4f1fa;--klk-editor-accent:#8e39da;background:var(--klk-editor-bg)!important;color:var(--klk-editor-text)!important}
+#chat.room-open.klkComposerV2 .chatTop{background:linear-gradient(110deg,#171426,#25203a)!important;color:#fff!important;border-bottom:1px solid #383047!important}
+#chat.room-open.klkComposerV2 .chatTop #chatTitle,#chat.room-open.klkComposerV2 .chatTop #who,#chat.room-open.klkComposerV2 .chatTop .roomIdentity,#chat.room-open.klkComposerV2 .chatTop .roomActions button,#chat.room-open.klkComposerV2 .chatTop .chatBack{color:#f4f1fa!important}
+#chat.room-open.klkComposerV2 .chatTop #who{color:#bbb4cd!important}
+#chat.room-open.klkComposerV2 #messages{background-color:#12121f!important;background-image:radial-gradient(#ffffff0a 1px,transparent 1px)!important;background-size:22px 22px!important}
+#chat.room-open.klkComposerV2 #messages .msg:not(.mine){background:#2b2939!important;color:#f6f2fc!important}
+#chat.room-open.klkComposerV2 #messages .msg.mine{background:linear-gradient(125deg,#7331b1,#542583)!important;color:#fff!important}
+#chat.room-open.klkComposerV2 #messages .msg p,#chat.room-open.klkComposerV2 #messages .msg b{color:inherit!important}
+#chat.room-open.klkComposerV2 .composer{background:#11121e!important;border-top:1px solid #2c293b!important;gap:7px!important;padding:9px 10px calc(9px + env(safe-area-inset-bottom))!important;min-height:68px!important}
+#chat.room-open.klkComposerV2 .messageInputShell{background:#282837!important;border:1px solid #38374a!important;border-radius:28px!important;min-height:52px!important;min-width:0!important;box-shadow:none!important}
+#chat.room-open.klkComposerV2 .messageInputShell #message{background:transparent!important;color:#fff!important;font-size:16px!important;height:50px!important;min-height:50px!important;padding:0 10px!important;outline:none!important}
+#chat.room-open.klkComposerV2 .messageInputShell #message::placeholder{color:#b2aec1!important;opacity:1}
+#chat.room-open.klkComposerV2 .composer .stickersToggle,#chat.room-open.klkComposerV2 .messageInputShell #pickPhoto,#chat.room-open.klkComposerV2 .messageInputShell #takePhoto{background:transparent!important;color:#c9c3d8!important;box-shadow:none!important}
+#chat.room-open.klkComposerV2 .composer .stickersToggle{font-size:26px!important;flex-basis:40px!important;width:40px!important;height:46px!important}
+#chat.room-open.klkComposerV2 .composer .stickersToggle[aria-expanded=true]{color:#b16cff!important}
+#chat.room-open.klkComposerV2 .composer #send,#chat.room-open.klkComposerV2 .composer #recordAudio{background:linear-gradient(145deg,#a94bf1,#762ac7)!important;color:#fff!important;border-radius:50%!important;box-shadow:0 3px 10px #0005!important;width:52px!important;min-width:52px!important;flex:0 0 52px!important;height:52px!important;margin:0!important}
+#chat.room-open.klkComposerV2 .composer #send svg{fill:#fff!important}
+#chat.room-open.klkComposerV2 #stickersPanel{background:#161622!important;color:#f6f2fc!important;border:1px solid #302b42!important;border-bottom:0!important;border-radius:20px 20px 0 0!important;box-shadow:0 -8px 26px #0004!important;padding:0 0 env(safe-area-inset-bottom)!important;overflow:hidden!important}
+#chat.room-open.klkComposerV2 #stickersPanel.open{display:flex!important;flex-direction:column!important;height:min(46dvh,420px)!important;max-height:min(46dvh,420px)!important;min-height:240px!important;flex:0 1 auto!important}
+#chat.room-open.klkComposerV2 .stickerSheetHandle{display:flex!important;align-items:center!important;justify-content:center!important;flex:0 0 18px!important;height:18px!important}
+#chat.room-open.klkComposerV2 .stickerSheetHandle span{background:#6d667b!important;border-radius:10px}
+#chat.room-open.klkComposerV2 .stickerSearchBar{display:flex!important;align-items:center!important;gap:8px!important;flex:0 0 42px!important;margin:3px 12px 10px!important;padding:0 12px!important;background:#292837!important;border-radius:24px!important}
+#chat.room-open.klkComposerV2 #stickerSearch{background:transparent!important;border:0!important;outline:none!important;color:#fff!important;font-size:14px!important;min-width:0!important}
+#chat.room-open.klkComposerV2 #stickerSearch::placeholder{color:#aaa6b9!important}
+#chat.room-open.klkComposerV2 .stickerSearchIcon{color:#aaa6b9!important;background:transparent!important}
+#chat.room-open.klkComposerV2 .stickerModeTabs{display:flex!important;gap:7px!important;flex:0 0 46px!important;height:46px!important;align-items:center!important;overflow-x:auto!important;scrollbar-width:none!important;margin:0 12px!important;padding:2px!important;border:0!important;background:#222230!important;border-radius:24px!important}
+#chat.room-open.klkComposerV2 .stickerModeTab{display:flex!important;align-items:center!important;justify-content:center!important;flex:1 0 auto!important;width:auto!important;min-width:66px!important;height:38px!important;padding:0 12px!important;margin:0!important;background:transparent!important;border:0!important;border-radius:20px!important;color:#d2cbdd!important;font-size:14px!important;font-weight:650!important}
+#chat.room-open.klkComposerV2 .stickerModeTab.active,#chat.room-open.klkComposerV2 .stickerModeTab[aria-selected=true]{background:linear-gradient(110deg,#7830c2,#9d40df)!important;color:white!important}
+#chat.room-open.klkComposerV2 .stickerModeTab:after{display:none!important}
+#chat.room-open.klkComposerV2 .stickerCategoryBar{display:flex!important;align-items:center!important;flex:0 0 50px!important;height:50px!important;overflow-x:auto!important;gap:5px!important;padding:4px 12px!important;border-bottom:1px solid #2b293b!important}
+#chat.room-open.klkComposerV2 .stickerCategoryBar[hidden]{display:none!important}
+#chat.room-open.klkComposerV2 .stickerCategory{background:transparent!important;color:#d1cadc!important;border-radius:12px!important;flex:0 0 42px!important}
+#chat.room-open.klkComposerV2 .stickerCategory.active{background:#493066!important;color:#fff!important}
+#chat.room-open.klkComposerV2 .stickerContentArea{flex:1 1 auto!important;min-height:0!important;overflow-y:auto!important;overscroll-behavior:contain!important;padding:12px!important}
+#chat.room-open.klkComposerV2 .stickersGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:10px!important}
+#chat.room-open.klkComposerV2 .emojiGrid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))!important;gap:4px!important}
+#chat.room-open.klkComposerV2 .stickersGrid[hidden],#chat.room-open.klkComposerV2 .emojiGrid[hidden],#chat.room-open.klkComposerV2 .stickerGifEmpty[hidden],#chat.room-open.klkComposerV2 .stickerNoResults[hidden]{display:none!important}
+#chat.room-open.klkComposerV2 .stickerChoice{background:#242333!important;border:1px solid #343048!important;border-radius:15px!important;min-height:65px!important;color:#fff!important}
+#chat.room-open.klkComposerV2 .emojiChoice{color:#fff!important;background:transparent!important}
+#chat.room-open.klkComposerV2 .stickerNoResults,#chat.room-open.klkComposerV2 .stickerGifEmpty{color:#c4bed0!important}
+#chat.room-open.klkComposerV2 #klkMineGrid{display:none;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+#chat.room-open.klkComposerV2 #stickersPanel.klkMineMode #klkMineGrid{display:grid!important}
+#chat.room-open.klkComposerV2 #stickersPanel.klkMineMode .emojiGrid,#chat.room-open.klkComposerV2 #stickersPanel.klkMineMode .stickersGrid,#chat.room-open.klkComposerV2 #stickersPanel.klkMineMode .stickerNoResults,#chat.room-open.klkComposerV2 #stickersPanel.klkMineMode .stickerGifEmpty,#chat.room-open.klkComposerV2 #stickersPanel.klkMineMode .stickerCategoryBar{display:none!important}
+#chat.room-open.klkComposerV2 #klkMineGrid button{display:grid;place-items:center;aspect-ratio:1;min-width:0;min-height:68px;padding:5px;margin:0;background:#252436!important;border:1px solid #3b3450!important;border-radius:15px!important}
+#chat.room-open.klkComposerV2 #klkMineGrid img{display:block;width:100%;height:100%;object-fit:contain}
+#chat.room-open.klkComposerV2 #klkMineGrid .klkMineEmpty{grid-column:1/-1;padding:24px 8px;text-align:center;color:#bcb5ca;font-size:13px;line-height:1.5}
+#chat.room-open.klkComposerV2 #attachmentPanel{background:#1b1a28!important;color:#fff!important}
+#chat.room-open.klkComposerV2 #recordStatus{background:#11121e!important;color:#e3d8f4!important}
+@media(max-width:380px){
+ #chat.room-open.klkComposerV2 .composer{gap:3px!important;padding-left:5px!important;padding-right:5px!important}
+ #chat.room-open.klkComposerV2 .composer .stickersToggle{width:36px!important;flex-basis:36px!important}
+ #chat.room-open.klkComposerV2 .messageInputShell #pickPhoto,#chat.room-open.klkComposerV2 .messageInputShell #takePhoto{width:32px!important;min-width:32px!important;flex-basis:32px!important}
+ #chat.room-open.klkComposerV2 .composer #send,#chat.room-open.klkComposerV2 .composer #recordAudio{width:48px!important;min-width:48px!important;flex-basis:48px!important;height:48px!important}
+}
+@media(prefers-reduced-motion:reduce){#chat.room-open.klkComposerV2 .stickerChoice{transition:none!important}}
+</style>
+
+<script id="klk-composer-stickers-redesign-js">
+(()=>{
+ "use strict";
+ const chat=document.getElementById("chat"),panel=document.getElementById("stickersPanel"),tabs=panel?.querySelector(".stickerModeTabs");
+ if(!chat||!panel||!tabs)return;
+ chat.classList.add("klkComposerV2");
+ const labels={emoji:"Emojis",gif:"GIF",sticker:"Stickers"};
+ tabs.querySelectorAll("[data-sticker-mode]").forEach(b=>{b.textContent=labels[b.dataset.stickerMode]||b.textContent;b.setAttribute("aria-label",b.textContent);});
+ const mine=document.createElement("button");
+ mine.type="button";mine.className="stickerModeTab";mine.textContent="Mis stickers";mine.setAttribute("role","tab");mine.setAttribute("aria-selected","false");mine.setAttribute("aria-label","Mis stickers guardados");
+ tabs.append(mine);
+ const grid=document.createElement("div");grid.id="klkMineGrid";grid.setAttribute("aria-label","Stickers guardados en este dispositivo");
+ panel.querySelector(".stickerContentArea")?.append(grid);
+ const search=panel.querySelector("#stickerSearch");
+ function showMine(){
+  panel.classList.add("klkMineMode");
+  tabs.querySelectorAll("[role=tab]").forEach(b=>{const active=b===mine;b.classList.toggle("active",active);b.setAttribute("aria-selected",String(active));});
+  renderMine();
+ }
+ function leaveMine(){panel.classList.remove("klkMineMode");mine.classList.remove("active");mine.setAttribute("aria-selected","false");}
+ function renderMine(){
+  grid.replaceChildren();
+  let packs={};try{packs=JSON.parse(localStorage.getItem("klk-sticker-packs-v1")||"{}")||{}}catch{}
+  const q=(search?.value||"").trim().toLocaleLowerCase();
+  const items=Object.entries(packs).flatMap(([name,list])=>Array.isArray(list)?list.map((item,i)=>({name,item,i})):[]).filter(x=>x.item&&typeof x.item.data==="string"&&x.item.data.startsWith("data:image/")&&(!q||x.name.toLocaleLowerCase().includes(q)));
+  if(!items.length){const empty=document.createElement("p");empty.className="klkMineEmpty";empty.textContent=q?"No hay stickers que coincidan.":"Crea o importa stickers con el botón ＋ Crear sticker y aparecerán aquí.";grid.append(empty);return;}
+  items.slice(0,120).forEach(({name,item,i})=>{
+   const b=document.createElement("button");b.type="button";b.setAttribute("aria-label","Enviar sticker de "+name);
+   const img=document.createElement("img");img.src=item.data;img.alt="Sticker "+(i+1);img.loading="lazy";b.append(img);
+   b.addEventListener("click",async()=>{
+    if(typeof window.klkSendCustomSticker!=="function")return;
+    b.disabled=true;
+    try{
+     const response=await fetch(item.data),blob=await response.blob();
+     if(!blob.type.startsWith("image/"))throw Error("Formato no compatible");
+     await window.klkSendCustomSticker(new File([blob],"sticker-klk.png",{type:blob.type||"image/png"}),"image");
+     if(panel.classList.contains("open"))document.getElementById("stickersToggle")?.click();
+    }catch(error){const status=document.getElementById("chatStatus");if(status)status.textContent="No se pudo enviar el sticker. Inténtalo de nuevo.";console.warn("KLK sticker:",error);}
+    finally{b.disabled=false;}
+   });grid.append(b);
+  });
+ }
+ mine.addEventListener("click",showMine);
+ tabs.querySelectorAll("[data-sticker-mode]").forEach(b=>b.addEventListener("click",leaveMine));
+ search?.addEventListener("input",()=>{if(panel.classList.contains("klkMineMode"))renderMine();});
+ new MutationObserver(()=>{if(!panel.classList.contains("open"))leaveMine();else if(panel.classList.contains("klkMineMode"))renderMine();}).observe(panel,{attributes:true,attributeFilter:["class"]});
+})();
+</script>
 </body></html>
