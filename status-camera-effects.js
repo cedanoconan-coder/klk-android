@@ -121,13 +121,18 @@
     {source:.12,y:place.sideburnY,left:place.leftCheek*.98,right:place.rightCheek*.98,center:0},
     {source:.30,y:-Math.min(place.jawWidth*.04,place.mouthWidth*.08),left:place.leftCheek*.94,right:place.rightCheek*.94,center:0},
     {source:.50,y:0,left:place.leftJaw*.98,right:place.rightJaw*.98,center:0},
-    {source:.72,y:chinDistance*.60,left:place.leftJaw*.96,right:place.rightJaw*.96,center:chinX*.48},
-    {source:.93,y:chinDistance,left:place.leftJaw*.50,right:place.rightJaw*.50,center:chinX*.88},
-    {source:.99,y:chinDistance+chinDistance*.06,left:place.leftJaw*.14,right:place.rightJaw*.14,center:chinX}
+    {source:.72,y:chinDistance*.58,left:place.leftJaw*.94,right:place.rightJaw*.94,center:chinX*.42},
+    {source:.84,y:chinDistance*.80,left:place.leftJaw*.80,right:place.rightJaw*.80,center:chinX*.68},
+    {source:.93,y:chinDistance,left:place.leftJaw*.64,right:place.rightJaw*.64,center:chinX*.88},
+    {source:.99,y:chinDistance+chinDistance*.025,left:place.leftJaw*.34,right:place.rightJaw*.34,center:chinX}
    ];
+   const slicesPerRow=6,lerp=(a,b,t)=>a+(b-a)*t;
    for(let i=0;i<rows.length-1;i++){
-    const a=rows[i],b=rows[i+1],sy=a.source*sourceH,sh=Math.max(1,(b.source-a.source)*sourceH+.5),top=a.y,bottom=b.y,topWidth=a.left+a.right,bottomWidth=b.left+b.right;
-    ctx.drawImage(beardTexture,0,sy,sourceW,sh,a.center-a.left,top,topWidth,bottom-top);
+    const a=rows[i],b=rows[i+1];
+    for(let slice=0;slice<slicesPerRow;slice++){
+     const t0=slice/slicesPerRow,t1=(slice+1)/slicesPerRow,source0=lerp(a.source,b.source,t0),source1=lerp(a.source,b.source,t1),top=lerp(a.y,b.y,t0),bottom=lerp(a.y,b.y,t1),left=lerp(a.left,b.left,t0),right=lerp(a.right,b.right,t0),center=lerp(a.center,b.center,t0),sy=source0*sourceH,sh=Math.max(1,(source1-source0)*sourceH+.35);
+     ctx.drawImage(beardTexture,0,sy,sourceW,sh,center-left,top,left+right,Math.max(1,bottom-top+.45));
+    }
    }
    ctx.restore();
   }
