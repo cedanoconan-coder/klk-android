@@ -249,7 +249,11 @@ function drawBeard(landmarks,pt){
   if(beardStyle==='full'&&beardOverlay.complete&&beardOverlay.naturalWidth){
    // The transparent hair texture follows the rotated mouth-to-jaw frame and is clipped to the live jaw contour.
    ctx.globalAlpha=.96;
-   ctx.drawImage(beardOverlay,-width*.51,-height*.46,width*1.02,height*1.72);
+   ctx.save();
+   // Lift the moustache onto the upper lip, narrow the cheek edges, and darken the generated highlights.
+   ctx.filter='brightness(.52) contrast(1.1) saturate(.72)';
+   ctx.drawImage(beardOverlay,-width*.48,-height*.80,width*.96,height*1.90);
+   ctx.restore();
    ctx.globalAlpha=1;
   }else texture(count,minY,maxY);
   ctx.restore();
