@@ -109,3 +109,22 @@ body>main{margin:0!important;padding:0!important;max-width:none!important}
 #clipsPanel .clipsStudioButtons{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 #clipsPanel .clipsStudioButtons button{width:100%;font-size:13px;margin:0!important}
 #clipsPanel .clipsStudioHelp{line-height:1.4}
+
+
+
+/* Adaptive beard controls in the integrated KLK Clips recorder */
+#clipsPanel .clipsCameraViewport{position:relative;width:100%;height:min(46dvh,420px);min-height:220px;overflow:hidden;border-radius:16px;background:#050407}
+#clipsPanel .clipsCameraViewport video,#clipsPanel .clipsCameraViewport canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border:0;border-radius:inherit}
+#clipsPanel .clipsCameraViewport video{display:block;background:#050407}
+#clipsPanel .clipsCameraViewport canvas{opacity:0;pointer-events:none}
+#clipsPanel .clipsCameraViewport.has-beard video{opacity:0}
+#clipsPanel .clipsCameraViewport.has-beard canvas{opacity:1}
+#clipsPanel #clipsBeardControls{margin:12px 0;padding:12px;border:1px solid #ffffff20;border-radius:16px;background:#120b1d}
+#clipsPanel #clipsBeardControls summary{cursor:pointer;font-weight:700;color:#f3dfff}
+#clipsPanel .clipsBeardOptions>p{font-size:12px;line-height:1.4;color:#d9c8e6}
+#clipsPanel .clipsBeardStyles{display:flex;gap:6px;overflow-x:auto;padding:2px 0 8px}
+#clipsPanel .clipsBeardStyles button{flex:0 0 auto;padding:8px 10px;margin:0;border-radius:16px;background:#30213d;font-size:12px}
+#clipsPanel .clipsBeardStyles button.active{background:#9c29ed;outline:2px solid #edcaff}
+#clipsPanel .clipsBeardColor{display:flex!important;align-items:center;justify-content:space-between;gap:12px;font-size:13px}
+#clipsPanel #clipsBeardColor{width:52px!important;height:38px;padding:2px;border:1px solid #ffffff35;border-radius:10px;background:transparent}
+#clipsPanel #clipsBeardStatus{min-height:18px;margin-bottom:0}
