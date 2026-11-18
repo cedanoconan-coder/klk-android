@@ -68,11 +68,11 @@
       const sourceX=[.035,.5,.965],sourceY=[.13,.53,.98],ids=[234,13,454,172,17,397,150,152,365],dest=ids.map(id=>dot(face[id]));
       for(let row=0;row<2;row++)for(let col=0;col<2;col++){const i=row*3+col,j=i+1,k=i+3,l=k+1,s=(r,c)=>[sourceX[c]*beardTexture.naturalWidth,sourceY[r]*beardTexture.naturalHeight];drawTriangle(beardTexture,s(row,col),s(row,col+1),s(row+1,col),dest[i],dest[j],dest[k],alpha);drawTriangle(beardTexture,s(row,col+1),s(row+1,col+1),s(row+1,col),dest[j],dest[l],dest[k],alpha)}
     }
-    function drawBlueIris(centerId,ringStart,alpha){
+    function drawBlueIris(centerId,ringStart,contourIds,alpha){
       const center=dot(face[centerId]),outer=dot(face[ringStart]),innerPoint=dot(face[ringStart+2]);
       const radius=Math.max(3,Math.hypot(outer[0]-center[0],outer[1]-center[1]));
-      const pupilRadius=Math.max(radius*.29,Math.hypot(innerPoint[0]-center[0],innerPoint[1]-center[1])*.74);
-      ctx.save();ctx.translate(...center);ctx.rotate(Math.atan2(outer[1]-center[1],outer[0]-center[0]));ctx.scale(1,.92);ctx.beginPath();ctx.arc(0,0,radius,0,Math.PI*2);ctx.clip();
+      const pupilRadius=Math.max(radius*.31,Math.hypot(innerPoint[0]-center[0],innerPoint[1]-center[1])*.31);
+      ctx.save();ctx.beginPath();contourIds.forEach((id,index)=>{const[x,y]=dot(face[id]);index?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.closePath();ctx.clip();ctx.translate(...center);ctx.rotate(Math.atan2(outer[1]-center[1],outer[0]-center[0]));ctx.scale(1,.92);ctx.beginPath();ctx.arc(0,0,radius,0,Math.PI*2);ctx.clip();
       const iris=ctx.createRadialGradient(0,0,pupilRadius*.72,0,0,radius);
       iris.addColorStop(0,'rgba(5,33,71,.88)');iris.addColorStop(.28,'rgba(20,103,190,.86)');iris.addColorStop(.68,'rgba(71,190,245,.88)');iris.addColorStop(.9,'rgba(12,93,160,.88)');iris.addColorStop(1,'rgba(3,25,52,.92)');
       ctx.globalAlpha=alpha;ctx.fillStyle=iris;ctx.beginPath();ctx.arc(0,0,radius,0,Math.PI*2);ctx.fill();
@@ -94,7 +94,7 @@
       ctx.clearRect(0,0,canvas.width,canvas.height);if(video.readyState>=2)ctx.drawImage(video,0,0,canvas.width,canvas.height);if(!face)return;
       const alpha=Number($('strength').value)/100,effect=$('effect').value;
       if(effect==='beard')drawBeardTexture(alpha*.96);
-      if((effect==='eyes'||effect==='eyes-hair')&&face.length>477){drawBlueIris(468,469,alpha);drawBlueIris(473,474,alpha)}
+      if((effect==='eyes'||effect==='eyes-hair')&&face.length>477){drawBlueIris(468,469,[33,160,158,133,153,144],alpha);drawBlueIris(473,474,[362,385,387,263,373,380],alpha)}
       if((effect==='hair'||effect==='eyes-hair')&&hairMask)tintHair();
       if(effect==='hat'){
         const[lx,ly]=dot(face[127]),[rx,ry]=dot(face[356]),[cx,cy]=dot(face[10]),width=Math.hypot(rx-lx,ry-ly)*1.4;
