@@ -215,7 +215,6 @@ function drawBeard(landmarks,pt){
  if(height<12)return;
  const local=p=>({x:(p.x-origin.x)*Math.cos(angle)+(p.y-origin.y)*Math.sin(angle),y:-(p.x-origin.x)*Math.sin(angle)+(p.y-origin.y)*Math.cos(angle)});
  const upper=local(upperLip),lower=local(lowerLip);
- const scale=Math.min(1,width/150);
  const ink=beardStyle==='shadow'?'.34':'.86';
  ctx.save();ctx.translate(origin.x,origin.y);ctx.rotate(angle);
  const beardFill=ctx.createLinearGradient(0,-height*.18,0,height);
