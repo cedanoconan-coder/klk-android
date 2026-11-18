@@ -133,7 +133,7 @@
    const scale=Math.max(.55,Math.min(1.5,place.jawWidth/320)),styleOpacity=manLook==='stubble'?.42:manLook==='short'?.78:manLook==='goatee'?.82:manLook==='mustache'?.72:.95;
    const shade=ctx.createLinearGradient(0,top,0,Math.max(top+1,bottom));shade.addColorStop(0,'rgba(36,25,21,.10)');shade.addColorStop(.42,'rgba(30,21,18,.20)');shade.addColorStop(1,'rgba(22,16,14,.28)');
    ctx.globalAlpha=amount*styleOpacity*.38;ctx.fillStyle=shade;ctx.fillRect(-leftTop,top,leftTop+rightTop,Math.max(1,bottom-top+chinDistance*.025));
-   const seed=n=>{const value=Math.sin(n*127.1+311.7)*43758.5453;return value-Math.floor(value)},density=manLook==='stubble'?380:manLook==='short'?760:manLook==='goatee'?620:manLook==='mustache'?380:980;
+   const seed=n=>{const value=Math.sin(n*127.1+311.7)*43758.5453;return value-Math.floor(value)},density=manLook==='stubble'?280:manLook==='short'?470:manLook==='goatee'?420:manLook==='mustache'?280:700;
    ctx.lineCap='round';
    for(let i=0;i<density;i++){
     const ry=seed(i+1701),t=Math.pow(ry,.78),y=top+(bottom-top)*t,progress=Math.max(0,Math.min(1,(y-top)/Math.max(1,bottom-top))),left=leftTop+(place.leftJaw-leftTop)*progress,right=rightTop+(place.rightJaw-rightTop)*progress,center=chinX*progress,x=center-left+seed(i+1)*(left+right),len=(manLook==='stubble'?1.1:manLook==='short'?2.1:manLook==='mustache'?1.5:2.8)+seed(i+918)*(manLook==='full'?5.2:3.3),lean=(seed(i+722)*2-1)*Math.max(.7,scale*2.1);
