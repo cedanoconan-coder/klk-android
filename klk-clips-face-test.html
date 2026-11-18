@@ -83,6 +83,9 @@ function restoreLivePreview(){
 }
 const irisGroups=[[468,469,470,471,472],[473,474,475,476,477]];
 const smoothedEyes=[null,null];
+// Photorealistic beard texture, composited inside the live jaw mask.
+const beardOverlay=new Image();
+beardOverlay.src='./klk-face-assets/beard-realistic.png';
 
 
 const irisTextures=new Map();
@@ -240,13 +243,19 @@ function drawBeard(landmarks,pt){
   ctx.save();
   ctx.beginPath();path();ctx.closePath();ctx.clip();
   ctx.globalCompositeOperation='source-over';
-  ctx.globalAlpha=beardStyle==='shadow'?.19:opacity;
+  ctx.globalAlpha=beardStyle==='shadow'?.19:(beardStyle==='full'&&beardOverlay.complete&&beardOverlay.naturalWidth?0.10:opacity);
   ctx.fillStyle=beardFill;ctx.fill();
   ctx.globalAlpha=1;
-  texture(count,minY,maxY);
+  if(beardStyle==='full'&&beardOverlay.complete&&beardOverlay.naturalWidth){
+   // The transparent hair texture follows the rotated mouth-to-jaw frame and is clipped to the live jaw contour.
+   ctx.globalAlpha=.96;
+   ctx.drawImage(beardOverlay,-width*.51,-height*.46,width*1.02,height*1.72);
+   ctx.globalAlpha=1;
+  }else texture(count,minY,maxY);
   ctx.restore();
  };
  const drawMoustache=()=>{
+  if(beardStyle==='full'&&beardOverlay.complete&&beardOverlay.naturalWidth)return;
   const moustache=()=>{
    ctx.moveTo(-width*.29,upper.y-height*.04);
    ctx.quadraticCurveTo(-width*.15,upper.y-height*.14,0,upper.y-height*.025);
@@ -279,8 +288,10 @@ function drawBeard(landmarks,pt){
     ctx.moveTo(b.x,b.y);ctx.quadraticCurveTo(rightMouth.x+width*.025,b.y+height*.07,rightMouth.x,lower.y+height*.045);
    };
    ctx.save();ctx.beginPath();cheekLine();ctx.strokeStyle=shade(.5,.16);ctx.lineWidth=Math.max(.8,width*.004);ctx.lineCap='round';ctx.stroke();ctx.restore();
-   const chinPatch=()=>{ctx.moveTo(-width*.105,lower.y+height*.13);ctx.quadraticCurveTo(-width*.075,height*.70,0,height*.96);ctx.quadraticCurveTo(width*.075,height*.70,width*.105,lower.y+height*.13);ctx.quadraticCurveTo(0,lower.y+height*.19,-width*.105,lower.y+height*.13);};
-   fillHair(chinPatch,Math.round(width*.72),lower.y+height*.15,height*.91,.30);
+   if(!(beardOverlay.complete&&beardOverlay.naturalWidth)){
+    const chinPatch=()=>{ctx.moveTo(-width*.105,lower.y+height*.13);ctx.quadraticCurveTo(-width*.075,height*.70,0,height*.96);ctx.quadraticCurveTo(width*.075,height*.70,width*.105,lower.y+height*.13);ctx.quadraticCurveTo(0,lower.y+height*.19,-width*.105,lower.y+height*.13);};
+    fillHair(chinPatch,Math.round(width*.72),lower.y+height*.15,height*.91,.30);
+   }
   }
  };
  const drawGoatee=(narrow=false)=>{
