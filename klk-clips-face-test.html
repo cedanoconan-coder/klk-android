@@ -350,7 +350,8 @@ function drawBeard(landmarks,pt){
   fillHair(shape,Math.round(width*(narrow?1.05:1.35)),top,height*.92,.40,lipContour);
  };
  ctx.save();ctx.translate(origin.x,origin.y);ctx.rotate(angle);
-  if(beardStyle==='curly'){if(!drawReferenceBeard()){drawFullBeard();drawMoustache(lipContour);drawSoulPatch();}}\n  else if(beardStyle==='full'){drawFullBeard();drawMoustache(lipContour);drawSoulPatch();}
+  if(beardStyle==='curly'){if(!drawReferenceBeard()){drawFullBeard();drawMoustache(lipContour);drawSoulPatch();}}
+  else if(beardStyle==='full'){drawFullBeard();drawMoustache(lipContour);drawSoulPatch();}
   else if(beardStyle==='short'){drawFullBeard(true);drawMoustache(lipContour);drawSoulPatch();}
   else if(beardStyle==='shadow'){drawFullBeard();drawMoustache(lipContour);}
   else if(beardStyle==='vandyke'){drawGoatee(true);drawMoustache(lipContour);}
