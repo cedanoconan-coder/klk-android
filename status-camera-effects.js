@@ -68,7 +68,7 @@
   const faceOutline=[10,338,297,332,284,251,389,356,454,323,361,288,397,365,379,378,400,377,152,148,176,149,150,136,172,58,132,93,234,127,162,21,54,103,67,109];
   const mouthOutline=[61,185,40,39,37,0,267,269,270,409,291,375,321,405,314,17,84,181,91,146];
   const beardOutline=[234,93,132,58,172,136,150,149,176,148,152,377,400,378,379,365,397,288,361,323,454];
-  const beardUpperCut=[234,93,132,58,61,185,40,39,37,0,267,269,270,409,291,288,361,323,454];
+  const beardUpperCut=[234,93,132,58,61,98,2,327,291,288,361,323,454];
   const upperLipAndMustache=[61,185,40,39,37,0,267,269,270,409,291,327,2,98];
   function traceLandmarkLoop(ids){ids.forEach((id,index)=>{const[x,y]=eyePoint(id);index?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.closePath()}
   function drawSkinSmoothing(){if(!skinSmooth||!facePoints)return;if(skinBuffer.width!==canvas.width||skinBuffer.height!==canvas.height){skinBuffer.width=canvas.width;skinBuffer.height=canvas.height}skinBufferCtx.clearRect(0,0,canvas.width,canvas.height);skinBufferCtx.filter=`blur(${1.2+skinSmooth/15}px)`;skinBufferCtx.drawImage(canvas,0,0);skinBufferCtx.filter='none';ctx.save();ctx.beginPath();traceLandmarkLoop(faceOutline);eyeContours.forEach(traceLandmarkLoop);traceLandmarkLoop(mouthOutline);ctx.clip('evenodd');ctx.globalAlpha=.18+skinSmooth/145;ctx.drawImage(skinBuffer,0,0);ctx.restore()}
