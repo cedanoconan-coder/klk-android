@@ -239,20 +239,20 @@ function drawBeard(landmarks,pt){
    ctx.beginPath();ctx.moveTo(x,y);ctx.quadraticCurveTo(x+dx,y+len*.52,x+dx*.45,y+len);ctx.stroke();
   }
  };
- const fillHair=(path,count,minY,maxY,opacity)=>{
+ const fillHair=(path,count,minY,maxY,opacity,customPainter=null,mouth=null)=>{
   ctx.save();
-  ctx.beginPath();path();ctx.closePath();ctx.clip();
+  ctx.beginPath();path();ctx.closePath();
+  if(mouth)ctx.ellipse(mouth.x,mouth.y,mouth.rx,mouth.ry,0,0,Math.PI*2);
+  ctx.clip(mouth?'evenodd':'nonzero');
   ctx.globalCompositeOperation='source-over';
   ctx.globalAlpha=beardStyle==='shadow'?.19:(beardStyle==='full'&&beardOverlay.complete&&beardOverlay.naturalWidth?0.10:opacity);
   ctx.fillStyle=beardFill;ctx.fill();
   ctx.globalAlpha=1;
-  if(beardStyle==='full'&&beardOverlay.complete&&beardOverlay.naturalWidth){
-   // The transparent hair texture follows the rotated mouth-to-jaw frame and is clipped to the live jaw contour.
-   ctx.globalAlpha=.96;
+  if(beardStyle==='full'&&beardOverlay.complete&&beardOverlay.naturalWidth&&customPainter){
+   ctx.globalAlpha=.94;
    ctx.save();
-   // Lift the moustache onto the upper lip, narrow the cheek edges, and darken the generated highlights.
    ctx.filter='brightness(.52) contrast(1.1) saturate(.72)';
-   ctx.drawImage(beardOverlay,-width*.48,-height*.80,width*.96,height*1.90);
+   customPainter();
    ctx.restore();
    ctx.globalAlpha=1;
   }else texture(count,minY,maxY);
@@ -271,19 +271,47 @@ function drawBeard(landmarks,pt){
   fillHair(moustache,Math.round(width*.72),upper.y-height*.12,lower.y+height*.008,.42);
  };
  const drawFullBeard=()=>{
-  // Follow the face mesh down each cheek and around the jaw; keep the mouth above the beard edge.
+  // Warp the beard across tracked cheek, lip, jaw, and chin points while preserving a clear mouth opening.
   const contour=[132,172,136,150,149,176,148,152,377,400,378,379,365,397,361].map(i=>local(pt(landmarks[i])));
   const first=contour[0],last=contour[contour.length-1];
-  const mouthA=Math.hypot(last.x-leftMouth.x,last.y-leftMouth.y)<Math.hypot(last.x-rightMouth.x,last.y-rightMouth.y)?leftMouth:rightMouth;
-  const mouthB=mouthA===leftMouth?rightMouth:leftMouth;
+  const drawAdaptiveTexture=()=>{
+   const source={
+    leftTop:{x:140,y:500},topCenter:{x:627,y:390},rightTop:{x:1114,y:500},
+    leftMouth:{x:340,y:600},rightMouth:{x:914,y:600},
+    leftJaw:{x:300,y:890},rightJaw:{x:954,y:890},chin:{x:627,y:1050},lowerCenter:{x:627,y:800}
+   };
+   const target={
+    leftTop:contour[0],topCenter:{x:0,y:upper.y-height*.06},rightTop:contour[contour.length-1],
+    leftMouth,rightMouth,leftJaw:contour[4],rightJaw:contour[10],chin,
+    lowerCenter:{x:0,y:lower.y+(height-lower.y)*.56}
+   };
+   const triangle=(names)=>{
+    const s=names.map(n=>source[n]),t=names.map(n=>target[n]);
+    const [s1,s2,s3]=s,[t1,t2,t3]=t;
+    const den=s1.x*(s2.y-s3.y)+s2.x*(s3.y-s1.y)+s3.x*(s1.y-s2.y);
+    if(Math.abs(den)<1)return;
+    const a=(t1.x*(s2.y-s3.y)+t2.x*(s3.y-s1.y)+t3.x*(s1.y-s2.y))/den;
+    const c=(t1.x*(s3.x-s2.x)+t2.x*(s1.x-s3.x)+t3.x*(s2.x-s1.x))/den;
+    const e=(t1.x*(s2.x*s3.y-s3.x*s2.y)+t2.x*(s3.x*s1.y-s1.x*s3.y)+t3.x*(s1.x*s2.y-s2.x*s1.y))/den;
+    const b=(t1.y*(s2.y-s3.y)+t2.y*(s3.y-s1.y)+t3.y*(s1.y-s2.y))/den;
+    const d=(t1.y*(s3.x-s2.x)+t2.y*(s1.x-s3.x)+t3.y*(s2.x-s1.x))/den;
+    const f=(t1.y*(s2.x*s3.y-s3.x*s2.y)+t2.y*(s3.x*s1.y-s1.x*s3.y)+t3.y*(s1.x*s2.y-s2.x*s1.y))/den;
+    ctx.save();ctx.beginPath();ctx.moveTo(t1.x,t1.y);ctx.lineTo(t2.x,t2.y);ctx.lineTo(t3.x,t3.y);ctx.closePath();ctx.clip();
+    ctx.transform(a,b,c,d,e,f);ctx.drawImage(beardOverlay,0,0);ctx.restore();
+   };
+   [['leftTop','topCenter','leftMouth'],['topCenter','rightMouth','leftMouth'],['topCenter','rightTop','rightMouth'],
+    ['leftTop','leftJaw','leftMouth'],['leftJaw','lowerCenter','leftMouth'],['leftMouth','lowerCenter','rightMouth'],
+    ['leftJaw','chin','lowerCenter'],['lowerCenter','chin','rightJaw'],['lowerCenter','rightJaw','rightMouth'],['rightMouth','rightJaw','rightTop']]
+    .forEach(triangle);
+  };
   const beardShape=()=>{
    ctx.moveTo(first.x,first.y);
    for(let i=1;i<contour.length;i++)ctx.lineTo(contour[i].x,contour[i].y);
-   ctx.bezierCurveTo(last.x+(mouthA.x-last.x)*.38,last.y+(mouthA.y-last.y)*.18,mouthA.x+width*.025,lower.y+height*.055,mouthA.x,lower.y+height*.045);
-   ctx.quadraticCurveTo((mouthA.x+mouthB.x)/2,lower.y+height*.17,mouthB.x,lower.y+height*.045);
-   ctx.bezierCurveTo(mouthB.x-width*.025,lower.y+height*.055,first.x+(mouthB.x-first.x)*.38,first.y+(mouthB.y-first.y)*.18,first.x,first.y);
+   ctx.bezierCurveTo(last.x+(rightMouth.x-last.x)*.38,last.y+(rightMouth.y-last.y)*.18,rightMouth.x+width*.025,upper.y-height*.055,rightMouth.x,upper.y-height*.02);
+   ctx.quadraticCurveTo(0,upper.y-height*.11,leftMouth.x,upper.y-height*.02);
+   ctx.bezierCurveTo(leftMouth.x-width*.025,upper.y-height*.055,first.x+(leftMouth.x-first.x)*.38,first.y+(leftMouth.y-first.y)*.18,first.x,first.y);
   };
-  fillHair(beardShape,Math.min(560,Math.round(width*2.05)),height*.10,height*.91,beardStyle==='shadow'?.19:.34);
+  fillHair(beardShape,Math.min(560,Math.round(width*2.05)),height*.10,height*.91,beardStyle==='shadow'?.19:.34,beardStyle==='full'?drawAdaptiveTexture:null,beardStyle==='full'?{x:(leftMouth.x+rightMouth.x)/2,y:(upper.y+lower.y)/2,rx:Math.hypot(rightMouth.x-leftMouth.x,rightMouth.y-leftMouth.y)*.52,ry:Math.max(4,Math.abs(lower.y-upper.y)*.8+height*.018)}:null);
   if(beardStyle==='full'){
    // Soft cheek guides replace the hard black outline that made the filter look painted on.
    const cheekLine=()=>{
