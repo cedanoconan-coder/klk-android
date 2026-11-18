@@ -249,11 +249,14 @@ function drawBeard(landmarks,pt){
   ctx.fillStyle=beardFill;ctx.fill();
   ctx.globalAlpha=1;
   if(beardStyle==='full'&&beardOverlay.complete&&beardOverlay.naturalWidth&&customPainter){
-   ctx.globalAlpha=.94;
+   // Blend the mapped hairs with the live skin so cheek and chin lighting remain visible.
+   ctx.globalCompositeOperation='multiply';
+   ctx.globalAlpha=.72;
    ctx.save();
-   ctx.filter='brightness(.52) contrast(1.1) saturate(.72)';
+   ctx.filter='brightness(.68) contrast(1.05) saturate(.68) blur(1px)';
    customPainter();
    ctx.restore();
+   ctx.globalCompositeOperation='source-over';
    ctx.globalAlpha=1;
   }else texture(count,minY,maxY);
   ctx.restore();
