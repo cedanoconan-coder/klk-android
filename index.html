@@ -1387,7 +1387,7 @@ input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),textarea,se
    <div class="profileNameWrap"><strong id="profilePanelName" class="profileUserName">Mi perfil</strong><span id="profileOnlineStatus" class="profileOnlineStatus" role="status" aria-live="polite">Desconectado</span></div>
   </div>
  </div>
- <div id="klkDeveloperClipsLink" style="display:none;margin:14px 16px"><a href="./klk-clips-preview.html?ui=touch-v256" style="display:block;padding:14px 16px;border-radius:14px;background:#eee4f8;color:#5b2586;font-weight:700;text-decoration:none">🎬 KLK Clips · Laboratorio del desarrollador</a><small style="display:block;padding:6px;color:#6c5c79">Solo disponible en tu perfil autorizado. No se publica para otros usuarios.</small></div>
+ <div id="klkDeveloperClipsLink" style="display:none;margin:14px 16px"><a href="./klk-clips-face-test.html?v=323" style="display:block;padding:14px 16px;border-radius:14px;background:#eee4f8;color:#5b2586;font-weight:700;text-decoration:none">🎬 KLK Clips · Laboratorio del desarrollador</a><small style="display:block;padding:6px;color:#6c5c79">Solo disponible en tu perfil autorizado. No se publica para otros usuarios.</small></div>
  <div id="klkAdminRegistrationLink" style="display:none;margin:14px 16px"><a href="https://cedanoconan-coder.github.io/klk-android/admin-registros.html" target="_blank" rel="noopener noreferrer" style="display:block;padding:14px 16px;border-radius:14px;background:#e4f3eb;color:#075e54;font-weight:700;text-decoration:none">🛡️ Administración · Usuarios registrados</a></div>
  <details class="profileSettingsAccordion"><summary><span class="profileSettingsIcon">⚙️</span><span><strong>Cuenta y ajustes</strong><small>Consulta y modifica tu información</small></span><b class="profileSettingsChevron">⌄</b></summary><div class="profileSettingsBody">
   <details class="profileSubmenu" open><summary><span>👤 Información de la cuenta</span><b>⌄</b></summary><div class="profileSubmenuBody">
@@ -1459,6 +1459,14 @@ input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),textarea,se
  </section>
  <section id="toolsPanel" class="homeUtilityPanel klkSettingsHome" aria-label="Herramientas y configuración" hidden>
 <div class="klkSettingsIntro"><h2>Configuración</h2><p>Administra tu cuenta y personaliza Klk manin.</p></div>
+ <section id="klkClipsIndependentSection" aria-label="Sección independiente de KLK Clips" style="display:none;margin:16px 0;padding:18px;border:1px solid #dcc8ea;border-radius:20px;background:linear-gradient(145deg,#fbf6ff,#f0e4f8);box-shadow:0 6px 18px #28103b12">
+  <div style="display:flex;align-items:center;gap:12px">
+   <span aria-hidden="true" style="display:grid;place-items:center;width:48px;height:48px;border-radius:16px;background:#ead9f5;font-size:26px">🎬</span>
+   <div><h2 style="margin:0;color:#4f236d;font-size:20px">KLK Clips</h2><small style="color:#725985">Sección independiente de creación</small></div>
+  </div>
+  <p class="hint" style="margin:12px 0;color:#685675">Crea clips y prueba los efectos faciales en un espacio separado de tus chats.</p>
+  <a href="./klk-clips-face-test.html?v=323" style="display:block;padding:13px 16px;border-radius:14px;background:#8c43b4;color:#fff;text-align:center;font-weight:700;text-decoration:none">Abrir KLK Clips</a>
+ </section>
  <section id="invitePanel" class="card" style="display:none;margin:0 16px 14px;padding:14px">
   <div class="klkInviteHeader"><strong>Invitar a klk</strong><button id="closeInvitePanel" type="button" class="secondary" aria-label="Cerrar invitación" style="width:42px;min-width:42px;margin:0;padding:8px">×</button></div>
   <p class="hint">Crea un código de un solo uso, válido durante 7 días. Compártelo solo con la persona que deseas agregar.</p>
@@ -1923,7 +1931,7 @@ try {
 } catch (error) { firebaseInitError = error; $("klkSessionLoading").style.display="none"; $("login").style.display="block"; $("status").textContent = "No se pudo iniciar Firebase. Comprueba la conexión a Internet y vuelve a abrir klk. Detalle: " + error.message; }
 // Compartir Firebase con los módulos externos de KLK.
 window.auth = auth || null;
-if(auth)auth.onAuthStateChanged(user=>{const allowed=user?.uid==="BMJ63X7P9oSvv9NuxtNogZ20FIH2";const panel=document.getElementById("klkDataPanel");if(panel)panel.hidden=!allowed;if(allowed)klkRenderDataUsage();for(const id of ["klkAdminRegistrationLink","klkDeveloperClipsLink"]){const el=document.getElementById(id);if(el)el.style.display=allowed?"block":"none";}});
+if(auth)auth.onAuthStateChanged(user=>{const allowed=user?.uid==="BMJ63X7P9oSvv9NuxtNogZ20FIH2";const panel=document.getElementById("klkDataPanel");if(panel)panel.hidden=!allowed;if(allowed)klkRenderDataUsage();for(const id of ["klkAdminRegistrationLink","klkDeveloperClipsLink","klkClipsIndependentSection"]){const el=document.getElementById(id);if(el)el.style.display=allowed?"block":"none";}});
 window.db = db || null;
 $("authForm").addEventListener("submit", async event => {
  event.preventDefault(); $("status").textContent = "";
