@@ -200,7 +200,7 @@ function drawHair(landmarks,pt){
  ctx.restore();
 }
 function drawBeard(landmarks,pt){
- const required=[13,14,61,132,136,148,149,150,152,172,176,234,291,288,361,365,377,378,379,397,400,454];
+ const required=[13,14,61,132,136,148,149,150,152,172,176,288,291,361,365,377,378,379,397,400,454];
  if(beardStyle==='none'||required.some(i=>!landmarks[i]))return;
  const left=pt(landmarks[234]),right=pt(landmarks[454]);
  const mouthLeft=pt(landmarks[61]),mouthRight=pt(landmarks[291]);
@@ -214,81 +214,84 @@ function drawBeard(landmarks,pt){
  const height=Math.abs(-Math.sin(angle)*toChinX+Math.cos(angle)*toChinY);
  if(height<12)return;
  const local=p=>({x:(p.x-origin.x)*Math.cos(angle)+(p.y-origin.y)*Math.sin(angle),y:-(p.x-origin.x)*Math.sin(angle)+(p.y-origin.y)*Math.cos(angle)});
- const upper=local(upperLip),lower=local(lowerLip);
+ const upper=local(upperLip),lower=local(lowerLip),leftMouth=local(mouthLeft),rightMouth=local(mouthRight);
  const rgb=[1,3,5].map(i=>parseInt(beardColor.slice(i,i+2),16));
  if(rgb.some(Number.isNaN))return;
- const color='rgba('+rgb.join(',')+',.82)';
- const beardFill=ctx.createLinearGradient(0,-height*.15,0,height);
- beardFill.addColorStop(0,'rgba('+rgb.join(',')+',.72)');
- beardFill.addColorStop(.38,color);
- beardFill.addColorStop(.78,'rgba('+rgb.map(n=>Math.round(n*.74)).join(',')+',.98)');
- beardFill.addColorStop(1,'rgba('+rgb.map(n=>Math.round(n*.52)).join(',')+',1)');
+ const shade=(factor,alpha)=>'rgba('+rgb.map(n=>Math.round(n*factor)).join(',')+','+alpha+')';
+ const beardFill=ctx.createLinearGradient(0,-height*.1,0,height);
+ beardFill.addColorStop(0,shade(1,.12));
+ beardFill.addColorStop(.28,shade(1,.25));
+ beardFill.addColorStop(.72,shade(.82,.38));
+ beardFill.addColorStop(1,shade(.68,.48));
  const texture=(count,minY,maxY)=>{
+  // Stable, fine strokes read as hair while avoiding the dotted, stamped look.
   let seed=719;const rand=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};
   ctx.lineCap='round';
   for(let i=0;i<count;i++){
-   const x=(rand()-.5)*width*.88,y=minY+rand()*(maxY-minY);
-   const len=height*(.012+rand()*.035),dx=(rand()-.5)*width*.014;
-   ctx.strokeStyle=i%4===0?'rgba(236,218,197,.34)':'rgba(8,6,5,'+(.28+rand()*.38)+')';
-   ctx.lineWidth=Math.max(.45,width*(.0022+rand()*.0022));
-   ctx.beginPath();ctx.moveTo(x,y);ctx.quadraticCurveTo(x+dx,y+len*.45,x+dx*.55,y+len);ctx.stroke();
-  }
-  for(let i=0;i<count*.6;i++){
-   const x=(rand()-.5)*width*.88,y=minY+rand()*(maxY-minY),radius=Math.max(.35,width*(.0012+rand()*.002));
-   ctx.fillStyle=i%3?'rgba(7,5,5,.38)':'rgba(230,210,190,.28)';
-   ctx.beginPath();ctx.arc(x,y,radius,0,Math.PI*2);ctx.fill();
+   const x=(rand()-.5)*width*.76,y=minY+rand()*(maxY-minY);
+   const len=height*(.012+rand()*.027),dx=(rand()-.5)*width*.009;
+   const light=i%7===0;
+   ctx.strokeStyle=light?'rgba(213,184,158,.16)':shade(.48+rand()*.4,.22+rand()*.18);
+   ctx.lineWidth=Math.max(.45,width*(.0011+rand()*.0018));
+   ctx.beginPath();ctx.moveTo(x,y);ctx.quadraticCurveTo(x+dx,y+len*.52,x+dx*.45,y+len);ctx.stroke();
   }
  };
  const fillHair=(path,count,minY,maxY,opacity)=>{
-  ctx.save();ctx.beginPath();path();ctx.closePath();ctx.clip();
-  ctx.globalCompositeOperation='multiply';ctx.globalAlpha=beardStyle==='shadow'?.44:Math.min(1,opacity*1.22);ctx.fillStyle=beardFill;ctx.fill();
-  ctx.globalCompositeOperation='source-over';ctx.globalAlpha=1;
+  ctx.save();
+  ctx.beginPath();path();ctx.closePath();ctx.clip();
+  ctx.globalCompositeOperation='source-over';
+  ctx.globalAlpha=beardStyle==='shadow'?.19:opacity;
+  ctx.fillStyle=beardFill;ctx.fill();
+  ctx.globalAlpha=1;
   texture(count,minY,maxY);
   ctx.restore();
  };
  const drawMoustache=()=>{
   const moustache=()=>{
-   ctx.moveTo(-width*.32,upper.y-height*.055);
-   ctx.quadraticCurveTo(-width*.17,upper.y-height*.19,0,upper.y-height*.045);
-   ctx.quadraticCurveTo(width*.17,upper.y-height*.19,width*.32,upper.y-height*.055);
-   ctx.quadraticCurveTo(width*.26,lower.y+height*.015,width*.08,lower.y-height*.015);
-   ctx.quadraticCurveTo(0,lower.y+height*.02,-width*.08,lower.y-height*.015);
-   ctx.quadraticCurveTo(-width*.26,lower.y+height*.015,-width*.32,upper.y-height*.055);
+   ctx.moveTo(-width*.29,upper.y-height*.04);
+   ctx.quadraticCurveTo(-width*.15,upper.y-height*.14,0,upper.y-height*.025);
+   ctx.quadraticCurveTo(width*.15,upper.y-height*.14,width*.29,upper.y-height*.04);
+   ctx.quadraticCurveTo(width*.23,lower.y+height*.005,width*.07,lower.y-height*.005);
+   ctx.quadraticCurveTo(0,lower.y+height*.012,-width*.07,lower.y-height*.005);
+   ctx.quadraticCurveTo(-width*.23,lower.y+height*.005,-width*.29,upper.y-height*.04);
   };
-  fillHair(moustache,Math.round(width*1.05),upper.y-height*.16,lower.y+height*.015,.96);
+  fillHair(moustache,Math.round(width*.72),upper.y-height*.12,lower.y+height*.008,.42);
  };
  const drawFullBeard=()=>{
+  // Follow the face mesh down each cheek and around the jaw; keep the mouth above the beard edge.
+  const contour=[132,172,136,150,149,176,148,152,377,400,378,379,365,397,361].map(i=>local(pt(landmarks[i])));
+  const first=contour[0],last=contour[contour.length-1];
+  const mouthA=Math.hypot(last.x-leftMouth.x,last.y-leftMouth.y)<Math.hypot(last.x-rightMouth.x,last.y-rightMouth.y)?leftMouth:rightMouth;
+  const mouthB=mouthA===leftMouth?rightMouth:leftMouth;
   const beardShape=()=>{
-   const contour=[132,58,172,136,150,149,176,148,152,377,400,378,379,365,397,288,361];
-   const first=local(pt(landmarks[contour[0]]));ctx.moveTo(first.x,first.y);
-   for(let i=1;i<contour.length;i++){const p=local(pt(landmarks[contour[i]]));ctx.lineTo(p.x,p.y);}
-   const rightCheek=local(pt(landmarks[361])),leftMouth=local(mouthLeft),rightMouth=local(mouthRight);
-   ctx.bezierCurveTo(rightCheek.x*.92,rightCheek.y+height*.05,rightMouth.x+width*.035,lower.y+height*.035,rightMouth.x,lower.y+height*.08);
-   ctx.quadraticCurveTo(rightMouth.x*.62,lower.y+height*.25,0,lower.y+height*.20);
-   ctx.quadraticCurveTo(leftMouth.x*.62,lower.y+height*.25,leftMouth.x,lower.y+height*.08);
-   ctx.bezierCurveTo(leftMouth.x-width*.035,lower.y+height*.035,first.x*.92,first.y+height*.05,first.x,first.y);
+   ctx.moveTo(first.x,first.y);
+   for(let i=1;i<contour.length;i++)ctx.lineTo(contour[i].x,contour[i].y);
+   ctx.bezierCurveTo(last.x+(mouthA.x-last.x)*.38,last.y+(mouthA.y-last.y)*.18,mouthA.x+width*.025,lower.y+height*.055,mouthA.x,lower.y+height*.045);
+   ctx.quadraticCurveTo((mouthA.x+mouthB.x)/2,lower.y+height*.17,mouthB.x,lower.y+height*.045);
+   ctx.bezierCurveTo(mouthB.x-width*.025,lower.y+height*.055,first.x+(mouthB.x-first.x)*.38,first.y+(mouthB.y-first.y)*.18,first.x,first.y);
   };
-  fillHair(beardShape,Math.min(900,Math.round(width*3.1)),height*.08,height*.96,beardStyle==='shadow'?.45:.88);
+  fillHair(beardShape,Math.min(560,Math.round(width*2.05)),height*.10,height*.91,beardStyle==='shadow'?.19:.34);
   if(beardStyle==='full'){
+   // Soft cheek guides replace the hard black outline that made the filter look painted on.
    const cheekLine=()=>{
-    const l=local(pt(landmarks[132])),r=local(pt(landmarks[361])),lm=local(mouthLeft),rm=local(mouthRight);
-    ctx.moveTo(l.x,l.y);ctx.quadraticCurveTo(lm.x-width*.035,l.y+height*.02,lm.x,lower.y+height*.08);
-    ctx.moveTo(r.x,r.y);ctx.quadraticCurveTo(rm.x+width*.035,r.y+height*.02,rm.x,lower.y+height*.08);
+    const a=contour[0],b=contour[contour.length-1];
+    ctx.moveTo(a.x,a.y);ctx.quadraticCurveTo(leftMouth.x-width*.025,a.y+height*.07,leftMouth.x,lower.y+height*.045);
+    ctx.moveTo(b.x,b.y);ctx.quadraticCurveTo(rightMouth.x+width*.025,b.y+height*.07,rightMouth.x,lower.y+height*.045);
    };
-   ctx.save();ctx.beginPath();cheekLine();ctx.strokeStyle='rgba(10,8,7,.72)';ctx.lineWidth=Math.max(1,width*.007);ctx.lineCap='round';ctx.stroke();ctx.restore();
-   const chinPatch=()=>{ctx.moveTo(-width*.13,lower.y+height*.17);ctx.quadraticCurveTo(-width*.09,height*.67,0,height*1.01);ctx.quadraticCurveTo(width*.09,height*.67,width*.13,lower.y+height*.17);ctx.quadraticCurveTo(0,lower.y+height*.23,-width*.13,lower.y+height*.17);};
-   fillHair(chinPatch,Math.round(width*.92),lower.y+height*.18,height*.94,.72);
+   ctx.save();ctx.beginPath();cheekLine();ctx.strokeStyle=shade(.5,.16);ctx.lineWidth=Math.max(.8,width*.004);ctx.lineCap='round';ctx.stroke();ctx.restore();
+   const chinPatch=()=>{ctx.moveTo(-width*.105,lower.y+height*.13);ctx.quadraticCurveTo(-width*.075,height*.70,0,height*.96);ctx.quadraticCurveTo(width*.075,height*.70,width*.105,lower.y+height*.13);ctx.quadraticCurveTo(0,lower.y+height*.19,-width*.105,lower.y+height*.13);};
+   fillHair(chinPatch,Math.round(width*.72),lower.y+height*.15,height*.91,.30);
   }
  };
  const drawGoatee=(narrow=false)=>{
-  const half=width*(narrow?.17:.23),top=lower.y+height*.09;
+  const half=width*(narrow?.15:.20),top=lower.y+height*.07;
   const shape=()=>{
    ctx.moveTo(-half,top);
-   ctx.quadraticCurveTo(-half*1.12,height*.46,0,height*1.02);
-   ctx.quadraticCurveTo(half*1.12,height*.46,half,top);
-   ctx.quadraticCurveTo(0,top+height*.12,-half,top);
+   ctx.quadraticCurveTo(-half*1.05,height*.44,0,height*.97);
+   ctx.quadraticCurveTo(half*1.05,height*.44,half,top);
+   ctx.quadraticCurveTo(0,top+height*.10,-half,top);
   };
-  fillHair(shape,Math.round(width*(narrow?1.45:1.8)),top,height*.98,.94);
+  fillHair(shape,Math.round(width*(narrow?1.05:1.35)),top,height*.92,.40);
  };
  ctx.save();ctx.translate(origin.x,origin.y);ctx.rotate(angle);
  if(beardStyle==='full'||beardStyle==='shadow'){drawFullBeard();drawMoustache();}
