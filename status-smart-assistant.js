@@ -2,7 +2,7 @@
 (()=>{'use strict';
 function init(){
  const camera=document.getElementById('klkStatusCamera');
- if(!camera||camera.querySelector('[data-klk-smart]'))return;
+ if(!camera||camera.querySelector('.klkEffectCarousel'))return;
  const area=camera.querySelector('.klkCameraEffects');
  if(!area)return;
  const root=document.createElement('section');root.dataset.klkSmart='';root.className='klkSmartTools';
@@ -78,14 +78,14 @@ function init(){
  #klkStatusCamera .klkSmartTools,#klkStatusCamera .klkCameraEffectsPanel,#klkStatusCamera .klkCameraEffects .klkEffectTabs{display:none!important}
  #klkStatusCamera .klkEffectCarousel[hidden]{display:none!important}
  #klkStatusCamera [data-cam="effects"]{display:none!important}
- #klkStatusCamera .klkEffectCarousel{position:fixed!important;z-index:20!important;left:0!important;right:0!important;bottom:calc(clamp(100px,18dvh,150px) + env(safe-area-inset-bottom))!important;height:82px!important;pointer-events:auto!important}
- #klkStatusCamera .klkEffectTrack{height:82px!important;display:flex!important;align-items:center!important;gap:12px!important;overflow-x:auto!important;overscroll-behavior-x:contain!important;scroll-snap-type:x mandatory!important;scrollbar-width:none!important;padding-inline:calc(50% - 36px)!important;box-sizing:border-box!important}
+ #klkStatusCamera .klkEffectCarousel{position:absolute!important;z-index:20!important;left:0!important;right:0!important;bottom:calc(92px + env(safe-area-inset-bottom))!important;height:82px!important;pointer-events:auto!important}
+ #klkStatusCamera .klkEffectTrack{width:100%!important;height:82px!important;display:flex!important;align-items:center!important;gap:12px!important;overflow-x:auto!important;overscroll-behavior-x:contain!important;scroll-snap-type:x mandatory!important;scrollbar-width:none!important;padding-inline:max(0px,calc(50% - 36px))!important;box-sizing:border-box!important}
  #klkStatusCamera .klkEffectTrack::-webkit-scrollbar{display:none!important}
  #klkStatusCamera .klkEffectTile{flex:0 0 72px!important;width:72px!important;height:72px!important;scroll-snap-align:center!important;border:2px solid #ffffff70!important;border-radius:50%!important;background:#292c36e8!important;color:white!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:3px!important;padding:5px!important;font-size:11px!important;line-height:1.1!important;text-align:center!important;box-sizing:border-box!important}
  #klkStatusCamera .klkEffectTile[aria-selected="true"]{border:3px solid white!important;box-shadow:0 0 0 3px #ffffff88!important;background:#1769db!important}
  #klkStatusCamera .klkEffectTile .klkEffectSymbol{font-size:24px!important;line-height:1!important}
  #klkStatusCamera .klkEffectCenter{position:absolute!important;left:50%!important;top:5px!important;transform:translateX(-50%)!important;width:72px!important;height:72px!important;border-radius:50%!important;border:2px solid #fff8!important;pointer-events:none!important;z-index:2!important}
- @media(max-height:650px){#klkStatusCamera .klkEffectCarousel{bottom:calc(90px + env(safe-area-inset-bottom))!important}}
+ @media(max-height:650px){#klkStatusCamera .klkEffectCarousel{bottom:calc(74px + env(safe-area-inset-bottom))!important}}
  `;
  document.head.appendChild(carouselCSS);
  const symbols={eyes:'👁️',beauty:'✨',filters:'🎨',face:'😊',men:'🧔',creative:'🌈'};
@@ -103,17 +103,20 @@ function init(){
    });
  });
  let selected=-1,scrollDebounce=0;
- function centerTile(index,smooth=true){const tile=entries[index]?.tile;if(!tile)return;const target=tile.offsetLeft+(tile.offsetWidth/2)-(track.clientWidth/2);track.scrollTo({left:target,behavior:smooth?'smooth':'instant'});}
+ function centerTile(index,smooth=true){const tile=entries[index]?.tile;if(!tile)return;const target=tile.offsetLeft+(tile.offsetWidth/2)-(track.clientWidth/2);track.scrollTo({left:Math.max(0,target),behavior:smooth?'smooth':'auto'});}
  function selectEffect(index,scroll=true){
    if(index<0||index>=entries.length||index===selected)return;
    selected=index;
    const item=entries[index];
    const tab=camera.querySelector('[data-effect-tab="'+item.category+'"]');
-   tab?.click();item.original.click();
+   if(tab && tab.getAttribute('aria-selected')!=='true')tab.click();
+   item.original.click();
    entries.forEach((entry,i)=>entry.tile.setAttribute('aria-selected',String(i===index)));
    if(scroll)centerTile(index);
  }
- entries.forEach((item,index)=>item.tile.addEventListener('click',()=>selectEffect(index)));
+ entries.forEach((item,index)=>item.tile.addEventListener('click',()=>{selectEffect(index);centerTile(index)}));
+ // Recentrar al rotar el dispositivo o cambiar el tamaño de la cámara.
+ window.addEventListener('resize',()=>{if(selected>=0)centerTile(selected,false)},{passive:true});
  track.addEventListener('scroll',()=>{
    clearTimeout(scrollDebounce);
    scrollDebounce=setTimeout(()=>{
@@ -128,6 +131,8 @@ function init(){
      centerTile(best,false);
    },110);
  },{passive:true});
+ // Mantener el carrusel accesible incluso cuando no haya efectos disponibles.
+ if(!entries.length){const msg=document.createElement('span');msg.textContent='No hay efectos disponibles';msg.style.cssText='color:white;margin:auto';track.appendChild(msg)}
  // Empezar sin efecto y mantener el círculo centrado.
  const natural=entries.findIndex(e=>e.category==='eyes'&&e.original.dataset.eyeColor==='none');
  requestAnimationFrame(()=>{if(natural>=0){selected=-1;selectEffect(natural,false);centerTile(natural,false)}});
