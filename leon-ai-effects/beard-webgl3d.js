@@ -5,6 +5,7 @@
 (function(global){
 'use strict';
 let enabled=false,host=null,video=null,canvas=null,gl=null,program=null,buffer=null,observer=null;
+let lastRender=0,frameBudget=33.3,quality=1,slowFrames=0,fastFrames=0;
 const L0=[234,93,132,58,172,136,150,149,176,148,152];
 const L1=[116,117,118,119,100,126,209,43,57,171,152];
 const L_MID=[123,147,187,205,206,207,216,212,202,204,152];
@@ -49,7 +50,12 @@ function initialize(){
  gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);
  gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);
 }
-function hash(i,s){let x=Math.sin(i*127.1+s*311.7)*43758.5453;return x-Math.floor(x)}
+function hash(i,s){const x=Math.sin(i*127.1+s*311.7)*43758.5453;return x-Math.floor(x)}
+// Deterministic but independent samples: hair roots stay anchored when the
+// head moves instead of being regenerated at unrelated screen coordinates.
+function sample(i,seed,channel){return hash(i*37+channel*101,seed*19+channel*53)}
+function setQuality(level){quality=clamp(Number(level)||1,.35,1)}
+function qualityStatus(){return {quality,frameBudgetMs:frameBudget}}
 function projected(){
  const vr=video.getBoundingClientRect(),hr=host.getBoundingClientRect();
  const vw=video.videoWidth,vh=video.videoHeight;if(!vw||!vh||!vr.width||!vr.height)return null;
@@ -65,6 +71,9 @@ function projected(){
 }
 function draw(geometry){
  if(!gl||!canvas)return;
+ const started=performance.now();
+ if(started-lastRender<frameBudget*.75)return;
+ lastRender=started;
  gl.viewport(0,0,canvas.width,canvas.height);
  gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
  const pts=geometry?.landmarks;if(!pts||pts.length<455)return;
@@ -79,15 +88,15 @@ function draw(geometry){
   if(!a||!b||!c||opacity<.05)return;
   const area=Math.abs((b.x-a.x)*(c.y-a.y)-(b.y-a.y)*(c.x-a.x));
   if(area<.000008||Math.max(a.z,b.z,c.z)-Math.min(a.z,b.z,c.z)>.14)return;
-  const count=Math.min(210,Math.max(5,Math.floor(area*26000)));
+  const count=Math.min(Math.round(210*quality),Math.max(4,Math.floor(area*26000*quality)));
   for(let i=0;i<count;i++){
-   const q=Math.sqrt(hash(i,seed)),v=hash(i+97,seed+1);
+   const q=Math.sqrt(sample(i,seed,0)),v=sample(i,seed,1);
    const aa=1-q,bb=q*(1-v),cc=q*v;
    const x=a.x*aa+b.x*bb+c.x*cc,y=a.y*aa+b.y*bb+c.y*cc,z=a.z*aa+b.z*bb+c.z*cc;
    if(x>=mouthMinX&&x<=mouthMaxX&&y>=mouthMinY&&y<=mouthMaxY)continue;
-   const length=.002+hash(i+193,seed+2)*.003;
-   const dx=(hash(i+293,seed+3)-.5)*length*.6;
-   const alpha=(.22+hash(i+397,seed+4)*.37)*opacity;
+   const length=.0018+sample(i,seed,2)*.003;
+   const dx=(sample(i,seed,3)-.5)*length*.7;
+   const alpha=(.22+sample(i,seed,4)*.37)*opacity;
    segments.push(x,y,z,alpha,x+dx,y+length,z,alpha);
   }
  }
@@ -111,6 +120,10 @@ function draw(geometry){
  gl.uniform1f(gl.getUniformLocation(program,'uMirror'),p.mirror?-1:1);
  gl.bindBuffer(gl.ARRAY_BUFFER,buffer);gl.bufferData(gl.ARRAY_BUFFER,data,gl.DYNAMIC_DRAW);
  gl.drawArrays(gl.LINES,0,data.length/4);
+ const elapsed=performance.now()-started;
+ if(elapsed>20){slowFrames++;fastFrames=0}else if(elapsed<9){fastFrames++;slowFrames=0}else{slowFrames=0;fastFrames=0}
+ if(slowFrames>=8){quality=Math.max(.35,quality*.8);slowFrames=0}
+ if(fastFrames>=90){quality=Math.min(1,quality+.08);fastFrames=0}
 }
 function resize(){if(!canvas||!host)return;const r=host.getBoundingClientRect();canvas.width=Math.max(1,Math.round(r.width));canvas.height=Math.max(1,Math.round(r.height))}
 function detach(){
@@ -135,8 +148,8 @@ function sync(){
  resize();host.addEventListener('klk:facegeometry',onFrame);
  if(typeof ResizeObserver!=='undefined'){observer=new ResizeObserver(resize);observer.observe(host);observer.observe(video)}
 }
-function setEnabled(v){enabled=!!v;if(enabled)sync();else detach()}
+function setEnabled(v){enabled=!!v;if(enabled){lastRender=0;sync()}else detach()}
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&gl){gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT)}});
 window.addEventListener('resize',resize);
-global.KLKBeardMask=Object.freeze({setEnabled,resize,clear:()=>{if(gl)gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT)}});
+global.KLKBeardMask=Object.freeze({setEnabled,setQuality,qualityStatus,resize,clear:()=>{if(gl)gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT)}});
 })(window);
