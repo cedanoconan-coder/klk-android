@@ -12,22 +12,35 @@
  function polygon(landmarks,indices){return indices.map(i=>point(landmarks,i)).filter(Boolean)}
  function smoothPoint(a,b,alpha){return {x:a.x+(b.x-a.x)*alpha,y:a.y+(b.y-a.y)*alpha,z:a.z+(b.z-a.z)*alpha}}
  class FaceGeometry {
-   constructor({smoothing=0.38}={}){this.smoothing=clamp(smoothing,0.01,1);this.previous=null}
-   reset(){this.previous=null}
+   constructor({smoothing=0.38}={}){this.smoothing=clamp(smoothing,0.01,1);this.previous=null;this.previousAt=0;this.missed=0}
+   reset(){this.previous=null;this.previousAt=0;this.missed=0}
    update(landmarks){
      if(!Array.isArray(landmarks)||landmarks.length<455){this.reset();return null}
      const current=landmarks.map((p,i)=>point(landmarks,i));
      if(current.some(p=>!p)){this.reset();return null}
-     // Follow large movements immediately; smooth only small landmark jitter.
-     // A fixed low alpha made the beard visibly trail the face during turns.
-     const stable=this.previous&&this.previous.length===current.length
-       ?current.map((p,i)=>{
-           const previous=this.previous[i];
-           const movement=Math.hypot(p.x-previous.x,p.y-previous.y);
-           const alpha=movement>0.025?1:movement>0.008?0.9:Math.max(0.65,this.smoothing);
-           return smoothPoint(previous,p,alpha);
-         }):current;
+     // Track translation and rotation together, rather than smoothing each point
+     // independently (which distorts the beard when the face turns).
+     const now=typeof performance!=='undefined'?performance.now():Date.now();
+     const previous=this.previous;
+     const anchorIds=[1,4,152,234,454];
+     let stable=current;
+     if(previous&&previous.length===current.length){
+       const center=arr=>anchorIds.reduce((v,i)=>({x:v.x+arr[i].x/anchorIds.length,y:v.y+arr[i].y/anchorIds.length}),{x:0,y:0});
+       const oldCenter=center(previous),newCenter=center(current);
+       const translation=Math.hypot(newCenter.x-oldCenter.x,newCenter.y-oldCenter.y);
+       const oldSpan=Math.hypot(previous[454].x-previous[234].x,previous[454].y-previous[234].y);
+       const newSpan=Math.hypot(current[454].x-current[234].x,current[454].y-current[234].y);
+       const scaleChange=Math.abs(newSpan-oldSpan);
+       const dt=this.previousAt?Math.max(1,now-this.previousAt):33;
+       // Large coordinated movements must follow immediately to avoid trailing.
+       // Smooth only tiny jitter while stationary.
+       const motion=translation+scaleChange;
+       const alpha=motion>0.008||dt>90?1:motion>0.003?0.9:0.78;
+       stable=alpha===1?current:current.map((p,i)=>smoothPoint(previous[i],p,alpha));
+     }
      this.previous=stable;
+     this.previousAt=now;
+     this.missed=0;
      return {
        landmarks:stable,
        jaw:polygon(stable,JAW),
