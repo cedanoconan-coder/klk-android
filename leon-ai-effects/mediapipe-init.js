@@ -15,7 +15,7 @@ async function initialize(){
   if(!global.KLKStatusFaceBridge)throw new Error('KLKStatusFaceBridge no disponible');
   const {FaceLandmarker,FilesetResolver}=await import(CDN+'/+esm');
   const fileset=await FilesetResolver.forVisionTasks(CDN+'/wasm');
-  const options={baseOptions:{modelAssetPath:MODEL,delegate:'GPU'},runningMode:'VIDEO',numFaces:1,outputFaceBlendshapes:false,outputFacialTransformationMatrixes:false};
+  const options={baseOptions:{modelAssetPath:MODEL,delegate:'GPU'},runningMode:'VIDEO',numFaces:1,outputFaceBlendshapes:false,outputFacialTransformationMatrixes:true};
   try{detector=await FaceLandmarker.createFromOptions(fileset,options)}
   catch(error){console.warn('GPU no disponible; usando CPU para seguimiento facial',error);options.baseOptions.delegate='CPU';detector=await FaceLandmarker.createFromOptions(fileset,options)}
   global.KLKStatusFaceBridge.setDetector(detector);
