@@ -58,7 +58,8 @@ function hash(i,s){const x=Math.sin(i*127.1+s*311.7)*43758.5453;return x-Math.fl
 // head moves instead of being regenerated at unrelated screen coordinates.
 function sample(i,seed,channel){return hash(i*37+channel*101,seed*19+channel*53)}
 function setQuality(level){quality=clamp(Number(level)||1,.35,1)}
-function qualityStatus(){return {quality,frameBudgetMs:frameBudget}}
+let lastFaceCount=0,lastSegmentCount=0;
+function qualityStatus(){return {quality,frameBudgetMs:frameBudget,enabled,meshReady:!!follicles,meshCount:follicles?.length||0,faceCount:lastFaceCount,segments:lastSegmentCount,webglReady:!!gl}}
 function projected(){
  const vr=video.getBoundingClientRect(),hr=host.getBoundingClientRect();
  const vw=video.videoWidth,vh=video.videoHeight;if(!vw||!vh||!vr.width||!vr.height)return null;
@@ -114,7 +115,7 @@ function draw(geometry){
  lastRender=started;
  gl.viewport(0,0,canvas.width,canvas.height);
  gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
- const pts=geometry?.landmarks;if(!pts||pts.length<468||!follicles)return;
+ const pts=geometry?.landmarks;lastFaceCount=pts?.length||0;lastSegmentCount=0;if(!pts||pts.length<468||!follicles)return;
  const p=projected();if(!p)return;
  const lipL=pts[61],lipR=pts[291],lipTop=pts[0],lipBottom=pts[17];
  const mouthMinX=Math.min(lipL.x,lipR.x)-.018,mouthMaxX=Math.max(lipL.x,lipR.x)+.018;
@@ -142,11 +143,12 @@ function draw(geometry){
   // Use local jaw direction so hairs rotate with the face, not the viewport.
   const dirX=(pts[152].x-pts[1].x),dirY=(pts[152].y-pts[1].y);
   const mag=Math.max(.02,Math.hypot(dirX,dirY));
-  const hairLength=root.length*clamp(style.lengthMm/28,.15,3.5);
+  const hairLength=Math.max(.0035,root.length*2.4)*clamp(style.lengthMm/12,.45,3.5);
   const dx=root.region==='mustache'?(x<pts[1].x?-1:1)*hairLength*.6+root.tilt:dirX/mag*hairLength+root.tilt;
   const dy=root.region==='mustache'?hairLength*.3:dirY/mag*hairLength;
-  segments.push(x,y,z,root.alpha,root.shade,x+dx,y+dy,z,root.alpha*.12,Math.min(1,root.shade+.18));
+  segments.push(x,y,z,Math.min(1,root.alpha*1.65),root.shade,x+dx,y+dy,z,root.alpha*.35,Math.min(1,root.shade+.18));
  }
+ lastSegmentCount=segments.length/10;
  if(!segments.length)return;
  const data=new Float32Array(segments);
  gl.useProgram(program);
