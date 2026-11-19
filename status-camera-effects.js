@@ -204,7 +204,7 @@
     const cache=drawManLook.patterns||(drawManLook.patterns=new Map());if(cache.has(key))return cache.get(key);
     const size=512,texture=document.createElement('canvas');texture.width=size;texture.height=size;
     const brush=texture.getContext('2d'),shade=brush.createLinearGradient(0,0,0,size);
-    shade.addColorStop(0,'rgba(36,25,21,0)');shade.addColorStop(.12,'rgba(34,24,20,.08)');shade.addColorStop(.46,'rgba(30,21,18,.19)');shade.addColorStop(1,'rgba(22,16,14,.30)');
+    shade.addColorStop(0,'rgba(36,25,21,0)');shade.addColorStop(.12,'rgba(34,24,20,.12)');shade.addColorStop(.46,'rgba(30,21,18,.30)');shade.addColorStop(1,'rgba(22,16,14,.52)');
     brush.fillStyle=shade;brush.fillRect(0,0,size,size);brush.lineCap='round';
     for(let i=0;i<density;i++){
      const across=seed(i+1+key.length*311),t=Math.pow(seed(i+1701+key.length*191),.78),x=12+across*488,y=12+t*488,edgeFade=Math.min(1,across/.08,(1-across)/.08),topFade=Math.min(1,t/.1),len=lengthBase+seed(i+918+key.length*71)*lengthRange,lean=(seed(i+722+key.length*41)*2-1)*2.2;
@@ -213,7 +213,7 @@
     brush.globalAlpha=1;cache.set(key,texture);return texture;
    }
    function paintRegion(path,rule,top,bottom,leftStart,rightStart,density,opacity,key,lengthBase,lengthRange){
-    ctx.save();ctx.beginPath();path();ctx.clip(rule);ctx.translate(centerX,centerY);ctx.rotate(angle);ctx.globalCompositeOperation='multiply';ctx.globalAlpha=amount*opacity;
+    ctx.save();ctx.beginPath();path();ctx.clip(rule);ctx.translate(centerX,centerY);ctx.rotate(angle);ctx.globalCompositeOperation='source-over';ctx.globalAlpha=Math.min(1,amount*opacity*1.25);
     const width=Math.max(1,leftStart+rightStart),height=Math.max(1,bottom-top),texture=beardPattern(key,density,lengthBase,lengthRange);
     ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';ctx.drawImage(texture,-leftStart,top,width,height);
     ctx.restore();
