@@ -104,6 +104,22 @@ jobs:
           if not root.exists() or not app.exists():
               raise SystemExit("No se encontraron los archivos Gradle generados por Capacitor.")
           root_text = root.read_text()
+          # Add independent repository endpoints for Gradle buildscript dependencies.
+          # Google Services transitively requires kotlin-stdlib-jdk8:1.9.20.
+          repository_fallback = """
+              maven { url 'https://repo1.maven.org/maven2' }
+              maven { url 'https://plugins.gradle.org/m2/' }
+          """
+          if "https://repo1.maven.org/maven2" not in root_text:
+              # Insert fallback into the first repositories block (buildscript).
+              import re
+              root_text, replacements = re.subn(
+                  r'(repositories\s*\{)',
+                  lambda match: match.group(1) + repository_fallback,
+                  root_text, count=1
+              )
+              if replacements != 1:
+                  raise SystemExit("No se encontró repositories en android/build.gradle")
           classpath = "classpath 'com.google.gms:google-services:4.4.2'"
           if classpath not in root_text:
               anchor = "dependencies {"
