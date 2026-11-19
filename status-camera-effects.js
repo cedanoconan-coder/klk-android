@@ -47,15 +47,34 @@
 
 // Carrusel de efectos siempre visible: la opción central se aplica al tocar o deslizar.
   const carousel=document.createElement('div');carousel.className='klkEffectCarousel';carousel.setAttribute('aria-label','Efectos de cámara');
+  // Each circle selects one distinct, currently supported effect.
+  // Beard options remain absent until Android validation.
   const choices=[
     ['Natural','✨','[data-eye-color="none"]'],
-    ['Azul','🔵','[data-eye-color="blue"]'],['Verde','🟢','[data-eye-color="green"]'],
-    ['Miel','🟤','[data-eye-color="hazel"]'],['Violeta','🟣','[data-eye-color="violet"]'],
-    ['Piel','🌟','[data-skin-preset="65"]'],['Suave','💫','[data-skin-preset="35"]'],
-    ['Cálido','☀️','[data-selfie-filter="warm"]'],['Cine','🎬','[data-selfie-filter="cinematic"]'],
-    ['Bigote','👨','[data-man-look="mustache"]'],['Candado','🧔','[data-man-look="goatee"]']
+    ['Ojos azules','🔵','[data-eye-color="blue"]'],
+    ['Ojos verdes','🟢','[data-eye-color="green"]'],
+    ['Ojos miel','🟤','[data-eye-color="hazel"]'],
+    ['Ojos violeta','🟣','[data-eye-color="violet"]'],
+    ['Ojos grises','⚪','[data-eye-color="gray"]'],
+    ['Piel suave','💫','[data-skin-preset="35"]'],
+    ['Piel limpia','🌟','[data-skin-preset="65"]'],
+    ['Luz suave','☁️','[data-skin-preset="85"]'],
+    ['Cálido','☀️','[data-selfie-filter="warm"]'],
+    ['Frío','❄️','[data-selfie-filter="cool"]'],
+    ['Brillo','✨','[data-selfie-filter="glow"]'],
+    ['Vintage','📷','[data-selfie-filter="vintage"]'],
+    ['Blanco y negro','◐','[data-selfie-filter="mono"]'],
+    ['Cine','🎬','[data-selfie-filter="cinematic"]'],
+    ['Rosa','🌸','[data-selfie-filter="rose"]'],
+    ['Sueño','🌙','[data-selfie-filter="dream"]'],
+    ['Vibrante','🎨','[data-selfie-filter="vivid"]'],
+    ['Pecas','🌼','[data-face-look="freckles"]'],
+    ['Rubor','🌷','[data-face-look="blush"]'],
+    ['Labios','💄','[data-face-look="lipstick"]'],
+    ['Glam','💎','[data-face-look="glam"]'],
+    ['Dorado','🌞','[data-face-look="golden"]']
   ];
-  let selectedEffect=0,carouselGestureStart=null;
+  let selectedEffect=0;
   const buttons=choices.map(([label,emoji,selector],index)=>{
     const button=document.createElement('button');button.type='button';button.className='klkEffectThumb';
     button.innerHTML='<span class="klkEffectCircle">'+emoji+'</span><small>'+label+'</small>';
@@ -67,16 +86,21 @@
     selectedEffect=(index+choices.length)%choices.length;
     buttons.forEach((button,i)=>{button.classList.toggle('selected',i===selectedEffect);button.setAttribute('aria-pressed',String(i===selectedEffect))});
     buttons[selectedEffect].scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});
-    const target=panel.querySelector(choices[selectedEffect][2]);if(target)target.click();
+    // Clear previous category so one circle means one effect, not stacked effects.
+    const selector=choices[selectedEffect][2];
+    if(!selector.startsWith('[data-eye-color='))panel.querySelector('[data-eye-color="none"]')?.click();
+    if(!selector.startsWith('[data-skin-preset='))panel.querySelector('[data-skin-preset="0"]')?.click();
+    if(!selector.startsWith('[data-selfie-filter='))panel.querySelector('[data-selfie-filter="normal"]')?.click();
+    if(!selector.startsWith('[data-face-look='))panel.querySelector('[data-face-look="none"]')?.click();
+    const target=panel.querySelector(selector);if(target)target.click();
   }
-  carousel.addEventListener('touchstart',e=>{carouselGestureStart=e.touches[0]?.clientX??null},{passive:true});
-  carousel.addEventListener('touchend',e=>{if(carouselGestureStart===null)return;const dx=(e.changedTouches[0]?.clientX??carouselGestureStart)-carouselGestureStart;carouselGestureStart=null;if(Math.abs(dx)>35){e.preventDefault();selectEffect(selectedEffect+(dx<0?1:-1))}},{passive:false});
+  // Native horizontal scroll is used; no synthetic swipe selection or prevented touch events.
   panel.querySelector('.klkCameraEffects').prepend(carousel);
   buttons[0].classList.add('selected');buttons[0].setAttribute('aria-pressed','true');
   const carouselStyle=document.createElement('style');
   carouselStyle.textContent=`
 #klkStatusCamera .klkCameraEffects{bottom:calc(env(safe-area-inset-bottom,0px) + 112px)!important;pointer-events:none}
-#klkStatusCamera .klkEffectCarousel{pointer-events:auto;display:flex;align-items:center;gap:13px;width:100%;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;padding:14px calc(50vw - 44px) 8px;box-sizing:border-box}
+#klkStatusCamera .klkEffectCarousel{pointer-events:auto;display:flex;align-items:center;gap:13px;width:100%;overflow-x:auto;scroll-snap-type:x proximity;scrollbar-width:none;padding:14px calc(50vw - 44px) 8px;box-sizing:border-box}
 #klkStatusCamera .klkEffectCarousel::-webkit-scrollbar{display:none}
 #klkStatusCamera .klkEffectThumb{scroll-snap-align:center;flex:0 0 72px;min-width:72px;display:flex;flex-direction:column;align-items:center;gap:5px;background:transparent!important;color:white!important;padding:0!important;border:0!important}
 #klkStatusCamera .klkEffectCircle{display:grid;place-items:center;width:66px;height:66px;border-radius:50%;background:linear-gradient(135deg,#4d375c,#13131b);border:2px solid #ffffff80;font-size:30px;box-shadow:0 2px 10px #0009}
