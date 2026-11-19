@@ -177,11 +177,11 @@ function sync(){
  if(!enabled)return;
  const next=document.getElementById('klkStatusCamera'),v=next?.querySelector('video');
  if(!next||!v||!next.isConnected)return;
- if(next===host&&v===video)return;
+ if(next===host&&v===video){resize();return;}
  detach();host=next;video=v;canvas=document.createElement('canvas');
  canvas.className='klkBeardMaskOverlay';
  canvas.setAttribute('aria-hidden','true');
- canvas.style.cssText='position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:3;visibility:hidden';
+ canvas.style.cssText='position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:6;visibility:visible';
  if(getComputedStyle(host).position==='static')host.style.position='relative';
  host.appendChild(canvas);
  canvas.addEventListener('webglcontextlost',onContextLost,false);
