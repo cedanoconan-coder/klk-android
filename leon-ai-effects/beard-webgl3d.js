@@ -23,7 +23,7 @@ function shader(type,source){
  return s;
 }
 function initialize(){
- gl=canvas.getContext('webgl2',{alpha:true,antialias:true,premultipliedAlpha:false,depth:true});
+ gl=canvas.getContext('webgl2',{alpha:true,antialias:true,premultipliedAlpha:false,depth:true,preserveDrawingBuffer:true});
  if(!gl)throw Error('WebGL2 unavailable');
  const vs=shader(gl.VERTEX_SHADER,`#version 300 es
  in vec3 aPosition; in float aOpacity; in float aShade;
