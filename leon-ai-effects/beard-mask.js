@@ -4,10 +4,31 @@
 (function(global){
 'use strict';
 let enabled=false,host=null,canvas=null,ctx=null,video=null;
+let resizeObserver=null;
 const cheekL=[234,93,132,58,172,136,150,149,176,148,152,175,199,57,43,106,203,123,116,117,118,119,100,126,209];
 const cheekR=[454,323,361,288,397,365,379,378,400,377,152,175,199,287,273,335,423,352,345,346,347,348,329,355,429];
 const chin=[58,172,136,150,149,176,148,152,377,400,378,379,365,397,288,287,273,335,406,418,262,369,396,175,199,171,140,32,194,204,43,57];
 const mouth=[61,40,37,0,267,270,291,321,314,17,84,91];
+// Convert normalized video landmarks to overlay pixels, respecting cover/contain cropping.
+function projection(){
+ if(!video||!host)return null;
+ const vr=video.getBoundingClientRect(),hr=host.getBoundingClientRect();
+ const vw=video.videoWidth,vh=video.videoHeight;
+ if(!vw||!vh||!vr.width||!vr.height)return null;
+ const css=getComputedStyle(video),fit=css.objectFit||'fill';
+ let dw=vr.width,dh=vr.height;
+ if(fit==='cover'||fit==='contain'||fit==='scale-down'){
+  const scale=(fit==='cover'?Math.max:Math.min)(vr.width/vw,vr.height/vh);
+  dw=vw*scale;dh=vh*scale;
+ }
+ const pos=(css.objectPosition||'50% 50%').split(/\s+/);
+ const fraction=v=>v?.endsWith('%')?parseFloat(v)/100:.5;
+ const ox=vr.left-hr.left+(vr.width-dw)*fraction(pos[0]);
+ const oy=vr.top-hr.top+(vr.height-dh)*fraction(pos[1]||pos[0]);
+ // Mirrored preview uses a horizontally flipped video element.
+ const mirrored=/matrix\(-|scaleX\(-1\)/.test(css.transform)||video.classList.contains('mirrored');
+ return {w:dw,h:dh,x:ox,y:oy,mirrored};
+}
 function clear(){if(ctx&&canvas)ctx.clearRect(0,0,canvas.width,canvas.height)}
 function polygon(ids,pts,w,h){
  if(ids.some(i=>!pts[i]))return false;
@@ -34,26 +55,28 @@ function region(ids,pts,w,h,seed){
 function draw(geometry){
  if(!enabled||!canvas||!ctx)return;
  clear();const pts=geometry?.landmarks;if(!pts||pts.length<455)return;
- const w=canvas.width,h=canvas.height;
+ const map=projection();if(!map)return;
  ctx.save();
- region(cheekL,pts,w,h,1);region(cheekR,pts,w,h,2);region(chin,pts,w,h,3);
+ ctx.translate(map.x+(map.mirrored?map.w:0),map.y);
+ if(map.mirrored)ctx.scale(-1,1);
+ region(cheekL,pts,map.w,map.h,1);region(cheekR,pts,map.w,map.h,2);region(chin,pts,map.w,map.h,3);
  // Clear the complete mouth area, including lips, with a feathered-looking wide margin.
- if(polygon(mouth,pts,w,h)){
+ if(polygon(mouth,pts,map.w,map.h)){
   ctx.globalCompositeOperation='destination-out';ctx.lineJoin='round';
-  ctx.lineWidth=Math.max(12,w*.032);ctx.stroke();ctx.fill();
+  ctx.lineWidth=Math.max(12,map.w*.032);ctx.stroke();ctx.fill();
  }
  ctx.restore();
 }
 function onGeometry(event){draw(event.detail?.geometry)}
 function resize(){if(!canvas||!host)return;const r=host.getBoundingClientRect();canvas.width=Math.max(1,Math.round(r.width));canvas.height=Math.max(1,Math.round(r.height))}
-function detach(){if(host)host.removeEventListener('klk:facegeometry',onGeometry);canvas?.remove();host=null;video=null;canvas=null;ctx=null}
+function detach(){resizeObserver?.disconnect();resizeObserver=null;if(host)host.removeEventListener('klk:facegeometry',onGeometry);canvas?.remove();host=null;video=null;canvas=null;ctx=null}
 function sync(){
  if(!enabled)return;const next=document.getElementById('klkStatusCamera'),v=next?.querySelector('video');
  if(!next||!v||!next.isConnected)return;if(host===next&&video===v)return;
  detach();host=next;video=v;canvas=document.createElement('canvas');canvas.className='klkBeardMaskOverlay';
  canvas.setAttribute('aria-hidden','true');canvas.style.cssText='position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:3';
  if(getComputedStyle(host).position==='static')host.style.position='relative';
- host.appendChild(canvas);ctx=canvas.getContext('2d');host.addEventListener('klk:facegeometry',onGeometry);resize();
+ host.appendChild(canvas);ctx=canvas.getContext('2d');host.addEventListener('klk:facegeometry',onGeometry);resize();if(typeof ResizeObserver!=='undefined'){resizeObserver=new ResizeObserver(resize);resizeObserver.observe(host);resizeObserver.observe(video)}
 }
 function setEnabled(value){enabled=!!value;if(enabled)sync();else detach()}
 document.addEventListener('visibilitychange',()=>{if(document.hidden)clear()});window.addEventListener('resize',resize);
