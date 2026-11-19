@@ -73,6 +73,40 @@
   carousel.addEventListener('touchend',e=>{if(carouselGestureStart===null)return;const dx=(e.changedTouches[0]?.clientX??carouselGestureStart)-carouselGestureStart;carouselGestureStart=null;if(Math.abs(dx)>35){e.preventDefault();selectEffect(selectedEffect+(dx<0?1:-1))}},{passive:false});
   panel.querySelector('.klkCameraEffects').prepend(carousel);
   buttons[0].classList.add('selected');buttons[0].setAttribute('aria-pressed','true');
+  // Diseño de Estados: visor despejado, herramientas laterales y selector centrado.
+  const modes=document.createElement('div');modes.className='klkCaptureModes';
+  modes.innerHTML='<span>15 s</span><span>30 s</span><strong>FOTO</strong><span>VIDEO</span>';
+  panel.appendChild(modes);
+  const side=document.createElement('div');side.className='klkCameraSide';
+  side.innerHTML='<button type="button" data-side="flip" aria-label="Cambiar cámara">↻</button><button type="button" data-side="effects" aria-label="Abrir biblioteca de efectos">✦</button>';
+  panel.appendChild(side);
+  side.querySelector('[data-side="flip"]').addEventListener('click',()=>panel.querySelector('[data-cam="flip"]').click());
+  side.querySelector('[data-side="effects"]').addEventListener('click',()=>effectsButton.click());
+  const selectFromScroll=()=>{
+    const center=carousel.scrollLeft+carousel.clientWidth/2;
+    let best=0,distance=Infinity;
+    buttons.forEach((button,i)=>{const midpoint=button.offsetLeft+button.offsetWidth/2;const d=Math.abs(midpoint-center);if(d<distance){distance=d;best=i}});
+    if(best!==selectedEffect)selectEffect(best);
+  };
+  let scrollIdle;
+  carousel.addEventListener('scroll',()=>{clearTimeout(scrollIdle);scrollIdle=setTimeout(selectFromScroll,140)},{passive:true});
+  const layout=document.createElement('style');layout.textContent=`
+#klkStatusCamera .klkCameraBar:first-child{top:calc(env(safe-area-inset-top,0px) + 8px)!important;right:76px!important}
+#klkStatusCamera .klkCameraBar:first-child strong{display:none!important}
+#klkStatusCamera .klkCameraBar:first-child [data-cam="flip"]{display:none!important}
+#klkStatusCamera .klkCameraBar:first-child [data-cam="close"]{font-size:0!important;width:46px!important;min-width:46px!important;background:transparent!important}
+#klkStatusCamera .klkCameraBar:first-child [data-cam="close"]::first-letter{font-size:27px}
+#klkStatusCamera .klkCameraSide{position:absolute;z-index:10;right:14px;top:calc(env(safe-area-inset-top,0px) + 22px);display:flex;flex-direction:column;gap:18px}
+#klkStatusCamera .klkCameraSide button{width:48px;height:48px;margin:0;padding:0;background:rgba(0,0,0,.25);color:#fff;border:0;border-radius:50%;font-size:30px}
+#klkStatusCamera .klkCameraMessage{top:calc(env(safe-area-inset-top,0px) + 76px)!important;max-width:65vw!important;font-size:11px!important;opacity:.78}
+#klkStatusCamera .klkCaptureModes{position:absolute;z-index:7;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 192px);display:flex;justify-content:center;align-items:center;gap:23px;font-size:13px;font-weight:700;text-shadow:0 1px 3px #000}
+#klkStatusCamera .klkCaptureModes strong{background:#fff;color:#151515;border-radius:22px;padding:8px 15px}
+#klkStatusCamera .klkCameraEffects{bottom:calc(env(safe-area-inset-bottom,0px) + 105px)!important}
+#klkStatusCamera .klkEffectCarousel{padding-top:8px!important;padding-bottom:3px!important}
+#klkStatusCamera .klkCameraEffectsPanel{max-height:35dvh!important}
+#klkStatusCamera .klkCameraBar:last-child{bottom:calc(env(safe-area-inset-bottom,0px) + 12px)!important}
+@media(max-height:720px){#klkStatusCamera .klkCaptureModes{bottom:calc(env(safe-area-inset-bottom,0px) + 172px)}#klkStatusCamera .klkCameraEffects{bottom:calc(env(safe-area-inset-bottom,0px) + 92px)!important}}
+`;document.head.appendChild(layout);
   const carouselStyle=document.createElement('style');
   carouselStyle.textContent=`
 #klkStatusCamera .klkCameraEffects{bottom:calc(env(safe-area-inset-bottom,0px) + 112px)!important;pointer-events:none}
