@@ -174,13 +174,15 @@
     if(manLook!=='none'&&now-lastBeardNotice>1600){message.textContent=text;lastBeardNotice=now}
   }
   function updateFaceTracker(detected,now){
-   if(!detected||detected.length<468){if(lastFaceSeenAt&&now-lastFaceSeenAt>450)resetFaceTracker();if(manLook!=='none'&&(!lastFaceSeenAt||now-lastFaceSeenAt>1200)&&now-lastBeardNotice>3000){reportFaceDiagnostic('Detector activo · rostro no reconocido. Centra el rostro y mantén buena luz.',now)}return}
+   if(!detected||detected.length<468){if(lastFaceSeenAt&&now-lastFaceSeenAt>(manLook!=='none'?120:450))resetFaceTracker();if(manLook!=='none'&&(!lastFaceSeenAt||now-lastFaceSeenAt>1200)&&now-lastBeardNotice>3000){reportFaceDiagnostic('Detector activo · rostro no reconocido. Centra el rostro y mantén buena luz.',now)}return}
    const next=detected.map(point=>({x:point.x,y:point.y,z:point.z||0}));
    if(!smoothedFacePoints||smoothedFacePoints.length!==next.length||now-lastFaceSeenAt>450){smoothedFacePoints=next;facePoints=smoothedFacePoints;lastFaceSeenAt=now;return}
    const anchors=[1,33,133,152,263,362];let movement=0,count=0;
    for(const id of anchors){if(!next[id]||!smoothedFacePoints[id])continue;movement+=Math.hypot(next[id].x-smoothedFacePoints[id].x,next[id].y-smoothedFacePoints[id].y);count++}
    movement=count?movement/count:0;
-   const alpha=movement>.12?.96:Math.max(.24,Math.min(.88,.24+movement*22));
+   // Beard must follow current jaw/cheek landmarks with minimal temporal lag.
+   // Strong smoothing at 14 FPS made the beard visibly slide behind head movement.
+   const alpha=manLook!=='none'?(movement>.002?.98:.88):(movement>.12?.96:Math.max(.24,Math.min(.88,.24+movement*22)));
    for(let i=0;i<next.length;i++){const current=next[i],previous=smoothedFacePoints[i];if(!previous){smoothedFacePoints[i]=current;continue}previous.x+=(current.x-previous.x)*alpha;previous.y+=(current.y-previous.y)*alpha;previous.z+=(current.z-previous.z)*alpha}
    facePoints=smoothedFacePoints;lastFaceSeenAt=now;
   }
@@ -328,12 +330,12 @@
   const beardFaceGeometry=new window.KLKFaceGeometry.FaceGeometry();
   function render(){
    if(!stream||closed)return;if(video.readyState>=2&&video.videoWidth){const scale=Math.min(1,1600/Math.max(video.videoWidth,video.videoHeight)),width=Math.max(1,Math.round(video.videoWidth*scale)),height=Math.max(1,Math.round(video.videoHeight*scale));if(canvas.width!==width||canvas.height!==height){canvas.width=width;canvas.height=height}const filterAmount=Number(filterStrengthInput.value)/100;ctx.filter=(selfieFilters[selfieFilter]||selfieFilters.normal)(filterAmount);ctx.drawImage(video,0,0,width,height);ctx.filter='none';
-    const now=performance.now();if((eyeColor!=='none'||skinSmooth>0||faceLook!=='none'||manLook!=='none')&&landmarker&&now-lastDetection>70){lastDetection=now;try{(()=>{const result=landmarker.detectForVideo(video,now);faceDetectionAttempts++;if(result.faceLandmarks?.[0]?.length>=468){lastFaceDiagnostic='Rostro detectado · '+result.faceLandmarks[0].length+' puntos';if(manLook!=='none'&&faceDetectionAttempts%90===1)message.textContent=lastFaceDiagnostic}else if(faceDetectionAttempts%30===1)reportFaceDiagnostic('Detector funcionando · sin rostro ('+faceDetectionAttempts+' intentos)',now);lastFaceTransform=result.facialTransformationMatrixes?.[0]||null;lastFaceBlendshapes=result.faceBlendshapes?.[0]||null;updateFaceTracker(result.faceLandmarks?.[0]||null,now);if(manLook!=='none'){const geometry=beardFaceGeometry.update(result.faceLandmarks?.[0]||null);panel.dispatchEvent(new CustomEvent('klk:facegeometry',{detail:{geometry,faceCount:result.faceLandmarks?.length||0}}))}})()}catch(error){lastFaceErrorAt=now;reportFaceDiagnostic('Error del detector facial: '+error.message,now);console.warn('KLK FaceLandmarker detectForVideo:',error)}}
+    const now=performance.now();if((eyeColor!=='none'||skinSmooth>0||faceLook!=='none'||manLook!=='none')&&landmarker&&now-lastDetection>(manLook!=='none'?33:70)){lastDetection=now;try{(()=>{const result=landmarker.detectForVideo(video,now);faceDetectionAttempts++;if(result.faceLandmarks?.[0]?.length>=468){lastFaceDiagnostic='Rostro detectado · '+result.faceLandmarks[0].length+' puntos';if(manLook!=='none'&&faceDetectionAttempts%90===1)message.textContent=lastFaceDiagnostic}else if(faceDetectionAttempts%30===1)reportFaceDiagnostic('Detector funcionando · sin rostro ('+faceDetectionAttempts+' intentos)',now);lastFaceTransform=result.facialTransformationMatrixes?.[0]||null;lastFaceBlendshapes=result.faceBlendshapes?.[0]||null;updateFaceTracker(result.faceLandmarks?.[0]||null,now);if(manLook!=='none'){const geometry=beardFaceGeometry.update(result.faceLandmarks?.[0]||null);panel.dispatchEvent(new CustomEvent('klk:facegeometry',{detail:{geometry,faceCount:result.faceLandmarks?.length||0}}))}})()}catch(error){lastFaceErrorAt=now;reportFaceDiagnostic('Error del detector facial: '+error.message,now);console.warn('KLK FaceLandmarker detectForVideo:',error)}}
     if(skinSmooth>0&&facePoints)drawSkinSmoothing();
     if(eyeColor!=='none'&&facePoints){const alpha=Number(eyeStrengthInput.value)/100,palette=eyePalettes[eyeColor]||eyePalettes.blue;drawIris(468,469,eyeContours[0],alpha,palette);drawIris(473,474,eyeContours[1],alpha,palette)}if(faceLook!=='none'&&facePoints)drawFaceLook();
     // Render beard directly into the same 2D canvas used for preview, photos and video.
     // This avoids a separate WebGL layer that can be blank on Android devices.
-    if(manLook!=='none'&&facePoints)drawManLook();
+    if(manLook!=='none'&&facePoints&&now-lastFaceSeenAt<130)drawManLook();
    }renderFrame=requestAnimationFrame(render)
   }
   function attach(file){const transfer=new DataTransfer();transfer.items.add(file);input.files=transfer.files;input.dispatchEvent(new Event('change',{bubbles:true}));const feedback=document.getElementById('statusFeedback');if(feedback)feedback.textContent=(file.type.startsWith('video/')?'Video':'Foto')+' listo para publicar.';close()}
