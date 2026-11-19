@@ -29,5 +29,24 @@ function init(){
    feedback.textContent=style==='natural'?'Efectos naturales seleccionados.':'Categoría abierta. Elige el efecto que prefieras.';
  }));
 }
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+function addEntry(){
+ const updates=document.getElementById('updatesPanel');
+ if(!updates||updates.querySelector('[data-klk-smart-entry]'))return;
+ const row=updates.querySelector('.myStatusRow')||document.getElementById('addStatusButton');
+ if(!row)return;
+ const button=document.createElement('button');
+ button.type='button';button.dataset.klkSmartEntry='';
+ button.textContent='🦁 Estados inteligentes · Abrir cámara y efectos';
+ button.setAttribute('aria-label','Abrir cámara de Estados inteligentes');
+ button.style.cssText='display:block;width:calc(100% - 32px);margin:10px 16px;padding:14px;border-radius:14px;background:#efe9ff;color:#3d2474;border:1px solid #d7c8ff;font-size:15px;font-weight:700;text-align:left';
+ row.insertAdjacentElement('afterend',button);
+ button.addEventListener('click',()=>{
+   const trigger=document.getElementById('statusCameraButton');
+   if(!trigger){button.textContent='Cámara no disponible en esta versión';return}
+   trigger.click();
+   init();
+ });
+}
+function start(){init();addEntry()}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
 })();
