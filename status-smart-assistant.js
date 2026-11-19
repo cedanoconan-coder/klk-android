@@ -122,6 +122,23 @@ function init(){
    if(scroll)centerTile(index);
  }
  entries.forEach((item,index)=>item.tile.addEventListener('click',()=>{selectEffect(index);centerTile(index)}));
+ // Acceso directo: el catálogo horizontal puede ocultar la barba completa en móviles.
+ const fullBeardIndex=entries.findIndex(entry=>entry.original.matches('[data-man-look="full"]'));
+ if(fullBeardIndex>=0){
+   const fullBeardButton=document.createElement('button');
+   fullBeardButton.type='button';
+   fullBeardButton.className='klkFullBeardShortcut';
+   fullBeardButton.textContent='🧔 Barba completa';
+   fullBeardButton.setAttribute('aria-label','Activar barba completa');
+   fullBeardButton.style.cssText='position:fixed;z-index:22;right:12px;bottom:calc(200px + env(safe-area-inset-bottom));padding:10px 14px;border:1px solid #fff8;border-radius:24px;background:#302044ed;color:#fff;font-size:13px;font-weight:700';
+   camera.appendChild(fullBeardButton);
+   fullBeardButton.addEventListener('click',()=>{
+     selectEffect(fullBeardIndex);
+     centerTile(fullBeardIndex,false);
+     fullBeardButton.setAttribute('aria-pressed','true');
+   });
+ }
+
  // Recentrar al rotar el dispositivo o cambiar el tamaño de la cámara.
  window.addEventListener('resize',()=>{if(selected>=0)centerTile(selected,false)},{passive:true});
  track.addEventListener('scroll',()=>{
