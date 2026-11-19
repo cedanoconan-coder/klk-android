@@ -118,7 +118,7 @@
   function drawManLook(){
    const amount=Number(manStrengthInput.value)/100;if(!amount||manLook==='none'||!facePoints)return;
    const place=beardPlacement(),{centerX,centerY,angle,chinDistance,chinX}=place;
-   const jawPath=()=>{const ids=[132,58,61,146,91,181,84,17,314,405,321,375,291,288,397,365,379,378,400,377,152,148,176,149,150,136,172,58];ids.forEach((id,i)=>{const[x,y]=eyePoint(id);i?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.closePath()};
+   const jawPath=()=>{const ids=[234,93,132,58,61,146,91,181,84,17,314,405,321,375,291,288,361,323,454,397,365,379,378,400,377,152,148,176,149,150,136,172,58];ids.forEach((id,i)=>{const[x,y]=eyePoint(id);i?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.closePath()};
    const seed=n=>{const value=Math.sin(n*127.1+311.7)*43758.5453;return value-Math.floor(value)};
    function beardPattern(key,density,lengthBase,lengthRange){
     const cache=drawManLook.patterns||(drawManLook.patterns=new Map());if(cache.has(key))return cache.get(key);
