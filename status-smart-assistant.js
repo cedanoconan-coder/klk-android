@@ -63,6 +63,67 @@ function init(){
    });
  }
 
+ // Carrusel central inspirado en la referencia: arrastrar para cambiar de efecto.
+ const carousel=document.createElement('div');carousel.className='klkEffectCarousel';
+ carousel.setAttribute('role','group');carousel.setAttribute('aria-label','Desliza los efectos al círculo central');
+ const track=document.createElement('div');track.className='klkEffectTrack';
+ carousel.innerHTML='<div class="klkEffectCenter" aria-hidden="true"></div>';
+ carousel.appendChild(track);camera.appendChild(carousel);
+ const carouselCSS=document.createElement('style');carouselCSS.id='klk-status-effect-carousel';
+ carouselCSS.textContent=`
+ #klkStatusCamera .klkSmartTools,#klkStatusCamera [data-cam="effects"],#klkStatusCamera .klkCameraEffectsPanel{display:none!important}
+ #klkStatusCamera .klkEffectCarousel{position:fixed!important;z-index:20!important;left:0!important;right:0!important;bottom:calc(108px + env(safe-area-inset-bottom))!important;height:82px!important;pointer-events:auto!important}
+ #klkStatusCamera .klkEffectTrack{height:82px!important;display:flex!important;align-items:center!important;gap:12px!important;overflow-x:auto!important;overscroll-behavior-x:contain!important;scroll-snap-type:x mandatory!important;scrollbar-width:none!important;padding-inline:calc(50vw - 36px)!important;box-sizing:border-box!important}
+ #klkStatusCamera .klkEffectTrack::-webkit-scrollbar{display:none!important}
+ #klkStatusCamera .klkEffectTile{flex:0 0 72px!important;width:72px!important;height:72px!important;scroll-snap-align:center!important;border:2px solid #ffffff70!important;border-radius:50%!important;background:#292c36e8!important;color:white!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:3px!important;padding:5px!important;font-size:11px!important;line-height:1.1!important;text-align:center!important;box-sizing:border-box!important}
+ #klkStatusCamera .klkEffectTile[aria-selected="true"]{border:3px solid white!important;box-shadow:0 0 0 3px #ffffff88!important;background:#1769db!important}
+ #klkStatusCamera .klkEffectTile .klkEffectSymbol{font-size:24px!important;line-height:1!important}
+ #klkStatusCamera .klkEffectCenter{position:absolute!important;left:50%!important;top:5px!important;transform:translateX(-50%)!important;width:72px!important;height:72px!important;border-radius:50%!important;border:2px solid #fff8!important;pointer-events:none!important;z-index:2!important}
+ @media(max-height:650px){#klkStatusCamera .klkEffectCarousel{bottom:calc(94px + env(safe-area-inset-bottom))!important}}
+ `;
+ document.head.appendChild(carouselCSS);
+ const symbols={eyes:'👁️',beauty:'✨',filters:'🎨',face:'😊',men:'🧔',creative:'🌈'};
+ const entries=[];
+ camera.querySelectorAll('[data-effect-category]').forEach(group=>{
+   const category=group.dataset.effectCategory;
+   group.querySelectorAll('.klkEffectChoices button').forEach(original=>{
+     const tile=document.createElement('button');tile.type='button';tile.className='klkEffectTile';
+     tile.setAttribute('aria-label',category+' · '+original.textContent.trim());
+     tile.setAttribute('aria-selected','false');
+     const symbol=document.createElement('span');symbol.className='klkEffectSymbol';symbol.textContent=symbols[category]||'✨';
+     const label=document.createElement('span');label.textContent=original.textContent.trim();
+     tile.append(symbol,label);track.appendChild(tile);
+     entries.push({tile,original,category});
+   });
+ });
+ let selected=-1,scrollDebounce=0;
+ function selectEffect(index,scroll=true){
+   if(index<0||index>=entries.length||index===selected)return;
+   selected=index;
+   const item=entries[index];
+   const tab=camera.querySelector('[data-effect-tab="'+item.category+'"]');
+   tab?.click();item.original.click();
+   entries.forEach((entry,i)=>entry.tile.setAttribute('aria-selected',String(i===index)));
+   if(scroll)item.tile.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'});
+ }
+ entries.forEach((item,index)=>item.tile.addEventListener('click',()=>selectEffect(index)));
+ track.addEventListener('scroll',()=>{
+   clearTimeout(scrollDebounce);
+   scrollDebounce=setTimeout(()=>{
+     const center=track.scrollLeft+track.clientWidth/2;
+     let best=0,distance=Infinity;
+     entries.forEach((entry,i)=>{
+       const mid=entry.tile.offsetLeft+entry.tile.offsetWidth/2;
+       const diff=Math.abs(mid-center);
+       if(diff<distance){distance=diff;best=i}
+     });
+     selectEffect(best,false);
+   },110);
+ },{passive:true});
+ // Empezar sin efecto y mantener el círculo centrado.
+ const natural=entries.findIndex(e=>e.category==='eyes'&&e.original.dataset.eyeColor==='none');
+ requestAnimationFrame(()=>{if(natural>=0){selected=-1;selectEffect(natural,true)}});
+
 }
 function addEntry(){
  const updates=document.getElementById('updatesPanel');
