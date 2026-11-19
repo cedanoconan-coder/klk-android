@@ -94,8 +94,7 @@
     if(!selector.startsWith('[data-face-look='))panel.querySelector('[data-face-look="none"]')?.click();
     const target=panel.querySelector(selector);if(target)target.click();
   }
-  carousel.addEventListener('touchstart',e=>{carouselGestureStart=e.touches[0]?.clientX??null},{passive:true});
-  carousel.addEventListener('touchend',e=>{if(carouselGestureStart===null)return;const dx=(e.changedTouches[0]?.clientX??carouselGestureStart)-carouselGestureStart;carouselGestureStart=null;if(Math.abs(dx)>35){e.preventDefault();selectEffect(selectedEffect+(dx<0?1:-1))}},{passive:false});
+  // Native horizontal scroll is used; no synthetic swipe selection or prevented touch events.
   panel.querySelector('.klkCameraEffects').prepend(carousel);
   buttons[0].classList.add('selected');buttons[0].setAttribute('aria-pressed','true');
   const carouselStyle=document.createElement('style');
