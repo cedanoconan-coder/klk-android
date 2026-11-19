@@ -117,29 +117,31 @@
   }
   function drawManLook(){
    const amount=Number(manStrengthInput.value)/100;if(!amount||manLook==='none'||!facePoints)return;
-   const place=beardPlacement(),{centerX,centerY,angle,chinDistance,chinX}=place;
-   ctx.save();
-   if(manLook==='full'||manLook==='short'||manLook==='stubble'){
-    ctx.beginPath();traceLandmarkLoop(beardOutline);traceLandmarkLoop(beardUpperCut);traceLandmarkLoop(mouthOutline);ctx.clip('evenodd');
-   }else if(manLook==='goatee'){
-    const mouthWidth=place.mouthWidth,rx=Math.max(mouthWidth*.62,place.jawWidth*.25),cy=centerY+Math.cos(angle)*chinDistance*.52;
-    ctx.beginPath();ctx.ellipse(centerX-Math.sin(angle)*chinDistance*.52,cy,rx,chinDistance*.68,angle,0,Math.PI*2);traceLandmarkLoop(mouthOutline);ctx.clip('evenodd');
+   const place=beardPlacement(),{centerX,centerY,angle,chinDistance,chinX}=place,scale=Math.max(.55,Math.min(1.5,place.jawWidth/320));
+   const seed=n=>{const value=Math.sin(n*127.1+311.7)*43758.5453;return value-Math.floor(value)},mix=(a,b,t)=>a+(b-a)*t;
+   const jawPath=()=>{const ids=[132,58,61,146,91,181,84,17,314,405,321,375,291,288,397,365,379,378,400,377,152,148,176,149,150,136,172,58];ids.forEach((id,i)=>{const[x,y]=eyePoint(id);i?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.closePath()};
+   function paintRegion(path,rule,top,bottom,leftStart,rightStart,leftEnd,rightEnd,shiftEnd,density,opacity,seedOffset){
+    ctx.save();ctx.beginPath();path();ctx.clip(rule);ctx.translate(centerX,centerY);ctx.rotate(angle);ctx.globalCompositeOperation='multiply';
+    const height=Math.max(1,bottom-top),width=leftStart+rightStart,shade=ctx.createLinearGradient(0,top,0,bottom);
+    shade.addColorStop(0,'rgba(36,25,21,0)');shade.addColorStop(.12,'rgba(34,24,20,.08)');shade.addColorStop(.46,'rgba(30,21,18,.19)');shade.addColorStop(1,'rgba(22,16,14,.30)');
+    ctx.globalAlpha=amount*opacity*.58;ctx.fillStyle=shade;ctx.fillRect(-leftStart,top,Math.max(1,width),height+chinDistance*.02);
+    ctx.lineCap='round';
+    for(let i=0;i<density;i++){
+     const t=Math.pow(seed(i+1701+seedOffset),.78),y=top+height*t,progress=Math.max(0,Math.min(1,(y-top)/height)),left=mix(leftStart,leftEnd,progress),right=mix(rightStart,rightEnd,progress),center=shiftEnd*progress,across=seed(i+1+seedOffset),edgeFade=Math.min(1,across/.08,(1-across)/.08),topFade=Math.min(1,progress/.1),len=(manLook==='stubble'?1.1:manLook==='short'?2.1:manLook==='mustache'?1.5:2.8)+seed(i+918+seedOffset)*(manLook==='full'?5.2:3.3),lean=(seed(i+722+seedOffset)*2-1)*Math.max(.7,scale*2.1),x=center-left+across*(left+right);
+     ctx.strokeStyle=i%9===0?'rgba(183,145,112,.48)':'rgba(37,26,22,.88)';ctx.globalAlpha=amount*opacity*(.28+seed(i+553+seedOffset)*.48)*edgeFade*topFade;ctx.lineWidth=Math.max(.45,scale*(manLook==='stubble'?.48:.68+seed(i+342+seedOffset)*.55));ctx.beginPath();ctx.moveTo(x,y);ctx.quadraticCurveTo(x+lean*.45,y+len*.48,x+lean,y+len);ctx.stroke();
+    }
+    ctx.restore();
+   }
+   if(manLook==='short'||manLook==='stubble'||manLook==='full'){
+    const density=manLook==='stubble'?320:manLook==='short'?720:900,opacity=manLook==='stubble'?.44:manLook==='short'?.84:.96;
+    paintRegion(jawPath,'nonzero',place.sideburnY,chinDistance+chinDistance*.02,place.leftCheek,place.rightCheek,place.leftJaw*.94,place.rightJaw*.94,chinX,density,opacity,0);
+    if(manLook!=='stubble')paintRegion(()=>{traceLandmarkLoop(upperLipAndMustache);traceLandmarkLoop(mouthOutline)},'evenodd',-place.mouthWidth*.24,-place.mouthWidth*.015,place.leftMouth*.82,place.rightMouth*.82,place.leftMouth*.74,place.rightMouth*.74,0,manLook==='full'?420:300,opacity,9000);
    }else if(manLook==='mustache'){
-    ctx.beginPath();traceLandmarkLoop(upperLipAndMustache);traceLandmarkLoop(mouthOutline);ctx.clip('evenodd');
+    paintRegion(()=>{traceLandmarkLoop(upperLipAndMustache);traceLandmarkLoop(mouthOutline)},'evenodd',-place.mouthWidth*.24,-place.mouthWidth*.015,place.leftMouth*.82,place.rightMouth*.82,place.leftMouth*.74,place.rightMouth*.74,0,340,.78,9000);
+   }else if(manLook==='goatee'){
+    const rx=Math.max(place.mouthWidth*.62,place.jawWidth*.25),cy=centerY+Math.cos(angle)*chinDistance*.52;
+    paintRegion(()=>{ctx.ellipse(centerX-Math.sin(angle)*chinDistance*.52,cy,rx,chinDistance*.68,angle,0,Math.PI*2);traceLandmarkLoop(mouthOutline)},'evenodd',-place.mouthWidth*.08,chinDistance,place.mouthWidth*.62,place.mouthWidth*.62,place.leftJaw*.34,place.rightJaw*.34,chinX,520,.84,0);
    }
-   ctx.translate(centerX,centerY);ctx.rotate(angle);ctx.globalCompositeOperation='multiply';
-   const isMustache=manLook==='mustache',top=isMustache?-place.mouthWidth*.24:manLook==='goatee'?-place.mouthWidth*.08:place.sideburnY,bottom=isMustache?place.mouthWidth*.02:chinDistance;
-   const leftTop=isMustache?place.leftMouth*.82:manLook==='goatee'?place.mouthWidth*.62:place.leftCheek,rightTop=isMustache?place.rightMouth*.82:manLook==='goatee'?place.mouthWidth*.62:place.rightCheek;
-   const scale=Math.max(.55,Math.min(1.5,place.jawWidth/320)),styleOpacity=manLook==='stubble'?.44:manLook==='short'?.82:manLook==='goatee'?.84:manLook==='mustache'?.74:.96;
-   const shade=ctx.createLinearGradient(0,top,0,Math.max(top+1,bottom));shade.addColorStop(0,'rgba(36,25,21,0)');shade.addColorStop(.12,'rgba(34,24,20,.08)');shade.addColorStop(.46,'rgba(30,21,18,.19)');shade.addColorStop(1,'rgba(22,16,14,.30)');
-   ctx.globalAlpha=amount*styleOpacity*.58;ctx.fillStyle=shade;ctx.fillRect(-leftTop,top,leftTop+rightTop,Math.max(1,bottom-top+chinDistance*.025));
-   const seed=n=>{const value=Math.sin(n*127.1+311.7)*43758.5453;return value-Math.floor(value)},density=manLook==='stubble'?320:manLook==='short'?800:manLook==='goatee'?500:manLook==='mustache'?320:900;
-   ctx.lineCap='round';
-   for(let i=0;i<density;i++){
-    const ry=seed(i+1701),t=Math.pow(ry,.78),y=top+(bottom-top)*t,progress=Math.max(0,Math.min(1,(y-top)/Math.max(1,bottom-top))),left=leftTop+(place.leftJaw-leftTop)*progress,right=rightTop+(place.rightJaw-rightTop)*progress,center=chinX*progress,across=seed(i+1),x=center-left+across*(left+right),edgeFade=Math.min(1,across/.08,(1-across)/.08),topFade=Math.min(1,progress/.10),len=(manLook==='stubble'?1.1:manLook==='short'?2.1:manLook==='mustache'?1.5:2.8)+seed(i+918)*(manLook==='full'?5.2:3.3),lean=(seed(i+722)*2-1)*Math.max(.7,scale*2.1);
-    ctx.strokeStyle=i%9===0?'rgba(183,145,112,.48)':'rgba(37,26,22,.88)';ctx.globalAlpha=amount*styleOpacity*(.28+seed(i+553)*.48)*edgeFade*topFade;ctx.lineWidth=Math.max(.45,scale*(manLook==='stubble'?.48:.68+seed(i+342)*.55));ctx.beginPath();ctx.moveTo(x,y);ctx.quadraticCurveTo(x+lean*.45,y+len*.48,x+lean,y+len);ctx.stroke();
-   }
-   ctx.restore();
   }
   function render(){
    if(!stream||closed)return;if(video.readyState>=2&&video.videoWidth){const scale=Math.min(1,1600/Math.max(video.videoWidth,video.videoHeight)),width=Math.max(1,Math.round(video.videoWidth*scale)),height=Math.max(1,Math.round(video.videoHeight*scale));if(canvas.width!==width||canvas.height!==height){canvas.width=width;canvas.height=height}const filterAmount=Number(filterStrengthInput.value)/100;ctx.filter=(selfieFilters[selfieFilter]||selfieFilters.normal)(filterAmount);ctx.drawImage(video,0,0,width,height);ctx.filter='none';
