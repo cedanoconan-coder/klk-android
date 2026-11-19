@@ -117,35 +117,41 @@
   }
   function drawManLook(){
    const amount=Number(manStrengthInput.value)/100;if(!amount||manLook==='none'||!facePoints)return;
-   const place=beardPlacement(),{centerX,centerY,angle,chinDistance,chinX}=place,scale=Math.max(.55,Math.min(1.5,place.jawWidth/320));
-   const seed=n=>{const value=Math.sin(n*127.1+311.7)*43758.5453;return value-Math.floor(value)},mix=(a,b,t)=>a+(b-a)*t;
+   const place=beardPlacement(),{centerX,centerY,angle,chinDistance,chinX}=place;
    const jawPath=()=>{const ids=[132,58,61,146,91,181,84,17,314,405,321,375,291,288,397,365,379,378,400,377,152,148,176,149,150,136,172,58];ids.forEach((id,i)=>{const[x,y]=eyePoint(id);i?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.closePath()};
-   function paintRegion(path,rule,top,bottom,leftStart,rightStart,leftEnd,rightEnd,shiftEnd,density,opacity,seedOffset){
-    ctx.save();ctx.beginPath();path();ctx.clip(rule);ctx.translate(centerX,centerY);ctx.rotate(angle);ctx.globalCompositeOperation='multiply';
-    const height=Math.max(1,bottom-top),width=leftStart+rightStart,shade=ctx.createLinearGradient(0,top,0,bottom);
+   const seed=n=>{const value=Math.sin(n*127.1+311.7)*43758.5453;return value-Math.floor(value)};
+   function beardPattern(key,density,lengthBase,lengthRange){
+    const cache=drawManLook.patterns||(drawManLook.patterns=new Map());if(cache.has(key))return cache.get(key);
+    const size=512,texture=document.createElement('canvas');texture.width=size;texture.height=size;
+    const brush=texture.getContext('2d'),shade=brush.createLinearGradient(0,0,0,size);
     shade.addColorStop(0,'rgba(36,25,21,0)');shade.addColorStop(.12,'rgba(34,24,20,.08)');shade.addColorStop(.46,'rgba(30,21,18,.19)');shade.addColorStop(1,'rgba(22,16,14,.30)');
-    ctx.globalAlpha=amount*opacity*.58;ctx.fillStyle=shade;ctx.fillRect(-leftStart,top,Math.max(1,width),height+chinDistance*.02);
-    ctx.lineCap='round';
+    brush.fillStyle=shade;brush.fillRect(0,0,size,size);brush.lineCap='round';
     for(let i=0;i<density;i++){
-     const t=Math.pow(seed(i+1701+seedOffset),.78),y=top+height*t,progress=Math.max(0,Math.min(1,(y-top)/height)),left=mix(leftStart,leftEnd,progress),right=mix(rightStart,rightEnd,progress),center=shiftEnd*progress,across=seed(i+1+seedOffset),edgeFade=Math.min(1,across/.08,(1-across)/.08),topFade=Math.min(1,progress/.1),len=(manLook==='stubble'?1.1:manLook==='short'?2.1:manLook==='mustache'?1.5:2.8)+seed(i+918+seedOffset)*(manLook==='full'?5.2:3.3),lean=(seed(i+722+seedOffset)*2-1)*Math.max(.7,scale*2.1),x=center-left+across*(left+right);
-     ctx.strokeStyle=i%9===0?'rgba(183,145,112,.48)':'rgba(37,26,22,.88)';ctx.globalAlpha=amount*opacity*(.28+seed(i+553+seedOffset)*.48)*edgeFade*topFade;ctx.lineWidth=Math.max(.45,scale*(manLook==='stubble'?.48:.68+seed(i+342+seedOffset)*.55));ctx.beginPath();ctx.moveTo(x,y);ctx.quadraticCurveTo(x+lean*.45,y+len*.48,x+lean,y+len);ctx.stroke();
+     const across=seed(i+1+key.length*311),t=Math.pow(seed(i+1701+key.length*191),.78),x=12+across*488,y=12+t*488,edgeFade=Math.min(1,across/.08,(1-across)/.08),topFade=Math.min(1,t/.1),len=lengthBase+seed(i+918+key.length*71)*lengthRange,lean=(seed(i+722+key.length*41)*2-1)*2.2;
+     brush.strokeStyle=i%9===0?'rgba(183,145,112,.48)':'rgba(37,26,22,.88)';brush.globalAlpha=(.28+seed(i+553+key.length*17)*.48)*edgeFade*topFade;brush.lineWidth=.72+seed(i+342+key.length*23)*.55;brush.beginPath();brush.moveTo(x,y);brush.quadraticCurveTo(x+lean*.45,y+len*.48,x+lean,y+len);brush.stroke();
     }
+    brush.globalAlpha=1;cache.set(key,texture);return texture;
+   }
+   function paintRegion(path,rule,top,bottom,leftStart,rightStart,density,opacity,key,lengthBase,lengthRange){
+    ctx.save();ctx.beginPath();path();ctx.clip(rule);ctx.translate(centerX,centerY);ctx.rotate(angle);ctx.globalCompositeOperation='multiply';ctx.globalAlpha=amount*opacity;
+    const width=Math.max(1,leftStart+rightStart),height=Math.max(1,bottom-top),texture=beardPattern(key,density,lengthBase,lengthRange);
+    ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';ctx.drawImage(texture,-leftStart,top,width,height);
     ctx.restore();
    }
    if(manLook==='short'||manLook==='stubble'||manLook==='full'){
     const density=manLook==='stubble'?320:manLook==='short'?720:900,opacity=manLook==='stubble'?.44:manLook==='short'?.84:.96;
-    paintRegion(jawPath,'nonzero',place.sideburnY,chinDistance+chinDistance*.02,place.leftCheek,place.rightCheek,place.leftJaw*.94,place.rightJaw*.94,chinX,density,opacity,0);
-    if(manLook!=='stubble')paintRegion(()=>{traceLandmarkLoop(upperLipAndMustache);traceLandmarkLoop(mouthOutline)},'evenodd',-place.mouthWidth*.24,-place.mouthWidth*.015,place.leftMouth*.82,place.rightMouth*.82,place.leftMouth*.74,place.rightMouth*.74,0,manLook==='full'?420:300,opacity,9000);
+    paintRegion(jawPath,'nonzero',place.sideburnY,chinDistance+chinDistance*.02,place.leftCheek,place.rightCheek,density,opacity,manLook+'-jaw',manLook==='stubble'?1.1:manLook==='short'?2.1:2.8,manLook==='full'?5.2:3.3);
+    if(manLook!=='stubble')paintRegion(()=>{traceLandmarkLoop(upperLipAndMustache);traceLandmarkLoop(mouthOutline)},'evenodd',-place.mouthWidth*.24,-place.mouthWidth*.015,place.leftMouth*.82,place.rightMouth*.82,manLook==='full'?420:300,opacity,manLook+'-mustache',1.5,3.3);
    }else if(manLook==='mustache'){
-    paintRegion(()=>{traceLandmarkLoop(upperLipAndMustache);traceLandmarkLoop(mouthOutline)},'evenodd',-place.mouthWidth*.24,-place.mouthWidth*.015,place.leftMouth*.82,place.rightMouth*.82,place.leftMouth*.74,place.rightMouth*.74,0,340,.78,9000);
+    paintRegion(()=>{traceLandmarkLoop(upperLipAndMustache);traceLandmarkLoop(mouthOutline)},'evenodd',-place.mouthWidth*.24,-place.mouthWidth*.015,place.leftMouth*.82,place.rightMouth*.82,340,.78,'mustache',1.5,3.3);
    }else if(manLook==='goatee'){
     const rx=Math.max(place.mouthWidth*.62,place.jawWidth*.25),cy=centerY+Math.cos(angle)*chinDistance*.52;
-    paintRegion(()=>{ctx.ellipse(centerX-Math.sin(angle)*chinDistance*.52,cy,rx,chinDistance*.68,angle,0,Math.PI*2);traceLandmarkLoop(mouthOutline)},'evenodd',-place.mouthWidth*.08,chinDistance,place.mouthWidth*.62,place.mouthWidth*.62,place.leftJaw*.34,place.rightJaw*.34,chinX,520,.84,0);
+    paintRegion(()=>{ctx.ellipse(centerX-Math.sin(angle)*chinDistance*.52,cy,rx,chinDistance*.68,angle,0,Math.PI*2);traceLandmarkLoop(mouthOutline)},'evenodd',-place.mouthWidth*.08,chinDistance,place.mouthWidth*.62,place.mouthWidth*.62,520,.84,'goatee',2.8,3.3);
    }
   }
   function render(){
    if(!stream||closed)return;if(video.readyState>=2&&video.videoWidth){const scale=Math.min(1,1600/Math.max(video.videoWidth,video.videoHeight)),width=Math.max(1,Math.round(video.videoWidth*scale)),height=Math.max(1,Math.round(video.videoHeight*scale));if(canvas.width!==width||canvas.height!==height){canvas.width=width;canvas.height=height}const filterAmount=Number(filterStrengthInput.value)/100;ctx.filter=(selfieFilters[selfieFilter]||selfieFilters.normal)(filterAmount);ctx.drawImage(video,0,0,width,height);ctx.filter='none';
-    const now=performance.now();if((eyeColor!=='none'||skinSmooth>0||faceLook!=='none'||manLook!=='none')&&landmarker&&now-lastDetection>45){lastDetection=now;try{updateFaceTracker(landmarker.detectForVideo(video,now).faceLandmarks?.[0]||null,now)}catch(error){message.textContent='El seguimiento facial tuvo un problema: '+error.message}}
+    const now=performance.now();if((eyeColor!=='none'||skinSmooth>0||faceLook!=='none'||manLook!=='none')&&landmarker&&now-lastDetection>70){lastDetection=now;try{updateFaceTracker(landmarker.detectForVideo(video,now).faceLandmarks?.[0]||null,now)}catch(error){message.textContent='El seguimiento facial tuvo un problema: '+error.message}}
     if(skinSmooth>0&&facePoints)drawSkinSmoothing();
     if(eyeColor!=='none'&&facePoints){const alpha=Number(eyeStrengthInput.value)/100,palette=eyePalettes[eyeColor]||eyePalettes.blue;drawIris(468,469,eyeContours[0],alpha,palette);drawIris(473,474,eyeContours[1],alpha,palette)}if(faceLook!=='none'&&facePoints)drawFaceLook();if(manLook!=='none'&&facePoints)drawManLook();
    }renderFrame=requestAnimationFrame(render)
