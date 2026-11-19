@@ -236,6 +236,7 @@
     try{await track.applyConstraints({advanced:[{torch:true}]});torch=true;await sleep(160)}catch(_){}
    }
    if(!torch){flashScreen.style.opacity='0.9';await sleep(180)}
+   // Screen flash brightens the subject before capture; it does not alter pixels artificially.
    try{return await capture()}finally{
     flashScreen.style.opacity='0';
     if(torch)try{await track.applyConstraints({advanced:[{torch:false}]})}catch(_){}
