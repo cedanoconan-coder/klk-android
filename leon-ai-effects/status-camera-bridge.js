@@ -15,7 +15,7 @@ function sync(){
  stop();video=next;
  try{
   tracker=new global.KLKLiveFaceTracker({
-   detector,maxFPS:20,
+   detector,maxFPS:30,
    onFrame:(geometry,result)=>host.dispatchEvent(new CustomEvent('klk:facegeometry',{detail:{geometry,faceCount:result?.faceLandmarks?.length||0}})),
    onError:error=>{console.warn('KLK face tracking paused:',error);stop()}
   });
