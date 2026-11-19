@@ -7,6 +7,7 @@
 let enabled=false,host=null,video=null,canvas=null,gl=null,program=null,buffer=null,observer=null;
 let lastRender=0,frameBudget=33.3,quality=1,slowFrames=0,fastFrames=0,contextLost=false;
 let follicles=null,meshLoading=null;
+const scriptBase=document.currentScript?.src||new URL('./leon-ai-effects/beard-webgl3d.js',location.href).href;
 const L0=[234,93,132,58,172,136,150,149,176,148,152];
 const L1=[116,117,118,119,100,126,209,43,57,171,152];
 const L_MID=[123,147,187,205,206,207,216,212,202,204,152];
@@ -76,7 +77,7 @@ async function loadFollicles(){
  if(follicles)return follicles;
  if(meshLoading)return meshLoading;
  meshLoading=(async()=>{
-  const response=await fetch(new URL('./assets/canonical_face_model.obj',document.currentScript?.src||location.href));
+  const response=await fetch(new URL('./assets/canonical_face_model.obj',scriptBase));
   if(!response.ok)throw Error('Canonical face mesh unavailable: '+response.status);
   const vertices=[],faces=[];
   for(const line of (await response.text()).split(/\r?\n/)){
