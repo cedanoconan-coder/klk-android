@@ -22,13 +22,13 @@ function initialize(){
  if(!gl)throw Error('WebGL2 unavailable');
  const vs=shader(gl.VERTEX_SHADER,`#version 300 es
  in vec3 aPosition; in float aOpacity;
- uniform vec4 uProjection; uniform float uMirror;
+ uniform vec4 uProjection; uniform vec2 uCanvas; uniform float uMirror;
  out float vOpacity;
  void main(){
-  float x=(uProjection.x+aPosition.x*uProjection.z)/uProjection.z;
-  float y=(uProjection.y+aPosition.y*uProjection.w)/uProjection.w;
+  float x=(uProjection.x+aPosition.x*uProjection.z)/uCanvas.x;
+  float y=(uProjection.y+aPosition.y*uProjection.w)/uCanvas.y;
   // Coordinates are normalized to the canvas, with cropping accounted for on CPU.
-  gl_Position=vec4(uMirror*x*2.0-1.0,1.0-y*2.0,clamp(aPosition.z*0.45,-0.95,0.95),1.0);
+  gl_Position=vec4((uMirror<0.0?1.0-x:x)*2.0-1.0,1.0-y*2.0,clamp(aPosition.z*0.45,-0.95,0.95),1.0);
   vOpacity=aOpacity;
  }`);
  const fs=shader(gl.FRAGMENT_SHADER,`#version 300 es
@@ -99,6 +99,7 @@ function draw(geometry){
  gl.useProgram(program);
  // Canvas coordinate conversion and mirror transform.
  gl.uniform4f(gl.getUniformLocation(program,'uProjection'),p.x,p.y,p.w,p.h);
+ gl.uniform2f(gl.getUniformLocation(program,'uCanvas'),canvas.width,canvas.height);
  gl.uniform1f(gl.getUniformLocation(program,'uMirror'),p.mirror?-1:1);
  gl.bindBuffer(gl.ARRAY_BUFFER,buffer);gl.bufferData(gl.ARRAY_BUFFER,data,gl.DYNAMIC_DRAW);
  gl.drawArrays(gl.LINES,0,data.length/4);
