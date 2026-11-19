@@ -69,15 +69,15 @@ function init(){
  const track=document.createElement('div');track.className='klkEffectTrack';
  carousel.innerHTML='<div class="klkEffectCenter" aria-hidden="true"></div>';
  carousel.appendChild(track);camera.appendChild(carousel);
- carousel.hidden=true;
+ carousel.hidden=false;
  const effectsTrigger=camera.querySelector('[data-cam="effects"]');
- effectsTrigger?.setAttribute('aria-expanded','false');
- effectsTrigger?.addEventListener('click',event=>{event.stopImmediatePropagation();carousel.hidden=!carousel.hidden;effectsTrigger.setAttribute('aria-expanded',String(!carousel.hidden));if(!carousel.hidden&&selected>=0)requestAnimationFrame(()=>centerTile(selected,false));},true);
+ effectsTrigger?.setAttribute('aria-expanded','true');
+ effectsTrigger?.addEventListener('click',event=>{event.stopImmediatePropagation();carousel.hidden=false;effectsTrigger.setAttribute('aria-expanded','true');if(selected>=0)requestAnimationFrame(()=>centerTile(selected,false));},true);
  const carouselCSS=document.createElement('style');carouselCSS.id='klk-status-effect-carousel';
  carouselCSS.textContent=`
- #klkStatusCamera .klkSmartTools,#klkStatusCamera .klkCameraEffectsPanel{display:none!important}
+ #klkStatusCamera .klkSmartTools,#klkStatusCamera .klkCameraEffectsPanel,#klkStatusCamera .klkCameraEffects .klkEffectTabs{display:none!important}
  #klkStatusCamera .klkEffectCarousel[hidden]{display:none!important}
- #klkStatusCamera [data-cam="effects"]{display:flex!important;position:relative!important;z-index:22!important}
+ #klkStatusCamera [data-cam="effects"]{display:none!important}
  #klkStatusCamera .klkEffectCarousel{position:fixed!important;z-index:20!important;left:0!important;right:0!important;bottom:calc(clamp(100px,18dvh,150px) + env(safe-area-inset-bottom))!important;height:82px!important;pointer-events:auto!important}
  #klkStatusCamera .klkEffectTrack{height:82px!important;display:flex!important;align-items:center!important;gap:12px!important;overflow-x:auto!important;overscroll-behavior-x:contain!important;scroll-snap-type:x mandatory!important;scrollbar-width:none!important;padding-inline:calc(50% - 36px)!important;box-sizing:border-box!important}
  #klkStatusCamera .klkEffectTrack::-webkit-scrollbar{display:none!important}
