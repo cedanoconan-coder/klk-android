@@ -99,7 +99,8 @@
   function stopStream(){cancelAnimationFrame(renderFrame);renderFrame=0;stopOutput();if(stream)stream.getTracks().forEach(track=>track.stop());stream=null;video.srcObject=null;facePoints=null}
   function close(){closed=true;clearTimeout(holdTimer);pressed=false;discardRecording=true;if(recorder&&recorder.state==='recording')recorder.stop();clearTimeout(recordTimer);resetElapsed();panel.classList.remove('open');stopStream()}
   async function loadVision(){if(visionFiles)return visionFiles;if(!visionPromise)visionPromise=(async()=>{const vision=await import('./klk-face-assets/vision_bundle.mjs');visionFiles=await vision.FilesetResolver.forVisionTasks('./klk-face-assets/wasm');return vision})().catch(error=>{visionPromise=null;throw error});return visionPromise}
-  async function ensureLandmarker(){if(landmarker)return landmarker;if(!landmarkerPromise)landmarkerPromise=(async()=>{const vision=await loadVision();landmarker=await vision.FaceLandmarker.createFromOptions(visionFiles,{baseOptions:{modelAssetPath:'./klk-face-assets/face_landmarker.task',delegate:'CPU'},runningMode:'VIDEO',numFaces:1,refineLandmarks:true});return landmarker})().catch(error=>{landmarkerPromise=null;throw error});return landmarkerPromise}
+  let lastFaceTransform=null,lastFaceBlendshapes=null;
+  async function ensureLandmarker(){if(landmarker)return landmarker;if(!landmarkerPromise)landmarkerPromise=(async()=>{const vision=await loadVision();landmarker=await vision.FaceLandmarker.createFromOptions(visionFiles,{baseOptions:{modelAssetPath:'./klk-face-assets/face_landmarker.task',delegate:'CPU'},runningMode:'VIDEO',numFaces:1,outputFaceBlendshapes:true,outputFacialTransformationMatrixes:true});return landmarker})().catch(error=>{landmarkerPromise=null;throw error});return landmarkerPromise}
   async function start(){
    stopStream();resetFaceTracker();closed=false;shutter.disabled=false;
    const desired=front?'user':'environment';
@@ -230,13 +231,18 @@
     const width=Math.max(1,leftStart+rightStart),height=Math.max(1,bottom-top),texture=beardPattern(key,density,lengthBase,lengthRange);
     ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
     // Feather hair texture toward its upper edge; preserve a clear lip cutout.
-    const feather=document.createElement('canvas');feather.width=512;feather.height=512;
+    const featherCache=drawManLook.featherCache||(drawManLook.featherCache=new Map());
+    let feather=featherCache.get(key);
+    if(!feather){
+    feather=document.createElement('canvas');feather.width=512;feather.height=512;
     const fctx=feather.getContext('2d');fctx.drawImage(texture,0,0);
     fctx.globalCompositeOperation='destination-in';
     const fade=fctx.createLinearGradient(0,0,0,512);
     fade.addColorStop(0,'rgba(0,0,0,0)');fade.addColorStop(.13,'rgba(0,0,0,.55)');
     fade.addColorStop(.30,'rgba(0,0,0,1)');fade.addColorStop(1,'rgba(0,0,0,1)');
     fctx.fillStyle=fade;fctx.fillRect(0,0,512,512);
+    featherCache.set(key,feather);
+    }
     ctx.drawImage(feather,-leftStart,top,width,height);
     ctx.restore();
    }
@@ -253,7 +259,7 @@
   }
   function render(){
    if(!stream||closed)return;if(video.readyState>=2&&video.videoWidth){const scale=Math.min(1,1600/Math.max(video.videoWidth,video.videoHeight)),width=Math.max(1,Math.round(video.videoWidth*scale)),height=Math.max(1,Math.round(video.videoHeight*scale));if(canvas.width!==width||canvas.height!==height){canvas.width=width;canvas.height=height}const filterAmount=Number(filterStrengthInput.value)/100;ctx.filter=(selfieFilters[selfieFilter]||selfieFilters.normal)(filterAmount);ctx.drawImage(video,0,0,width,height);ctx.filter='none';
-    const now=performance.now();if((eyeColor!=='none'||skinSmooth>0||faceLook!=='none'||manLook!=='none')&&landmarker&&now-lastDetection>70){lastDetection=now;try{updateFaceTracker(landmarker.detectForVideo(video,now).faceLandmarks?.[0]||null,now)}catch(error){message.textContent='El seguimiento facial tuvo un problema: '+error.message}}
+    const now=performance.now();if((eyeColor!=='none'||skinSmooth>0||faceLook!=='none'||manLook!=='none')&&landmarker&&now-lastDetection>70){lastDetection=now;try{(()=>{const result=landmarker.detectForVideo(video,now);lastFaceTransform=result.facialTransformationMatrixes?.[0]||null;lastFaceBlendshapes=result.faceBlendshapes?.[0]||null;updateFaceTracker(result.faceLandmarks?.[0]||null,now)})()}catch(error){message.textContent='El seguimiento facial tuvo un problema: '+error.message}}
     if(skinSmooth>0&&facePoints)drawSkinSmoothing();
     if(eyeColor!=='none'&&facePoints){const alpha=Number(eyeStrengthInput.value)/100,palette=eyePalettes[eyeColor]||eyePalettes.blue;drawIris(468,469,eyeContours[0],alpha,palette);drawIris(473,474,eyeContours[1],alpha,palette)}if(faceLook!=='none'&&facePoints)drawFaceLook();if(manLook!=='none'&&facePoints){if(now-lastBeardNotice>5000){message.textContent='Seguimiento facial activo · barba '+manLook;lastBeardNotice=now}try{drawManLook()}catch(error){if(now-lastBeardNotice>3000){message.textContent='Error al dibujar barba: '+error.message;lastBeardNotice=now}}}
    }renderFrame=requestAnimationFrame(render)
