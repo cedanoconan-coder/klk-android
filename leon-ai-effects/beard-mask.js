@@ -19,16 +19,33 @@ function region(ids,pts,w,h,seed){
  const bounds=ids.map(i=>pts[i]),minX=Math.max(0,Math.min(...bounds.map(p=>p.x*w))),maxX=Math.min(w,Math.max(...bounds.map(p=>p.x*w)));
  const minY=Math.max(0,Math.min(...bounds.map(p=>p.y*h))),maxY=Math.min(h,Math.max(...bounds.map(p=>p.y*h)));
  ctx.fillStyle='rgba(30,23,21,.19)';ctx.fill();
- const step=Math.max(2.6,w*.0045);
- for(let y=minY;y<maxY;y+=step){
-  for(let x=minX;x<maxX;x+=step){
-   const n=Math.sin(x*12.9898+y*78.233+seed*41.7)*43758.5453, f=n-Math.floor(n);
-   if(f<.33)continue;
-   const len=step*(.75+f*1.8);
-   ctx.strokeStyle=f>.78?'rgba(17,13,12,.65)':'rgba(39,29,25,.45)';
-   ctx.lineWidth=Math.max(.55,w*.0011);ctx.beginPath();ctx.moveTo(x,y);ctx.quadraticCurveTo(x+(f-.5)*step,y+len*.55,x+(f-.5)*step*1.5,y+len);ctx.stroke();
+
+ // Generate strands in face-relative coordinates, not fixed screen pixels.
+ // Screen-space seeds make the texture visibly slide when the head rotates.
+ const left=pts[234],right=pts[454],top=pts[0],bottom=pts[152];
+ const faceWidth=Math.max(1,Math.hypot((right.x-left.x)*w,(right.y-left.y)*h));
+ const faceHeight=Math.max(1,Math.hypot((bottom.x-top.x)*w,(bottom.y-top.y)*h));
+ const angle=Math.atan2((right.y-left.y)*h,(right.x-left.x)*w);
+ const cx=(left.x+right.x)*w/2,cy=(left.y+right.y)*h/2;
+ const cos=Math.cos(angle),sin=Math.sin(angle);
+ const step=.012;
+ for(let v=-.7;v<1.1;v+=step){
+  for(let u=-.65;u<.65;u+=step){
+   const hash=Math.sin(Math.round(u/step)*12.9898+Math.round(v/step)*78.233+seed*41.7)*43758.5453;
+   const f=hash-Math.floor(hash);
+   if(f<.38)continue;
+   const x=cx+u*faceWidth*cos-v*faceHeight*sin;
+   const y=cy+u*faceWidth*sin+v*faceHeight*cos;
+   if(x<minX-10||x>maxX+10||y<minY-10||y>maxY+10)continue;
+   const len=faceWidth*step*(.6+f*1.2);
+   ctx.strokeStyle=f>.8?'rgba(17,13,12,.66)':'rgba(39,29,25,.48)';
+   ctx.lineWidth=Math.max(.5,faceWidth*.0014);
+   ctx.beginPath();ctx.moveTo(x,y);
+   ctx.quadraticCurveTo(x-sin*len*.35,y+cos*len*.35,x-sin*len,y+cos*len);
+   ctx.stroke();
   }
  }
+
  ctx.restore();
 }
 function draw(geometry){
