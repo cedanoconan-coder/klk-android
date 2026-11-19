@@ -109,6 +109,7 @@ function init(){
  function selectEffect(index,scroll=true){
    if(index<0||index>=entries.length||index===selected)return;
    selected=index;
+   window.KLKBeardMask?.setEnabled(false);
    const item=entries[index];
    const tab=camera.querySelector('[data-effect-tab="'+item.category+'"]');
    if(tab && tab.getAttribute('aria-selected')!=='true')tab.click();
