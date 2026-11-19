@@ -103,7 +103,7 @@ function init(){
      tile.setAttribute('aria-label',category+' · '+original.textContent.trim());
      tile.setAttribute('aria-selected','false');
      const symbol=document.createElement('span');symbol.className='klkEffectSymbol';symbol.textContent=symbols[category]||'✨';
-     const label=document.createElement('span');label.textContent=original.textContent.trim();
+     const label=document.createElement('span');label.textContent=original.matches('[data-man-look="full"]')?'Barba completa':original.textContent.trim();
      tile.append(symbol,label);track.appendChild(tile);
      entries.push({tile,original,category});
    });
