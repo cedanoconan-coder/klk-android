@@ -114,7 +114,7 @@ jobs:
               # Insert fallback into the first repositories block (buildscript).
               import re
               root_text, replacements = re.subn(
-                  r'(repositories\\s*\\{)',
+                  r'(repositories\s*\{)',
                   lambda match: match.group(1) + repository_fallback,
                   root_text, count=1
               )
