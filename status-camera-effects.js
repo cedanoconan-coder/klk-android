@@ -44,6 +44,51 @@
 `;document.head.appendChild(effectStyle);
   document.body.appendChild(panel);
   const video=panel.querySelector('video'),canvas=panel.querySelector('canvas'),ctx=canvas.getContext('2d'),message=panel.querySelector('.klkCameraMessage'),shutter=panel.querySelector('[data-cam="shutter"]'),effectsButton=panel.querySelector('[data-cam="effects"]'),effectsPanel=panel.querySelector('.klkCameraEffectsPanel'),eyeStrengthInput=panel.querySelector('[data-eye-strength]'),filterStrengthInput=panel.querySelector('[data-filter-strength]'),skinStrengthInput=panel.querySelector('[data-skin-strength]'),faceStrengthInput=panel.querySelector('[data-face-strength]'),manStrengthInput=panel.querySelector('[data-man-strength]'),timerDisplay=panel.querySelector('.klkRecordTimer'),clock=panel.querySelector('.klkRecordClock'),progress=panel.querySelector('.klkRecordProgress span');
+
+// Carrusel de efectos siempre visible: la opción central se aplica al tocar o deslizar.
+  const carousel=document.createElement('div');carousel.className='klkEffectCarousel';carousel.setAttribute('aria-label','Efectos de cámara');
+  const choices=[
+    ['Natural','✨','[data-eye-color="none"]'],['Barba','🧔','[data-man-look="full"]'],
+    ['Azul','🔵','[data-eye-color="blue"]'],['Verde','🟢','[data-eye-color="green"]'],
+    ['Miel','🟤','[data-eye-color="hazel"]'],['Violeta','🟣','[data-eye-color="violet"]'],
+    ['Piel','🌟','[data-skin-preset="65"]'],['Suave','💫','[data-skin-preset="35"]'],
+    ['Cálido','☀️','[data-selfie-filter="warm"]'],['Cine','🎬','[data-selfie-filter="cinematic"]'],
+    ['Bigote','👨','[data-man-look="mustache"]'],['Candado','🧔','[data-man-look="goatee"]']
+  ];
+  let selectedEffect=0,carouselGestureStart=null;
+  const buttons=choices.map(([label,emoji,selector],index)=>{
+    const button=document.createElement('button');button.type='button';button.className='klkEffectThumb';
+    button.innerHTML='<span class="klkEffectCircle">'+emoji+'</span><small>'+label+'</small>';
+    button.setAttribute('aria-label','Aplicar efecto '+label);
+    button.addEventListener('click',()=>selectEffect(index));
+    carousel.appendChild(button);return button;
+  });
+  function selectEffect(index){
+    selectedEffect=(index+choices.length)%choices.length;
+    buttons.forEach((button,i)=>{button.classList.toggle('selected',i===selectedEffect);button.setAttribute('aria-pressed',String(i===selectedEffect))});
+    buttons[selectedEffect].scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});
+    const target=panel.querySelector(choices[selectedEffect][2]);if(target)target.click();
+  }
+  carousel.addEventListener('touchstart',e=>{carouselGestureStart=e.touches[0]?.clientX??null},{passive:true});
+  carousel.addEventListener('touchend',e=>{if(carouselGestureStart===null)return;const dx=(e.changedTouches[0]?.clientX??carouselGestureStart)-carouselGestureStart;carouselGestureStart=null;if(Math.abs(dx)>35){e.preventDefault();selectEffect(selectedEffect+(dx<0?1:-1))}},{passive:false});
+  panel.querySelector('.klkCameraEffects').prepend(carousel);
+  buttons[0].classList.add('selected');buttons[0].setAttribute('aria-pressed','true');
+  const carouselStyle=document.createElement('style');
+  carouselStyle.textContent=`
+#klkStatusCamera .klkCameraEffects{bottom:calc(env(safe-area-inset-bottom,0px) + 112px)!important;pointer-events:none}
+#klkStatusCamera .klkEffectCarousel{pointer-events:auto;display:flex;align-items:center;gap:13px;width:100%;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;padding:14px calc(50vw - 44px) 8px;box-sizing:border-box}
+#klkStatusCamera .klkEffectCarousel::-webkit-scrollbar{display:none}
+#klkStatusCamera .klkEffectThumb{scroll-snap-align:center;flex:0 0 72px;min-width:72px;display:flex;flex-direction:column;align-items:center;gap:5px;background:transparent!important;color:white!important;padding:0!important;border:0!important}
+#klkStatusCamera .klkEffectCircle{display:grid;place-items:center;width:66px;height:66px;border-radius:50%;background:linear-gradient(135deg,#4d375c,#13131b);border:2px solid #ffffff80;font-size:30px;box-shadow:0 2px 10px #0009}
+#klkStatusCamera .klkEffectThumb.selected .klkEffectCircle{border:4px solid white;box-shadow:0 0 0 3px #a64ef5,0 2px 14px #000}
+#klkStatusCamera .klkEffectThumb small{font-size:11px;color:#fff;text-shadow:0 1px 5px #000}
+#klkStatusCamera [data-cam="effects"]{display:none!important}
+#klkStatusCamera .klkCameraEffectsPanel{display:none!important}
+#klkStatusCamera .klkCameraBar:first-child strong{font-size:15px!important}
+#klkStatusCamera .klkCameraMessage{top:auto!important;bottom:calc(env(safe-area-inset-bottom,0px) + 204px)!important;font-size:11px!important}
+#klkStatusCamera .klkShutter{width:76px!important;height:76px!important}
+`;
+  document.head.appendChild(carouselStyle);
   let stream=null,outputStream=null,recorder=null,chunks=[],front=false,recordTimer=null,holdTimer=null,pressed=false,recordingByHold=false,discardRecording=false,elapsedTimer=null,recordStartedAt=0,renderFrame=0,landmarker=null,landmarkerPromise=null,visionFiles=null,visionPromise=null,facePoints=null,smoothedFacePoints=null,lastFaceSeenAt=0,lastDetection=0,eyeColor='none',selfieFilter='normal',skinSmooth=0,faceLook='none',manLook='none',beardTexture=null,beardTexturePromise=null,closed=false;
   const eyePalettes={blue:['5,33,71','20,103,190','71,190,245','12,93,160','3,25,52'],green:['12,55,32','26,129,76','105,205,126','26,112,66','7,43,27'],hazel:['75,38,12','156,94,30','219,174,75','139,91,34','54,31,14'],violet:['48,21,76','112,62,168','190,145,239','99,55,151','35,18,58'],gray:['29,44,55','88,124,143','190,211,218','90,123,138','30,44,52']};
   const selfieFilters={normal:t=>'none',warm:t=>`sepia(${.22*t}) saturate(${1+.25*t}) brightness(${1+.035*t})`,cool:t=>`hue-rotate(${18*t}deg) saturate(${1+.12*t}) brightness(${1+.025*t})`,glow:t=>`brightness(${1+.12*t}) saturate(${1+.16*t}) contrast(${1-.05*t})`,vintage:t=>`sepia(${.42*t}) contrast(${1+.08*t}) saturate(${1-.18*t})`,mono:t=>`grayscale(${t}) contrast(${1+.12*t})`,rose:t=>`hue-rotate(-12deg) saturate(${1+.42*t}) brightness(${1+.035*t})`,cinematic:t=>`contrast(${1+.22*t}) saturate(${1-.12*t}) brightness(${1-.035*t}) sepia(${.08*t})`,dream:t=>`saturate(${1+.18*t}) brightness(${1+.12*t}) contrast(${1-.12*t})`,vivid:t=>`saturate(${1+.72*t}) contrast(${1+.12*t}) brightness(${1+.025*t})`};
