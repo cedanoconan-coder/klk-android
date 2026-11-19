@@ -1,0 +1,15 @@
+import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';import vm from 'node:vm';
+const root=new URL('../',import.meta.url);
+const catalogSource=readFileSync(new URL('leon-ai-effects/beard-styles.js',root),'utf8');
+const camera=readFileSync(new URL('status-camera-effects.js',root),'utf8');
+const sandbox={window:{}};vm.runInNewContext(catalogSource,sandbox);
+const styles=sandbox.window.KLKBeardStyles;
+assert.equal(styles.all.length,12);
+assert.equal(styles.availableForCamera,true);
+new vm.Script(camera);
+assert.match(camera,/beardPresets\.forEach\(style=>choices\.push/);
+assert.match(camera,/manLook=beardFallback\[id\]/);
+assert.match(camera,/if\(manLook!=='none'&&facePoints\)/);
+assert.doesNotMatch(camera,/if\(false&&manLook/);
+for(const style of styles.all)assert.ok(styles.get(style.id));
+console.log('Experimental beard presets enabled: 12 styles; camera syntax PASS');
