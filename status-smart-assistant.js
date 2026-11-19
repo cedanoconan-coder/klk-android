@@ -142,7 +142,13 @@ function init(){
    preset.setAttribute('aria-label','Aplicar efecto de barba existente');
    preset.style.cssText='position:fixed;z-index:21;right:12px;bottom:calc(190px + env(safe-area-inset-bottom));width:auto;max-width:50vw;margin:0;padding:9px 12px;border-radius:22px;background:#24252bdc;color:white;font-size:12px';
    camera.appendChild(preset);
-   preset.addEventListener('click',()=>{selectEffect(beardEntry);preset.setAttribute('aria-pressed','true')});
+   preset.addEventListener('click',async()=>{
+     selectEffect(beardEntry);preset.setAttribute('aria-pressed','true');
+     if(!window.KLKMediaPipeFace)return;
+     preset.disabled=true;
+     try{await window.KLKMediaPipeFace.initialize()}catch(error){console.warn('León: seguimiento facial no disponible',error);preset.title='No se pudo iniciar seguimiento facial'}
+     finally{preset.disabled=false}
+   });
  }
  // Mantener el carrusel accesible incluso cuando no haya efectos disponibles.
  if(!entries.length){const msg=document.createElement('span');msg.textContent='No hay efectos disponibles';msg.style.cssText='color:white;margin:auto';track.appendChild(msg)}
