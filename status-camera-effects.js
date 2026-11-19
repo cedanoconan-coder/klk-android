@@ -138,9 +138,9 @@
   }
   function resetFaceTracker(){facePoints=null;smoothedFacePoints=null;lastFaceSeenAt=0}
   function updateFaceTracker(detected,now){
-   if(!detected||detected.length<468){if(lastFaceSeenAt&&now-lastFaceSeenAt>180)resetFaceTracker();if(manLook!=='none'&&now-lastBeardNotice>3000){message.textContent='Barba seleccionada · no se detecta un rostro. Mira a la cámara frontal con buena luz.';lastBeardNotice=now}return}
+   if(!detected||detected.length<468){if(lastFaceSeenAt&&now-lastFaceSeenAt>450)resetFaceTracker();if(manLook!=='none'&&(!lastFaceSeenAt||now-lastFaceSeenAt>1200)&&now-lastBeardNotice>3000){message.textContent='Barba seleccionada · no se detecta un rostro. Mira a la cámara frontal con buena luz.';lastBeardNotice=now}return}
    const next=detected.map(point=>({x:point.x,y:point.y,z:point.z||0}));
-   if(!smoothedFacePoints||smoothedFacePoints.length!==next.length||now-lastFaceSeenAt>180){smoothedFacePoints=next;facePoints=smoothedFacePoints;lastFaceSeenAt=now;return}
+   if(!smoothedFacePoints||smoothedFacePoints.length!==next.length||now-lastFaceSeenAt>450){smoothedFacePoints=next;facePoints=smoothedFacePoints;lastFaceSeenAt=now;return}
    const anchors=[1,33,133,152,263,362];let movement=0,count=0;
    for(const id of anchors){if(!next[id]||!smoothedFacePoints[id])continue;movement+=Math.hypot(next[id].x-smoothedFacePoints[id].x,next[id].y-smoothedFacePoints[id].y);count++}
    movement=count?movement/count:0;
@@ -199,13 +199,18 @@
    const amount=Number(manStrengthInput.value)/100;if(!amount||manLook==='none'||!facePoints)return;
    const place=beardPlacement(),{centerX,centerY,angle,chinDistance,chinX}=place;
    const jawPath=()=>{
-    // Follow cheeks and jaw instead of tracing the lips as the upper beard edge.
+    // Upper edge follows the natural cheek-to-mouth beard line on both sides.
+    // The mouth is a hole, never part of the filled beard region.
     const outer=[234,93,132,58,172,136,150,149,176,148,152,377,400,378,379,365,397,288,361,323,454];
-    const upper=[454,323,361,288,291,61,58,132,93,234];
     outer.forEach((id,i)=>{const[x,y]=eyePoint(id);i?ctx.lineTo(x,y):ctx.moveTo(x,y)});
-    upper.forEach(id=>{const[x,y]=eyePoint(id);ctx.lineTo(x,y)});
+    const cheekR=[454,323,361,288,291],cheekL=[61,58,132,93,234];
+    cheekR.forEach(id=>{const[x,y]=eyePoint(id);ctx.lineTo(x,y)});
+    const [rx,ry]=eyePoint(291),[lx,ly]=eyePoint(61),[cx,cy]=eyePoint(17);
+    // Curved upper lip boundary instead of a straight cheek-to-cheek chord.
+    ctx.quadraticCurveTo((rx+cx)*.5,ry+Math.abs(cy-ry)*.12,cx,cy-Math.abs(cy-ry)*.40);
+    ctx.quadraticCurveTo((lx+cx)*.5,ly+Math.abs(cy-ly)*.12,lx,ly);
+    cheekL.forEach(id=>{const[x,y]=eyePoint(id);ctx.lineTo(x,y)});
     ctx.closePath();
-    // Keep the entire lip contour clear, even on a moving face.
     traceLandmarkLoop(mouthOutline);
    };
    const seed=n=>{const value=Math.sin(n*127.1+311.7)*43758.5453;return value-Math.floor(value)};
@@ -223,7 +228,16 @@
    function paintRegion(path,rule,top,bottom,leftStart,rightStart,density,opacity,key,lengthBase,lengthRange){
     ctx.save();ctx.beginPath();path();ctx.clip(rule);ctx.translate(centerX,centerY);ctx.rotate(angle);ctx.globalCompositeOperation='source-over';ctx.globalAlpha=Math.min(1,amount*opacity*1.25);
     const width=Math.max(1,leftStart+rightStart),height=Math.max(1,bottom-top),texture=beardPattern(key,density,lengthBase,lengthRange);
-    ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';ctx.drawImage(texture,-leftStart,top,width,height);
+    ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
+    // Feather hair texture toward its upper edge; preserve a clear lip cutout.
+    const feather=document.createElement('canvas');feather.width=512;feather.height=512;
+    const fctx=feather.getContext('2d');fctx.drawImage(texture,0,0);
+    fctx.globalCompositeOperation='destination-in';
+    const fade=fctx.createLinearGradient(0,0,0,512);
+    fade.addColorStop(0,'rgba(0,0,0,0)');fade.addColorStop(.13,'rgba(0,0,0,.55)');
+    fade.addColorStop(.30,'rgba(0,0,0,1)');fade.addColorStop(1,'rgba(0,0,0,1)');
+    fctx.fillStyle=fade;fctx.fillRect(0,0,512,512);
+    ctx.drawImage(feather,-leftStart,top,width,height);
     ctx.restore();
    }
    if(manLook==='short'||manLook==='stubble'||manLook==='full'){
