@@ -91,13 +91,16 @@ async function loadFollicles(){
    const x=(a[0]+b[0]+d[0])/3,y=(a[1]+b[1]+d[1])/3;
    // Anatomical follicle mask: cheeks, jaw, chin; exclude upper face/nose.
    const cheek=Math.abs(x)>1.35&&Math.abs(x)<7.2&&y<-.85&&y>-7.9;
-   const chin=Math.abs(x)<=2.6&&y< -5.25&&y> -9.2;
-   if(!cheek&&!chin)continue;
+   const chin=Math.abs(x)<=3.5&&y< -5.15&&y> -9.2;
+   // Upper lip: leave a clear central philtrum and never enter the lip line.
+   const mustache=Math.abs(x)>.32&&Math.abs(x)<2.65&&y< -2.65&&y> -3.88;
+   const connector=Math.abs(x)>1.9&&Math.abs(x)<3.5&&y< -3.25&&y> -5.45;
+   if(!cheek&&!chin&&!mustache&&!connector)continue;
    const cross=Math.hypot((b[0]-a[0])*(d[1]-a[1])-(b[1]-a[1])*(d[0]-a[0]),(b[1]-a[1])*(d[2]-a[2])-(b[2]-a[2])*(d[1]-a[1]),(b[2]-a[2])*(d[0]-a[0])-(b[0]-a[0])*(d[2]-a[2]));
-   const n=Math.min(42,Math.max(2,Math.floor(cross*5)));
+   const n=Math.min(72,Math.max(3,Math.floor(cross*(mustache?12:cheek?10:8))));
    for(let i=0;i<n;i++){
     const q=Math.sqrt(sample(i,t,0)),v=sample(i,t,1);
-    roots.push({ids,weights:[1-q,q*(1-v),q*v],length:.0018+sample(i,t,2)*.004,tilt:(sample(i,t,3)-.5)*.005,shade:sample(i,t,4),alpha:.3+sample(i,t,5)*.45});
+    roots.push({ids,weights:[1-q,q*(1-v),q*v],length:(mustache?.0012:.0018)+sample(i,t,2)*(mustache?.002:.0035),tilt:(sample(i,t,3)-.5)*.002,shade:sample(i,t,4),alpha:.34+sample(i,t,5)*.48,region:mustache?'mustache':'beard'});
    }
   }
   follicles=roots;return roots;
@@ -126,8 +129,9 @@ function draw(geometry){
   // Use local jaw direction so hairs rotate with the face, not the viewport.
   const dirX=(pts[152].x-pts[1].x),dirY=(pts[152].y-pts[1].y);
   const mag=Math.max(.02,Math.hypot(dirX,dirY));
-  const dx=dirX/mag*root.length+root.tilt,dy=dirY/mag*root.length;
-  segments.push(x,y,z,root.alpha,root.shade,x+dx,y+dy,z,root.alpha*.75,root.shade*.8);
+  const dx=root.region==='mustache'?(x<pts[1].x?-1:1)*root.length*.6+root.tilt:dirX/mag*root.length+root.tilt;
+  const dy=root.region==='mustache'?root.length*.3:dirY/mag*root.length;
+  segments.push(x,y,z,root.alpha,root.shade,x+dx,y+dy,z,root.alpha*.12,Math.min(1,root.shade+.18));
  }
  if(!segments.length)return;
  const data=new Float32Array(segments);
