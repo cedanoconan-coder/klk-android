@@ -133,6 +133,17 @@ function init(){
      centerTile(best,false);
    },110);
  },{passive:true});
+ // León AI Effects: preset local editable. Reutiliza los efectos existentes; no afirma generar geometría nueva.
+ const beardEntry=entries.findIndex(e=>e.category==='men' && /barba|beard/i.test(e.original.textContent));
+ if(beardEntry>=0){
+   const preset=document.createElement('button');
+   preset.type='button';preset.className='klkBeardPreset';
+   preset.textContent='🦁 Barba negra natural';
+   preset.setAttribute('aria-label','Aplicar efecto de barba existente');
+   preset.style.cssText='position:fixed;z-index:21;right:12px;bottom:calc(190px + env(safe-area-inset-bottom));width:auto;max-width:50vw;margin:0;padding:9px 12px;border-radius:22px;background:#24252bdc;color:white;font-size:12px';
+   camera.appendChild(preset);
+   preset.addEventListener('click',()=>{selectEffect(beardEntry);preset.setAttribute('aria-pressed','true')});
+ }
  // Mantener el carrusel accesible incluso cuando no haya efectos disponibles.
  if(!entries.length){const msg=document.createElement('span');msg.textContent='No hay efectos disponibles';msg.style.cssText='color:white;margin:auto';track.appendChild(msg)}
  // Empezar sin efecto y mantener el círculo centrado.
