@@ -6,7 +6,7 @@
 'use strict';
 let enabled=false,host=null,video=null,canvas=null,gl=null,program=null,buffer=null,observer=null;
 let lastRender=0,frameBudget=33.3,quality=1,slowFrames=0,fastFrames=0,contextLost=false;
-let follicles=null,meshLoading=null;
+let follicles=null,meshLoading=null,selectedStyle='full';
 const scriptBase=document.currentScript?.src||new URL('./leon-ai-effects/beard-webgl3d.js',location.href).href;
 const L0=[234,93,132,58,172,136,150,149,176,148,152];
 const L1=[116,117,118,119,100,126,209,43,57,171,152];
@@ -100,7 +100,7 @@ async function loadFollicles(){
    const n=Math.min(72,Math.max(3,Math.floor(cross*(mustache?12:cheek?10:8))));
    for(let i=0;i<n;i++){
     const q=Math.sqrt(sample(i,t,0)),v=sample(i,t,1);
-    roots.push({ids,weights:[1-q,q*(1-v),q*v],length:(mustache?.0012:.0018)+sample(i,t,2)*(mustache?.002:.0035),tilt:(sample(i,t,3)-.5)*.002,shade:sample(i,t,4),alpha:.34+sample(i,t,5)*.48,region:mustache?'mustache':'beard'});
+    roots.push({canonicalX:x,canonicalY:y,ids,weights:[1-q,q*(1-v),q*v],length:(mustache?.0012:.0018)+sample(i,t,2)*(mustache?.002:.0035),tilt:(sample(i,t,3)-.5)*.002,shade:sample(i,t,4),alpha:.34+sample(i,t,5)*.48,region:mustache?'mustache':'beard'});
    }
   }
   follicles=roots;return roots;
@@ -120,8 +120,21 @@ function draw(geometry){
  const mouthMinX=Math.min(lipL.x,lipR.x)-.018,mouthMaxX=Math.max(lipL.x,lipR.x)+.018;
  const mouthMinY=lipTop.y-.025,mouthMaxY=lipBottom.y+.023;
  const segments=[],step=Math.max(1,Math.round(1/quality));
+ const style=global.KLKBeardStyles?.get(selectedStyle);
+ if(!style)return;
+ const visible=root=>{
+  const x=Math.abs(root.canonicalX),y=root.canonicalY;
+  const region=root.region==='mustache'?'mustache':y< -5.5?(x<2.7?'chin':'jaw'):x>3.2?'cheeks':x>1.9&&y< -3.25?'connectors':'chin';
+  if(!style.regions.includes(region))return false;
+  if(style.silhouette==='strap'&&region==='jaw'&&y> -4.8)return false;
+  if(style.silhouette==='pointed'&&region==='chin'&&x>2.3)return false;
+  if(style.silhouette==='anchor'&&region==='jaw'&&x>4.5)return false;
+  if(style.silhouette==='balbo'&&region==='jaw'&&x>4.8)return false;
+  return true;
+ };
  for(let k=0;k<follicles.length;k+=step){
-  const root=follicles[k],[a,b,d]=root.ids.map(i=>pts[i]);if(!a||!b||!d)continue;
+  const root=follicles[k];if(!visible(root)||sample(k,17,0)>style.density)continue;
+  const [a,b,d]=root.ids.map(i=>pts[i]);if(!a||!b||!d)continue;
   const [u,v,w]=root.weights;
   const x=a.x*u+b.x*v+d.x*w,y=a.y*u+b.y*v+d.y*w,z=a.z*u+b.z*v+d.z*w;
   if(x>=mouthMinX&&x<=mouthMaxX&&y>=mouthMinY&&y<=mouthMaxY)continue;
@@ -129,8 +142,9 @@ function draw(geometry){
   // Use local jaw direction so hairs rotate with the face, not the viewport.
   const dirX=(pts[152].x-pts[1].x),dirY=(pts[152].y-pts[1].y);
   const mag=Math.max(.02,Math.hypot(dirX,dirY));
-  const dx=root.region==='mustache'?(x<pts[1].x?-1:1)*root.length*.6+root.tilt:dirX/mag*root.length+root.tilt;
-  const dy=root.region==='mustache'?root.length*.3:dirY/mag*root.length;
+  const hairLength=root.length*clamp(style.lengthMm/28,.15,3.5);
+  const dx=root.region==='mustache'?(x<pts[1].x?-1:1)*hairLength*.6+root.tilt:dirX/mag*hairLength+root.tilt;
+  const dy=root.region==='mustache'?hairLength*.3:dirY/mag*hairLength;
   segments.push(x,y,z,root.alpha,root.shade,x+dx,y+dy,z,root.alpha*.12,Math.min(1,root.shade+.18));
  }
  if(!segments.length)return;
@@ -174,8 +188,9 @@ function sync(){
  resize();host.addEventListener('klk:facegeometry',onFrame);
  if(typeof ResizeObserver!=='undefined'){observer=new ResizeObserver(resize);observer.observe(host);observer.observe(video)}
 }
+function setStyle(id){if(!global.KLKBeardStyles?.get(id))return false;selectedStyle=id;return true}
 function setEnabled(v){enabled=!!v;if(enabled){lastRender=0;loadFollicles();sync()}else detach()}
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&gl){gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT)}});
 window.addEventListener('resize',resize);
-global.KLKBeardMask=Object.freeze({setEnabled,setQuality,qualityStatus,resize,clear:()=>{if(gl)gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT)}});
+global.KLKBeardMask=Object.freeze({setEnabled,setStyle,getStyle:()=>selectedStyle,setQuality,qualityStatus,resize,clear:()=>{if(gl)gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT)}});
 })(window);
