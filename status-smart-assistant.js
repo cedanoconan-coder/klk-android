@@ -78,16 +78,18 @@ function init(){
  #klkStatusCamera .klkSmartTools,#klkStatusCamera .klkCameraEffectsPanel,#klkStatusCamera .klkCameraEffects .klkEffectTabs{display:none!important}
  #klkStatusCamera .klkEffectCarousel[hidden]{display:none!important}
  #klkStatusCamera [data-cam="effects"]{display:none!important}
- #klkStatusCamera .klkEffectCarousel{position:absolute!important;z-index:20!important;left:0!important;right:0!important;bottom:calc(92px + env(safe-area-inset-bottom))!important;height:82px!important;pointer-events:auto!important}
- #klkStatusCamera .klkEffectTrack{width:100%!important;height:82px!important;display:flex!important;align-items:center!important;gap:12px!important;overflow-x:auto!important;overscroll-behavior-x:contain!important;scroll-snap-type:x mandatory!important;scrollbar-width:none!important;padding-inline:max(0px,calc(50% - 36px))!important;box-sizing:border-box!important}
+ #klkStatusCamera .klkEffectCarousel{position:fixed!important;z-index:20!important;left:0!important;right:0!important;bottom:calc(90px + env(safe-area-inset-bottom))!important;height:92px!important;pointer-events:auto!important}
+ #klkStatusCamera .klkEffectTrack{width:100%!important;height:92px!important;display:flex!important;align-items:center!important;gap:16px!important;overflow-x:auto!important;overscroll-behavior-x:contain!important;scroll-snap-type:x mandatory!important;scrollbar-width:none!important;padding-inline:max(0px,calc(50% - 36px))!important;box-sizing:border-box!important}
  #klkStatusCamera .klkEffectTrack::-webkit-scrollbar{display:none!important}
- #klkStatusCamera .klkEffectTile{flex:0 0 72px!important;width:72px!important;height:72px!important;scroll-snap-align:center!important;border:2px solid #ffffff70!important;border-radius:50%!important;background:#292c36e8!important;color:white!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:3px!important;padding:5px!important;font-size:11px!important;line-height:1.1!important;text-align:center!important;box-sizing:border-box!important}
+ #klkStatusCamera .klkEffectTile{flex:0 0 72px!important;width:72px!important;height:72px!important;min-width:72px!important;max-width:72px!important;min-height:72px!important;max-height:72px!important;overflow:hidden!important;scroll-snap-align:center!important;border:2px solid #ffffff70!important;border-radius:50%!important;background:#292c36e8!important;color:white!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:3px!important;padding:5px!important;font-size:11px!important;line-height:1.1!important;text-align:center!important;box-sizing:border-box!important}
  #klkStatusCamera .klkEffectTile[aria-selected="true"]{border:3px solid white!important;box-shadow:0 0 0 3px #ffffff88!important;background:#1769db!important}
+ #klkStatusCamera .klkEffectTile span:last-child{display:block!important;width:100%!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;font-size:10px!important}
  #klkStatusCamera .klkEffectTile .klkEffectSymbol{font-size:24px!important;line-height:1!important}
- #klkStatusCamera .klkEffectCenter{position:absolute!important;left:50%!important;top:5px!important;transform:translateX(-50%)!important;width:72px!important;height:72px!important;border-radius:50%!important;border:2px solid #fff8!important;pointer-events:none!important;z-index:2!important}
+ #klkStatusCamera .klkEffectCenter{position:absolute!important;left:50%!important;top:10px!important;transform:translateX(-50%)!important;width:72px!important;height:72px!important;border-radius:50%!important;border:2px solid #fff8!important;pointer-events:none!important;z-index:2!important}
  @media(max-height:650px){#klkStatusCamera .klkEffectCarousel{bottom:calc(74px + env(safe-area-inset-bottom))!important}}
  `;
  document.head.appendChild(carouselCSS);
+ // El indicador central permanece fijo y no debe interceptar gestos.
  const symbols={eyes:'👁️',beauty:'✨',filters:'🎨',face:'😊',men:'🧔',creative:'🌈'};
  const entries=[];
  camera.querySelectorAll('[data-effect-category]').forEach(group=>{
