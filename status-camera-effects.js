@@ -212,12 +212,11 @@
    function beardPattern(key,density,lengthBase,lengthRange){
     const cache=drawManLook.patterns||(drawManLook.patterns=new Map());if(cache.has(key))return cache.get(key);
     const size=512,texture=document.createElement('canvas');texture.width=size;texture.height=size;
-    const brush=texture.getContext('2d'),shade=brush.createLinearGradient(0,0,0,size);
-    shade.addColorStop(0,'rgba(36,25,21,0)');shade.addColorStop(.12,'rgba(34,24,20,.12)');shade.addColorStop(.46,'rgba(30,21,18,.30)');shade.addColorStop(1,'rgba(22,16,14,.52)');
-    brush.fillStyle=shade;brush.fillRect(0,0,size,size);brush.lineCap='round';
+    const brush=texture.getContext('2d');brush.lineCap='round';
+    // Transparent texture: never paint a rectangular gradient over the face.
     for(let i=0;i<density;i++){
      const across=seed(i+1+key.length*311),t=Math.pow(seed(i+1701+key.length*191),.78),x=12+across*488,y=12+t*488,edgeFade=Math.min(1,across/.08,(1-across)/.08),topFade=Math.min(1,t/.1),len=lengthBase+seed(i+918+key.length*71)*lengthRange,lean=(seed(i+722+key.length*41)*2-1)*2.2;
-     brush.strokeStyle=i%9===0?'rgba(183,145,112,.48)':'rgba(37,26,22,.88)';brush.globalAlpha=(.28+seed(i+553+key.length*17)*.48)*edgeFade*topFade;brush.lineWidth=.72+seed(i+342+key.length*23)*.55;brush.beginPath();brush.moveTo(x,y);brush.quadraticCurveTo(x+lean*.45,y+len*.48,x+lean,y+len);brush.stroke();
+     brush.strokeStyle=i%9===0?'rgba(183,145,112,.48)':'rgba(37,26,22,.88)';brush.globalAlpha=(.48+seed(i+553+key.length*17)*.5)*edgeFade*topFade;brush.lineWidth=.5+seed(i+342+key.length*23)*.75;brush.beginPath();brush.moveTo(x,y);brush.quadraticCurveTo(x+lean*.45,y+len*.48,x+lean,y+len);brush.stroke();
     }
     brush.globalAlpha=1;cache.set(key,texture);return texture;
    }
@@ -228,7 +227,7 @@
     ctx.restore();
    }
    if(manLook==='short'||manLook==='stubble'||manLook==='full'){
-    const density=manLook==='stubble'?320:manLook==='short'?720:900,opacity=manLook==='stubble'?.44:manLook==='short'?.84:.96;
+    const density=manLook==='stubble'?2400:manLook==='short'?5500:10500,opacity=manLook==='stubble'?.44:manLook==='short'?.84:.96;
     paintRegion(jawPath,'evenodd',place.sideburnY,chinDistance+chinDistance*.02,place.leftCheek,place.rightCheek,density,opacity,manLook+'-jaw',manLook==='stubble'?1.1:manLook==='short'?2.1:2.8,manLook==='full'?5.2:3.3);
     if(manLook!=='stubble')paintRegion(()=>{traceLandmarkLoop(upperLipAndMustache);traceLandmarkLoop(mouthOutline)},'evenodd',-place.mouthWidth*.24,-place.mouthWidth*.015,place.leftMouth*.82,place.rightMouth*.82,manLook==='full'?420:300,opacity,manLook+'-mustache',1.5,3.3);
    }else if(manLook==='mustache'){
