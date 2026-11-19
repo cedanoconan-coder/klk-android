@@ -6,6 +6,8 @@
 'use strict';
 let enabled=false,host=null,video=null,canvas=null,gl=null,program=null,buffer=null,observer=null;
 let lastRender=0,frameBudget=33.3,quality=1,slowFrames=0,fastFrames=0,contextLost=false;
+let follicles=null,meshLoading=null;
+const scriptBase=document.currentScript?.src||new URL('./leon-ai-effects/beard-webgl3d.js',location.href).href;
 const L0=[234,93,132,58,172,136,150,149,176,148,152];
 const L1=[116,117,118,119,100,126,209,43,57,171,152];
 const L_MID=[123,147,187,205,206,207,216,212,202,204,152];
@@ -24,29 +26,30 @@ function initialize(){
  gl=canvas.getContext('webgl2',{alpha:true,antialias:true,premultipliedAlpha:false,depth:true});
  if(!gl)throw Error('WebGL2 unavailable');
  const vs=shader(gl.VERTEX_SHADER,`#version 300 es
- in vec3 aPosition; in float aOpacity;
+ in vec3 aPosition; in float aOpacity; in float aShade;
  uniform vec4 uProjection; uniform vec2 uCanvas; uniform float uMirror;
- out float vOpacity;
+ out float vOpacity; out float vShade;
  void main(){
   float x=(uProjection.x+aPosition.x*uProjection.z)/uCanvas.x;
   float y=(uProjection.y+aPosition.y*uProjection.w)/uCanvas.y;
   // Coordinates are normalized to the canvas, with cropping accounted for on CPU.
   gl_Position=vec4((uMirror<0.0?1.0-x:x)*2.0-1.0,1.0-y*2.0,clamp(aPosition.z*0.45,-0.95,0.95),1.0);
-  vOpacity=aOpacity;
+  vOpacity=aOpacity;vShade=aShade;
  }`);
  const fs=shader(gl.FRAGMENT_SHADER,`#version 300 es
  precision mediump float;
- in float vOpacity; out vec4 outColor;
- void main(){outColor=vec4(0.065,0.045,0.036,vOpacity);}`);
+ in float vOpacity; in float vShade; out vec4 outColor;
+ void main(){vec3 base=mix(vec3(.022,.015,.012),vec3(.14,.105,.083),clamp(vShade,0.,1.));outColor=vec4(base,vOpacity);}`);
  program=gl.createProgram();gl.attachShader(program,vs);gl.attachShader(program,fs);gl.linkProgram(program);
  gl.deleteShader(vs);gl.deleteShader(fs);
  if(!gl.getProgramParameter(program,gl.LINK_STATUS))throw Error(gl.getProgramInfoLog(program));
  buffer=gl.createBuffer();gl.useProgram(program);
  gl.bindBuffer(gl.ARRAY_BUFFER,buffer);
- const stride=16;
- const p=gl.getAttribLocation(program,'aPosition'),a=gl.getAttribLocation(program,'aOpacity');
+ const stride=20;
+ const p=gl.getAttribLocation(program,'aPosition'),a=gl.getAttribLocation(program,'aOpacity'),s=gl.getAttribLocation(program,'aShade');
  gl.enableVertexAttribArray(p);gl.vertexAttribPointer(p,3,gl.FLOAT,false,stride,0);
  gl.enableVertexAttribArray(a);gl.vertexAttribPointer(a,1,gl.FLOAT,false,stride,12);
+ gl.enableVertexAttribArray(s);gl.vertexAttribPointer(s,1,gl.FLOAT,false,stride,16);
  gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);
  gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);
 }
@@ -62,12 +65,44 @@ function projected(){
  const style=getComputedStyle(video),fit=style.objectFit;
  const scale=fit==='cover'?Math.max(vr.width/vw,vr.height/vh):fit==='contain'?Math.min(vr.width/vw,vr.height/vh):null;
  const w=scale?vw*scale:vr.width,h=scale?vh*scale:vr.height;
- const pos=(style.objectPosition||'50% 50%').split(/\\s+/);
+ const pos=(style.objectPosition||'50% 50%').split(/\s+/);
  const pct=v=>v?.endsWith('%')?clamp(parseFloat(v)/100,0,1):.5;
  const x=vr.left-hr.left+(vr.width-w)*pct(pos[0]);
  const y=vr.top-hr.top+(vr.height-h)*pct(pos[1]||pos[0]);
- const mirror=/matrix\\(-|scaleX\\(-1\\)/.test(style.transform)||video.classList.contains('mirrored');
+ const mirror=style.transform.includes('matrix(-')||style.transform.includes('scaleX(-1)')||video.classList.contains('mirrored');
  return {x,y,w,h,mirror};
+}
+// Canonical mesh is bundled locally; no remote service is needed at runtime.
+async function loadFollicles(){
+ if(follicles)return follicles;
+ if(meshLoading)return meshLoading;
+ meshLoading=(async()=>{
+  const response=await fetch(new URL('./assets/canonical_face_model.obj',scriptBase));
+  if(!response.ok)throw Error('Canonical face mesh unavailable: '+response.status);
+  const vertices=[],faces=[];
+  for(const line of (await response.text()).split(/\r?\n/)){
+   if(line.startsWith('v ')){const p=line.trim().split(/\s+/);vertices.push([+p[1],+p[2],+p[3]])}
+   else if(line.startsWith('f ')){const ids=line.trim().split(/\s+/).slice(1).map(v=>parseInt(v,10)-1);for(let i=1;i<ids.length-1;i++)faces.push([ids[0],ids[i],ids[i+1]])}
+  }
+  if(vertices.length!==468||faces.length<800)throw Error('Unexpected canonical topology');
+  const roots=[];
+  for(let t=0;t<faces.length;t++){
+   const ids=faces[t],a=vertices[ids[0]],b=vertices[ids[1]],d=vertices[ids[2]];
+   const x=(a[0]+b[0]+d[0])/3,y=(a[1]+b[1]+d[1])/3;
+   // Anatomical follicle mask: cheeks, jaw, chin; exclude upper face/nose.
+   const cheek=Math.abs(x)>1.35&&Math.abs(x)<7.2&&y<-.85&&y>-7.9;
+   const chin=Math.abs(x)<=2.6&&y< -5.25&&y> -9.2;
+   if(!cheek&&!chin)continue;
+   const cross=Math.hypot((b[0]-a[0])*(d[1]-a[1])-(b[1]-a[1])*(d[0]-a[0]),(b[1]-a[1])*(d[2]-a[2])-(b[2]-a[2])*(d[1]-a[1]),(b[2]-a[2])*(d[0]-a[0])-(b[0]-a[0])*(d[2]-a[2]));
+   const n=Math.min(42,Math.max(2,Math.floor(cross*5)));
+   for(let i=0;i<n;i++){
+    const q=Math.sqrt(sample(i,t,0)),v=sample(i,t,1);
+    roots.push({ids,weights:[1-q,q*(1-v),q*v],length:.0018+sample(i,t,2)*.004,tilt:(sample(i,t,3)-.5)*.005,shade:sample(i,t,4),alpha:.3+sample(i,t,5)*.45});
+   }
+  }
+  follicles=roots;return roots;
+ })().catch(error=>{meshLoading=null;console.warn('KLK canonical mesh unavailable:',error);return null});
+ return meshLoading;
 }
 function draw(geometry){
  if(!gl||!canvas||contextLost)return;
@@ -76,50 +111,32 @@ function draw(geometry){
  lastRender=started;
  gl.viewport(0,0,canvas.width,canvas.height);
  gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
- const pts=geometry?.landmarks;if(!pts||pts.length<455)return;
+ const pts=geometry?.landmarks;if(!pts||pts.length<468||!follicles)return;
  const p=projected();if(!p)return;
- const l=pts[234],r=pts[454],nose=pts[1];
- const yaw=Math.abs(r.x-l.x)>.035?clamp((nose.x-(l.x+r.x)/2)/(r.x-l.x)*2,-1,1):0;
- const segments=[];
  const lipL=pts[61],lipR=pts[291],lipTop=pts[0],lipBottom=pts[17];
- const mouthMinX=Math.min(lipL.x,lipR.x)-.023,mouthMaxX=Math.max(lipL.x,lipR.x)+.023;
- const mouthMinY=lipTop.y-.023,mouthMaxY=lipBottom.y+.026;
- function triangle(a,b,c,seed,opacity){
-  if(!a||!b||!c||opacity<.05)return;
-  const area=Math.abs((b.x-a.x)*(c.y-a.y)-(b.y-a.y)*(c.x-a.x));
-  if(area<.000008||Math.max(a.z,b.z,c.z)-Math.min(a.z,b.z,c.z)>.14)return;
-  const count=Math.min(Math.round(210*quality),Math.max(4,Math.floor(area*26000*quality)));
-  for(let i=0;i<count;i++){
-   const q=Math.sqrt(sample(i,seed,0)),v=sample(i,seed,1);
-   const aa=1-q,bb=q*(1-v),cc=q*v;
-   const x=a.x*aa+b.x*bb+c.x*cc,y=a.y*aa+b.y*bb+c.y*cc,z=a.z*aa+b.z*bb+c.z*cc;
-   if(x>=mouthMinX&&x<=mouthMaxX&&y>=mouthMinY&&y<=mouthMaxY)continue;
-   const length=.0018+sample(i,seed,2)*.003;
-   const dx=(sample(i,seed,3)-.5)*length*.7;
-   const alpha=(.22+sample(i,seed,4)*.37)*opacity;
-   segments.push(x,y,z,alpha,x+dx,y+length,z,alpha);
-  }
+ const mouthMinX=Math.min(lipL.x,lipR.x)-.018,mouthMaxX=Math.max(lipL.x,lipR.x)+.018;
+ const mouthMinY=lipTop.y-.025,mouthMaxY=lipBottom.y+.023;
+ const segments=[],step=Math.max(1,Math.round(1/quality));
+ for(let k=0;k<follicles.length;k+=step){
+  const root=follicles[k],[a,b,d]=root.ids.map(i=>pts[i]);if(!a||!b||!d)continue;
+  const [u,v,w]=root.weights;
+  const x=a.x*u+b.x*v+d.x*w,y=a.y*u+b.y*v+d.y*w,z=a.z*u+b.z*v+d.z*w;
+  if(x>=mouthMinX&&x<=mouthMaxX&&y>=mouthMinY&&y<=mouthMaxY)continue;
+  if(Math.max(a.z,b.z,d.z)-Math.min(a.z,b.z,d.z)>.12)continue;
+  // Use local jaw direction so hairs rotate with the face, not the viewport.
+  const dirX=(pts[152].x-pts[1].x),dirY=(pts[152].y-pts[1].y);
+  const mag=Math.max(.02,Math.hypot(dirX,dirY));
+  const dx=dirX/mag*root.length+root.tilt,dy=dirY/mag*root.length;
+  segments.push(x,y,z,root.alpha,root.shade,x+dx,y+dy,z,root.alpha*.75,root.shade*.8);
  }
- function strip(out,inside,seed,opacity){
-  for(let i=0;i<out.length-1;i++){
-   const a=pts[out[i]],b=pts[inside[i]],c=pts[out[i+1]],d=pts[inside[i+1]];
-   triangle(a,b,c,seed+i*4,opacity);triangle(b,d,c,seed+i*4+2,opacity);
-  }
- }
- strip(L0,L_MID,101,clamp((.60-yaw)/.52,0,1));
- strip(L_MID,L1,151,clamp((.60-yaw)/.52,0,1));
- strip(R0,R_MID,201,clamp((.60+yaw)/.52,0,1));
- strip(R_MID,R1,251,clamp((.60+yaw)/.52,0,1));
- strip(C0,C1,301,1);
  if(!segments.length)return;
  const data=new Float32Array(segments);
  gl.useProgram(program);
- // Canvas coordinate conversion and mirror transform.
  gl.uniform4f(gl.getUniformLocation(program,'uProjection'),p.x,p.y,p.w,p.h);
  gl.uniform2f(gl.getUniformLocation(program,'uCanvas'),canvas.width,canvas.height);
  gl.uniform1f(gl.getUniformLocation(program,'uMirror'),p.mirror?-1:1);
  gl.bindBuffer(gl.ARRAY_BUFFER,buffer);gl.bufferData(gl.ARRAY_BUFFER,data,gl.DYNAMIC_DRAW);
- gl.drawArrays(gl.LINES,0,data.length/4);
+ gl.drawArrays(gl.LINES,0,data.length/5);
  const elapsed=performance.now()-started;
  if(elapsed>20){slowFrames++;fastFrames=0}else if(elapsed<9){fastFrames++;slowFrames=0}else{slowFrames=0;fastFrames=0}
  if(slowFrames>=8){quality=Math.max(.35,quality*.8);slowFrames=0}
@@ -153,7 +170,7 @@ function sync(){
  resize();host.addEventListener('klk:facegeometry',onFrame);
  if(typeof ResizeObserver!=='undefined'){observer=new ResizeObserver(resize);observer.observe(host);observer.observe(video)}
 }
-function setEnabled(v){enabled=!!v;if(enabled){lastRender=0;sync()}else detach()}
+function setEnabled(v){enabled=!!v;if(enabled){lastRender=0;loadFollicles();sync()}else detach()}
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&gl){gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT)}});
 window.addEventListener('resize',resize);
 global.KLKBeardMask=Object.freeze({setEnabled,setQuality,qualityStatus,resize,clear:()=>{if(gl)gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT)}});
