@@ -246,15 +246,48 @@
     ctx.drawImage(feather,-leftStart,top,width,height);
     ctx.restore();
    }
+   // Hair roots are barycentric coordinates in landmark triangles. Unlike a
+   // stretched rectangular texture, each root follows cheek/jaw deformation.
+   function paintMeshHair(style){
+    const triangles=style==='goatee'?
+     [[61,17,152],[291,17,152],[61,152,172],[291,397,152]]:
+     [[234,93,132],[234,132,172],[132,58,172],[172,136,150],[150,149,152],
+      [454,323,361],[454,361,397],[361,288,397],[397,365,378],[378,379,152],
+      [58,172,152],[288,397,152],[172,136,152],[397,365,152]];
+    const count=style==='stubble'?95:style==='short'?210:style==='goatee'?210:300;
+    const opacity=style==='stubble'?.35:style==='short'?.65:.82;
+    const lip=eyePoint(0),lowerLip=eyePoint(17),lipWidth=Math.max(8,place.mouthWidth);
+    ctx.save();ctx.lineCap='round';
+    for(let t=0;t<triangles.length;t++){
+     const ids=triangles[t],a=eyePoint(ids[0]),b=eyePoint(ids[1]),c=eyePoint(ids[2]);
+     const dx=(a[0]+b[0]+c[0])/3-centerX,dy=(a[1]+b[1]+c[1])/3-centerY;
+     const shade=Math.max(.35,Math.min(1,1-Math.abs(dx)/(place.jawWidth*1.1)));
+     for(let i=0;i<count;i++){
+      const seedIndex=i+t*1021+style.length*113;
+      const u=Math.sqrt(seed(seedIndex+5)),v=seed(seedIndex+103);
+      const wa=1-u,wb=u*(1-v),wc=u*v;
+      const x=a[0]*wa+b[0]*wb+c[0]*wc,y=a[1]*wa+b[1]*wb+c[1]*wc;
+      // Never draw whiskers over the lip opening.
+      if(Math.abs(x-(lip[0]+lowerLip[0])*.5)<lipWidth*.54&&y>lip[1]-lipWidth*.13&&y<lowerLip[1]+lipWidth*.20)continue;
+      const len=(style==='stubble'?1:style==='short'?2.5:4.4)*(0.55+seed(seedIndex+411)*.9)*Math.max(.6,place.jawWidth/140);
+      const slant=(seed(seedIndex+221)-.5)*len*.65;
+      ctx.globalAlpha=amount*opacity*shade*(.3+seed(seedIndex+701)*.7);
+      ctx.strokeStyle=i%13===0?'#775b49':i%4===0?'#3b3029':'#1d1918';
+      ctx.lineWidth=Math.max(.4,Math.min(1.5,place.jawWidth/190))*(.7+seed(seedIndex+313)*.6);
+      ctx.beginPath();ctx.moveTo(x,y);ctx.quadraticCurveTo(x+slant*.4,y+len*.5,x+slant,y+len);ctx.stroke();
+     }
+    }
+    ctx.restore();
+   }
    if(manLook==='short'||manLook==='stubble'||manLook==='full'){
     const density=manLook==='stubble'?3200:manLook==='short'?8500:16000,opacity=manLook==='stubble'?.44:manLook==='short'?.84:.96;
-    paintRegion(jawPath,'evenodd',place.sideburnY,chinDistance+chinDistance*.02,place.leftCheek,place.rightCheek,density,opacity,manLook+'-jaw',manLook==='stubble'?1.1:manLook==='short'?2.1:2.8,manLook==='full'?5.2:3.3);
+    paintMeshHair(manLook);
     if(manLook!=='stubble')paintRegion(()=>{traceLandmarkLoop(upperLipAndMustache);traceLandmarkLoop(mouthOutline)},'evenodd',-place.mouthWidth*.24,-place.mouthWidth*.015,place.leftMouth*.82,place.rightMouth*.82,manLook==='full'?420:300,opacity,manLook+'-mustache',1.5,3.3);
    }else if(manLook==='mustache'){
     paintRegion(()=>{traceLandmarkLoop(upperLipAndMustache);traceLandmarkLoop(mouthOutline)},'evenodd',-place.mouthWidth*.24,-place.mouthWidth*.015,place.leftMouth*.82,place.rightMouth*.82,340,.78,'mustache',1.5,3.3);
    }else if(manLook==='goatee'){
     const rx=Math.max(place.mouthWidth*.62,place.jawWidth*.25),cy=centerY+Math.cos(angle)*chinDistance*.52;
-    paintRegion(()=>{ctx.ellipse(centerX-Math.sin(angle)*chinDistance*.52,cy,rx,chinDistance*.68,angle,0,Math.PI*2);traceLandmarkLoop(mouthOutline)},'evenodd',-place.mouthWidth*.08,chinDistance,place.mouthWidth*.62,place.mouthWidth*.62,520,.84,'goatee',2.8,3.3);
+    paintMeshHair('goatee');
    }
   }
   function render(){
