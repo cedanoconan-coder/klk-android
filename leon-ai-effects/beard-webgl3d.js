@@ -65,11 +65,11 @@ function projected(){
  const style=getComputedStyle(video),fit=style.objectFit;
  const scale=fit==='cover'?Math.max(vr.width/vw,vr.height/vh):fit==='contain'?Math.min(vr.width/vw,vr.height/vh):null;
  const w=scale?vw*scale:vr.width,h=scale?vh*scale:vr.height;
- const pos=(style.objectPosition||'50% 50%').split(/\\s+/);
+ const pos=(style.objectPosition||'50% 50%').split(/\s+/);
  const pct=v=>v?.endsWith('%')?clamp(parseFloat(v)/100,0,1):.5;
  const x=vr.left-hr.left+(vr.width-w)*pct(pos[0]);
  const y=vr.top-hr.top+(vr.height-h)*pct(pos[1]||pos[0]);
- const mirror=/matrix\\(-|scaleX\\(-1\\)/.test(style.transform)||video.classList.contains('mirrored');
+ const mirror=style.transform.includes('matrix(-')||style.transform.includes('scaleX(-1)')||video.classList.contains('mirrored');
  return {x,y,w,h,mirror};
 }
 // Canonical mesh is bundled locally; no remote service is needed at runtime.
