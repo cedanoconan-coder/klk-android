@@ -89,7 +89,7 @@
 #klkStatusCamera .klkShutter{width:76px!important;height:76px!important}
 `;
   document.head.appendChild(carouselStyle);
-  let stream=null,outputStream=null,recorder=null,chunks=[],front=false,recordTimer=null,holdTimer=null,pressed=false,recordingByHold=false,discardRecording=false,elapsedTimer=null,recordStartedAt=0,renderFrame=0,landmarker=null,landmarkerPromise=null,visionFiles=null,visionPromise=null,facePoints=null,smoothedFacePoints=null,lastFaceSeenAt=0,lastDetection=0,eyeColor='none',selfieFilter='normal',skinSmooth=0,faceLook='none',manLook='none',beardTexture=null,beardTexturePromise=null,closed=false;
+  let stream=null,outputStream=null,recorder=null,chunks=[],front=true,recordTimer=null,holdTimer=null,pressed=false,recordingByHold=false,discardRecording=false,elapsedTimer=null,recordStartedAt=0,renderFrame=0,landmarker=null,landmarkerPromise=null,visionFiles=null,visionPromise=null,facePoints=null,smoothedFacePoints=null,lastFaceSeenAt=0,lastDetection=0,eyeColor='none',selfieFilter='normal',skinSmooth=0,faceLook='none',manLook='none',beardTexture=null,beardTexturePromise=null,closed=false;
   const eyePalettes={blue:['5,33,71','20,103,190','71,190,245','12,93,160','3,25,52'],green:['12,55,32','26,129,76','105,205,126','26,112,66','7,43,27'],hazel:['75,38,12','156,94,30','219,174,75','139,91,34','54,31,14'],violet:['48,21,76','112,62,168','190,145,239','99,55,151','35,18,58'],gray:['29,44,55','88,124,143','190,211,218','90,123,138','30,44,52']};
   const selfieFilters={normal:t=>'none',warm:t=>`sepia(${.22*t}) saturate(${1+.25*t}) brightness(${1+.035*t})`,cool:t=>`hue-rotate(${18*t}deg) saturate(${1+.12*t}) brightness(${1+.025*t})`,glow:t=>`brightness(${1+.12*t}) saturate(${1+.16*t}) contrast(${1-.05*t})`,vintage:t=>`sepia(${.42*t}) contrast(${1+.08*t}) saturate(${1-.18*t})`,mono:t=>`grayscale(${t}) contrast(${1+.12*t})`,rose:t=>`hue-rotate(-12deg) saturate(${1+.42*t}) brightness(${1+.035*t})`,cinematic:t=>`contrast(${1+.22*t}) saturate(${1-.12*t}) brightness(${1-.035*t}) sepia(${.08*t})`,dream:t=>`saturate(${1+.18*t}) brightness(${1+.12*t}) contrast(${1-.12*t})`,vivid:t=>`saturate(${1+.72*t}) contrast(${1+.12*t}) brightness(${1+.025*t})`};
   const eyeContours=[[33,160,158,133,153,144],[362,385,387,263,373,380]];
@@ -105,13 +105,13 @@
    const desired=front?'user':'environment';
    const cameras=await navigator.mediaDevices.enumerateDevices().catch(()=>[]);
    const videoInputs=cameras.filter(device=>device.kind==='videoinput');
-   const match=videoInputs.find(device=>desired==='user'?/front|frontal|selfie|user|face/i.test(device.label):/back|rear|trasera|environment/i.test(device.label));
+   const match=videoInputs.find(device=>desired==='user'?/front|frontal|selfie|user|face|facing front/i.test(device.label):/back|rear|trasera|environment|facing back/i.test(device.label));
    const base={width:{ideal:1280},height:{ideal:720},frameRate:{ideal:24,max:30}};
    const constraints=match?.deviceId?{...base,deviceId:{exact:match.deviceId}}:{...base,facingMode:{exact:desired}};
    try{
     stream=await navigator.mediaDevices.getUserMedia({audio:false,video:constraints});
    }catch(error){
-    if(match?.deviceId||!['OverconstrainedError','NotFoundError'].includes(error.name))throw error;
+    if(!['OverconstrainedError','NotFoundError'].includes(error.name))throw error;
     stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{...base,facingMode:{ideal:desired}}});
    }
    const track=stream.getVideoTracks()[0],actual=track?.getSettings?.().facingMode;
