@@ -5,7 +5,7 @@
 (function(global){
 'use strict';
 let enabled=false,host=null,video=null,canvas=null,gl=null,program=null,buffer=null,observer=null;
-let lastRender=0,frameBudget=33.3,quality=1,slowFrames=0,fastFrames=0;
+let lastRender=0,frameBudget=33.3,quality=1,slowFrames=0,fastFrames=0,contextLost=false;
 const L0=[234,93,132,58,172,136,150,149,176,148,152];
 const L1=[116,117,118,119,100,126,209,43,57,171,152];
 const L_MID=[123,147,187,205,206,207,216,212,202,204,152];
@@ -70,7 +70,7 @@ function projected(){
  return {x,y,w,h,mirror};
 }
 function draw(geometry){
- if(!gl||!canvas)return;
+ if(!gl||!canvas||contextLost)return;
  const started=performance.now();
  if(started-lastRender<frameBudget*.75)return;
  lastRender=started;
@@ -130,9 +130,12 @@ function detach(){
  observer?.disconnect();observer=null;
  if(host)host.removeEventListener('klk:facegeometry',onFrame);
  if(gl){if(buffer)gl.deleteBuffer(buffer);if(program)gl.deleteProgram(program)}
- canvas?.remove();host=video=canvas=gl=program=buffer=null;
+ if(canvas){canvas.removeEventListener('webglcontextlost',onContextLost);canvas.removeEventListener('webglcontextrestored',onContextRestored)}
+ canvas?.remove();host=video=canvas=gl=program=buffer=null;contextLost=false;
 }
 function onFrame(event){draw(event.detail?.geometry)}
+function onContextLost(event){event.preventDefault();contextLost=true;console.warn('KLK beard GPU context lost; preview effect suspended')}
+function onContextRestored(){contextLost=false;try{initialize();resize()}catch(error){console.warn('KLK beard GPU restore failed',error);contextLost=true}}
 function sync(){
  if(!enabled)return;
  const next=document.getElementById('klkStatusCamera'),v=next?.querySelector('video');
@@ -144,6 +147,8 @@ function sync(){
  canvas.style.cssText='position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:3';
  if(getComputedStyle(host).position==='static')host.style.position='relative';
  host.appendChild(canvas);
+ canvas.addEventListener('webglcontextlost',onContextLost,false);
+ canvas.addEventListener('webglcontextrestored',onContextRestored,false);
  try{initialize()}catch(error){console.warn('KLK WebGL beard unavailable:',error);detach();return}
  resize();host.addEventListener('klk:facegeometry',onFrame);
  if(typeof ResizeObserver!=='undefined'){observer=new ResizeObserver(resize);observer.observe(host);observer.observe(video)}
