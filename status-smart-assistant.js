@@ -109,6 +109,7 @@ function init(){
  function selectEffect(index,scroll=true){
    if(index<0||index>=entries.length||index===selected)return;
    selected=index;
+   window.KLKBeardMask?.setEnabled(false);
    const item=entries[index];
    const tab=camera.querySelector('[data-effect-tab="'+item.category+'"]');
    if(tab && tab.getAttribute('aria-selected')!=='true')tab.click();
@@ -144,6 +145,7 @@ function init(){
    camera.appendChild(preset);
    preset.addEventListener('click',async()=>{
      selectEffect(beardEntry);preset.setAttribute('aria-pressed','true');
+     window.KLKBeardMask?.setEnabled(true);
      if(!window.KLKMediaPipeFace)return;
      preset.disabled=true;
      try{await window.KLKMediaPipeFace.initialize()}catch(error){console.warn('León: seguimiento facial no disponible',error);preset.title='No se pudo iniciar seguimiento facial'}
