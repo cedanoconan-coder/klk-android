@@ -18,8 +18,15 @@
      if(!Array.isArray(landmarks)||landmarks.length<455){this.reset();return null}
      const current=landmarks.map((p,i)=>point(landmarks,i));
      if(current.some(p=>!p)){this.reset();return null}
+     // Follow large movements immediately; smooth only small landmark jitter.
+     // A fixed low alpha made the beard visibly trail the face during turns.
      const stable=this.previous&&this.previous.length===current.length
-       ?current.map((p,i)=>smoothPoint(this.previous[i],p,this.smoothing)):current;
+       ?current.map((p,i)=>{
+           const previous=this.previous[i];
+           const movement=Math.hypot(p.x-previous.x,p.y-previous.y);
+           const alpha=movement>0.025?1:movement>0.008?0.9:Math.max(0.65,this.smoothing);
+           return smoothPoint(previous,p,alpha);
+         }):current;
      this.previous=stable;
      return {
        landmarks:stable,
