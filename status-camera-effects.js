@@ -198,7 +198,16 @@
   function drawManLook(){
    const amount=Number(manStrengthInput.value)/100;if(!amount||manLook==='none'||!facePoints)return;
    const place=beardPlacement(),{centerX,centerY,angle,chinDistance,chinX}=place;
-   const jawPath=()=>{const ids=[234,93,132,58,61,146,91,181,84,17,314,405,321,375,291,288,361,323,454,397,365,379,378,400,377,152,148,176,149,150,136,172,58];ids.forEach((id,i)=>{const[x,y]=eyePoint(id);i?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.closePath()};
+   const jawPath=()=>{
+    // Follow cheeks and jaw instead of tracing the lips as the upper beard edge.
+    const outer=[234,93,132,58,172,136,150,149,176,148,152,377,400,378,379,365,397,288,361,323,454];
+    const upper=[454,323,361,288,291,61,58,132,93,234];
+    outer.forEach((id,i)=>{const[x,y]=eyePoint(id);i?ctx.lineTo(x,y):ctx.moveTo(x,y)});
+    upper.forEach(id=>{const[x,y]=eyePoint(id);ctx.lineTo(x,y)});
+    ctx.closePath();
+    // Keep the entire lip contour clear, even on a moving face.
+    traceLandmarkLoop(mouthOutline);
+   };
    const seed=n=>{const value=Math.sin(n*127.1+311.7)*43758.5453;return value-Math.floor(value)};
    function beardPattern(key,density,lengthBase,lengthRange){
     const cache=drawManLook.patterns||(drawManLook.patterns=new Map());if(cache.has(key))return cache.get(key);
@@ -220,7 +229,7 @@
    }
    if(manLook==='short'||manLook==='stubble'||manLook==='full'){
     const density=manLook==='stubble'?320:manLook==='short'?720:900,opacity=manLook==='stubble'?.44:manLook==='short'?.84:.96;
-    paintRegion(jawPath,'nonzero',place.sideburnY,chinDistance+chinDistance*.02,place.leftCheek,place.rightCheek,density,opacity,manLook+'-jaw',manLook==='stubble'?1.1:manLook==='short'?2.1:2.8,manLook==='full'?5.2:3.3);
+    paintRegion(jawPath,'evenodd',place.sideburnY,chinDistance+chinDistance*.02,place.leftCheek,place.rightCheek,density,opacity,manLook+'-jaw',manLook==='stubble'?1.1:manLook==='short'?2.1:2.8,manLook==='full'?5.2:3.3);
     if(manLook!=='stubble')paintRegion(()=>{traceLandmarkLoop(upperLipAndMustache);traceLandmarkLoop(mouthOutline)},'evenodd',-place.mouthWidth*.24,-place.mouthWidth*.015,place.leftMouth*.82,place.rightMouth*.82,manLook==='full'?420:300,opacity,manLook+'-mustache',1.5,3.3);
    }else if(manLook==='mustache'){
     paintRegion(()=>{traceLandmarkLoop(upperLipAndMustache);traceLandmarkLoop(mouthOutline)},'evenodd',-place.mouthWidth*.24,-place.mouthWidth*.015,place.leftMouth*.82,place.rightMouth*.82,340,.78,'mustache',1.5,3.3);
