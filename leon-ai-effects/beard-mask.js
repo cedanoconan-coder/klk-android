@@ -52,6 +52,22 @@ function region(ids,pts,w,h,seed){
  }
  ctx.restore();
 }
+// Estimate face yaw from the nose position between the side contours. Avoid
+// drawing the far-side cheek when its projected mesh collapses or folds.
+function faceYaw(pts){
+ const left=pts[234],right=pts[454],nose=pts[1];
+ if(!left||!right||!nose)return 0;
+ const span=right.x-left.x;
+ return Math.abs(span)<0.035?0:Math.max(-1,Math.min(1,2*(nose.x-(left.x+right.x)/2)/span));
+}
+function validRegion(ids,pts){
+ if(ids.some(i=>!pts[i]))return false;
+ // A side cheek projected into a narrow sliver creates the black vertical
+ // streak visible in profile. Skip that cheek, not the entire beard.
+ const xs=ids.map(i=>pts[i].x),ys=ids.map(i=>pts[i].y);
+ return Math.max(...xs)-Math.min(...xs)>0.035 &&
+        Math.max(...ys)-Math.min(...ys)>0.045;
+}
 function draw(geometry){
  if(!enabled||!canvas||!ctx)return;
  clear();const pts=geometry?.landmarks;if(!pts||pts.length<455)return;
@@ -59,7 +75,14 @@ function draw(geometry){
  ctx.save();
  ctx.translate(map.x+(map.mirrored?map.w:0),map.y);
  if(map.mirrored)ctx.scale(-1,1);
- region(cheekL,pts,map.w,map.h,1);region(cheekR,pts,map.w,map.h,2);region(chin,pts,map.w,map.h,3);
+ const yaw=faceYaw(pts);
+ // Preserve the near cheek; hide the far cheek progressively during turns.
+ // MediaPipe landmark x coordinates are in camera space before mirroring.
+ const leftVisible=yaw<0.28;
+ const rightVisible=yaw> -0.28;
+ if(leftVisible&&validRegion(cheekL,pts))region(cheekL,pts,map.w,map.h,1);
+ if(rightVisible&&validRegion(cheekR,pts))region(cheekR,pts,map.w,map.h,2);
+ if(validRegion(chin,pts))region(chin,pts,map.w,map.h,3);
  // Clear the complete mouth area, including lips, with a feathered-looking wide margin.
  if(polygon(mouth,pts,map.w,map.h)){
   ctx.globalCompositeOperation='destination-out';ctx.lineJoin='round';
