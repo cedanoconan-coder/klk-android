@@ -130,14 +130,14 @@
    ctx.translate(centerX,centerY);ctx.rotate(angle);ctx.globalCompositeOperation='multiply';
    const isMustache=manLook==='mustache',top=isMustache?-place.mouthWidth*.24:manLook==='goatee'?-place.mouthWidth*.08:place.sideburnY,bottom=isMustache?place.mouthWidth*.02:chinDistance;
    const leftTop=isMustache?place.leftMouth*.82:manLook==='goatee'?place.mouthWidth*.62:place.leftCheek,rightTop=isMustache?place.rightMouth*.82:manLook==='goatee'?place.mouthWidth*.62:place.rightCheek;
-   const scale=Math.max(.55,Math.min(1.5,place.jawWidth/320)),styleOpacity=manLook==='stubble'?.42:manLook==='short'?.78:manLook==='goatee'?.82:manLook==='mustache'?.72:.95;
-   const shade=ctx.createLinearGradient(0,top,0,Math.max(top+1,bottom));shade.addColorStop(0,'rgba(36,25,21,.10)');shade.addColorStop(.42,'rgba(30,21,18,.20)');shade.addColorStop(1,'rgba(22,16,14,.28)');
-   ctx.globalAlpha=amount*styleOpacity*.38;ctx.fillStyle=shade;ctx.fillRect(-leftTop,top,leftTop+rightTop,Math.max(1,bottom-top+chinDistance*.025));
-   const seed=n=>{const value=Math.sin(n*127.1+311.7)*43758.5453;return value-Math.floor(value)},density=manLook==='stubble'?280:manLook==='short'?470:manLook==='goatee'?420:manLook==='mustache'?280:700;
+   const scale=Math.max(.55,Math.min(1.5,place.jawWidth/320)),styleOpacity=manLook==='stubble'?.44:manLook==='short'?.82:manLook==='goatee'?.84:manLook==='mustache'?.74:.96;
+   const shade=ctx.createLinearGradient(0,top,0,Math.max(top+1,bottom));shade.addColorStop(0,'rgba(36,25,21,0)');shade.addColorStop(.12,'rgba(34,24,20,.08)');shade.addColorStop(.46,'rgba(30,21,18,.19)');shade.addColorStop(1,'rgba(22,16,14,.30)');
+   ctx.globalAlpha=amount*styleOpacity*.58;ctx.fillStyle=shade;ctx.fillRect(-leftTop,top,leftTop+rightTop,Math.max(1,bottom-top+chinDistance*.025));
+   const seed=n=>{const value=Math.sin(n*127.1+311.7)*43758.5453;return value-Math.floor(value)},density=manLook==='stubble'?320:manLook==='short'?800:manLook==='goatee'?500:manLook==='mustache'?320:900;
    ctx.lineCap='round';
    for(let i=0;i<density;i++){
-    const ry=seed(i+1701),t=Math.pow(ry,.78),y=top+(bottom-top)*t,progress=Math.max(0,Math.min(1,(y-top)/Math.max(1,bottom-top))),left=leftTop+(place.leftJaw-leftTop)*progress,right=rightTop+(place.rightJaw-rightTop)*progress,center=chinX*progress,x=center-left+seed(i+1)*(left+right),len=(manLook==='stubble'?1.1:manLook==='short'?2.1:manLook==='mustache'?1.5:2.8)+seed(i+918)*(manLook==='full'?5.2:3.3),lean=(seed(i+722)*2-1)*Math.max(.7,scale*2.1);
-    ctx.strokeStyle=i%9===0?'rgba(183,145,112,.48)':'rgba(37,26,22,.88)';ctx.globalAlpha=amount*styleOpacity*(.28+seed(i+553)*.48);ctx.lineWidth=Math.max(.45,scale*(manLook==='stubble'?.48:.68+seed(i+342)*.55));ctx.beginPath();ctx.moveTo(x,y);ctx.quadraticCurveTo(x+lean*.45,y+len*.48,x+lean,y+len);ctx.stroke();
+    const ry=seed(i+1701),t=Math.pow(ry,.78),y=top+(bottom-top)*t,progress=Math.max(0,Math.min(1,(y-top)/Math.max(1,bottom-top))),left=leftTop+(place.leftJaw-leftTop)*progress,right=rightTop+(place.rightJaw-rightTop)*progress,center=chinX*progress,across=seed(i+1),x=center-left+across*(left+right),edgeFade=Math.min(1,across/.08,(1-across)/.08),topFade=Math.min(1,progress/.10),len=(manLook==='stubble'?1.1:manLook==='short'?2.1:manLook==='mustache'?1.5:2.8)+seed(i+918)*(manLook==='full'?5.2:3.3),lean=(seed(i+722)*2-1)*Math.max(.7,scale*2.1);
+    ctx.strokeStyle=i%9===0?'rgba(183,145,112,.48)':'rgba(37,26,22,.88)';ctx.globalAlpha=amount*styleOpacity*(.28+seed(i+553)*.48)*edgeFade*topFade;ctx.lineWidth=Math.max(.45,scale*(manLook==='stubble'?.48:.68+seed(i+342)*.55));ctx.beginPath();ctx.moveTo(x,y);ctx.quadraticCurveTo(x+lean*.45,y+len*.48,x+lean,y+len);ctx.stroke();
    }
    ctx.restore();
   }
