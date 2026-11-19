@@ -7,8 +7,10 @@
 let enabled=false,host=null,video=null,canvas=null,gl=null,program=null,buffer=null,observer=null;
 const L0=[234,93,132,58,172,136,150,149,176,148,152];
 const L1=[116,117,118,119,100,126,209,43,57,171,152];
+const L_MID=[123,147,187,205,206,207,216,212,202,204,152];
 const R0=[454,323,361,288,397,365,379,378,400,377,152];
 const R1=[345,346,347,348,329,355,429,273,287,396,152];
+const R_MID=[352,376,411,425,426,427,436,432,422,418,152];
 const C0=[58,172,136,150,149,176,148,152,377,400,378,379,365,397,288];
 const C1=[57,43,204,194,140,171,199,175,396,369,262,418,406,273,287];
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
@@ -70,18 +72,22 @@ function draw(geometry){
  const l=pts[234],r=pts[454],nose=pts[1];
  const yaw=Math.abs(r.x-l.x)>.035?clamp((nose.x-(l.x+r.x)/2)/(r.x-l.x)*2,-1,1):0;
  const segments=[];
+ const lipL=pts[61],lipR=pts[291],lipTop=pts[0],lipBottom=pts[17];
+ const mouthMinX=Math.min(lipL.x,lipR.x)-.023,mouthMaxX=Math.max(lipL.x,lipR.x)+.023;
+ const mouthMinY=lipTop.y-.023,mouthMaxY=lipBottom.y+.026;
  function triangle(a,b,c,seed,opacity){
   if(!a||!b||!c||opacity<.05)return;
   const area=Math.abs((b.x-a.x)*(c.y-a.y)-(b.y-a.y)*(c.x-a.x));
   if(area<.000008||Math.max(a.z,b.z,c.z)-Math.min(a.z,b.z,c.z)>.14)return;
-  const count=Math.min(90,Math.floor(area*9500));
+  const count=Math.min(210,Math.max(5,Math.floor(area*26000)));
   for(let i=0;i<count;i++){
-   const q=Math.sqrt(hash(i,seed)),v=hash(i,seed+1);
+   const q=Math.sqrt(hash(i,seed)),v=hash(i+97,seed+1);
    const aa=1-q,bb=q*(1-v),cc=q*v;
    const x=a.x*aa+b.x*bb+c.x*cc,y=a.y*aa+b.y*bb+c.y*cc,z=a.z*aa+b.z*bb+c.z*cc;
-   const length=.003+hash(i,seed+2)*.004;
-   const dx=(hash(i,seed+3)-.5)*length*.6;
-   const alpha=(.32+hash(i,seed+4)*.45)*opacity;
+   if(x>=mouthMinX&&x<=mouthMaxX&&y>=mouthMinY&&y<=mouthMaxY)continue;
+   const length=.002+hash(i+193,seed+2)*.003;
+   const dx=(hash(i+293,seed+3)-.5)*length*.6;
+   const alpha=(.22+hash(i+397,seed+4)*.37)*opacity;
    segments.push(x,y,z,alpha,x+dx,y+length,z,alpha);
   }
  }
@@ -91,8 +97,10 @@ function draw(geometry){
    triangle(a,b,c,seed+i*4,opacity);triangle(b,d,c,seed+i*4+2,opacity);
   }
  }
- strip(L0,L1,101,clamp((.52-yaw)/.40,0,1));
- strip(R0,R1,201,clamp((.52+yaw)/.40,0,1));
+ strip(L0,L_MID,101,clamp((.60-yaw)/.52,0,1));
+ strip(L_MID,L1,151,clamp((.60-yaw)/.52,0,1));
+ strip(R0,R_MID,201,clamp((.60+yaw)/.52,0,1));
+ strip(R_MID,R1,251,clamp((.60+yaw)/.52,0,1));
  strip(C0,C1,301,1);
  if(!segments.length)return;
  const data=new Float32Array(segments);
