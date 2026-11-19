@@ -1,6 +1,6 @@
 /* León AI Effects: beard style definitions, no rendering or remote assets.
  * Each style has independent coverage regions, density, length and moustache connection.
- * Rendering remains gated until an Android-validated engine is available.
+ * Camera offers experimental 2D previews; photorealistic engine remains unvalidated.
  */
 (function(global){
 'use strict';
@@ -24,7 +24,7 @@ global.KLKBeardStyles=Object.freeze({
  all:Object.freeze(styles),
  get(id){return styles.find(s=>s.id===id)||null},
  families:Object.freeze(['corta','media','larga']),
- // Explicitly disabled until real-world Android visual checks pass.
- availableForCamera:false
+ // Experimental camera previews enabled; not a claim of photorealism.
+ availableForCamera:true
 });
 })(window);
