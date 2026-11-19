@@ -38,8 +38,12 @@ function init(){
  #klkStatusCamera .klkSmartToggle{font-size:13px!important;padding:9px 12px!important;border-radius:24px!important;background:#24252bcc!important;color:#fff!important}
  #klkStatusCamera #klkSmartOptions{position:absolute;left:0;bottom:45px;width:min(290px,calc(100vw - 24px));max-height:28vh;overflow-y:auto;padding:12px;border-radius:16px;background:#202127ee;box-sizing:border-box}
  #klkStatusCamera #klkSmartOptions[hidden]{display:none!important}
- #klkStatusCamera .klkCameraEffectsPanel:not([hidden]){position:fixed;z-index:6;left:8px;right:8px;bottom:calc(104px + env(safe-area-inset-bottom));width:auto!important;max-width:none!important;max-height:min(32vh,260px);overflow:auto;overscroll-behavior:contain;box-sizing:border-box;display:block!important;padding:12px!important;border-radius:18px;background:#202127ed;box-shadow:0 4px 22px #0006}
+ #klkStatusCamera .klkCameraEffectsPanel:not([hidden]){position:fixed;z-index:6;left:8px;right:8px;bottom:calc(92px + env(safe-area-inset-bottom));width:auto!important;max-width:none!important;max-height:min(23vh,190px);overflow:auto;overscroll-behavior:contain;box-sizing:border-box;display:block!important;padding:12px!important;border-radius:18px;background:#202127ed;box-shadow:0 4px 22px #0006}
  #klkStatusCamera .klkCameraEffectsPanel *{max-width:100%;box-sizing:border-box}
+ #klkStatusCamera .klkCameraEffectsPanel .klkEffectCategories{display:flex;flex-wrap:nowrap;gap:6px;overflow-x:auto;scrollbar-width:none}
+ #klkStatusCamera .klkCameraEffectsPanel .klkEffectCategories button{flex:0 0 auto;white-space:nowrap}
+ #klkStatusCamera .klkCameraEffectsPanel .klkEffectChoices{display:flex;gap:8px;overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none}
+ #klkStatusCamera .klkCameraEffectsPanel .klkEffectChoices button{flex:0 0 auto;white-space:nowrap}
  #klkStatusCamera .klkCameraEffectsPanel [class*="tabs"],#klkStatusCamera .klkCameraEffectsPanel [class*="Tabs"]{max-width:100%;overflow-x:auto;scrollbar-width:thin}
  #klkStatusCamera .klkCameraEffectsPanel button{font-size:13px!important;padding:8px 10px!important}
  #klkStatusCamera .klkCameraEffectsPanel[hidden]{display:none!important}
