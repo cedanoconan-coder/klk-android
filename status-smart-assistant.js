@@ -144,6 +144,7 @@ function init(){
    camera.appendChild(preset);
    preset.addEventListener('click',async()=>{
      selectEffect(beardEntry);preset.setAttribute('aria-pressed','true');
+     window.KLKBeardMask?.setEnabled(true);
      if(!window.KLKMediaPipeFace)return;
      preset.disabled=true;
      try{await window.KLKMediaPipeFace.initialize()}catch(error){console.warn('León: seguimiento facial no disponible',error);preset.title='No se pudo iniciar seguimiento facial'}
