@@ -75,7 +75,6 @@
     ['Dorado','🌞','[data-face-look="golden"]']
   ];
   const beardPresets=globalThis.KLKBeardStyles?.all||[];
-  const beardFallback={stubble:'stubble','short-boxed':'short',full:'full',corporate:'short',goatee:'goatee',circle:'goatee','van-dyke':'goatee',balbo:'short',anchor:'goatee','chin-strap':'short',ducktail:'full',garibaldi:'full'};
   beardPresets.forEach(style=>choices.push([style.name,'🧔','[data-beard-preset="'+style.id+'"]']));
   const beardControls=document.createElement('div');
   beardControls.hidden=true;
@@ -95,7 +94,7 @@
     buttons[selectedEffect].scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});
     // Clear previous category so one circle means one effect, not stacked effects.
     const selector=choices[selectedEffect][2];
-    if(!selector.startsWith('[data-beard-preset=')){manLook='none';}
+    if(!selector.startsWith('[data-beard-preset=')){manLook='none';window.KLKBeardMask?.setEnabled(false);}
     if(!selector.startsWith('[data-eye-color='))panel.querySelector('[data-eye-color="none"]')?.click();
     if(!selector.startsWith('[data-skin-preset='))panel.querySelector('[data-skin-preset="0"]')?.click();
     if(!selector.startsWith('[data-selfie-filter='))panel.querySelector('[data-selfie-filter="normal"]')?.click();
@@ -128,7 +127,7 @@
   function resetElapsed(){clearInterval(elapsedTimer);elapsedTimer=null;timerDisplay.classList.remove('visible');progress.parentElement.style.display='none';progress.style.width='0%';clock.textContent='00:00'}
   function updateElapsed(){const seconds=Math.min(30,Math.floor((performance.now()-recordStartedAt)/1000));clock.textContent='00:'+String(seconds).padStart(2,'0');progress.style.width=Math.min(100,(performance.now()-recordStartedAt)/30000*100)+'%'}
   function stopOutput(){if(outputStream)outputStream.getTracks().forEach(track=>track.stop());outputStream=null}
-  function stopStream(){cancelAnimationFrame(renderFrame);renderFrame=0;stopOutput();if(stream)stream.getTracks().forEach(track=>track.stop());stream=null;video.srcObject=null;facePoints=null}
+  function stopStream(){window.KLKBeardMask?.setEnabled(false);window.KLKStatusFaceBridge?.stop();cancelAnimationFrame(renderFrame);renderFrame=0;stopOutput();if(stream)stream.getTracks().forEach(track=>track.stop());stream=null;video.srcObject=null;facePoints=null}
   function close(){closed=true;clearTimeout(holdTimer);pressed=false;discardRecording=true;if(recorder&&recorder.state==='recording')recorder.stop();clearTimeout(recordTimer);resetElapsed();panel.classList.remove('open');stopStream()}
   async function loadVision(){if(visionFiles)return visionFiles;if(!visionPromise)visionPromise=(async()=>{const vision=await import('./klk-face-assets/vision_bundle.mjs');visionFiles=await vision.FilesetResolver.forVisionTasks('./klk-face-assets/wasm');return vision})().catch(error=>{visionPromise=null;throw error});return visionPromise}
   let lastFaceTransform=null,lastFaceBlendshapes=null;
@@ -324,9 +323,9 @@
   }
   function render(){
    if(!stream||closed)return;if(video.readyState>=2&&video.videoWidth){const scale=Math.min(1,1600/Math.max(video.videoWidth,video.videoHeight)),width=Math.max(1,Math.round(video.videoWidth*scale)),height=Math.max(1,Math.round(video.videoHeight*scale));if(canvas.width!==width||canvas.height!==height){canvas.width=width;canvas.height=height}const filterAmount=Number(filterStrengthInput.value)/100;ctx.filter=(selfieFilters[selfieFilter]||selfieFilters.normal)(filterAmount);ctx.drawImage(video,0,0,width,height);ctx.filter='none';
-    const now=performance.now();if((eyeColor!=='none'||skinSmooth>0||faceLook!=='none'||manLook!=='none')&&landmarker&&now-lastDetection>70){lastDetection=now;try{(()=>{const result=landmarker.detectForVideo(video,now);lastFaceTransform=result.facialTransformationMatrixes?.[0]||null;lastFaceBlendshapes=result.faceBlendshapes?.[0]||null;updateFaceTracker(result.faceLandmarks?.[0]||null,now)})()}catch(error){message.textContent='El seguimiento facial tuvo un problema: '+error.message}}
+    const now=performance.now();if((eyeColor!=='none'||skinSmooth>0||faceLook!=='none')&&landmarker&&now-lastDetection>70){lastDetection=now;try{(()=>{const result=landmarker.detectForVideo(video,now);lastFaceTransform=result.facialTransformationMatrixes?.[0]||null;lastFaceBlendshapes=result.faceBlendshapes?.[0]||null;updateFaceTracker(result.faceLandmarks?.[0]||null,now)})()}catch(error){message.textContent='El seguimiento facial tuvo un problema: '+error.message}}
     if(skinSmooth>0&&facePoints)drawSkinSmoothing();
-    if(eyeColor!=='none'&&facePoints){const alpha=Number(eyeStrengthInput.value)/100,palette=eyePalettes[eyeColor]||eyePalettes.blue;drawIris(468,469,eyeContours[0],alpha,palette);drawIris(473,474,eyeContours[1],alpha,palette)}if(faceLook!=='none'&&facePoints)drawFaceLook();if(manLook!=='none'&&facePoints){if(now-lastBeardNotice>5000){message.textContent='Seguimiento facial activo · barba '+manLook;lastBeardNotice=now}try{drawManLook()}catch(error){if(now-lastBeardNotice>3000){message.textContent='Error al dibujar barba: '+error.message;lastBeardNotice=now}}}
+    if(eyeColor!=='none'&&facePoints){const alpha=Number(eyeStrengthInput.value)/100,palette=eyePalettes[eyeColor]||eyePalettes.blue;drawIris(468,469,eyeContours[0],alpha,palette);drawIris(473,474,eyeContours[1],alpha,palette)}if(faceLook!=='none'&&facePoints)drawFaceLook();// Beard is rendered exclusively by WebGL2 and composited into the camera canvas.\n     compositeBeardForCapture();
    }renderFrame=requestAnimationFrame(render)
   }
   function attach(file){const transfer=new DataTransfer();transfer.items.add(file);input.files=transfer.files;input.dispatchEvent(new Event('change',{bubbles:true}));const feedback=document.getElementById('statusFeedback');if(feedback)feedback.textContent=(file.type.startsWith('video/')?'Video':'Foto')+' listo para publicar.';close()}
@@ -370,6 +369,20 @@
     if(torch)try{await track.applyConstraints({advanced:[{torch:false}]})}catch(_){}
    }
   }
+  function compositeBeardForCapture(){
+    if(manLook==='none')return;
+    const overlay=panel.querySelector('.klkBeardMaskOverlay');
+    if(!overlay||!overlay.width||!overlay.height)return;
+    const videoRect=video.getBoundingClientRect(),hostRect=panel.getBoundingClientRect();
+    const sx=(videoRect.left-hostRect.left)*overlay.width/Math.max(1,hostRect.width);
+    const sy=(videoRect.top-hostRect.top)*overlay.height/Math.max(1,hostRect.height);
+    const sw=videoRect.width*overlay.width/Math.max(1,hostRect.width);
+    const sh=videoRect.height*overlay.height/Math.max(1,hostRect.height);
+    ctx.save();
+    if(front){ctx.translate(canvas.width,0);ctx.scale(-1,1)}
+    ctx.drawImage(overlay,sx,sy,sw,sh,0,0,canvas.width,canvas.height);
+    ctx.restore();
+  }
   async function takePhoto(){if(!video.videoWidth){message.textContent='La cámara aún no está lista.';return}if((eyeColor!=='none'||skinSmooth>0||faceLook!=='none'||manLook!=='none')&&!landmarker){message.textContent='Activa el seguimiento facial antes de capturar.';return}const blob=await withFlash(()=>new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',.9)));if(blob)attach(new File([blob],'estado-foto.jpg',{type:'image/jpeg'}))}
   async function selectEyeColor(color){eyeColor=color;facePoints=null;panel.querySelectorAll('[data-eye-color]').forEach(button=>{const active=button.dataset.eyeColor===color;button.classList.toggle('active',active);button.setAttribute('aria-pressed',String(active))});if(color==='none'){shutter.disabled=false;message.textContent='Color natural · Elige un filtro para tu selfie';return}shutter.disabled=true;message.textContent='Cargando seguimiento facial…';try{await ensureLandmarker();if(closed)return;shutter.disabled=false;message.textContent='Ojos '+({blue:'azules',green:'verdes',hazel:'color miel',violet:'violeta',gray:'grises'}[color]||'con color')+' activados · seguimiento facial en vivo'}catch(error){eyeColor='none';shutter.disabled=false;panel.querySelectorAll('[data-eye-color]').forEach(button=>{const active=button.dataset.eyeColor==='none';button.classList.toggle('active',active);button.setAttribute('aria-pressed',String(active))});message.textContent='No se pudo cargar el seguimiento facial: '+error.message}}
   function selectSelfieFilter(filter){selfieFilter=filter;panel.querySelectorAll('[data-selfie-filter]').forEach(button=>{const active=button.dataset.selfieFilter===filter;button.classList.toggle('active',active);button.setAttribute('aria-pressed',String(active))});message.textContent='Filtro '+({normal:'natural',warm:'cálido',cool:'frío',glow:'brillo',vintage:'vintage',mono:'blanco y negro',rose:'rosa',cinematic:'cine',dream:'sueño',vivid:'vibrante'}[filter]||'natural')+' activado'}
@@ -379,11 +392,12 @@
   panel.querySelectorAll('[data-beard-preset]').forEach(button=>button.onclick=async()=>{
     const id=button.dataset.beardPreset,style=globalThis.KLKBeardStyles?.get(id);
     if(!style)return;
-    manLook=beardFallback[id]||'short';
+    manLook=id;
+    if(!window.KLKBeardMask?.setStyle(id)){manLook='none';message.textContent='Motor de barba WebGL2 no disponible';return}
     facePoints=null;
     message.textContent='Activando '+style.name+' (vista experimental)…';
-    try{await ensureLandmarker();if(!closed)message.textContent=style.name+' · vista experimental, realismo pendiente de validar'}
-    catch(error){manLook='none';message.textContent='No se pudo activar barba: '+error.message}
+    try{const detector=await ensureLandmarker();if(closed)return;window.KLKStatusFaceBridge?.setDetector(detector);window.KLKBeardMask?.setEnabled(true);message.textContent=style.name+' · motor WebGL2 experimental activo'}
+    catch(error){manLook='none';window.KLKBeardMask?.setEnabled(false);message.textContent='No se pudo activar barba: '+error.message}
   });
   effectsButton.onclick=()=>{const show=effectsPanel.hidden;effectsPanel.hidden=!show;effectsButton.setAttribute('aria-expanded',String(show))};panel.querySelectorAll('[data-effect-tab]').forEach(tab=>tab.onclick=()=>{panel.querySelectorAll('[data-effect-tab]').forEach(item=>item.setAttribute('aria-selected',String(item===tab)));panel.querySelectorAll('[data-effect-category]').forEach(group=>group.hidden=group.dataset.effectCategory!==tab.dataset.effectTab)});panel.querySelectorAll('[data-skin-preset]').forEach(button=>button.onclick=()=>{const value=Number(button.dataset.skinPreset);skinStrengthInput.value=String(value);skinStrengthInput.dispatchEvent(new Event('input',{bubbles:true}));panel.querySelectorAll('[data-skin-preset]').forEach(item=>{const active=item===button;item.classList.toggle('active',active);item.setAttribute('aria-pressed',String(active))})});skinStrengthInput.addEventListener('input',async()=>{skinSmooth=Number(skinStrengthInput.value);panel.querySelectorAll('[data-skin-preset]').forEach(item=>{const active=Number(item.dataset.skinPreset)===skinSmooth;item.classList.toggle('active',active);item.setAttribute('aria-pressed',String(active))});if(!skinSmooth){message.textContent='Piel natural · Elige un look creativo';return}message.textContent='Activando suavizado de piel…';try{await ensureLandmarker();if(!closed)message.textContent='Suavizado de piel activado · seguimiento facial en vivo'}catch(error){skinSmooth=0;skinStrengthInput.value='0';message.textContent='No se pudo activar el suavizado: '+error.message}});panel.querySelectorAll('[data-face-look]').forEach(button=>button.onclick=async()=>{const next=button.dataset.faceLook;panel.querySelectorAll('[data-face-look]').forEach(item=>{const active=item===button;item.classList.toggle('active',active);item.setAttribute('aria-pressed',String(active))});faceLook=next;facePoints=null;if(next==='none'){message.textContent='Maquillaje desactivado · rostro natural';return}message.textContent='Activando seguimiento facial…';try{await ensureLandmarker();if(!closed)message.textContent='Efecto '+({blush:'rubor',freckles:'pecas',lipstick:'labios',glam:'glam',golden:'dorado'}[next]||'facial')+' activo · sigue tu rostro en vivo'}catch(error){faceLook='none';message.textContent='No se pudo activar el seguimiento facial: '+error.message}});panel.querySelectorAll('[data-man-look]').forEach(button=>button.onclick=async()=>{message.textContent='Efectos de barba temporalmente desactivados mientras se desarrolla el reemplazo';return;const next=button.dataset.manLook;panel.querySelectorAll('[data-man-look]').forEach(item=>{const active=item===button;item.classList.toggle('active',active);item.setAttribute('aria-pressed',String(active))});manLook=next;facePoints=null;if(next==='none'){message.textContent='Efecto masculino desactivado';return}message.textContent='Activando seguimiento facial…';try{await ensureLandmarker();if(!closed)message.textContent='Buscando rostro para aplicar '+({stubble:'barba de 3 días',short:'barba corta',goatee:'candado',mustache:'bigote',full:'barba completa'}[next]||'de barba')+' · mira a la cámara frontal'}catch(error){manLook='none';panel.querySelectorAll('[data-man-look]').forEach(item=>{const active=item.dataset.manLook==='none';item.classList.toggle('active',active);item.setAttribute('aria-pressed',String(active))});message.textContent='No se pudo activar el seguimiento facial: '+error.message}});panel.querySelectorAll('[data-eye-color]').forEach(button=>button.onclick=()=>selectEyeColor(button.dataset.eyeColor));panel.querySelectorAll('[data-selfie-filter]').forEach(button=>button.onclick=()=>selectSelfieFilter(button.dataset.selfieFilter));
   shutter.addEventListener('pointerdown',event=>{if(event.button!==0||!stream)return;event.preventDefault();pressed=true;recordingByHold=false;try{shutter.setPointerCapture(event.pointerId)}catch(_){}holdTimer=setTimeout(startRecording,450)});

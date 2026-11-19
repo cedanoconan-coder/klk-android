@@ -23,7 +23,7 @@ function shader(type,source){
  return s;
 }
 function initialize(){
- gl=canvas.getContext('webgl2',{alpha:true,antialias:true,premultipliedAlpha:false,depth:true});
+ gl=canvas.getContext('webgl2',{alpha:true,antialias:true,premultipliedAlpha:false,depth:true,preserveDrawingBuffer:true});
  if(!gl)throw Error('WebGL2 unavailable');
  const vs=shader(gl.VERTEX_SHADER,`#version 300 es
  in vec3 aPosition; in float aOpacity; in float aShade;
@@ -70,7 +70,7 @@ function projected(){
  const x=vr.left-hr.left+(vr.width-w)*pct(pos[0]);
  const y=vr.top-hr.top+(vr.height-h)*pct(pos[1]||pos[0]);
  const mirror=style.transform.includes('matrix(-')||style.transform.includes('scaleX(-1)')||video.classList.contains('mirrored');
- return {x,y,w,h,mirror};
+ return {x,y,w,h,mirror:false};
 }
 // Canonical mesh is bundled locally; no remote service is needed at runtime.
 async function loadFollicles(){
@@ -179,7 +179,7 @@ function sync(){
  detach();host=next;video=v;canvas=document.createElement('canvas');
  canvas.className='klkBeardMaskOverlay';
  canvas.setAttribute('aria-hidden','true');
- canvas.style.cssText='position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:3';
+ canvas.style.cssText='position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:3;visibility:hidden';
  if(getComputedStyle(host).position==='static')host.style.position='relative';
  host.appendChild(canvas);
  canvas.addEventListener('webglcontextlost',onContextLost,false);

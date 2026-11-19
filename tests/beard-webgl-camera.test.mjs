@@ -1,0 +1,16 @@
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import vm from 'node:vm';
+const root=new URL('../',import.meta.url);
+const camera=readFileSync(new URL('status-camera-effects.js',root),'utf8');
+const gpu=readFileSync(new URL('leon-ai-effects/beard-webgl3d.js',root),'utf8');
+const html=readFileSync(new URL('index.html',root),'utf8');
+new vm.Script(camera);new vm.Script(gpu);
+assert.match(html,/beard-webgl3d\.js\?v=4/);
+assert.match(camera,/KLKBeardMask\?\.setStyle\(id\)/);
+assert.match(camera,/KLKStatusFaceBridge\?\.setDetector\(detector\)/);
+assert.match(camera,/KLKBeardMask\?\.setEnabled\(true\)/);
+assert.match(camera,/compositeBeardForCapture\(\);const blob/);
+assert.doesNotMatch(camera,/try\{drawManLook\(\)\}/);
+assert.match(gpu,/preserveDrawingBuffer:true/);
+console.log('WebGL2 beard integration static checks passed');
