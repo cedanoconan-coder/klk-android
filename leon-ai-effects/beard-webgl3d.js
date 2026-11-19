@@ -115,7 +115,7 @@ function draw(geometry){
  lastRender=started;
  gl.viewport(0,0,canvas.width,canvas.height);
  gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
- const pts=geometry?.landmarks;lastFaceCount=pts?.length||0;lastSegmentCount=0;if(!pts||pts.length<468||!follicles)return;
+ const pts=geometry?.landmarks;lastFaceCount=pts?.length||0;lastSegmentCount=0;if(!pts||pts.length<468||!follicles?.length)return;
  const p=projected();if(!p)return;
  const lipL=pts[61],lipR=pts[291],lipTop=pts[0],lipBottom=pts[17];
  const mouthMinX=Math.min(lipL.x,lipR.x)-.018,mouthMaxX=Math.max(lipL.x,lipR.x)+.018;
@@ -170,7 +170,7 @@ function detach(){
  if(canvas){canvas.removeEventListener('webglcontextlost',onContextLost);canvas.removeEventListener('webglcontextrestored',onContextRestored)}
  canvas?.remove();host=video=canvas=gl=program=buffer=null;contextLost=false;
 }
-function onFrame(event){draw(event.detail?.geometry)}
+function onFrame(event){if(enabled)draw(event.detail?.geometry)}
 function onContextLost(event){event.preventDefault();contextLost=true;console.warn('KLK beard GPU context lost; preview effect suspended')}
 function onContextRestored(){contextLost=false;try{initialize();resize()}catch(error){console.warn('KLK beard GPU restore failed',error);contextLost=true}}
 function sync(){
@@ -191,7 +191,7 @@ function sync(){
  if(typeof ResizeObserver!=='undefined'){observer=new ResizeObserver(resize);observer.observe(host);observer.observe(video)}
 }
 function setStyle(id){if(!global.KLKBeardStyles?.get(id))return false;selectedStyle=id;return true}
-function setEnabled(v){enabled=!!v;if(enabled){lastRender=0;loadFollicles();sync()}else detach()}
+function setEnabled(v){enabled=!!v;if(enabled){lastRender=0;sync();void loadFollicles().then(roots=>{if(enabled&&roots?.length){sync()}else if(enabled){console.warn('KLK beard: no follicles loaded')}})}else detach()}
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&gl){gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT)}});
 window.addEventListener('resize',resize);
 global.KLKBeardMask=Object.freeze({setEnabled,setStyle,getStyle:()=>selectedStyle,setQuality,qualityStatus,resize,clear:()=>{if(gl)gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT)}});
