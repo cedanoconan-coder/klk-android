@@ -28,6 +28,41 @@ function init(){
    root.querySelectorAll('[data-klk-style]').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));
    feedback.textContent=style==='natural'?'Efectos naturales seleccionados.':'Categoría abierta. Elige el efecto que prefieras.';
  }));
+ // Mantener la vista previa libre: controles en una bandeja inferior compacta.
+ const compactStyle=document.createElement('style');
+ compactStyle.id='klk-status-compact-layout';
+ compactStyle.textContent=`
+ #klkStatusCamera{overflow:hidden}
+ #klkStatusCamera .klkCameraEffects{position:static;flex:0 0 auto;min-width:0}
+ #klkStatusCamera .klkSmartTools{position:fixed;left:12px;bottom:calc(112px + env(safe-area-inset-bottom));z-index:5;width:auto;max-width:calc(100vw - 24px);margin:0;padding:0;background:transparent}
+ #klkStatusCamera .klkSmartToggle{font-size:13px!important;padding:9px 12px!important;border-radius:24px!important;background:#24252bcc!important;color:#fff!important}
+ #klkStatusCamera #klkSmartOptions{position:absolute;left:0;bottom:45px;width:min(290px,calc(100vw - 24px));max-height:28vh;overflow-y:auto;padding:12px;border-radius:16px;background:#202127ee;box-sizing:border-box}
+ #klkStatusCamera #klkSmartOptions[hidden]{display:none!important}
+ #klkStatusCamera .klkCameraEffectsPanel:not([hidden]){position:fixed;z-index:6;left:8px;right:8px;bottom:calc(104px + env(safe-area-inset-bottom));width:auto!important;max-width:none!important;max-height:min(32vh,260px);overflow:auto;overscroll-behavior:contain;box-sizing:border-box;display:block!important;padding:12px!important;border-radius:18px;background:#202127ed;box-shadow:0 4px 22px #0006}
+ #klkStatusCamera .klkCameraEffectsPanel *{max-width:100%;box-sizing:border-box}
+ #klkStatusCamera .klkCameraEffectsPanel [class*="tabs"],#klkStatusCamera .klkCameraEffectsPanel [class*="Tabs"]{max-width:100%;overflow-x:auto;scrollbar-width:thin}
+ #klkStatusCamera .klkCameraEffectsPanel button{font-size:13px!important;padding:8px 10px!important}
+ #klkStatusCamera .klkCameraEffectsPanel[hidden]{display:none!important}
+ #klkStatusCamera .klkCompactClose{position:sticky;top:0;float:right;z-index:10;padding:6px 10px!important;background:#fff!important;color:#171717!important;font-size:12px!important}
+ @media(max-height:650px){#klkStatusCamera .klkCameraEffectsPanel:not([hidden]){max-height:26vh}#klkStatusCamera .klkSmartTools{bottom:calc(96px + env(safe-area-inset-bottom))}}
+ `;
+ document.head.appendChild(compactStyle);
+ const panel=camera.querySelector('.klkCameraEffectsPanel');
+ if(panel){
+   panel.hidden=true;
+   const close=document.createElement('button');close.type='button';close.className='klkCompactClose';close.textContent='✕ Ocultar';close.setAttribute('aria-label','Ocultar efectos y ver rostro');
+   close.addEventListener('click',()=>{panel.hidden=true;options.hidden=true;toggle.setAttribute('aria-expanded','false')});
+   panel.prepend(close);
+   // Al elegir un efecto se conserva la vista previa de la cara.
+   panel.addEventListener('click',event=>{
+     if(event.target.closest('.klkCompactClose'))return;
+     if(event.target.closest('[data-effect-tab]'))return;
+     if(event.target.closest('button[data-man-look],button[data-eye-color],button[data-selfie-filter],button[data-skin-preset]')){
+       setTimeout(()=>{panel.hidden=true},250);
+     }
+   });
+ }
+
 }
 function addEntry(){
  const updates=document.getElementById('updatesPanel');
