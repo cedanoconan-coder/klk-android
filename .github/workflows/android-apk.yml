@@ -38,8 +38,18 @@ jobs:
         run: |
           set -e
           mkdir -p www
-          cp index.html klk-call-theme.css calls.js group-calls.js chat-camera.js qr-contacts.js sticker-studio.js icon.svg manifest.webmanifest sw.js www/
-          if [ -d assets ]; then cp -R assets www/; fi
+          # Include all locally referenced JS/CSS and facial tracking assets in the APK.
+          find . -maxdepth 1 -type f \( -name '*.js' -o -name '*.css' -o -name '*.html' -o -name '*.svg' -o -name '*.webmanifest' \) -exec cp {} www/ \;
+          for folder in assets leon-ai-effects klk-face-assets; do
+            if [ -d "$folder" ]; then cp -R "$folder" www/; fi
+          done
+          # Fail the Android build instead of shipping an APK with invisible beard effects.
+          for required in index.html status-camera-effects.js leon-ai-effects/beard-styles.js leon-ai-effects/beard-webgl3d.js leon-ai-effects/face-geometry.js leon-ai-effects/assets/canonical_face_model.obj klk-face-assets/vision_bundle.mjs klk-face-assets/face_landmarker.task; do
+            test -s "www/$required" || { echo "::error::Falta recurso de barba en APK: $required"; exit 1; }
+          done
+          node --check www/status-camera-effects.js
+          node --check www/leon-ai-effects/beard-webgl3d.js
+          node --check www/leon-ai-effects/face-geometry.js
           # Evitar generar una APK incompleta si falta un recurso esencial.
           test -s www/group-calls.js
           test -s www/chat-camera.js
