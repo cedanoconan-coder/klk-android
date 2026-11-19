@@ -103,21 +103,38 @@
   async function start(){
    stopStream();resetFaceTracker();closed=false;shutter.disabled=false;
    const desired=front?'user':'environment';
-   const cameras=await navigator.mediaDevices.enumerateDevices().catch(()=>[]);
-   const videoInputs=cameras.filter(device=>device.kind==='videoinput');
-   const match=videoInputs.find(device=>desired==='user'?/front|frontal|selfie|user|face|facing front/i.test(device.label):/back|rear|trasera|environment|facing back/i.test(device.label));
-   const base={width:{ideal:1280},height:{ideal:720},frameRate:{ideal:24,max:30}};
-   const constraints=match?.deviceId?{...base,deviceId:{exact:match.deviceId}}:{...base,facingMode:{exact:desired}};
-   try{
-    stream=await navigator.mediaDevices.getUserMedia({audio:false,video:constraints});
-   }catch(error){
-    if(!['OverconstrainedError','NotFoundError'].includes(error.name))throw error;
-    stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{...base,facingMode:{ideal:desired}}});
+   const devices=await navigator.mediaDevices.enumerateDevices().catch(()=>[]);
+   const cameras=devices.filter(device=>device.kind==='videoinput');
+   const matcher=desired==='user'?/front|frontal|selfie|user|face|facing front/i:/back|rear|trasera|environment|facing back/i;
+   const match=cameras.find(device=>matcher.test(device.label));
+   const attempts=[
+    {facingMode:{exact:desired}},
+    ...(match?.deviceId?[{deviceId:{exact:match.deviceId}}]:[]),
+    {facingMode:{ideal:desired}}
+   ];
+   let lastError=null,selected=null;
+   for(const constraint of attempts){
+    try{
+     const candidate=await navigator.mediaDevices.getUserMedia({audio:false,video:constraint});
+     const track=candidate.getVideoTracks()[0];
+     const settings=track?.getSettings?.()||{};
+     const label=track?.label||'';
+     const actual=settings.facingMode;
+     const wrongFacing=actual&&actual!==desired;
+     const wrongLabel=matcher.test(label)===false&&/(front|frontal|selfie|user|back|rear|trasera|environment)/i.test(label);
+     if(wrongFacing||wrongLabel){candidate.getTracks().forEach(t=>t.stop());lastError=new Error('Android devolvió otra lente: '+(label||actual));continue}
+     stream=candidate;selected={label:label||'Sin nombre',facing:actual||'no informado',deviceId:settings.deviceId||'no informado'};
+     break;
+    }catch(error){lastError=error}
    }
-   const track=stream.getVideoTracks()[0],actual=track?.getSettings?.().facingMode;
-   if(actual&&actual!==desired){stopStream();throw new Error('El dispositivo mantuvo la cámara '+(actual==='environment'?'trasera':'frontal')+'.');}
-   video.srcObject=stream;video.style.transform=front?'scaleX(-1)':'none';canvas.style.transform=front?'scaleX(-1)':'none';
-   await video.play();render();
+   if(!stream)throw lastError||new Error('No se pudo seleccionar la lente '+desired);
+   video.srcObject=stream;
+   video.style.transform=front?'scaleX(-1)':'none';
+   canvas.style.transform=front?'scaleX(-1)':'none';
+   await video.play();
+   const status=front?'Frontal':'Trasera';
+   message.textContent=status+' · '+selected.label+' · orientación: '+selected.facing;
+   render();
   }
   function resetFaceTracker(){facePoints=null;smoothedFacePoints=null;lastFaceSeenAt=0}
   function updateFaceTracker(detected,now){
@@ -265,7 +282,7 @@
   function selectSelfieFilter(filter){selfieFilter=filter;panel.querySelectorAll('[data-selfie-filter]').forEach(button=>{const active=button.dataset.selfieFilter===filter;button.classList.toggle('active',active);button.setAttribute('aria-pressed',String(active))});message.textContent='Filtro '+({normal:'natural',warm:'cálido',cool:'frío',glow:'brillo',vintage:'vintage',mono:'blanco y negro',rose:'rosa',cinematic:'cine',dream:'sueño',vivid:'vibrante'}[filter]||'natural')+' activado'}
   function startRecording(){if(!pressed||!stream||typeof MediaRecorder==='undefined'){message.textContent='La grabación no está disponible en este navegador.';return}if((eyeColor!=='none'||manLook!=='none')&&!landmarker){message.textContent='Espera a que se active el seguimiento facial.';return}const preferred=['video/mp4;codecs=avc1.42E01E,mp4a.40.2','video/mp4','video/webm;codecs=vp8,opus','video/webm'],chosen=preferred.find(type=>MediaRecorder.isTypeSupported(type));try{stopOutput();const canvasStream=canvas.captureStream(24);outputStream=new MediaStream([...canvasStream.getVideoTracks(),...stream.getAudioTracks()]);chunks=[];discardRecording=false;recorder=new MediaRecorder(outputStream,{...(chosen?{mimeType:chosen}:{}),videoBitsPerSecond:1600000,audioBitsPerSecond:96000});recorder.ondataavailable=event=>{if(event.data.size)chunks.push(event.data)};recorder.onstop=()=>{clearTimeout(recordTimer);stopOutput();resetElapsed();shutter.classList.remove('recording');if(discardRecording)return;const blob=new Blob(chunks,{type:recorder.mimeType||'video/webm'});if(blob.size>52428800){message.textContent='Video demasiado grande. Graba uno más corto.';return}if(blob.size)attach(new File([blob],'estado-video.'+(blob.type.includes('mp4')?'mp4':'webm'),{type:blob.type}))};recorder.start(250);recordStartedAt=performance.now();timerDisplay.classList.add('visible');progress.parentElement.style.display='block';updateElapsed();clearInterval(elapsedTimer);elapsedTimer=setInterval(updateElapsed,100);recordingByHold=true;shutter.classList.add('recording');message.textContent=(eyeColor!=='none'?'Grabando con ojos '+({blue:'azules',green:'verdes',hazel:'miel',violet:'violetas',gray:'grises'}[eyeColor]||'con efecto')+' · ':'')+(selfieFilter!=='normal'?'filtro '+selfieFilter+' · ':'')+'Suelta para terminar (máximo 30 segundos)';recordTimer=setTimeout(()=>{if(recorder&&recorder.state==='recording'){updateElapsed();recorder.stop()}},30000)}catch(error){recordingByHold=false;stopOutput();message.textContent='No se pudo iniciar grabación: '+error.message}}
   trigger.addEventListener('click',async event=>{event.preventDefault();event.stopImmediatePropagation();panel.classList.add('open');message.textContent='Solicitando acceso a cámara y micrófono…';try{if(!navigator.mediaDevices?.getUserMedia)throw new Error('Cámara no disponible');await start();message.textContent='Toca para foto · Mantén pulsado para grabar video';}catch(error){panel.classList.remove('open');stopStream();message.textContent='No se pudo abrir la cámara de KLK: '+error.message;panel.classList.add('open')}},true);
-  panel.querySelector('[data-cam="close"]').onclick=close;panel.querySelector('[data-cam="flip"]').onclick=async event=>{const button=event.currentTarget;if(button.disabled)return;button.disabled=true;const previous=front;front=!front;try{await start();message.textContent=front?'Cámara frontal activa':'Cámara trasera activa'}catch(error){front=previous;message.textContent='No se pudo cambiar la cámara: '+error.message;try{await start()}catch(_){}}finally{button.disabled=false}};
+  panel.querySelector('[data-cam="close"]').onclick=close;panel.querySelector('[data-cam="flip"]').onclick=async event=>{const button=event.currentTarget;if(button.disabled)return;button.disabled=true;const previous=front;front=!front;try{await start();void 0}catch(error){front=previous;message.textContent='No se pudo cambiar la cámara: '+error.message;try{await start()}catch(_){}}finally{button.disabled=false}};
   effectsButton.onclick=()=>{const show=effectsPanel.hidden;effectsPanel.hidden=!show;effectsButton.setAttribute('aria-expanded',String(show))};panel.querySelectorAll('[data-effect-tab]').forEach(tab=>tab.onclick=()=>{panel.querySelectorAll('[data-effect-tab]').forEach(item=>item.setAttribute('aria-selected',String(item===tab)));panel.querySelectorAll('[data-effect-category]').forEach(group=>group.hidden=group.dataset.effectCategory!==tab.dataset.effectTab)});panel.querySelectorAll('[data-skin-preset]').forEach(button=>button.onclick=()=>{const value=Number(button.dataset.skinPreset);skinStrengthInput.value=String(value);skinStrengthInput.dispatchEvent(new Event('input',{bubbles:true}));panel.querySelectorAll('[data-skin-preset]').forEach(item=>{const active=item===button;item.classList.toggle('active',active);item.setAttribute('aria-pressed',String(active))})});skinStrengthInput.addEventListener('input',async()=>{skinSmooth=Number(skinStrengthInput.value);panel.querySelectorAll('[data-skin-preset]').forEach(item=>{const active=Number(item.dataset.skinPreset)===skinSmooth;item.classList.toggle('active',active);item.setAttribute('aria-pressed',String(active))});if(!skinSmooth){message.textContent='Piel natural · Elige un look creativo';return}message.textContent='Activando suavizado de piel…';try{await ensureLandmarker();if(!closed)message.textContent='Suavizado de piel activado · seguimiento facial en vivo'}catch(error){skinSmooth=0;skinStrengthInput.value='0';message.textContent='No se pudo activar el suavizado: '+error.message}});panel.querySelectorAll('[data-face-look]').forEach(button=>button.onclick=async()=>{const next=button.dataset.faceLook;panel.querySelectorAll('[data-face-look]').forEach(item=>{const active=item===button;item.classList.toggle('active',active);item.setAttribute('aria-pressed',String(active))});faceLook=next;facePoints=null;if(next==='none'){message.textContent='Maquillaje desactivado · rostro natural';return}message.textContent='Activando seguimiento facial…';try{await ensureLandmarker();if(!closed)message.textContent='Efecto '+({blush:'rubor',freckles:'pecas',lipstick:'labios',glam:'glam',golden:'dorado'}[next]||'facial')+' activo · sigue tu rostro en vivo'}catch(error){faceLook='none';message.textContent='No se pudo activar el seguimiento facial: '+error.message}});panel.querySelectorAll('[data-man-look]').forEach(button=>button.onclick=async()=>{const next=button.dataset.manLook;panel.querySelectorAll('[data-man-look]').forEach(item=>{const active=item===button;item.classList.toggle('active',active);item.setAttribute('aria-pressed',String(active))});manLook=next;facePoints=null;if(next==='none'){message.textContent='Efecto masculino desactivado';return}message.textContent='Activando seguimiento facial…';try{await ensureLandmarker();if(!closed)message.textContent='Efecto '+({stubble:'barba de 3 días',short:'barba corta',goatee:'candado',mustache:'bigote',full:'barba completa'}[next]||'de barba')+' activo · sigue tu rostro en vivo'}catch(error){manLook='none';panel.querySelectorAll('[data-man-look]').forEach(item=>{const active=item.dataset.manLook==='none';item.classList.toggle('active',active);item.setAttribute('aria-pressed',String(active))});message.textContent='No se pudo activar el seguimiento facial: '+error.message}});panel.querySelectorAll('[data-eye-color]').forEach(button=>button.onclick=()=>selectEyeColor(button.dataset.eyeColor));panel.querySelectorAll('[data-selfie-filter]').forEach(button=>button.onclick=()=>selectSelfieFilter(button.dataset.selfieFilter));
   shutter.addEventListener('pointerdown',event=>{if(event.button!==0||!stream)return;event.preventDefault();pressed=true;recordingByHold=false;try{shutter.setPointerCapture(event.pointerId)}catch(_){}holdTimer=setTimeout(startRecording,450)});
   function finishPress(event){if(!pressed)return;event.preventDefault();pressed=false;clearTimeout(holdTimer);if(recordingByHold){recordingByHold=false;if(recorder&&recorder.state==='recording')recorder.stop()}else takePhoto()}
