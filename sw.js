@@ -71,12 +71,14 @@ self.addEventListener("fetch", event => {
   if(url.origin !== self.location.origin)return;
   // No almacenar invitaciones ni respuestas de servicios privados.
   if(url.searchParams.has("invite"))return;
+  // Never cache personalized navigation URLs or authentication callbacks.
+  const hasNavigationParameters = request.mode === "navigate" && url.search.length > 0;
   const isShell = request.mode === "navigate" || /\.(?:js|css|svg|webmanifest|html)$/.test(url.pathname) || url.pathname.endsWith("/");
   if(!isShell)return;
   event.respondWith((async()=>{
     const cache=await caches.open(CACHE_NAME);
     if(request.mode==="navigate"){
-      try{const fresh=await fetch(request,{cache:"no-store"});if(fresh.ok)await cache.put(request,fresh.clone());return fresh;}catch(error){return (await cache.match(request))||(await cache.match("./index.html"))||Response.error();}
+      try{const fresh=await fetch(request,{cache:"no-store"});if(fresh.ok && !hasNavigationParameters)await cache.put("./index.html",fresh.clone());return fresh;}catch(error){return (await cache.match("./index.html"))||Response.error();}
     }
     const cached=await cache.match(request);
     if(url.pathname.endsWith("/chat-camera.js") || url.pathname.endsWith("/calls.js") || url.pathname.endsWith("/sticker-studio.js")){
