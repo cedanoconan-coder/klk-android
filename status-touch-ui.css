@@ -17,3 +17,10 @@
 @media(max-width:400px){#klkStatusCamera [data-status-music]{left:8px!important;right:8px!important}#klkStatusCamera [data-music-row] span{font-size:10px!important}#klkStatusCamera [data-music-row] button{width:36px!important;height:36px!important;min-width:36px!important;min-height:36px!important}}
 @media(max-height:680px){#klkStatusCamera [data-status-music]{top:calc(env(safe-area-inset-top,0px) + 65px)!important}#klkStatusCamera [data-music-details]{max-height:120px}}
 @media(prefers-reduced-motion:no-preference){#klkStatusCamera [data-music-editor]{transition:opacity .18s ease,transform .18s ease}}
+
+/* Keep the music shortcut compact and away from the camera preview. */
+#klkStatusCamera [data-status-music]{left:auto!important;right:12px!important;width:auto!important;max-width:min(88vw,340px)!important}
+#klkStatusCamera [data-status-music]>[data-music-open]{margin:0 0 0 auto!important;min-width:44px!important;min-height:44px!important}
+#klkStatusCamera [data-status-music]>[data-music-open][aria-label="Abrir ajustes de música"]{width:44px!important;height:44px!important;border-radius:50%!important;padding:0!important;font-size:22px!important}
+#klkStatusCamera [data-music-editor]{width:min(88vw,340px)!important;margin:8px 0 0 auto!important}
+#klkStatusCamera [data-music-editor][hidden]{display:none!important}
