@@ -13,7 +13,7 @@
  picker.append(label,input);picker.after(controls);
  let music=null,url=null,busy=false;
  function clear(){music=null;if(url)URL.revokeObjectURL(url);url=null;input.value='';controls.hidden=true;controls.querySelector('audio').removeAttribute('src');controls.querySelector('audio').load()}
- input.addEventListener('change',()=>{const file=input.files?.[0];if(!file)return;if(!file.type.startsWith('audio/')||file.size>25*1048576){alert('Elige un audio de hasta 25 MB.');clear();return}clear();music=file;url=URL.createObjectURL(file);controls.hidden=false;controls.querySelector('audio').src=url;controls.querySelector('.klkStatusMusicName').textContent=file.name});
+ input.addEventListener('change',()=>{const file=input.files?.[0];if(!file)return;if(!file.type.startsWith('audio/')||file.size>25*1048576){alert('Elige un audio de hasta 25 MB.');clear();return}clear();music=file;url=URL.createObjectURL(file);controls.hidden=false;controls.querySelector('audio').src=url;name.textContent='Música seleccionada'});
  controls.querySelector('.klkStatusMusicRemove').onclick=clear;
  document.addEventListener('klk-status-published',clear);
  async function composePhoto(photo,audioFile){
