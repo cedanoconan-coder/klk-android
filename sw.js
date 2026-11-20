@@ -54,7 +54,7 @@ messaging.onBackgroundMessage(payload => {
     vibrate: [180, 80, 180]
   });
 });
-const CACHE_NAME = "klk-shell-chat-mirror-v431";
+const CACHE_NAME = "klk-shell-chat-mirror-v432";
 const APP_SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon.svg", "./calls.js?v=231", "./klk-call-theme.css?v=3", "./navigation.js", "./chat-camera.js?v=233", "./sticker-studio.js?v=2", "./status-camera-effects.js?v=431", "./version.json"];
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => Promise.allSettled(APP_SHELL.map(path => cache.add(path)))));
