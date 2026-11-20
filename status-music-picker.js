@@ -21,14 +21,14 @@ function mount(){
  host.querySelector('[data-music-open]').onclick=()=>input.click();
  host.querySelector('[data-music-remove]').onclick=()=>{stop();input.value=''};
  play.onclick=()=>{if(!audio)return;if(!audio.paused){audio.pause();return}audio.currentTime=Number(start.value);audio.play().catch(()=>{});};
- start.oninput=sync;
+ start.oninput=()=>{sync();if(audio&&!audio.paused){audio.currentTime=Number(start.value)}};
  input.onchange=()=>{
   stop();const file=input.files&&input.files[0];if(!file)return;
   if(!file.type.startsWith('audio/')||file.size>MAX_BYTES){alert('Selecciona un audio compatible de hasta 30 MB.');input.value='';return}
   selected=file;url=URL.createObjectURL(file);audio=new Audio();audio.preload='metadata';
-  audio.onloadedmetadata=()=>{if(!Number.isFinite(audio.duration)||audio.duration<=0){stop();alert('No se pudo leer la duración.');return}start.max=String(Math.max(0,audio.duration-1));start.value='0';host.querySelector('[data-music-name]').textContent=file.name;editor.hidden=false;host.querySelector('[data-music-open]').hidden=true;sync()};
+  audio.onloadedmetadata=()=>{if(!Number.isFinite(audio.duration)||audio.duration<=0){stop();alert('No se pudo leer la duración.');return}start.max=String(Math.max(0,audio.duration-1));start.value='0';host.querySelector('[data-music-name]').textContent=file.name;editor.hidden=false;details.hidden=true;expand.setAttribute('aria-expanded','false');expand.textContent='⌄';host.querySelector('[data-music-open]').hidden=true;sync()};
   audio.onplay=()=>{play.textContent='Ⅱ';play.setAttribute('aria-label','Pausar fragmento')};audio.onpause=()=>{play.textContent='▶';play.setAttribute('aria-label','Reproducir fragmento')};
-  audio.ontimeupdate=()=>{if(audio&&audio.currentTime>=Number(start.value)+40)audio.pause()};
+  audio.ontimeupdate=()=>{if(audio&&audio.currentTime>=Math.min(audio.duration,Number(start.value)+40))audio.pause()};
   audio.onerror=()=>{stop();alert('No se pudo abrir el audio.')};audio.src=url;
  };
  const observer=new MutationObserver(()=>{if(!camera.isConnected){stop();observer.disconnect()}else if(!camera.classList.contains('open')&&audio&&!audio.paused)audio.pause()});
