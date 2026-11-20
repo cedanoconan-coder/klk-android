@@ -15,7 +15,7 @@ function mount(){
  const input=host.querySelector('input'),editor=host.querySelector('[data-music-editor]'),start=host.querySelector('[data-music-start]'),range=host.querySelector('[data-music-range]');
  const stop=()=>{if(audio){audio.pause();audio.removeAttribute('src');audio.load();audio=null}if(url){URL.revokeObjectURL(url);url=''}selected=null;editor.hidden=true};
  const fmt=n=>Number.isFinite(n)?Math.floor(n/60)+':'+String(Math.floor(n%60)).padStart(2,'0'):'0:00';
- const sync=()=>{if(!audio)return;const a=Number(start.value);range.textContent=fmt(a)+' – '+fmt(Math.min(audio.duration,a+30));};
+ const sync=()=>{if(!audio)return;const a=Number(start.value);range.textContent=fmt(a)+' – '+fmt(Math.min(audio.duration,a+40));};
  host.querySelector('[data-music-open]').onclick=()=>input.click();
  host.querySelector('[data-music-remove]').onclick=()=>{stop();input.value=''};
  host.querySelector('[data-music-play]').onclick=()=>{if(!audio)return;if(!audio.paused){audio.pause();return}audio.currentTime=Number(start.value);audio.play().catch(()=>{});};
@@ -25,12 +25,12 @@ function mount(){
   if(!file.type.startsWith('audio/')||file.size>MAX_BYTES){alert('Selecciona un audio compatible de hasta 30 MB.');input.value='';return}
   selected=file;url=URL.createObjectURL(file);audio=new Audio();audio.preload='metadata';
   audio.onloadedmetadata=()=>{if(!Number.isFinite(audio.duration)||audio.duration<=0){stop();alert('No se pudo leer la duración.');return}start.max=String(Math.max(0,audio.duration-1));start.value='0';host.querySelector('[data-music-name]').textContent=file.name;editor.hidden=false;sync()};
-  audio.ontimeupdate=()=>{if(audio&&audio.currentTime>=Number(start.value)+30)audio.pause()};
+  audio.ontimeupdate=()=>{if(audio&&audio.currentTime>=Number(start.value)+40)audio.pause()};
   audio.onerror=()=>{stop();alert('No se pudo abrir el audio.')};audio.src=url;
  };
  const observer=new MutationObserver(()=>{if(!camera.isConnected){stop();observer.disconnect()}else if(!camera.classList.contains('open')&&audio&&!audio.paused)audio.pause()});
  observer.observe(camera,{attributes:true,attributeFilter:['class']});observer.observe(document.body,{childList:true});
- window.klkStatusMusicPreview=()=>selected?{name:selected.name,start:Number(start.value),duration:Math.min(30,Math.max(0,(audio&&audio.duration||0)-Number(start.value)))}:null;
+ window.klkStatusMusicPreview=()=>selected?{name:selected.name,start:Number(start.value),duration:Math.min(40,Math.max(0,(audio&&audio.duration||0)-Number(start.value)))}:null;
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount,{once:true});else mount();
 const observer=new MutationObserver(()=>{if(document.getElementById('klkStatusCamera')){mount();observer.disconnect()}});
