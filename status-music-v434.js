@@ -6,7 +6,10 @@
  const label=document.createElement('label');label.className='klkStatusMediaAction';label.htmlFor='klkStatusMusicFile';label.textContent='🎵 Música';
  const input=document.createElement('input');input.type='file';input.id='klkStatusMusicFile';input.accept='audio/*';input.hidden=true;
  const controls=document.createElement('div');controls.className='klkStatusMusicControls';controls.hidden=true;
- controls.innerHTML='<span class="klkStatusMusicName"></span><audio controls preload="metadata"></audio><button type="button" class="klkStatusMusicRemove">Quitar música</button>';
+ const name=document.createElement('span');name.className='klkStatusMusicName';
+ const player=document.createElement('audio');player.controls=true;player.preload='metadata';
+ const remove=document.createElement('button');remove.type='button';remove.className='klkStatusMusicRemove';remove.textContent='Quitar música';
+ controls.append(name,player,remove);
  picker.append(label,input);picker.after(controls);
  let music=null,url=null,busy=false;
  function clear(){music=null;if(url)URL.revokeObjectURL(url);url=null;input.value='';controls.hidden=true;controls.querySelector('audio').removeAttribute('src');controls.querySelector('audio').load()}
