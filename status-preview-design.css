@@ -1,0 +1,15 @@
+/* KLK photo status preview: immersive layout without changing publish handlers. */
+#klkStatusEditor.open{background:#08070d!important;color:#fff!important;padding:calc(env(safe-area-inset-top,0px) + 12px) 12px calc(env(safe-area-inset-bottom,0px) + 14px)!important;gap:10px!important}
+#klkStatusEditor .klkEditTop{padding:4px 2px!important;gap:10px!important}
+#klkStatusEditor .klkEditTop strong{font-size:20px!important;letter-spacing:-.4px!important}
+#klkStatusEditor .klkEditTop button{background:#292630!important;border-radius:24px!important;min-height:44px!important}
+#klkStatusEditor .klkEditPreview{border-radius:18px!important;background:#16131d!important;box-shadow:0 8px 28px #0005!important}
+#klkStatusEditor .klkEditControls{order:2!important;padding:8px 0!important}
+#klkStatusEditor .klkEditControls button{border-radius:22px!important;background:#282330!important;border:1px solid #ffffff24!important}
+#klkStatusEditor .klkEditStrip{order:3!important;max-height:78px!important}
+#klkStatusEditor .klkEditStrip img{width:52px!important;height:60px!important;border-radius:10px!important}
+#klkStatusEditor .klkEditStrip button.active{border-color:#a83bff!important;border-radius:12px!important}
+#klkStatusEditor #klkEditText{order:4!important;background:#26212d!important;color:white!important;border:1px solid #ffffff36!important;border-radius:16px!important}
+#klkStatusEditor .klkEditBottom{order:5!important;gap:12px!important}
+#klkStatusEditor #klkEditDone{background:#9336ef!important;border-radius:28px!important;padding:12px 18px!important;font-weight:700!important}
+@media(max-height:690px){#klkStatusEditor.open{gap:5px!important}#klkStatusEditor .klkEditTop strong{font-size:17px!important}#klkStatusEditor .klkEditStrip img{height:38px!important;width:35px!important}}
