@@ -1,0 +1,33 @@
+/* KLK UI cleanup v432: presentation-only; keep existing functionality and event handlers. */
+#homeView{background:#fff!important;color:#111b21!important}
+#homeView .homeTitle{background:#fff!important;border-bottom:1px solid #f0edf3!important;box-shadow:none!important}
+#homeView .klkHeaderBrand{letter-spacing:-.025em!important}
+#homeView .homeActions button{box-shadow:none!important}
+#chatsPanel,#callsPanel,#updatesPanel,#toolsPanel{background:#fff!important;color:#111b21!important}
+#chatsPanel #chatsList{padding:8px 16px 18px!important}
+#chatsPanel #chatsList > *{box-shadow:none!important}
+#callsPanel{padding:18px 18px 110px!important}
+#callsPanel .klkCallsHeading h2{margin:0 0 18px!important;font-weight:800!important}
+#callsPanel .klkCallsHeading h3{margin:12px 0!important;color:#58636c!important}
+#callsPanel #callContacts .callHistoryItem{box-shadow:none!important;border-bottom:1px solid #edf0f2!important}
+#updatesPanel{padding-left:16px!important;padding-right:16px!important}
+#updatesPanel .updatesTopbar{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:12px!important;margin-bottom:14px!important}
+#updatesPanel .updatesTopbar h1{font-weight:800!important;letter-spacing:-.03em!important}
+#updatesPanel .updatesTopActions{display:flex!important;gap:8px!important}
+#updatesPanel .updatesTopActions button{box-shadow:none!important}
+#updatesPanel .updatesHeading{margin:18px 0 12px!important}
+#updatesPanel #addStatusButton{display:flex!important;align-items:center!important;gap:16px!important;width:100%!important;min-height:108px!important;padding:16px!important;border-radius:20px!important;background:#f7f0ff!important;border:1px solid #e5cff9!important;box-shadow:none!important;color:#241333!important;text-align:left!important}
+#updatesPanel #addStatusButton .myStatusAvatar{flex:0 0 64px!important;width:64px!important;height:64px!important;transform:none!important}
+#updatesPanel #addStatusButton .myStatusCopy{min-width:0!important}
+#updatesPanel #addStatusButton .myStatusCopy strong{color:#21142c!important;font-size:20px!important}
+#updatesPanel #addStatusButton .myStatusCopy small{color:#62616b!important;font-size:13px!important;line-height:1.4!important}
+#updatesPanel .statusComposer{box-shadow:none!important;border:1px solid #e6e8eb!important;border-radius:20px!important}
+#updatesPanel .statusComposer[hidden]{display:none!important}
+#updatesPanel .statusComposerActions button{box-shadow:none!important}
+#updatesPanel .statusFab{box-shadow:none!important}
+#toolsPanel{padding-bottom:110px!important}
+#toolsPanel .klkSettingsIntro{padding-top:18px!important}
+#toolsPanel .klkSettingsIntro h2{font-weight:800!important;letter-spacing:-.025em!important}
+#toolsPanel .card{box-shadow:none!important;border:1px solid #ece7f1!important;border-radius:18px!important}
+#toolsPanel button{box-shadow:none!important}
+@media(max-width:390px){#updatesPanel #addStatusButton{padding:12px!important;gap:10px!important}#updatesPanel #addStatusButton .myStatusCopy strong{font-size:18px!important}}
