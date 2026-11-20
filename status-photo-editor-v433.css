@@ -1,0 +1,13 @@
+/* Full-screen States photo editor: responsive controls and accessible pinch gesture. */
+#klkStatusEditor.open{display:flex!important;flex-direction:column!important;overflow:hidden!important;padding:calc(env(safe-area-inset-top,0px) + 10px) 12px calc(env(safe-area-inset-bottom,0px) + 12px)!important;height:100dvh!important;background:#101010!important;gap:8px!important}
+#klkStatusEditor .klkEditTop{flex:0 0 auto!important;min-height:42px!important}
+#klkStatusEditor .klkEditStrip{flex:0 0 auto!important;max-height:62px!important;padding:3px 0!important}
+#klkStatusEditor .klkEditStrip img{width:40px!important;height:45px!important}
+#klkStatusEditor .klkEditPreview{display:block!important;flex:1 1 auto!important;min-height:0!important;max-height:none!important;max-width:100%!important;width:100%!important;height:100%!important;margin:0 auto!important;object-fit:contain!important;touch-action:none!important;overscroll-behavior:contain!important;background:#171717!important}
+#klkStatusEditor .klkEditControls{flex:0 0 auto!important;display:flex!important;flex-wrap:nowrap!important;overflow-x:auto!important;scrollbar-width:none!important;gap:8px!important;padding:8px 0!important}
+#klkStatusEditor .klkEditControls button{flex:0 0 auto!important;min-height:46px!important;white-space:nowrap!important}
+#klkStatusEditor #klkEditText{flex:0 0 auto!important;box-sizing:border-box!important;margin:0!important;min-height:44px!important}
+#klkStatusEditor .klkEditBottom{flex:0 0 auto!important;align-items:center!important;margin:0!important;min-height:48px!important}
+#klkStatusEditor #klkEditDone{min-height:46px!important}
+#klkStatusEditor .klkEditZoomHint{position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 165px);transform:translateX(-50%);pointer-events:none;background:#0009;color:white;padding:7px 12px;border-radius:16px;font-size:12px;white-space:nowrap;z-index:2}
+@media(max-height:650px){#klkStatusEditor .klkEditStrip{max-height:45px!important}#klkStatusEditor .klkEditStrip img{height:32px!important}#klkStatusEditor .klkEditControls button{min-height:38px!important}}
