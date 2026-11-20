@@ -348,7 +348,14 @@
     const gate=document.createElement('div');
     gate.id='klkStatusPublishVideoReview';
     gate.hidden=true;
-    gate.innerHTML='<div class="klkPublishVideoTop"><strong>Vista previa · Video</strong><button type="button" data-action="back">← Volver</button></div><video controls playsinline preload="metadata"></video><p role="status">Revisa el video antes de publicarlo.</p><button type="button" data-action="publish">Publicar video</button>';
+    const top=document.createElement('div');top.className='klkPublishVideoTop';
+    const heading=document.createElement('strong');heading.textContent='Vista previa · Video';
+    const back=document.createElement('button');back.type='button';back.dataset.action='back';back.textContent='← Volver';
+    top.append(heading,back);
+    const preview=document.createElement('video');preview.controls=true;preview.playsInline=true;preview.preload='metadata';
+    const feedback=document.createElement('p');feedback.setAttribute('role','status');feedback.textContent='Revisa el video antes de publicarlo.';
+    const publishVideo=document.createElement('button');publishVideo.type='button';publishVideo.dataset.action='publish';publishVideo.textContent='Publicar video';
+    gate.append(top,preview,feedback,publishVideo);
     const style=document.createElement('style');
     style.textContent='#klkStatusPublishVideoReview{position:fixed;inset:0;z-index:2147483646;background:#09080e;color:#fff;display:flex;flex-direction:column;align-items:center;gap:14px;padding:calc(env(safe-area-inset-top,0px) + 16px) 16px calc(env(safe-area-inset-bottom,0px) + 20px);box-sizing:border-box}#klkStatusPublishVideoReview[hidden]{display:none!important}#klkStatusPublishVideoReview .klkPublishVideoTop{width:100%;display:flex;align-items:center;justify-content:space-between}#klkStatusPublishVideoReview video{width:100%;flex:1;min-height:0;object-fit:contain;background:#000;border-radius:14px}#klkStatusPublishVideoReview button{min-height:48px;padding:10px 22px;border:0;border-radius:24px;background:#8234c7;color:#fff;font-weight:700}#klkStatusPublishVideoReview [data-action="publish"]{width:100%}';
     document.head.appendChild(style);document.body.appendChild(gate);
