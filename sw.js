@@ -54,8 +54,8 @@ messaging.onBackgroundMessage(payload => {
     vibrate: [180, 80, 180]
   });
 });
-const CACHE_NAME = "klk-shell-chat-mirror-v241";
-const APP_SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon.svg", "./calls.js?v=231", "./klk-call-theme.css?v=3", "./navigation.js", "./chat-camera.js?v=233", "./sticker-studio.js?v=2", "./status-camera-effects.js?v=16", "./version.json"];
+const CACHE_NAME = "klk-shell-chat-mirror-v430";
+const APP_SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon.svg", "./calls.js?v=231", "./klk-call-theme.css?v=3", "./navigation.js", "./chat-camera.js?v=233", "./sticker-studio.js?v=2", "./status-camera-effects.js?v=430", "./version.json"];
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => Promise.allSettled(APP_SHELL.map(path => cache.add(path)))));
   self.skipWaiting();
@@ -79,7 +79,7 @@ self.addEventListener("fetch", event => {
       try{const fresh=await fetch(request,{cache:"no-store"});if(fresh.ok)await cache.put(request,fresh.clone());return fresh;}catch(error){return (await cache.match(request))||(await cache.match("./index.html"))||Response.error();}
     }
     const cached=await cache.match(request);
-    if(url.pathname.endsWith("/chat-camera.js") || url.pathname.endsWith("/calls.js") || url.pathname.endsWith("/sticker-studio.js")){
+    if(url.pathname.endsWith("/status-camera-effects.js") || url.pathname.endsWith("/chat-camera.js") || url.pathname.endsWith("/calls.js") || url.pathname.endsWith("/sticker-studio.js")){
       try{const fresh=await fetch(request,{cache:"no-store"});if(fresh.ok){await cache.put(request,fresh.clone());return fresh;}}catch(error){}
       return cached||Response.error();
     }
