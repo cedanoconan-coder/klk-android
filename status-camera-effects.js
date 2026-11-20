@@ -83,7 +83,9 @@
   let selectedEffect=0;
   const buttons=choices.map(([label,emoji,selector],index)=>{
     const button=document.createElement('button');button.type='button';button.className='klkEffectThumb';
-    button.innerHTML='<span class="klkEffectCircle">'+emoji+'</span><small>'+label+'</small>';
+    const circle=document.createElement('span');circle.className='klkEffectCircle';circle.textContent=emoji;
+    const caption=document.createElement('small');caption.textContent=label;
+    button.append(circle,caption);
     button.setAttribute('aria-label','Aplicar efecto '+label);
     button.addEventListener('click',()=>selectEffect(index));
     carousel.appendChild(button);return button;
