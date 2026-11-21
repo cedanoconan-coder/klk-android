@@ -3570,11 +3570,11 @@ function klkConfirmDeleteStatus(){
  const statusPreviewMedia=document.createElement("div");statusPreviewMedia.style.cssText="display:grid;gap:10px;margin:12px 0";
  const statusDiscard=document.createElement("button");statusDiscard.type="button";statusDiscard.textContent="Descartar archivos";
  statusPreviewPanel.append(statusPreviewTitle,statusPreviewMedia,statusDiscard);
- statusPublish?.parentNode?.insertBefore(statusPreviewPanel,statusPublish);
+ statusPublish?.closest(".statusComposerActions")?.insertAdjacentElement("beforebegin",statusPreviewPanel);
  let statusPreviewReady=false,statusPreviewFiles=[],statusPreviewUrls=[],statusPreviewGeneration=0;
  function clearStatusPreview(clearFiles=false){
   statusPreviewGeneration++;statusPreviewReady=false;statusPreviewFiles=[];
-  statusPreviewMedia.replaceChildren();statusPreviewUrls.forEach(url=>URL.revokeObjectURL(url));statusPreviewUrls=[];
+  statusPreviewMedia.querySelectorAll("video").forEach(video=>{video.pause();video.removeAttribute("src");video.load();});statusPreviewMedia.replaceChildren();statusPreviewUrls.forEach(url=>URL.revokeObjectURL(url));statusPreviewUrls=[];
   statusPreviewPanel.style.display="none";
   if(clearFiles){statusInput.value="";window.klkStatusEditedFiles=[];}
  }
@@ -3596,15 +3596,15 @@ function klkConfirmDeleteStatus(){
     await new Promise((resolve,reject)=>{
      const ok=()=>{cleanup();resolve();},bad=()=>{cleanup();reject(new Error("No se puede reproducir este archivo en el dispositivo."));};
      const timer=setTimeout(bad,12000);
-     const cleanup=()=>{clearTimeout(timer);media.removeEventListener(media.tagName==="VIDEO"?"loadedmetadata":"load",ok);media.removeEventListener("error",bad);};
+     const cleanup=()=>{clearTimeout(timer);media.removeEventListener(media.tagName==="VIDEO"?"loadeddata":"load",ok);media.removeEventListener("error",bad);};
      media.addEventListener(media.tagName==="VIDEO"?"loadedmetadata":"load",ok,{once:true});
      media.addEventListener("error",bad,{once:true});
-     if(media.tagName==="VIDEO"&&media.readyState>=1)ok();
+     if(media.tagName==="VIDEO"&&media.readyState>=2&&media.videoWidth&&media.videoHeight)ok();
      if(media.tagName==="IMG"&&media.complete&&media.naturalWidth)ok();
     });
     if(generation!==statusPreviewGeneration)return;
    }
-   statusPreviewFiles=files;statusPreviewReady=true;statusPublish.disabled=false;
+   if(generation!==statusPreviewGeneration)return;statusPreviewFiles=files;statusPreviewReady=true;statusPublish.disabled=false;
    $("statusFeedback").textContent="Vista previa lista. Pulsa Publicar cuando quieras compartir.";
   }catch(error){
    if(generation!==statusPreviewGeneration)return;
