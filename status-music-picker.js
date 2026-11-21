@@ -40,3 +40,23 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 const observer=new MutationObserver(()=>{if(document.getElementById('klkStatusCamera')){mount();observer.disconnect()}});
 observer.observe(document.documentElement,{childList:true,subtree:true});
 })();
+/* Show every selected status video in the composer before publishing. */
+(()=>{
+ 'use strict';
+ function installStatusVideoPreview(){
+  const input=document.getElementById('statusPhoto'),composer=document.getElementById('statusComposer'),actions=composer?.querySelector('.statusComposerActions');
+  if(!input||!composer||!actions||input.dataset.videoPreviewReady)return;
+  input.dataset.videoPreviewReady='true';
+  const preview=document.createElement('section');preview.className='klkStatusVideoPreviews';preview.hidden=true;preview.setAttribute('aria-label','Vista previa de los videos seleccionados');actions.before(preview);
+  const style=document.createElement('style');style.textContent='#updatesPanel .klkStatusVideoPreviews{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:12px;margin:12px 0;padding:12px;border:1px solid #e5d9ef;border-radius:16px;background:#faf7fc}#updatesPanel .klkStatusVideoPreviews[hidden]{display:none!important}#updatesPanel .klkStatusVideoPreview{min-width:0;overflow:hidden;border:1px solid #e8e2ed;border-radius:13px;background:#17151a}#updatesPanel .klkStatusVideoPreview video{display:block;width:100%;max-height:45dvh;aspect-ratio:9/16;object-fit:contain;background:#09080a}#updatesPanel .klkStatusVideoPreview footer{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;background:#fff;color:#342b3d;font-size:12px}#updatesPanel .klkStatusVideoPreview footer button{width:auto;min-height:34px;margin:0;padding:6px 10px;border:0;border-radius:10px;background:#f4e9fa;color:#651e91;font-size:12px;font-weight:700}@media(max-width:420px){#updatesPanel .klkStatusVideoPreview video{max-height:38dvh}}';document.head.append(style);
+  let urls=[];
+  function clear(){urls.forEach(url=>URL.revokeObjectURL(url));urls=[];preview.replaceChildren();preview.hidden=true}
+  function render(){
+   clear();const files=Array.from(input.files||[]),videos=files.filter(file=>file.type.startsWith('video/'));if(!videos.length)return;preview.hidden=false;
+   videos.forEach((file,index)=>{const card=document.createElement('article');card.className='klkStatusVideoPreview';const video=document.createElement('video');video.controls=true;video.playsInline=true;video.preload='metadata';video.muted=true;video.autoplay=true;video.loop=true;video.setAttribute('aria-label','Vista previa del video '+(index+1));const url=URL.createObjectURL(file);urls.push(url);video.src=url;video.play().catch(()=>{});const footer=document.createElement('footer'),name=document.createElement('span');name.textContent='Video '+(index+1)+' · '+(file.size/1048576).toFixed(1)+' MB';const remove=document.createElement('button');remove.type='button';remove.textContent='Quitar';remove.setAttribute('aria-label','Quitar video '+(index+1));remove.addEventListener('click',()=>{const transfer=new DataTransfer();files.filter(candidate=>candidate!==file).forEach(candidate=>transfer.items.add(candidate));input.files=transfer.files;input.dispatchEvent(new Event('change',{bubbles:true}))});footer.append(name,remove);card.append(video,footer);preview.append(card)});
+   const feedback=document.getElementById('statusFeedback');if(feedback)feedback.textContent='Revisa tus videos aquí antes de tocar Publicar.';
+  }
+  input.addEventListener('change',render);document.addEventListener('klk-status-published',clear);render();
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installStatusVideoPreview,{once:true});else installStatusVideoPreview();
+})();
