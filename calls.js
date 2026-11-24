@@ -420,6 +420,19 @@
  const klkNaturalCameraStyle=document.createElement("style");
  klkNaturalCameraStyle.textContent="#callOverlay #localVideo,#callOverlay.visible #localVideo{scale:1 1!important;rotate:none!important}#callOverlay #remoteVideo,#callOverlay.visible #remoteVideo{transform:none!important;scale:1 1!important;rotate:none!important}";
  document.head.appendChild(klkNaturalCameraStyle);
+ // Reanudar la reproducción visual al regresar desde otra aplicación.
+ // No reinicia la cámara ni la conexión WebRTC existente.
+ function klkResumeVisibleCallVideos(){
+  if(document.hidden||!overlay.classList.contains("visible"))return;
+  for(const id of ["localVideo","remoteVideo"]){
+   const video=$(id);
+   if(!video||!video.srcObject||!video.paused)continue;
+   const playback=video.play();
+   if(playback&&typeof playback.catch==="function")playback.catch(()=>{});
+  }
+ }
+ document.addEventListener("visibilitychange",klkResumeVisibleCallVideos);
+ window.addEventListener("pageshow",klkResumeVisibleCallVideos);
  function klkUpdateMirrorPreview(){
   // CSS-only preview; rear camera remains unmirrored, even after switching.
   for(const id of ["localVideo","remoteVideo"]){
