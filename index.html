@@ -3149,7 +3149,7 @@ stickersToggle.addEventListener("click",()=>{closeAttachmentPanel();const openin
 stickersPanel.addEventListener("click",async event=>{const emoji=event.target.closest("[data-emoji]");if(emoji){const input=$("message"),value=emoji.dataset.emoji,start=input.selectionStart??input.value.length,end=input.selectionEnd??input.value.length;input.value=input.value.slice(0,start)+value+input.value.slice(end);const cursor=start+value.length;input.setSelectionRange(cursor,cursor);input.dispatchEvent(new Event("input",{bubbles:true}));closeStickersPanel();input.focus({preventScroll:true});return;}const choice=event.target.closest("[data-sticker]");if(!choice)return;const sticker=choice.dataset.sticker,user=auth&&auth.currentUser;if(!user||!activeConversationId){$("chatStatus").textContent="Abre una conversación para enviar stickers.";return;}if(sending)return;const conversationId=activeConversationId;sending=true;stickersPanel.querySelectorAll("button").forEach(button=>button.disabled=true);$("chatStatus").textContent="Enviando sticker...";try{const sent=await messagesCollection().add({type:"sticker",text:sticker,email:user.email||"",displayName:(peopleCache.get(user.uid)||{}).displayName||(user.email||"Miembro").split("@")[0],uid:user.uid,createdAt:firebase.firestore.FieldValue.serverTimestamp()});void sendKlkPushForMessage(conversationId,sent.id);$("chatStatus").textContent="Sticker enviado.";closeStickersPanel();}catch(error){showError("chatStatus",error);}finally{sending=false;stickersPanel.querySelectorAll("button").forEach(button=>button.disabled=false);syncComposerMode();}});
 $("message").addEventListener("focus",()=>{closeStickersPanel();closeAttachmentPanel();});
 async function compressImage(file) {
- if (!file || !file.type.startsWith("image/") || file.type === "image/gif" || file.size < 350 * 1024) return file;
+ if (!file || !file.type.startsWith("image/") || file.type === "image/gif" || file.size < 180 * 1024) return file;
  let bitmap, objectUrl;
  try {
   if ("createImageBitmap" in window) bitmap = await createImageBitmap(file);
@@ -3169,7 +3169,7 @@ async function compressImage(file) {
   ctx.fillStyle = "#fff";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-  const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", 0.72));
+  const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", 0.68));
   if (!blob || blob.size >= file.size) return file;
   const baseName = (file.name || "foto").replace(/\.[^.]+$/, "");
   return new File([blob], baseName + ".jpg", {type:"image/jpeg", lastModified:Date.now()});
