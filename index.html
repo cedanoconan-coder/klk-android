@@ -2673,27 +2673,34 @@ function klkClearPhotoCache(){
  for(const entry of klkPhotoCache.values()) URL.revokeObjectURL(entry.url);
  klkPhotoCache.clear(); klkPhotoCacheBytes = 0;
 }
+const klkPhotoPending = new Map();
 async function klkCachedPhotoUrl(path, conversationId, fallbackUrl){
  const owner = (auth && auth.currentUser && auth.currentUser.uid) || "";
- if(klkPhotoCacheOwner !== owner){klkClearPhotoCache();klkPhotoCacheOwner=owner;}
+ if(klkPhotoCacheOwner !== owner){klkClearPhotoCache();klkPhotoCacheOwner=owner;klkPhotoPending.clear();}
  if(!owner || !path || !fallbackUrl) return fallbackUrl;
  const key=owner+"|"+(conversationId||"")+"|"+path;
  if(klkPhotoCache.has(key)){
   const entry=klkPhotoCache.get(key);klkPhotoCache.delete(key);klkPhotoCache.set(key,entry);klkRecordDataUsage("hits",1);return entry.url;
  }
- try{
-  const response=await fetch(fallbackUrl,{credentials:"omit"});
-  if(!response.ok || !response.headers.get("content-type")?.startsWith("image/")) return fallbackUrl;
-  const blob=await response.blob();
-  if(!blob.size || blob.size>5*1024*1024) return fallbackUrl;
-  const url=URL.createObjectURL(blob);
-  while(klkPhotoCacheBytes+blob.size>KLK_PHOTO_CACHE_LIMIT && klkPhotoCache.size){
-   const oldest=klkPhotoCache.keys().next().value,entry=klkPhotoCache.get(oldest);
-   klkPhotoCache.delete(oldest);klkPhotoCacheBytes-=entry.size;URL.revokeObjectURL(entry.url);
-  }
-  klkPhotoCache.set(key,{url,size:blob.size});klkPhotoCacheBytes+=blob.size;klkRecordDataUsage("downloads",blob.size);
-  return url;
- }catch(error){return fallbackUrl;} // Browsers may disallow CORS reads; regular image loading still works.
+ if(klkPhotoPending.has(key)) return klkPhotoPending.get(key);
+ const pending=(async()=>{
+  try{
+   const response=await fetch(fallbackUrl,{credentials:"omit"});
+   if(!response.ok || !response.headers.get("content-type")?.startsWith("image/")) return fallbackUrl;
+   const blob=await response.blob();
+   if(!blob.size || blob.size>5*1024*1024) return fallbackUrl;
+   if(klkPhotoCacheOwner!==owner) return fallbackUrl;
+   const url=URL.createObjectURL(blob);
+   while(klkPhotoCacheBytes+blob.size>KLK_PHOTO_CACHE_LIMIT && klkPhotoCache.size){
+    const oldest=klkPhotoCache.keys().next().value,entry=klkPhotoCache.get(oldest);
+    klkPhotoCache.delete(oldest);klkPhotoCacheBytes-=entry.size;URL.revokeObjectURL(entry.url);
+   }
+   klkPhotoCache.set(key,{url,size:blob.size});klkPhotoCacheBytes+=blob.size;klkRecordDataUsage("downloads",blob.size);
+   return url;
+  }catch(error){return fallbackUrl;}
+ })();
+ klkPhotoPending.set(key,pending);
+ try{return await pending;}finally{if(klkPhotoPending.get(key)===pending)klkPhotoPending.delete(key);}
 }
 function klkLoadPhotoWhenVisible(img, load){
  if(!("IntersectionObserver" in window)){void load();return;}
