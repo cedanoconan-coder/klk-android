@@ -8,7 +8,15 @@ function mount(){
  const camera=document.getElementById('klkStatusCamera');
  if(!camera||camera.querySelector('[data-status-music]'))return;
  const host=document.createElement('div');host.dataset.statusMusic='';
- host.innerHTML='<button type="button" data-music-open aria-label="Añadir música" aria-expanded="false">♫ Añadir música</button><input type="file" accept="audio/*" hidden aria-label="Seleccionar audio"><section data-music-editor hidden><div data-music-row><button type="button" data-music-play aria-label="Reproducir fragmento">▶</button><strong data-music-name></strong><span data-music-range></span><button type="button" data-music-expand aria-label="Ajustar fragmento" aria-expanded="false">⌄</button><button type="button" data-music-change aria-label="Cambiar canción">♫</button><button type="button" data-music-remove aria-label="Quitar música">×</button></div><div data-music-details hidden><label>Inicio <input type="range" data-music-start min="0" max="0" step="0.1" value="0"></label><small>Vista previa solamente. La música aún no se incorpora al archivo publicado.</small></div></section>';
+ const make=(tag,attrs={},label='')=>{const node=document.createElement(tag);for(const [key,value] of Object.entries(attrs)){if(key==='text')node.textContent=value;else if(key==='hidden')node.hidden=value;else node.setAttribute(key,value)}if(label)node.textContent=label;return node};
+ const open=make('button',{type:'button','data-music-open':'','aria-label':'Añadir música','aria-expanded':'false'},'♫ Añadir música');
+ const picker=make('input',{type:'file',accept:'audio/*',hidden:true,'aria-label':'Seleccionar audio'});
+ const editor=make('section',{'data-music-editor':'',hidden:true});
+ const row=make('div',{'data-music-row':''});
+ row.append(make('button',{type:'button','data-music-play':'','aria-label':'Reproducir fragmento'},'▶'),make('strong',{'data-music-name':''}),make('span',{'data-music-range':''}),make('button',{type:'button','data-music-expand':'','aria-label':'Ajustar fragmento','aria-expanded':'false'},'⌄'),make('button',{type:'button','data-music-change':'','aria-label':'Cambiar canción'},'♫'),make('button',{type:'button','data-music-remove':'','aria-label':'Quitar música'},'×'));
+ const details=make('div',{'data-music-details':'',hidden:true}),label=make('label',{},'Inicio '),slider=make('input',{type:'range','data-music-start':'',min:'0',max:'0',step:'0.1',value:'0'});
+ label.append(slider);details.append(label,make('small',{},'Vista previa solamente. La música aún no se incorpora al archivo publicado.'));
+ editor.append(row,details);host.append(open,picker,editor);
  const css=document.createElement('style');
  css.textContent='#klkStatusCamera [data-status-music]{position:absolute;top:calc(env(safe-area-inset-top,0px) + 76px);left:12px;right:12px;z-index:12;color:#fff;font:14px system-ui;pointer-events:none}#klkStatusCamera [data-status-music]>*{pointer-events:auto}#klkStatusCamera [data-status-music]>[data-music-open]{display:block;margin:0 auto;border:0;border-radius:22px;background:#25202bcc;color:#fff;padding:9px 14px}#klkStatusCamera [data-music-editor]{background:#16131ddc;border-radius:22px;padding:6px 8px;margin:8px auto 0;max-width:420px;box-shadow:0 3px 12px #0005}#klkStatusCamera [data-music-editor][hidden],#klkStatusCamera [data-music-details][hidden]{display:none}#klkStatusCamera [data-music-row]{display:flex;align-items:center;gap:8px;min-height:38px}#klkStatusCamera [data-music-row] strong{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}#klkStatusCamera [data-music-row] span{font-size:12px;white-space:nowrap}#klkStatusCamera [data-music-row] button{flex-shrink:0;border:0;border-radius:50%;background:#39343ecc;color:#fff;width:32px;height:32px;padding:0;font-size:19px}#klkStatusCamera [data-music-details]{padding:6px 10px 10px;display:grid;gap:8px}#klkStatusCamera [data-music-details] label{display:grid;gap:5px}#klkStatusCamera [data-music-details] input{width:100%}#klkStatusCamera [data-music-details] small{color:#ffdfac;font-size:11px}';
  css.textContent+='#klkStatusCamera [data-status-music]>[data-music-open][hidden]{display:none}#klkStatusCamera [data-music-editor] button{margin:0}#klkStatusCamera [data-music-row] strong{font-weight:600}#klkStatusCamera [data-music-details] input{margin:0;padding:0}';camera.append(css,host);
@@ -39,4 +47,24 @@ function mount(){
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount,{once:true});else mount();
 const observer=new MutationObserver(()=>{if(document.getElementById('klkStatusCamera')){mount();observer.disconnect()}});
 observer.observe(document.documentElement,{childList:true,subtree:true});
+})();
+/* Show every selected status video in the composer before publishing. */
+(()=>{
+ 'use strict';
+ function installStatusVideoPreview(){
+  const input=document.getElementById('statusPhoto'),composer=document.getElementById('statusComposer'),actions=composer?.querySelector('.statusComposerActions');
+  if(!input||!composer||!actions||input.dataset.videoPreviewReady)return;
+  input.dataset.videoPreviewReady='true';
+  const preview=document.createElement('section');preview.className='klkStatusVideoPreviews';preview.hidden=true;preview.setAttribute('aria-label','Vista previa de los videos seleccionados');actions.before(preview);
+  const style=document.createElement('style');style.textContent='#updatesPanel .klkStatusVideoPreviews{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:12px;margin:12px 0;padding:12px;border:1px solid #e5d9ef;border-radius:16px;background:#faf7fc}#updatesPanel .klkStatusVideoPreviews[hidden]{display:none!important}#updatesPanel .klkStatusVideoPreview{min-width:0;overflow:hidden;border:1px solid #e8e2ed;border-radius:13px;background:#17151a}#updatesPanel .klkStatusVideoPreview video{display:block;width:100%;max-height:45dvh;aspect-ratio:9/16;object-fit:contain;background:#09080a}#updatesPanel .klkStatusVideoPreview footer{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;background:#fff;color:#342b3d;font-size:12px}#updatesPanel .klkStatusVideoPreview footer button{width:auto;min-height:34px;margin:0;padding:6px 10px;border:0;border-radius:10px;background:#f4e9fa;color:#651e91;font-size:12px;font-weight:700}@media(max-width:420px){#updatesPanel .klkStatusVideoPreview video{max-height:38dvh}}';document.head.append(style);
+  let urls=[];
+  function clear(){urls.forEach(url=>URL.revokeObjectURL(url));urls=[];preview.replaceChildren();preview.hidden=true}
+  function render(){
+   clear();const files=Array.from(input.files||[]),videos=files.filter(file=>file.type.startsWith('video/'));if(!videos.length)return;preview.hidden=false;
+   videos.forEach((file,index)=>{const card=document.createElement('article');card.className='klkStatusVideoPreview';const video=document.createElement('video');video.controls=true;video.playsInline=true;video.preload='metadata';video.muted=true;video.autoplay=true;video.loop=true;video.setAttribute('aria-label','Vista previa del video '+(index+1));const url=URL.createObjectURL(file);urls.push(url);video.src=url;video.play().catch(()=>{});const footer=document.createElement('footer'),name=document.createElement('span');name.textContent='Video '+(index+1)+' · '+(file.size/1048576).toFixed(1)+' MB';const remove=document.createElement('button');remove.type='button';remove.textContent='Quitar';remove.setAttribute('aria-label','Quitar video '+(index+1));remove.addEventListener('click',()=>{const transfer=new DataTransfer();files.filter(candidate=>candidate!==file).forEach(candidate=>transfer.items.add(candidate));input.files=transfer.files;input.dispatchEvent(new Event('change',{bubbles:true}))});footer.append(name,remove);card.append(video,footer);preview.append(card)});
+   const feedback=document.getElementById('statusFeedback');if(feedback)feedback.textContent='Revisa tus videos aquí antes de tocar Publicar.';
+  }
+  input.addEventListener('change',render);document.addEventListener('klk-status-published',clear);render();
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installStatusVideoPreview,{once:true});else installStatusVideoPreview();
 })();
