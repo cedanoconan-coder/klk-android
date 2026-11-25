@@ -340,7 +340,7 @@
     if(manLook!=='none'&&facePoints&&now-lastFaceSeenAt<130)drawManLook();
    }renderFrame=requestAnimationFrame(render)
   }
-  function attach(file){const transfer=new DataTransfer();transfer.items.add(file);input.files=transfer.files;input.dispatchEvent(new Event('change',{bubbles:true}));const feedback=document.getElementById('statusFeedback');if(feedback)feedback.textContent=(file.type.startsWith('video/')?'Video':'Foto')+' listo para publicar.';close()}
+  function attach(file){try{const transfer=new DataTransfer();transfer.items.add(file);input.files=transfer.files;close();input.dispatchEvent(new Event('change',{bubbles:true}));}catch(error){message.textContent='No se pudo transferir el archivo al editor: '+error.message;}}
   // Review recorded videos locally before passing them to the status composer.
   const review=document.createElement('div');
   review.className='klkVideoReview';
