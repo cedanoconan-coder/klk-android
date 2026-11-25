@@ -341,6 +341,42 @@
    }renderFrame=requestAnimationFrame(render)
   }
   function attach(file){const transfer=new DataTransfer();transfer.items.add(file);input.files=transfer.files;input.dispatchEvent(new Event('change',{bubbles:true}));const feedback=document.getElementById('statusFeedback');if(feedback)feedback.textContent=(file.type.startsWith('video/')?'Video':'Foto')+' listo para publicar.';close()}
+  // Gate video publication even when the legacy photo editor skips video files.
+  // Capture phase prevents the existing publish handler from running until the user confirms.
+  (function installVideoPublishReview(){
+    const publish=document.getElementById('publishStatus');
+    if(!publish)return;
+    let confirmed=false,previewUrl=null;
+    const gate=document.createElement('div');
+    gate.id='klkStatusPublishVideoReview';
+    gate.hidden=true;
+    const top=document.createElement('div');top.className='klkPublishVideoTop';
+    const heading=document.createElement('strong');heading.textContent='Vista previa · Video';
+    const back=document.createElement('button');back.type='button';back.dataset.action='back';back.textContent='← Volver';
+    top.append(heading,back);
+    const preview=document.createElement('video');preview.controls=true;preview.playsInline=true;preview.preload='metadata';
+    const feedback=document.createElement('p');feedback.setAttribute('role','status');feedback.textContent='Revisa el video antes de publicarlo.';
+    const publishVideo=document.createElement('button');publishVideo.type='button';publishVideo.dataset.action='publish';publishVideo.textContent='Publicar video';
+    gate.append(top,preview,feedback,publishVideo);
+    const style=document.createElement('style');
+    style.textContent='#klkStatusPublishVideoReview{position:fixed;inset:0;z-index:2147483646;background:#09080e;color:#fff;display:flex;flex-direction:column;align-items:center;gap:14px;padding:calc(env(safe-area-inset-top,0px) + 16px) 16px calc(env(safe-area-inset-bottom,0px) + 20px);box-sizing:border-box}#klkStatusPublishVideoReview[hidden]{display:none!important}#klkStatusPublishVideoReview .klkPublishVideoTop{width:100%;display:flex;align-items:center;justify-content:space-between}#klkStatusPublishVideoReview video{width:100%;flex:1;min-height:0;object-fit:contain;background:#000;border-radius:14px}#klkStatusPublishVideoReview button{min-height:48px;padding:10px 22px;border:0;border-radius:24px;background:#8234c7;color:#fff;font-weight:700}#klkStatusPublishVideoReview [data-action="publish"]{width:100%}';
+    document.head.appendChild(style);document.body.appendChild(gate);
+    const player=gate.querySelector('video'),status=gate.querySelector('p'),confirm=gate.querySelector('[data-action="publish"]');
+    function hide(){player.pause();player.removeAttribute('src');player.load();if(previewUrl)URL.revokeObjectURL(previewUrl);previewUrl=null;gate.hidden=true}
+    gate.querySelector('[data-action="back"]').addEventListener('click',hide);
+    player.addEventListener('error',()=>{confirm.disabled=true;status.textContent='No se puede reproducir este video. Vuelve y graba otro.'});
+    player.addEventListener('loadedmetadata',()=>{confirm.disabled=false;status.textContent='Revisa el video antes de publicarlo.'});
+    publish.addEventListener('click',event=>{
+      if(confirmed){confirmed=false;return}
+      const file=Array.from(document.getElementById('statusPhoto')?.files||[]).find(f=>f.type.startsWith('video/'));
+      if(!file)return;
+      event.preventDefault();event.stopImmediatePropagation();
+      hide();previewUrl=URL.createObjectURL(file);gate.hidden=false;
+      confirm.disabled=true;status.textContent='Preparando vista previa…';
+      player.src=previewUrl;player.load();player.play().catch(()=>{});
+    },true);
+    confirm.addEventListener('click',()=>{if(confirm.disabled)return;hide();confirmed=true;publish.click();confirmed=false});
+  })();
   // Review recorded videos locally before passing them to the status composer.
   const review=document.createElement('div');
   review.className='klkVideoReview';
