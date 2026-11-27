@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: ["main"]
   push:
-    branches: ["main", "market-readiness", "integrar-supabase-storage", "features/notificaciones-ajustes", "build/klk-ajustes-apk", "feature/complete-interface-settings", "feature/invitation-only-registration", "fix/integral-klk-reliability"]
+    branches: ["main", "experiment/klk-offline", "market-readiness", "integrar-supabase-storage", "features/notificaciones-ajustes", "build/klk-ajustes-apk", "feature/complete-interface-settings", "feature/invitation-only-registration", "fix/integral-klk-reliability"]
   workflow_dispatch:
 
 permissions:
@@ -45,6 +45,9 @@ jobs:
           test -s www/chat-camera.js
           test -s www/qr-contacts.js
           test -s www/index.html
+          cp offline-test.js www/
+          printf '\n<script src="offline-test.js"></script>\n' >> www/index.html
+          node --check offline-test.js
 
       - name: Verificar sintaxis JavaScript
         run: |
@@ -171,6 +174,9 @@ jobs:
           s = s.replace(marker, permissions + marker, 1)
           p.write_text(s)
           PY
+
+      - name: Instalar KLK Offline experimental
+        run: python3 scripts/enable-android-offline.py
 
       - name: Habilitar ventana flotante de videollamadas Android
         run: python3 scripts/enable-android-video-pip.py
