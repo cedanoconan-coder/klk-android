@@ -146,16 +146,8 @@ service cloud.firestore {
           && (!changed.hasAny(['coverPath']) || (request.resource.data.coverPath is string && request.resource.data.coverPath.size() <= 500))
           && (!changed.hasAny(['updatedAt']) || request.resource.data.updatedAt == request.time);
       }
-      function isUnblockedQrContact() {
-        return signedIn()
-          && (exists(/databases/$(database)/documents/qrContacts/$(userId)/members/$(request.auth.uid))
-            || exists(/databases/$(database)/documents/qrContacts/$(request.auth.uid)/members/$(userId)))
-          && !exists(/databases/$(database)/documents/userBlocks/$(userId)/blocked/$(request.auth.uid))
-          && !exists(/databases/$(database)/documents/userBlocks/$(request.auth.uid)/blocked/$(userId));
-      }
       allow list: if signedIn() && resource.data.directoryVisible == true;
-      // A private profile remains hidden from the public directory, but an approved QR contact may see its name.
-      allow get: if signedIn() && (request.auth.uid == userId || resource.data.directoryVisible == true || isUnblockedQrContact());
+      allow get: if signedIn() && (request.auth.uid == userId || resource.data.directoryVisible == true);
       allow create: if validPublicProfile();
       // En documentos antiguos, validar solo los campos modificados sin bloquear
       // la actualización por campos heredados que esta versión ya no utiliza.
