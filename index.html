@@ -1704,6 +1704,13 @@ input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),textarea,se
   },true);
   window.addEventListener("unhandledrejection",function(event){
     const reason=event.reason;
+    const code=String(reason?.code||"");
+    const message=String(reason?.message||"");
+    if((code==="unavailable"||code==="firestore/unavailable")&&/client is offline/i.test(message)){
+      event.preventDefault();
+      console.warn("KLK: consulta no disponible sin conexión",reason);
+      return;
+    }
     report("Promesa rechazada: "+(reason&&(reason.stack||reason.message)||reason||"sin detalle"));
   });
 })();
