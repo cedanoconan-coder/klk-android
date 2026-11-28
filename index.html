@@ -2627,9 +2627,24 @@ async function openPrivateConversation(otherUid, otherName) {
  const members = [user.uid,otherUid].sort(), conversationId = members.join("__");
  $("chatStatus").textContent = "Comprobando privacidad...";
  try {
-  if(await isUserBlockedEitherWay(otherUid)){ $("chatStatus").textContent="No puedes abrir este chat porque uno de los dos miembros ha bloqueado al otro."; return; }
-  const ref = db.collection("conversations").doc(conversationId), existing = await ref.get();
-  if (!existing.exists) await ref.set({members,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+  const ref = db.collection("conversations").doc(conversationId);
+  const offline = !navigator.onLine;
+  if (offline) {
+   // Only open an existing, cached conversation belonging to this account.
+   const [block, existing] = await Promise.all([
+    blockedUsersRef(user.uid).doc(otherUid).get({source:"cache"}),
+    ref.get({source:"cache"})
+   ]);
+   if (block.exists || !existing.exists || !Array.isArray(existing.data().members) ||
+       existing.data().members.length !== 2 || !members.every(uid=>existing.data().members.includes(uid))) {
+    $("chatStatus").textContent="Este chat necesita una comprobación de privacidad con internet."; return;
+   }
+  } else {
+   if(await isUserBlockedEitherWay(otherUid)){ $("chatStatus").textContent="No puedes abrir este chat porque uno de los dos miembros ha bloqueado al otro."; return; }
+   const existing = await ref.get();
+   if (!existing.exists) await ref.set({members,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+  }
+  if(auth.currentUser?.uid!==user.uid)return;
   activeConversationId = conversationId; activeConversationName = otherName; activeConversationPeerUid = otherUid; klkWatchActivity(); klkStartPresence(); watchDisappearingSettings(); $("disappearingPanel").hidden=true;
   klkPushView("conversation");$("chat").classList.add("room-open"); const chatFooter=$("chat").querySelector(".chatFoot"); if(chatFooter){chatFooter.hidden=false;chatFooter.style.display="block";} $("chatTitle").textContent = otherName; updateRoomAvatar(otherUid);
   $("dmPanel").style.display = "none"; $("messages").style.display = "block";
