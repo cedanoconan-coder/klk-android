@@ -2627,9 +2627,19 @@ async function openPrivateConversation(otherUid, otherName) {
  const members = [user.uid,otherUid].sort(), conversationId = members.join("__");
  $("chatStatus").textContent = "Comprobando privacidad...";
  try {
-  if(await isUserBlockedEitherWay(otherUid)){ $("chatStatus").textContent="No puedes abrir este chat porque uno de los dos miembros ha bloqueado al otro."; return; }
-  const ref = db.collection("conversations").doc(conversationId), existing = await ref.get();
-  if (!existing.exists) await ref.set({members,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+  const ref = db.collection("conversations").doc(conversationId);
+  if (!navigator.onLine) {
+   if (blockedUsers.has(otherUid)) { $("chatStatus").textContent="Contacto bloqueado."; return; }
+   const existing = await ref.get({source:"cache"});
+   if (!existing.exists || !members.every(uid => (existing.data().members || []).includes(uid))) {
+    $("chatStatus").textContent="Esta conversación necesita conexión para abrirse por primera vez."; return;
+   }
+  } else {
+   if(await isUserBlockedEitherWay(otherUid)){ $("chatStatus").textContent="No puedes abrir este chat porque uno de los dos miembros ha bloqueado al otro."; return; }
+   const existing = await ref.get();
+   if (!existing.exists) await ref.set({members,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+  }
+  if (auth.currentUser?.uid !== user.uid) return;
   activeConversationId = conversationId; activeConversationName = otherName; activeConversationPeerUid = otherUid; klkWatchActivity(); klkStartPresence(); watchDisappearingSettings(); $("disappearingPanel").hidden=true;
   klkPushView("conversation");$("chat").classList.add("room-open"); const chatFooter=$("chat").querySelector(".chatFoot"); if(chatFooter){chatFooter.hidden=false;chatFooter.style.display="block";} $("chatTitle").textContent = otherName; updateRoomAvatar(otherUid);
   $("dmPanel").style.display = "none"; $("messages").style.display = "block";
@@ -3060,7 +3070,8 @@ $("send").onclick = async () => {
  $("chatStatus").textContent=navigator.onLine?"Enviando mensaje...":"Sin conexión. Esperando conexión para enviar...";
  try {
   // Escribir en la conversación capturada y esperar la confirmación del servidor.
-  const sentMessage=await db.collection("conversations").doc(conversationId).collection("messages").add({
+  const messageRef=db.collection("conversations").doc(conversationId).collection("messages").doc();
+  const pendingWrite=messageRef.set({
    type:"text",
    text,
    ...(reply?{replyTo:reply}:{}),
@@ -3070,8 +3081,14 @@ $("send").onclick = async () => {
    createdAt:firebase.firestore.FieldValue.serverTimestamp(),
    ...(activeDisappearingHours ? {expiresAt:firebase.firestore.Timestamp.fromDate(new Date(Date.now()+activeDisappearingHours*60*60*1000))} : {})
   });
+  if (!navigator.onLine) {
+   pendingWrite.then(()=>{if(auth.currentUser?.uid===user.uid)void sendKlkPushForMessage(conversationId,messageRef.id);}).catch(error=>{if(auth.currentUser?.uid===user.uid&&activeConversationId===conversationId){if(!input.value.trim())input.value=text;showError("chatStatus",error);syncComposerMode();}else console.error("Envío pendiente rechazado",error);});
+   if(reply&&klkReplyTarget&&klkReplyTarget.id===reply.id)klkClearReply();
+   return;
+  }
+  await pendingWrite;
   if(reply&&klkReplyTarget&&klkReplyTarget.id===reply.id)klkClearReply();
-  void sendKlkPushForMessage(conversationId,sentMessage.id);
+  void sendKlkPushForMessage(conversationId,messageRef.id);
   if(activeConversationId===conversationId)$("chatStatus").textContent="";
  } catch(error) {
   // No perder el texto cuando Firestore rechaza o no puede completar el envío.
