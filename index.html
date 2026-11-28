@@ -1693,6 +1693,10 @@ input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),textarea,se
       return;
     }
     const source=event.target&&event.target.src?event.target.src:"";
+    // Google Auth iframe bootstrap is optional for an already authenticated offline session.
+    if(source && event.target instanceof HTMLScriptElement){
+      try { const url=new URL(source); if(url.origin==="https://apis.google.com" && url.pathname==="/js/api.js" && !navigator.onLine){ console.warn("KLK: Google Auth no disponible sin internet"); return; } } catch (_) {}
+    }
     // Los scripts de terceros pueden emitir "Script error." sin detalles por restricciones CORS.
     // No bloquear el chat con un aviso genérico que no permite diagnosticar la causa.
     if(event.message==="Script error."&&!event.filename){
