@@ -1693,6 +1693,10 @@ input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),textarea,se
       return;
     }
     const source=event.target&&event.target.src?event.target.src:"";
+    // Google Auth loads this optional helper dynamically; offline failure must not interrupt cached chats.
+    if(!event.message && source){
+      try{const url=new URL(source,location.href);if(url.protocol==="https:"&&url.hostname==="apis.google.com"&&url.pathname==="/js/api.js"){console.warn("KLK: servicio auxiliar de Google no disponible",source);return;}}catch(error){console.warn("KLK: URL de recurso inválida",error);}
+    }
     // Los scripts de terceros pueden emitir "Script error." sin detalles por restricciones CORS.
     // No bloquear el chat con un aviso genérico que no permite diagnosticar la causa.
     if(event.message==="Script error."&&!event.filename){
