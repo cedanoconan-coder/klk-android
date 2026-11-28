@@ -39,7 +39,22 @@ jobs:
           set -e
           mkdir -p www
           cp index.html klk-call-theme.css calls.js group-calls.js chat-camera.js qr-contacts.js sticker-studio.js icon.svg manifest.webmanifest sw.js www/
+          # Include all local web scripts and styles, including dynamically loaded modules.
+          find . -maxdepth 1 -type f \( -name '*.js' -o -name '*.mjs' -o -name '*.css' \) -exec cp {} www/ \;
           if [ -d assets ]; then cp -R assets www/; fi
+          python3 - <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+          from urllib.parse import urlsplit, unquote
+          class Resources(HTMLParser):
+              def handle_starttag(self, tag, attrs):
+                  for key, value in attrs:
+                      if key in ('src', 'href') and value and value.startswith('./'):
+                          path = Path('www') / unquote(urlsplit(value).path)
+                          if not path.is_file():
+                              raise SystemExit(f'Recurso local ausente: {path}')
+          Resources().feed(Path('www/index.html').read_text())
+          PY
           # Evitar generar una APK incompleta si falta un recurso esencial.
           test -s www/group-calls.js
           test -s www/chat-camera.js
