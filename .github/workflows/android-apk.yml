@@ -38,7 +38,7 @@ jobs:
         run: |
           set -e
           mkdir -p www
-          cp index.html klk-call-theme.css calls.js group-calls.js chat-camera.js qr-contacts.js sticker-studio.js icon.svg manifest.webmanifest sw.js www/
+          cp index.html klk-call-theme.css calls.js group-calls.js chat-camera.js qr-contacts.js sticker-studio.js navigation.js status-camera-effects.js status-music-picker.js icon.svg manifest.webmanifest sw.js www/
           if [ -d assets ]; then cp -R assets www/; fi
           # Evitar generar una APK incompleta si falta un recurso esencial.
           test -s www/group-calls.js
@@ -48,6 +48,10 @@ jobs:
           cp offline-test.js www/
           printf '\n<script src="offline-test.js"></script>\n' >> www/index.html
           node --check offline-test.js
+          for script in navigation.js status-camera-effects.js status-music-picker.js; do
+            test -s "www/$script"
+            node --check "www/$script"
+          done
 
       - name: Verificar sintaxis JavaScript
         run: |
